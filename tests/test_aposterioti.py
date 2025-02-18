@@ -2,9 +2,9 @@ import unittest
 import numpy as np
 from ..aposteriori import (
     aposteriori_unimodality,
-    bootrstrap_level_aposteriori_unit,
-    discussion_aposteriori,
-    aposteriori_unit,
+    _bootstrap_level_aposteriori_unit,
+    _discussion_aposteriori,
+    _aposteriori_unit,
 )
 
 
@@ -45,7 +45,7 @@ class TestBootstrapLevelAposterioriUnit(unittest.TestCase):
         annotations = np.array([1, 2, 3, 4])
         annotator_group = np.array(["A", "A", "B", "B"])
         level = "A"
-        result = bootrstrap_level_aposteriori_unit(
+        result = _bootstrap_level_aposteriori_unit(
             annotations, annotator_group, level, sample_ratio=0.5, bootstrap_steps=10
         )
         self.assertIsInstance(result, float, "Result should be a float.")
@@ -56,14 +56,14 @@ class TestDiscussionAposteriori(unittest.TestCase):
     def test_discussion_aposteriori_basic(self):
         """Test the Wilcoxon test with valid statistics."""
         stats = [0.1, 0.2, 0.3, 0.4]
-        result = discussion_aposteriori(stats)
+        result = _discussion_aposteriori(stats)
         self.assertGreaterEqual(result, 0.0, "P-value should be non-negative.")
         self.assertLessEqual(result, 1.0, "P-value should be at most 1.")
 
     def test_discussion_aposteriori_no_difference(self):
         """Test when there is no difference between statistics and zero."""
         stats = [0.0, 0.0, 0.0]
-        result = discussion_aposteriori(stats)
+        result = _discussion_aposteriori(stats)
         self.assertEqual(result, 1.0, "Should return 1.0 when there is no difference.")
 
 
@@ -72,7 +72,7 @@ class TestAposterioriUnit(unittest.TestCase):
         """Test computation of aposteriori unit differences."""
         global_annotations = np.array([1, 2, 3, 4])
         level_annotations = np.array([1, 1, 2, 2])
-        result = aposteriori_unit(global_annotations, level_annotations)
+        result = _aposteriori_unit(global_annotations, level_annotations)
         self.assertIsInstance(result, float, "Result should be a float.")
 
 

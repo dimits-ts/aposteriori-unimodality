@@ -7,6 +7,40 @@ from ndfu import ndfu
 
 
 def aposteriori_unimodality(
+    annotations: list[np.ndarray], annotator_group: list[np.ndarray]
+) -> dict[Hashable, float]:
+    _validate_groups(annotations, annotator_group)
+
+    # Initialize statistics for each group level
+    all_annots = []
+    print(annotations)
+    for array in annotator_group:
+        for key in array:
+            all_annots.append(key)
+
+    aposteriori_unit_statistics: dict[Hashable, list] = {
+        key: [] for key in np.unique(all_annots)
+    }
+
+    # Calculate per-comment statistics for each group level
+    for comment_annotations, comment_annotator_group in zip(
+        annotations, annotator_group
+    ):
+        for level in np.unique(annotator_group):
+            aposteriori_stat = _aposteriori_unit(
+                comment_annotations, comment_annotator_group
+            )
+            aposteriori_unit_statistics[level].append(aposteriori_stat)
+
+    # Aggregate statistics for the entire group
+    aposteriori_final_statistics: dict[Hashable, float] = {}
+    for level, stats in aposteriori_unit_statistics.items():
+        aposteriori_final_statistics[level] = _discussion_aposteriori(stats)
+
+    return aposteriori_final_statistics
+
+
+def aposteriori_unimodality_bootstrapped(
     annotations: list[np.ndarray],
     annotator_group: list[np.ndarray],
     sample_ratio: float = 0.2,
@@ -32,23 +66,7 @@ def aposteriori_unimodality(
             do not match, or if the lengths of annotations and group assignments
             are inconsistent for any comment.
     """
-    if len(annotations) != len(annotator_group):
-        raise ValueError(
-            "The number of comments in `annotations` and `annotator_group` must be the same."
-        )
-
-    if len(annotations) == 0:
-        return {}
-
-    for annotation, group in zip(annotations, annotator_group):
-        if len(annotation) != len(group) or len(annotation) == 0 or len(group) == 0:
-            raise ValueError(
-                "Annotations and group assignments must have the same length for each comment."
-            )
-
-    for annotation, group in zip(annotations, annotator_group):
-        if len(annotation) == 0 or len(group) == 0:
-            raise ValueError("Comments should have at least one annotation.")
+    _validate_groups(annotations, annotator_group)
 
     # Initialize statistics for each group level
     all_annots = []
@@ -65,24 +83,24 @@ def aposteriori_unimodality(
         annotations, annotator_group
     ):
         for level in np.unique(annotator_group):
-            aposteriori_stat = bootrstrap_level_aposteriori_unit(
+            aposteriori_stat = _bootstrap_level_aposteriori_unit(
                 comment_annotations,
                 comment_annotator_group,
                 level,
                 sample_ratio=sample_ratio,
-                bootstrap_steps=bootstrap_steps
+                bootstrap_steps=bootstrap_steps,
             )
             aposteriori_unit_statistics[level].append(aposteriori_stat)
 
     # Aggregate statistics for the entire group
     aposteriori_final_statistics: dict[Hashable, float] = {}
     for level, stats in aposteriori_unit_statistics.items():
-        aposteriori_final_statistics[level] = discussion_aposteriori(stats)
+        aposteriori_final_statistics[level] = _discussion_aposteriori(stats)
 
     return aposteriori_final_statistics
 
 
-def bootrstrap_level_aposteriori_unit(
+def _bootstrap_level_aposteriori_unit(
     annotations: np.ndarray,
     annotator_group: np.ndarray,
     level: Hashable,
@@ -100,7 +118,7 @@ def bootrstrap_level_aposteriori_unit(
         sample_annotations = np.random.choice(
             level_annotations, replace=True, size=n_samples
         )
-        s_stat = aposteriori_unit(
+        s_stat = _aposteriori_unit(
             global_annotations=sample_annotations,
             level_annotations=sample_level_annotations,
         )
@@ -109,7 +127,7 @@ def bootrstrap_level_aposteriori_unit(
     return float(np.mean(s_statistics))
 
 
-def discussion_aposteriori(level_aposteriori_statistics: list[float]) -> float:
+def _discussion_aposteriori(level_aposteriori_statistics: list[float]) -> float:
     """
     Performs a Wilcoxon signed-rank test to determine the significance of differences
     in aposteriori statistics for a specific group.
@@ -128,7 +146,7 @@ def discussion_aposteriori(level_aposteriori_statistics: list[float]) -> float:
         return scipy.stats.wilcoxon(x, y=y, alternative="greater").pvalue
 
 
-def aposteriori_unit(
+def _aposteriori_unit(
     global_annotations: np.ndarray, level_annotations: np.ndarray
 ) -> float:
     """
@@ -146,3 +164,23 @@ def aposteriori_unit(
     global_ndfu = ndfu(global_annotations)
     level_ndfu = ndfu(level_annotations)
     return global_ndfu - level_ndfu
+
+
+def _validate_groups(annotations, annotator_group) -> None:
+    if len(annotations) != len(annotator_group):
+        raise ValueError(
+            "The number of comments in `annotations` and `annotator_group` must be the same."
+        )
+
+    if len(annotations) == 0:
+        raise ValueError("No annotations given.")
+
+    for annotation, group in zip(annotations, annotator_group):
+        if len(annotation) != len(group) or len(annotation) == 0 or len(group) == 0:
+            raise ValueError(
+                "Annotations and group assignments must have the same length for each comment."
+            )
+
+    for annotation, group in zip(annotations, annotator_group):
+        if len(annotation) == 0 or len(group) == 0:
+            raise ValueError("Comments should have at least one annotation.")
