@@ -21,7 +21,7 @@ def aposteriori_unimodality(all_annotations: list[int], annotator_group: list[An
 
 
     #print("DEBUG: final stats: ", stats)
-    return _wilcox(curr_comment_stats)
+    return _significance(curr_comment_stats)
 
 
 def _aposteriori_comment(all_comment_annotations: np.ndarray, annotator_group: np.ndarray) -> np.ndarray:
@@ -48,7 +48,7 @@ def _aposteriori_comment(all_comment_annotations: np.ndarray, annotator_group: n
 
 
 
-def _wilcox(level_aposteriori_statistics: list[float]) -> float:
+def _significance(level_aposteriori_statistics: list[float]) -> float:
     """
     Performs a Wilcoxon signed-rank test to determine the significance of differences
     in aposteriori statistics for a specific group.
@@ -61,10 +61,7 @@ def _wilcox(level_aposteriori_statistics: list[float]) -> float:
     """
     x = level_aposteriori_statistics
     y = np.zeros_like(level_aposteriori_statistics)
-    if np.sum(x - y) == 0:
-        return 1.0
-    else:
-        return scipy.stats.wilcoxon(x=x, y=y, alternative="less").pvalue
+    return scipy.stats.mannwhitneyu(x, y, alternative="less").pvalue
 
 
 def _ndfu_diff(
