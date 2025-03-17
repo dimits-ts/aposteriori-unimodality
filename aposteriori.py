@@ -25,7 +25,7 @@ def aposteriori_unimodality(
         )
         all_comment_stats.extend(curr_comment_stats)
 
-    print("DEBUG: final stats: ", all_comment_stats)
+    print("DEBUG: final stats: ", scipy.stats.describe(all_comment_stats))
     return _significance(all_comment_stats)
 
 
