@@ -17,14 +17,15 @@ def aposteriori_unimodality(all_annotations: list[int], annotator_group: list[An
         comment_annotator_groups = annotator_group[is_in_curr_comment]
         
         curr_comment_stats = _aposteriori_comment(all_comment_annotations, comment_annotator_groups)
-        all_comment_stats.extend(curr_comment_stats)
+        print(curr_comment_stats)
+        all_comment_stats.append(curr_comment_stats)
 
 
-    #print("DEBUG: final stats: ", stats)
-    return _significance(curr_comment_stats)
+    print("DEBUG: final stats: ", all_comment_stats)
+    return _significance(all_comment_stats)
 
 
-def _aposteriori_comment(all_comment_annotations: np.ndarray, annotator_group: np.ndarray) -> np.ndarray:
+def _aposteriori_comment(all_comment_annotations: np.ndarray, annotator_group: np.ndarray) -> float:
     """
     Generate the aposteriori stat (ndfu diff stat) for each annotation level, for one comment.
 
@@ -44,7 +45,7 @@ def _aposteriori_comment(all_comment_annotations: np.ndarray, annotator_group: n
                 all_comment_annotations, factor_annotations
             )
             stats.append(aposteriori_stat)
-    return np.array(stats)
+    return np.max(stats)
 
 
 
