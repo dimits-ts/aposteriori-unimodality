@@ -23,7 +23,7 @@ def aposteriori_unimodality(
         curr_comment_stats = _aposteriori_comment(
             all_comment_annotations, comment_annotator_groups
         )
-        all_comment_stats.append(curr_comment_stats)
+        all_comment_stats.extend(curr_comment_stats)
 
     print("DEBUG: final stats: ", all_comment_stats)
     return _significance(all_comment_stats)
@@ -49,7 +49,7 @@ def _aposteriori_comment(
         if len(factor_annotations) != 0:
             aposteriori_stat = _ndfu_diff(all_comment_annotations, factor_annotations)
             stats.append(aposteriori_stat)
-    return np.max(stats)
+    return np.array(stats)
 
 
 def _significance(level_aposteriori_statistics: list[float]) -> float:
