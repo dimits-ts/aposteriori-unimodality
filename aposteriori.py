@@ -1,37 +1,108 @@
-from typing import Any
+from typing import Any, Iterable
 
 import numpy as np
 import scipy
 
-from ndfu import ndfu
+
+class _ListDict:
+    def __init__(self):
+        self.dict = {}
+
+    def keys(self) -> list[Any, list[Any]]:
+        return self.dict.keys()
+
+    def values(self) -> list[Any, list[Any]]:
+        return self.dict.values()
+
+    def items(self) -> list[tuple[Any, list]]:
+        return self.dict.items()
+
+    def __getitem__(self, key):
+        return self.dict[key]
+
+    def __setitem__(self, key, value):
+        if key in self.dict:
+            self.dict[key].append(value)
+        else:
+            self.dict[key] = [value]
+
+
+# code adapted from John Pavlopoulos https://github.com/ipavlopoulos/ndfu/blob/main/src/__init__.py
+def ndfu(input_data: Iterable[float], num_bins: int = 5) -> float:
+    """The normalized Distance From Unimodality measure
+    :param: input_data: a list of annotations, not necessarily discrete
+    :param: histogram_input: False to compute rel. frequencies (ratings as input)
+    :raises ValueError: if input_data is empty
+    :return: the nDFU score
+    """
+    # compute DFU
+    hist = _to_hist(input_data, num_bins=num_bins)
+    max_value = max(hist)
+    pos_max = np.where(hist == max_value)[0][0]
+    # right search
+    max_diff = 0
+    for i in range(pos_max, len(hist) - 1):
+        diff = hist[i + 1] - hist[i]
+        if diff > max_diff:
+            max_diff = diff
+    for i in range(pos_max, 0, -1):
+        diff = hist[i - 1] - hist[i]
+        if diff > max_diff:
+            max_diff = diff
+
+    # return normalized dfu
+    return max_diff / max_value
 
 
 def aposteriori_unimodality(
-    annotations: list[int], annotator_group: list[Any], comment_group: list[Any]
+    annotations: list[int], factor_group: list[Any], comment_group: list[Any]
 ) -> float:
-    _validate_input(annotations, annotator_group, comment_group)
-    all_annotations = np.array(annotations)
-    annotator_group = np.array(annotator_group)
+    # data prep
+    _validate_input(annotations, factor_group, comment_group)
+    annotations = np.array(annotations)
+    factor_group = np.array(factor_group)
     comment_group = np.array(comment_group)
 
-    all_comment_stats = []
-    for curr_comment_id in np.unique(comment_group):
-        is_in_curr_comment = comment_group == curr_comment_id
-        all_comment_annotations = all_annotations[is_in_curr_comment]
-        comment_annotator_groups = annotator_group[is_in_curr_comment]
+    stats_by_factor = (
+        _ListDict()
+    )  # keeps list for each factor, each value in the list is a comment
+    global_ndfus = []  # ndfus when not partioned by any factor
+    all_factors = np.unique(factor_group)
 
-        curr_comment_stats = _aposteriori_comment(
+    # select comment
+    for curr_comment_id in np.unique(comment_group):
+        # select only annotations relevant to this comment
+        is_in_curr_comment = comment_group == curr_comment_id
+        all_comment_annotations = annotations[is_in_curr_comment]
+        comment_annotator_groups = factor_group[is_in_curr_comment]
+
+        # update results for each factor according to new comment
+        comment_factor_ndfus = _calculate_comment_factor_ndfus(
             all_comment_annotations, comment_annotator_groups
         )
-        all_comment_stats.append(curr_comment_stats)
+        _update_stats_by_factor(stats_by_factor, comment_factor_ndfus, all_factors)
 
-    print("DEBUG: final stats: ", scipy.stats.describe(all_comment_stats))
-    return _significance(all_comment_stats)
+        # update comment ndfu
+        global_ndfus.append(ndfu(all_comment_annotations))
+
+    return _significance(global_ndfus, stats_by_factor)
 
 
-def _aposteriori_comment(
-    all_comment_annotations: np.ndarray, annotator_group: np.ndarray
-) -> float:
+def _update_stats_by_factor(
+    stats_by_factor: _ListDict, new_stats: dict, all_factors: list
+) -> None:
+    for factor, ndfu in new_stats.items():
+        stats_by_factor[factor] = ndfu
+
+    # keep size of all groups the same even if no annotation from that factor was observed in a comment
+    for factor in all_factors:
+        if factor not in new_stats.keys():
+            stats_by_factor[factor] = np.nan
+
+
+def _calculate_comment_factor_ndfus(
+    all_comment_annotations: np.ndarray, feature_group: np.ndarray
+) -> dict[Any, float]:
     """
     Generate the aposteriori stat (ndfu diff stat) for each annotation level, for one comment.
 
@@ -42,17 +113,18 @@ def _aposteriori_comment(
     :return: A numpy array containing the ndfu stats for each level of the currently considered factor, for one comment
     :rtype: np.ndarray
     """
-    stats = []
-    for annot_group in np.unique(annotator_group):
-        factor_annotations = all_comment_annotations[annotator_group == annot_group]
+    stats = {}
+    for factor in np.unique(feature_group):
+        factor_annotations = all_comment_annotations[feature_group == factor]
+        if len(factor_annotations) == 0:
+            stats[factor] = np.nan
+        else:
+            stats[factor] = ndfu(factor_annotations)
 
-        if len(factor_annotations) != 0:
-            aposteriori_stat = _ndfu_diff(all_comment_annotations, factor_annotations)
-            stats.append(aposteriori_stat)
-    return np.average(stats)
+    return stats
 
 
-def _significance(level_aposteriori_statistics: list[float]) -> float:
+def _significance(global_ndfus: list[float], stats_by_factor: _ListDict) -> float:
     """
     Performs a Wilcoxon signed-rank test to determine the significance of differences
     in aposteriori statistics for a specific group.
@@ -63,27 +135,17 @@ def _significance(level_aposteriori_statistics: list[float]) -> float:
     Returns:
         float: The p-value of the Wilcoxon test. If no difference is detected, returns 1.
     """
-    x = level_aposteriori_statistics
-    y = np.zeros_like(level_aposteriori_statistics)
-    return scipy.stats.mannwhitneyu(x, y, alternative="greater").pvalue
+    pvalues_by_factor = {}
 
+    for factor, factor_ndfus in stats_by_factor.items():
+        x = global_ndfus
+        y = factor_ndfus
+        pvalue = scipy.stats.wilcoxon(
+            x, y, alternative="greater", nan_policy="omit"
+        ).pvalue
+        pvalues_by_factor[factor] = pvalue
 
-def _ndfu_diff(global_annotations: np.ndarray, level_annotations: np.ndarray) -> float:
-    """
-    Computes the difference in normalized distance from unimodality (nDFU) between
-    global annotations and annotations from a specific group.
-
-    Args:
-        global_annotations (np.ndarray): The full set of annotations for a comment.
-        level_annotations (np.ndarray): The subset of annotations corresponding to a specific group.
-
-    Returns:
-        float: The difference in nDFU values, which indicates the contribution of the
-        group to polarization.
-    """
-    global_ndfu = ndfu(global_annotations)
-    level_ndfu = ndfu(level_annotations)
-    return global_ndfu - level_ndfu
+    return pvalues_by_factor
 
 
 def _validate_input(
@@ -91,8 +153,25 @@ def _validate_input(
 ) -> None:
     if not (len(annotations) == len(annotator_group) == len(comment_group)):
         raise ValueError(
-            "Length of provided lists must be the same, " +
-            f"but len(annotations)=={len(annotations)}, " +
-            f"len(annotator_group)=={len(annotator_group)}, " +
-            f"len(comment_group)=={len(comment_group)}"
+            "Length of provided lists must be the same, "
+            + f"but len(annotations)=={len(annotations)}, "
+            + f"len(annotator_group)=={len(annotator_group)}, "
+            + f"len(comment_group)=={len(comment_group)}"
         )
+
+
+def _to_hist(scores: Iterable[float], num_bins: int, normed: bool = True) -> np.ndarray:
+    """Creating a normalised histogram
+    :param: scores: the ratings (not necessarily discrete)
+    :param: num_bins: the number of bins to create
+    :param: normed: whether to normalise the counts or not, by default true
+    :return: the histogram
+    """
+    scores_array = np.array(scores)
+    if len(scores_array) == 0:
+        raise ValueError("Annotation list can not be empty.")
+
+    # not keeping the values order when bins are not created
+    counts, bins = np.histogram(a=scores_array, bins=num_bins)
+    counts_normed = counts / counts.sum()
+    return counts_normed if normed else counts
