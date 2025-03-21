@@ -140,7 +140,7 @@ def _significance(global_ndfus: list[float], stats_by_factor: _ListDict) -> floa
     for factor, factor_ndfus in stats_by_factor.items():
         x = global_ndfus
         y = factor_ndfus
-        pvalue = scipy.stats.wilcoxon(
+        pvalue = scipy.stats.ttest_rel(
             x, y, alternative="greater", nan_policy="omit"
         ).pvalue
         pvalues_by_factor[factor] = pvalue
