@@ -1,4 +1,5 @@
 from typing import Any, Iterable
+import copy
 
 import numpy as np
 import scipy
@@ -27,13 +28,13 @@ class _ListDict:
             self.dict[key] = [value]
 
 
-# code adapted from John Pavlopoulos https://github.com/ipavlopoulos/ndfu/blob/main/src/__init__.py
+# code adapted from John Pavlopoulos
+# https://github.com/ipavlopoulos/ndfu/blob/main/src/__init__.py
 def ndfu(input_data: Iterable[float], num_bins: int = 5) -> float:
     """The normalized Distance From Unimodality measure
-    :param: input_data: a list of annotations, not necessarily discrete
-    :param: histogram_input: False to compute rel. frequencies (ratings as input)
+    :param: input_data: a sequence of annotations, not necessarily discrete
     :raises ValueError: if input_data is empty
-    :return: the nDFU score
+    :return: the nDFU score of the sequence
     """
     # compute DFU
     hist = _to_hist(input_data, num_bins=num_bins)
@@ -66,7 +67,7 @@ def aposteriori_unimodality(
     stats_by_factor = (
         _ListDict()
     )  # keeps list for each factor, each value in the list is a comment
-    global_ndfus = []  # ndfus when not partioned by any factor
+    global_ndfus = []  # ndfus when not partitioned by any factor
     all_factors = np.unique(factor_group)
 
     # select comment
@@ -80,7 +81,9 @@ def aposteriori_unimodality(
         comment_factor_ndfus = _calculate_comment_factor_ndfus(
             all_comment_annotations, comment_annotator_groups
         )
-        _update_stats_by_factor(stats_by_factor, comment_factor_ndfus, all_factors)
+        stats_by_factor = _update_stats_by_factor(
+            stats_by_factor, comment_factor_ndfus, all_factors
+        )
 
         # update comment ndfu
         global_ndfus.append(ndfu(all_comment_annotations))
@@ -89,28 +92,50 @@ def aposteriori_unimodality(
 
 
 def _update_stats_by_factor(
-    stats_by_factor: _ListDict, new_stats: dict, all_factors: list
-) -> None:
-    for factor, ndfu in new_stats.items():
-        stats_by_factor[factor] = ndfu
+    old_stats: _ListDict, new_stats: dict[Any, float], all_factors: list
+) -> _ListDict:
+    """
+    Update the ListDict with at most one extra value per factor, keeping all
+    internal arrays at same length. If a factor isn't present, it is replaced
+    by a nan.
 
-    # keep size of all groups the same even if no annotation from that factor was observed in a comment
+    :param old_stats: The ListDict to be updated
+    :type stats_by_factor: _ListDict
+    :param new_stats: A dictionary holding pairs of factor:stat
+    :type new_stats: dict[Any, float]
+    :param all_factors: A list of all possible factors in the feature.
+        Needed to ensure that all internal arrays have the same length.
+    :type all_factors: list
+    """
+    updated_dict = copy.copy(old_stats)
+
+    for factor, ndfu in new_stats.items():
+        updated_dict[factor] = ndfu
+
+    # keep size of all groups the same even if no annotation from that factor
+    # was observed in a comment
     for factor in all_factors:
         if factor not in new_stats.keys():
-            stats_by_factor[factor] = np.nan
+            updated_dict[factor] = np.nan
+
+    return updated_dict
 
 
 def _calculate_comment_factor_ndfus(
     all_comment_annotations: np.ndarray, feature_group: np.ndarray
 ) -> dict[Any, float]:
     """
-    Generate the aposteriori stat (ndfu diff stat) for each annotation level, for one comment.
+    Generate the aposteriori stat (ndfu diff stat) for each factor of the
+    selected feature, for one comment.
 
-    :param all_comment_annotations: An array containing all annotations for the current comment
+    :param all_comment_annotations: An array containing all annotations
+        for the current comment
     :type all_comment_annotations: np.ndarray
-    :param annotator_group: An array where each value is a distinct level of the currently considered factor
+    :param feature_group: An array where each value is a distinct level of
+        the currently considered factor
     :type annotator_group: np.ndarray
-    :return: A numpy array containing the ndfu stats for each level of the currently considered factor, for one comment
+    :return: The aposteriori stats for each level of the currently considered
+        factor, for one comment
     :rtype: np.ndarray
     """
     stats = {}
@@ -124,16 +149,18 @@ def _calculate_comment_factor_ndfus(
     return stats
 
 
-def _significance(global_ndfus: list[float], stats_by_factor: _ListDict) -> float:
+def _significance(
+    global_ndfus: list[float], stats_by_factor: _ListDict
+) -> dict[Any, float]:
     """
-    Performs a Wilcoxon signed-rank test to determine the significance of differences
-    in aposteriori statistics for a specific group.
+    Performs a Wilcoxon signed-rank test to determine the significance of
+    differences in aposteriori statistics for a specific group.
 
-    Args:
-        level_aposteriori_statistics (list[float]): A list of aposteriori statistics for a group.
-
-    Returns:
-        float: The p-value of the Wilcoxon test. If no difference is detected, returns 1.
+    :param level_aposteriori_statistics: A list of aposteriori
+        statistics for a group.
+    :type level_aposteriori_statistics: (list[float])
+    :return: The aposteriori unimodality significance for each factor
+    :rtype: dict[Any, float]
     """
     pvalues_by_factor = {}
 
@@ -149,7 +176,9 @@ def _significance(global_ndfus: list[float], stats_by_factor: _ListDict) -> floa
 
 
 def _validate_input(
-    annotations: list[int], annotator_group: list[Any], comment_group: list[Any]
+    annotations: list[int],
+    annotator_group: list[Any],
+    comment_group: list[Any],
 ) -> None:
     if not (len(annotations) == len(annotator_group) == len(comment_group)):
         raise ValueError(
@@ -160,7 +189,9 @@ def _validate_input(
         )
 
 
-def _to_hist(scores: Iterable[float], num_bins: int, normed: bool = True) -> np.ndarray:
+def _to_hist(
+    scores: Iterable[float], num_bins: int, normed: bool = True
+) -> np.ndarray:
     """Creating a normalised histogram
     :param: scores: the ratings (not necessarily discrete)
     :param: num_bins: the number of bins to create
