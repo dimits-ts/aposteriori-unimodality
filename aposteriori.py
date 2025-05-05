@@ -3,6 +3,7 @@ import copy
 
 import numpy as np
 import scipy
+import statsmodels.stats.multitest
 
 
 class _ListDict:
@@ -88,7 +89,7 @@ def aposteriori_unimodality(
         # update comment ndfu
         global_ndfus.append(ndfu(all_comment_annotations))
 
-    return _significance(global_ndfus, stats_by_factor)
+    return _get_overall_significance(global_ndfus, stats_by_factor)
 
 
 def _update_stats_by_factor(
@@ -149,15 +150,25 @@ def _calculate_comment_factor_ndfus(
     return stats
 
 
-def _significance(
+def _get_overall_significance(
+    global_ndfus: list[float], stats_by_factor: _ListDict, alpha: float = 0.05
+) -> dict[Any, float]:
+    raw_stats = _raw_significance(global_ndfus, stats_by_factor)
+    keys, raw_pvalues = zip(*raw_stats.items())  # keep key-value order
+    corrected_pvalues = _correct_significance(raw_pvalues, alpha)
+    corrected_stats = dict(zip(keys, corrected_pvalues))
+    return corrected_stats
+
+
+def _raw_significance(
     global_ndfus: list[float], stats_by_factor: _ListDict
 ) -> dict[Any, float]:
     """
-    Performs a Wilcoxon signed-rank test to determine the significance of
-    differences in aposteriori statistics for a specific group.
+    Performs a means test to determine the significance of
+    differences in aposteriori statistics for a specific feature.
 
-    :param level_aposteriori_statistics: A list of aposteriori
-        statistics for a group.
+    :param global_ndfus: A list of aposteriori
+        statistics for a feature.
     :type level_aposteriori_statistics: (list[float])
     :return: The aposteriori unimodality significance for each factor
     :rtype: dict[Any, float]
@@ -173,6 +184,19 @@ def _significance(
         pvalues_by_factor[factor] = pvalue
 
     return pvalues_by_factor
+
+
+def _correct_significance(
+    pvalues: Iterable[float], alpha: float
+) -> np.ndarray:
+    corrected_stats = statsmodels.stats.multitest.multipletests(
+        np.array(pvalues),
+        alpha=alpha,
+        method="bonferroni",
+        is_sorted=False,
+        returnsorted=False,
+    )
+    return corrected_stats[1]
 
 
 def _validate_input(
