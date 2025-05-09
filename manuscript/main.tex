@@ -2,6 +2,7 @@
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{acronym}
+\usepackage{biblatex}
 
 \title{Aposteriori Unimodality}
 \author{Dimitris }
@@ -15,6 +16,8 @@
 }
 \begingroup\lccode`~=`, \lowercase{\endgroup\def~}{\stdcomma\,}
 
+\graphicspath{ {../graphs}  }
+\bibliography{refs.bib}
 
 
 \begin{document}
@@ -44,13 +47,20 @@ Since our goal is to pinpoint which specific characteristics contribute to polar
 
 The mechanism defined in Section \ref{ssec:methodology:problem} allows us to isolate the effects of each \ac{SDB} dimension, but we still lack a mechanism with which to analyze that effect. In this section, we present the "pol-statistic" (polarization statistic) as a tool to not only attribute polarization to a dimension $\xi$, but also to specific groups within that dimension $g \in G_{\xi}$.
 
-Intuitively, $\xi$ influences polarization within an annotation set when the annotations, divided according to each group $g \in G_{\xi}$, show greater polarization than the full set of annotations. For instance, consider an annotation task for bigoted speech and a misogynistic comment. In this case, the annotations may be generally polarized, although annotations from female annotators might show low polarization (most may agree the comment is bigoted), and so may annotations from male annotators (but most may agree that it is \textit{not} bigoted). This suggests that the overall polarization is driven by disagreements between male and female annotators. %TODO: Add figure
+Intuitively, $\xi$ influences polarization within an annotation set when the annotations, divided according to each group $g \in G_{\xi}$, show greater polarization than the full set of annotations. For instance, consider a misogynistic comment in the context of an annotation task for bigoted speech (Figure~\ref{fig:ndfu_single_comment}). The annotations may be generally polarized, although annotations from female annotators might show low polarization (most may agree the comment is bigoted), and so may annotations from male annotators (but most may agree that it is \textit{not} bigoted). This suggests that the overall polarization is driven by disagreements between male and female annotators. 
 
- However, using all annotations in a discussion is not ideal because we can not control for factors like different comment content. For example, if women find one comment toxic more than men, and another much less toxic than men, the opposing effects might balance each other out, leading to a false negative. To avoid this, we apply our statistic only within the same comment’s annotations instead. Thus, we can define our "pol-statistic" as:%TODO: Add figure
+\begin{figure}
+	\centering
+	\includegraphics[width=10cm]{ndfu_single_comment.png}
+	\caption{Example where the whole annotation set is extremely polarized, but not when the annotations are split by group.}
+	\label{fig:ndfu_single_comment}
+\end{figure}
+
+ However, directly using annotations for all comments in a discussion is not ideal because we can not control for factors like different comment content. For example, if women find one comment toxic more than men, and another much less toxic than men, the opposing effects might balance each other out, leading to a false negative. To avoid this, we apply our statistic only within the same comment’s annotations instead. Thus, we can define our "pol-statistic" as:
 \begin{equation}
 	pol(c, \mu) = nDFU(A) - nDFU(P(A, \xi, g))
 \end{equation}
-\noindent where $P(A,\xi, g) = \{a(d, i, u) \in A | (\xi, \mu) \in \theta\}$ is the set of annotations $A$ for a comment $c(d, i)$ for which its annotators belong  to the group $g$ of dimension $\xi$.
+\noindent where $P(A,\xi, g) = \{a(d, i, u) \in A | (\xi, \mu) \in \theta\}$ is the set of annotations $A$ for a comment $c(d, i)$ for which its annotators belong  to the group $g$ of \ac{SDB} dimension $\xi$.
 
 
 \subsection{The Aposteriori Unimodality Test}
@@ -65,7 +75,7 @@ Although intuitive, the \textit{pol statistic} can only be applied to individual
 	H_i:  \frac{1}{\lvert d \rvert} \sum\limits_{c \in d}  pol(c, g_i) > 0, g_i \in G_{\xi}
 \end{equation}
 
-Since we are considering $\lvert G_{\xi} \rvert$ tests, we apply a multiple comparison correction to the resulting p-values. We choose the Bonferroni adjustment, since it is widely used, generally conservative, and especially so towards correlated hypotheses. The last point is important, since many annotation groups are likely to be inter-correlated (e.g., age categories such as 50-60 and 60-70 years). Furthermore, one of its largest weaknesses (large numbers-hundreds-of hypotheses) is unlikely to be met in annotation groups.
+Since we are considering $\lvert G_{\xi} \rvert$ tests, we apply a multiple comparison correction to the resulting p-values. We choose the Bonferroni method \parencite{Bland170}, since it is widely used, generally conservative, and especially so towards correlated hypotheses \parencite{ChenFengYi2017}. The last point is important, since many annotation groups are likely to be inter-correlated (e.g., age categories such as 50-60 and 60-70 years). Furthermore, one of its largest weaknesses (large numbers-hundreds-of hypotheses) is unlikely to be met in annotation groups.
 
 This procedure is referred to as the \textit{``Aposteriori Unimodality Test''}, where a small p-value suggests that we can not rule out that annotators of the $g$ group make a significant contribution to the overall annotator polarization.
 
@@ -75,5 +85,7 @@ This procedure is referred to as the \textit{``Aposteriori Unimodality Test''}, 
 \begin{acronym}[WWW]
     \acro{SDB}{SocioDemographic Background}
 \end{acronym}
+
+\printbibliography
 
 \end{document}
