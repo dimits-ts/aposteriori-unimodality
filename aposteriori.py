@@ -7,6 +7,11 @@ import statsmodels.stats.multitest
 
 
 class _ListDict:
+    """
+    A dictionary appending multiple values with the same key
+    to a list instead of overwriting them.
+    """
+
     def __init__(self):
         self.dict = {}
 
@@ -79,7 +84,7 @@ def aposteriori_unimodality(
         comment_annotator_groups = factor_group[is_in_curr_comment]
 
         # update results for each factor according to new comment
-        comment_factor_ndfus = _calculate_comment_factor_ndfus(
+        comment_factor_ndfus = _polarization_stat(
             all_comment_annotations, comment_annotator_groups
         )
         stats_by_factor = _update_stats_by_factor(
@@ -89,7 +94,9 @@ def aposteriori_unimodality(
         # update comment ndfu
         global_ndfus.append(ndfu(all_comment_annotations))
 
-    return _get_overall_significance(global_ndfus, stats_by_factor)
+    raw_pvalues = _raw_significance(global_ndfus, stats_by_factor)
+    corrected_pvalues = _correct_significance(raw_pvalues, alpha=0.001)
+    return corrected_pvalues
 
 
 def _update_stats_by_factor(
@@ -122,11 +129,11 @@ def _update_stats_by_factor(
     return updated_dict
 
 
-def _calculate_comment_factor_ndfus(
+def _polarization_stat(
     all_comment_annotations: np.ndarray, feature_group: np.ndarray
 ) -> dict[Any, float]:
     """
-    Generate the aposteriori stat (ndfu diff stat) for each factor of the
+    Generate the polarization stat (ndfu diff stat) for each factor of the
     selected feature, for one comment.
 
     :param all_comment_annotations: An array containing all annotations
@@ -135,7 +142,7 @@ def _calculate_comment_factor_ndfus(
     :param feature_group: An array where each value is a distinct level of
         the currently considered factor
     :type annotator_group: np.ndarray
-    :return: The aposteriori stats for each level of the currently considered
+    :return: The polarization stats for each level of the currently considered
         factor, for one comment
     :rtype: np.ndarray
     """
@@ -150,14 +157,15 @@ def _calculate_comment_factor_ndfus(
     return stats
 
 
-def _get_overall_significance(
-    global_ndfus: list[float], stats_by_factor: _ListDict, alpha: float = 0.05
+def _correct_significance(
+    raw_pvalues: Iterable[float], alpha: float = 0.05
 ) -> dict[Any, float]:
-    raw_stats = _raw_significance(global_ndfus, stats_by_factor)
-    keys, raw_pvalues = zip(*raw_stats.items())  # keep key-value order
-    corrected_pvalues = _correct_significance(raw_pvalues, alpha)
-    corrected_stats = dict(zip(keys, corrected_pvalues))
-    return corrected_stats
+    # place each pvalue in an ordered list
+    keys, raw_pvalue_ls = zip(*raw_pvalues.items())  # keep key-value order
+    corrected_pvalue_ls = _apply_correction(raw_pvalue_ls, alpha)
+    # repackage dictionary
+    corrected_pvalues_dict = dict(zip(keys, corrected_pvalue_ls))
+    return corrected_pvalues_dict
 
 
 def _raw_significance(
@@ -186,9 +194,7 @@ def _raw_significance(
     return pvalues_by_factor
 
 
-def _correct_significance(
-    pvalues: Iterable[float], alpha: float
-) -> np.ndarray:
+def _apply_correction(pvalues: Iterable[float], alpha: float) -> np.ndarray:
     corrected_stats = statsmodels.stats.multitest.multipletests(
         np.array(pvalues),
         alpha=alpha,
