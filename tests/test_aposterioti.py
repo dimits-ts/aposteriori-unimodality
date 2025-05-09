@@ -3,7 +3,7 @@ import numpy as np
 from ..aposteriori import (
     aposteriori_unimodality,
     _bootstrap_ndfu_diff,
-    _wilcox,
+    _significance,
     _ndfu_diff,
 )
 
@@ -56,14 +56,14 @@ class TestDiscussionAposteriori(unittest.TestCase):
     def test_discussion_aposteriori_basic(self):
         """Test the Wilcoxon test with valid statistics."""
         stats = [0.1, 0.2, 0.3, 0.4]
-        result = _wilcox(stats)
+        result = _significance(stats)
         self.assertGreaterEqual(result, 0.0, "P-value should be non-negative.")
         self.assertLessEqual(result, 1.0, "P-value should be at most 1.")
 
     def test_discussion_aposteriori_no_difference(self):
         """Test when there is no difference between statistics and zero."""
         stats = [0.0, 0.0, 0.0]
-        result = _wilcox(stats)
+        result = _significance(stats)
         self.assertEqual(result, 1.0, "Should return 1.0 when there is no difference.")
 
 
