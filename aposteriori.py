@@ -36,14 +36,14 @@ class _ListDict:
 
 # code adapted from John Pavlopoulos
 # https://github.com/ipavlopoulos/ndfu/blob/main/src/__init__.py
-def ndfu(input_data: Iterable[float], num_bins: int = 5) -> float:
+def ndfu(input_data: Iterable[float]) -> float:
     """The normalized Distance From Unimodality measure
     :param: input_data: a sequence of annotations, not necessarily discrete
     :raises ValueError: if input_data is empty
     :return: the nDFU score of the sequence
     """
     # compute DFU
-    hist = _to_hist(input_data, num_bins=num_bins)
+    hist = _to_hist(input_data)
     max_value = max(hist)
     pos_max = np.where(hist == max_value)[0][0]
     # right search
@@ -220,7 +220,7 @@ def _validate_input(
 
 
 def _to_hist(
-    scores: Iterable[float], num_bins: int, normed: bool = True
+    scores: Iterable[float], normed: bool = True
 ) -> np.ndarray:
     """Creating a normalised histogram
     :param: scores: the ratings (not necessarily discrete)
@@ -233,6 +233,6 @@ def _to_hist(
         raise ValueError("Annotation list can not be empty.")
 
     # not keeping the values order when bins are not created
-    counts, bins = np.histogram(a=scores_array, bins=num_bins)
+    counts, bins = np.histogram(a=scores_array)
     counts_normed = counts / counts.sum()
     return counts_normed if normed else counts
