@@ -51,16 +51,24 @@ Intuitively, $\xi$ influences polarization within an annotation set when the ann
 
 \begin{figure}
 	\centering
-	\includegraphics[width=10cm]{ndfu_single_comment.png}
+	\includegraphics[width=0.8\linewidth]{ndfu_single_comment.png}
 	\caption{Example where the whole annotation set is extremely polarized, but not when the annotations are split by group.}
 	\label{fig:ndfu_single_comment}
 \end{figure}
 
- However, directly using annotations for all comments in a discussion is not ideal because we can not control for factors like different comment content. For example, if women find one comment toxic more than men, and another much less toxic than men, the opposing effects might balance each other out, leading to a false negative. To avoid this, we apply our statistic only within the same comment’s annotations instead. Thus, we can define our "pol-statistic" as:
+ However, directly using annotations for all comments in a discussion is not ideal because we can not control for factors like different comment content. For example, if women find one comment toxic more than men, and another much less toxic than men, the opposing effects might balance each other out, leading to a false negative. This effect is demonstrated in Figure~\ref{fig:ndfu_multi_comment}. To avoid this, we apply our statistic only within the same comment’s annotations instead. Thus, we can define our "pol-statistic" as:
 \begin{equation}
 	pol(c, \mu) = nDFU(A) - nDFU(P(A, \xi, g))
 \end{equation}
 \noindent where $P(A,\xi, g) = \{a(d, i, u) \in A | (\xi, \mu) \in \theta\}$ is the set of annotations $A$ for a comment $c(d, i)$ for which its annotators belong  to the group $g$ of \ac{SDB} dimension $\xi$.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=\linewidth]{ndfu_multi_comments.png}
+	\caption{Example where the whole annotation set is extremely polarized, but not when the annotations are split by group.}
+	\label{fig:ndfu_multi_comment}
+\end{figure}
+
 
 
 \subsection{The Aposteriori Unimodality Test}
