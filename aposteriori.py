@@ -240,5 +240,6 @@ def _to_hist(scores: Iterable[float], bins: int) -> np.ndarray:
         raise ValueError("Annotation list can not be empty.")
 
     # not keeping the values order when bins are not created
-    counts, bins = np.histogram(a=scores_array, bins=bins)
+    # normalize results using density=True to make stat invariant to scale
+    counts, bins = np.histogram(a=scores_array, bins=bins, density=True)
     return counts / counts.sum()
