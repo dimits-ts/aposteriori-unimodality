@@ -80,11 +80,65 @@ def dfu(
 
 
 def aposteriori_unimodality(
-    annotations: list[int],
+    annotations: list[float],
     factor_group: list[Any],
     comment_group: list[Any],
     bins: int,
 ) -> float:
+    """
+    Perform the Aposteriori Unimodality Test to identify whether any annotator
+    group, defined by a particular Socio-Demographic Beackground (SDB)
+    attribute (e.g., gender, age), contributes significantly to the observed
+    polarization in a discussion.
+
+    This method tests whether partitioning annotations by a specific factor
+    (such as gender or age group) systematically reduces within-group
+    polarization (as measured by Distance from Unimodality, DFU), relative to
+    the global polarization. It aggregates comment-level polarization
+    differences and performs statistical testing across the discussion.
+
+    :param annotations:
+        A list of annotation scores, where each element corresponds to an
+        annotation (e.g., a toxicity score) made by an annotator.
+        Needs not be discrete.
+    :type annotations: list[float]
+
+    :param factor_group:
+        A list indicating the group assignment (e.g., 'male', 'female') of
+        the annotator who produced each annotation. For example, if two
+        annotations were made by a male and female annotator respectively,
+        the provided factor_group would be ["male", "female"].
+        female annotator
+    :type factor_group: list[Any]
+
+    :param comment_group:
+        A list of comment identifiers, where each element associates an
+        annotation with a specific comment in the discussion.
+    :type comment_group: list[Any]
+
+    :param bins:
+        The number of bins to use when computing the DFU polarization metric.
+        If data is discrete, it is advisable to use the number of modes.
+        Example: An annotation task in the 1-5 LIKERT scale should use 5 bins.
+    :type bins: int
+
+    :returns:
+        A list of pvalues for each factor of the selected SDB dimension.
+        A low p-value indicates that the group likely contributes to the
+        observed polarization.
+    :rtype: float
+
+
+    .. seealso::
+        - :func:`dfu` – Computes the Distance from Unimodality.
+
+    .. note::
+        The test is conservative by design and well-suited to annotation tasks
+        with a small number of group comparisons.
+        Recommended to use with discussions having numerous comments.
+        The test is relatively robust even with a small number of annotations
+        per comment.
+    """
     # data prep
     _validate_input(annotations, factor_group, comment_group)
     annotations = np.array(annotations)
