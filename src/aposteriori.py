@@ -8,6 +8,7 @@ import statsmodels.stats.multitest
 FactorType = TypeVar("Factor Type")
 
 
+# TODO: Collection instead of Iterable everywhere
 class _ListDict:
     """
     A dictionary appending multiple values with the same key
@@ -83,19 +84,20 @@ def dfu(x: Iterable[float], bins: int, normalized: bool = False) -> float:
     pos_max = np.argmax(hist)
 
     # right search
-    right_diffs = hist[pos_max+1:] - hist[pos_max:-1]
+    right_diffs = hist[pos_max + 1 :] - hist[pos_max:-1]
 
     # left search
     max_ldiff = 0
     if pos_max > 0:
-        left_diffs = hist[0:pos_max] - hist[1:pos_max + 1]
+        left_diffs = hist[0:pos_max] - hist[1 : pos_max + 1]
         max_ldiff = (
             left_diffs[left_diffs > 0].max() if np.any(left_diffs > 0) else 0
         )
 
     max_diff = max(right_diffs.max(), max_ldiff)
 
-    return max_diff / max_value if normalized else max_diff
+    dfu_stat = max_diff / max_value if normalized else max_diff
+    return float(dfu_stat)
 
 
 def aposteriori_unimodality(
@@ -128,12 +130,12 @@ def aposteriori_unimodality(
         annotations were made by a male and female annotator respectively,
         the provided factor_group would be ["male", "female"].
         female annotator
-    :type factor_group: list[`T`]
+    :type factor_group: list[`FactorType`]
 
     :param comment_group:
         A list of comment identifiers, where each element associates an
         annotation with a specific comment in the discussion.
-    :type comment_group: list[`T`]
+    :type comment_group: list[`FactorType`]
 
     :param bins:
         The number of bins to use when computing the DFU polarization metric.
@@ -146,6 +148,9 @@ def aposteriori_unimodality(
         A low p-value indicates that the group likely contributes to the
         observed polarization.
     :rtype: float
+
+    :raises ValueError:
+        If the given lists are not the same length, or are empty.
 
     .. seealso::
         - :func:`dfu` – Computes the Distance from Unimodality.
@@ -189,6 +194,20 @@ def aposteriori_unimodality(
     return corrected_pvalues
 
 
+def _validate_input(
+    annotations: Iterable[int],
+    annotator_group: Iterable[FactorType],
+    comment_group: Iterable[FactorType],
+) -> None:
+    if not (len(annotations) == len(annotator_group) == len(comment_group)):
+        raise ValueError(
+            "Length of provided lists must be the same, "
+            + f"but len(annotations)=={len(annotations)}, "
+            + f"len(annotator_group)=={len(annotator_group)}, "
+            + f"len(comment_group)=={len(comment_group)}"
+        )
+
+
 def _polarization_stat(
     all_comment_annotations: np.ndarray[float],
     feature_group: np.ndarray[FactorType],
@@ -203,13 +222,19 @@ def _polarization_stat(
     :type all_comment_annotations: np.ndarray[float]
     :param feature_group: An array where each value is a distinct level of
         the currently considered factor
-    :type annotator_group: np.ndarray[`T`]
+    :type annotator_group: np.ndarray[`FactorType`]
     :param bins: number of annotation levels
     :type bins: int
     :return: The polarization stats for each level of the currently considered
         factor, for one comment
     :rtype: np.ndarray
     """
+    if all_comment_annotations.shape != feature_group.shape:
+        raise ValueError("Value and group arrays must be the same length.")
+
+    if len(all_comment_annotations) == 0:
+        raise ValueError("Empty annotation list given.")
+
     stats = {}
     for factor in np.unique(feature_group):
         factor_annotations = all_comment_annotations[feature_group == factor]
@@ -221,17 +246,6 @@ def _polarization_stat(
     return stats
 
 
-def _correct_significance(
-    raw_pvalues: Iterable[float], alpha: float = 0.05
-) -> dict[Any, float]:
-    # place each pvalue in an ordered list
-    keys, raw_pvalue_ls = zip(*raw_pvalues.items())  # keep key-value order
-    corrected_pvalue_ls = _apply_correction(raw_pvalue_ls, alpha)
-    # repackage dictionary
-    corrected_pvalues_dict = dict(zip(keys, corrected_pvalue_ls))
-    return corrected_pvalues_dict
-
-
 def _raw_significance(
     global_ndfus: list[float], stats_by_factor: _ListDict
 ) -> dict[FactorType, float]:
@@ -239,23 +253,63 @@ def _raw_significance(
     Performs a means test to determine the significance of
     differences in aposteriori statistics for a specific feature.
 
-    :param global_ndfus: A list of aposteriori
-        statistics for a feature.
-    :type level_aposteriori_statistics: (list[float])
+    :param global_ndfus: A list of aposteriori statistics for a feature.
+    :type global_ndfus: `FactorType`
     :return: The aposteriori unimodality significance for each factor
-    :rtype: dict[`T`, float]
+    :rtype: dict[`FactorType`, float]
+    :raises ValueError: if there is a mismatch between the number of comments 
+        in the provided dictionary and the global_ndfus for any factor
     """
+    if len(global_ndfus) == 0:
+        return {}
+
     pvalues_by_factor = {}
 
     for factor, factor_ndfus in stats_by_factor.items():
         x = global_ndfus
         y = factor_ndfus
+
+        if len(x) != len(y):
+            raise ValueError(
+                f"Number of comments ({len(y)}) "
+                f"is different than number of global dfus ({len(x)}) "
+                f"for factor {factor}."
+            )
+
         pvalue = scipy.stats.ttest_rel(
             x, y, alternative="greater", nan_policy="omit"
         ).pvalue
         pvalues_by_factor[factor] = pvalue
 
     return pvalues_by_factor
+
+
+def _correct_significance(
+    raw_pvalues: dict[FactorType, float], alpha: float = 0.05
+) -> dict[FactorType, float]:
+    """
+    Apply a statistical correction to pvalues from multiple alternative
+    hypotheses.
+
+    :param raw_pvalues: the pvalue of each hypothesis
+    :type raw_pvalues: dict[`FactorType`, float]
+    :param alpha: the target significance, defaults to 0.05
+    :type alpha: float, optional
+    :return: the corrected pvalues for each hypothesis
+    :rtype: dict[`FactorType`, float]
+    """
+    if len(raw_pvalues) == 0:
+        return {}
+
+    if not np.any([0 <= np.array(x) <= 1 for x in raw_pvalues.values()]):
+        raise ValueError("Invalid pvalues given for correction.")
+
+    # place each pvalue in an ordered list
+    keys, raw_pvalue_ls = zip(*raw_pvalues.items())  # keep key-value order
+    corrected_pvalue_ls = _apply_correction(raw_pvalue_ls, alpha)
+    # repackage dictionary
+    corrected_pvalues_dict = dict(zip(keys, corrected_pvalue_ls))
+    return corrected_pvalues_dict
 
 
 def _apply_correction(pvalues: Iterable[float], alpha: float) -> np.ndarray:
@@ -267,20 +321,6 @@ def _apply_correction(pvalues: Iterable[float], alpha: float) -> np.ndarray:
         returnsorted=False,
     )
     return corrected_stats[1]
-
-
-def _validate_input(
-    annotations: list[int],
-    annotator_group: list[FactorType],
-    comment_group: list[FactorType],
-) -> None:
-    if not (len(annotations) == len(annotator_group) == len(comment_group)):
-        raise ValueError(
-            "Length of provided lists must be the same, "
-            + f"but len(annotations)=={len(annotations)}, "
-            + f"len(annotator_group)=={len(annotator_group)}, "
-            + f"len(comment_group)=={len(comment_group)}"
-        )
 
 
 def _to_hist(scores: np.ndarray[float], bins: int) -> np.ndarray:
