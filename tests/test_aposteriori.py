@@ -5,7 +5,98 @@ from src.aposteriori import (
     _polarization_stat,
     _raw_significance,
     _correct_significance,
+    aposteriori_unimodality,
 )
+
+
+class TestAposterioriUnimodality(unittest.TestCase):
+
+    def setUp(self):
+        self.rng = np.random.default_rng(42)
+
+    def test_output_is_dict(self):
+        annotations = [1, 2, 3, 4, 5, 1, 2, 3, 4, 5]
+        factor_group = ["A"] * 5 + ["B"] * 5
+        comment_group = ["c1"] * 5 + ["c2"] * 5
+        result = aposteriori_unimodality(
+            annotations, factor_group, comment_group, bins=5
+        )
+        self.assertIsInstance(result, dict)
+        for key, value in result.items():
+            self.assertIsInstance(key, str)
+            self.assertIsInstance(value, float)
+
+    def test_output_keys_match_factor_values(self):
+        annotations = [1, 2, 3, 4, 5, 1, 2, 3, 4, 5]
+        factor_group = ["A"] * 5 + ["B"] * 5
+        comment_group = ["c1"] * 5 + ["c2"] * 5
+        result = aposteriori_unimodality(
+            annotations, factor_group, comment_group, bins=5
+        )
+        self.assertEqual(set(result.keys()), {"A", "B"})
+
+    def test_empty_inputs_raise_value_error(self):
+        with self.assertRaises(ValueError):
+            aposteriori_unimodality([], [], [], bins=5)
+
+    def test_mismatched_lengths_raise_value_error(self):
+        annotations = [1, 2, 3]
+        factor_group = ["A", "B"]
+        comment_group = ["c1", "c1", "c1"]
+        with self.assertRaises(ValueError):
+            aposteriori_unimodality(
+                annotations, factor_group, comment_group, bins=5
+            )
+
+    def test_single_group_raise_value_error(self):
+        annotations = [1, 2, 3, 4, 5]
+        factor_group = ["solo"] * 5
+        comment_group = ["c1"] * 5
+        with self.assertRaises(ValueError):
+            aposteriori_unimodality(
+                annotations, factor_group, comment_group, bins=5
+            )
+
+    def test_partitioned_bimodal_data_low_pvalue(self):
+        annotations = [1] * 50 + [5] * 50
+        factor_group = ["left"] * 50 + ["right"] * 50
+        comment_group = ["c1"] * 50 + ["c2"] * 50
+        result = aposteriori_unimodality(
+            annotations, factor_group, comment_group, bins=5
+        )
+        for group, p in result.items():
+            self.assertLess(p, 0.05)
+
+    def test_random_noise_returns_high_pvalues(self):
+        annotations = self.rng.normal(loc=3, scale=1, size=100).tolist()
+        factor_group = ["X"] * 50 + ["Y"] * 50
+        comment_group = ["c1"] * 50 + ["c2"] * 50
+        result = aposteriori_unimodality(
+            annotations, factor_group, comment_group, bins=5
+        )
+        for group, p in result.items():
+            self.assertGreater(p, 0.05)
+
+    def test_multiple_comments_are_aggregated(self):
+        annotations = [1, 5, 1, 5, 1, 5, 2, 4, 2, 4]
+        factor_group = ["A", "B"] * 5
+        comment_group = [
+            "c1",
+            "c1",
+            "c2",
+            "c2",
+            "c3",
+            "c3",
+            "c4",
+            "c4",
+            "c5",
+            "c5",
+        ]
+        result = aposteriori_unimodality(
+            annotations, factor_group, comment_group, bins=5
+        )
+        self.assertEqual(set(result.keys()), {"A", "B"})
+        self.assertTrue(all(0 <= p <= 1 for p in result.values()))
 
 
 class TestPolarizationStat(unittest.TestCase):

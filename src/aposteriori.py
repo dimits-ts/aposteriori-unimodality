@@ -103,7 +103,7 @@ def aposteriori_unimodality(
     factor_group: Collection[FactorType],
     comment_group: Collection[FactorType],
     bins: int,
-) -> float:
+) -> dict[FactorType, float]:
     """
     Perform the Aposteriori Unimodality Test to identify whether any annotator
     group, defined by a particular Socio-Demographic Beackground (SDB)
@@ -142,13 +142,14 @@ def aposteriori_unimodality(
     :type bins: int
 
     :returns:
-        A list of pvalues for each factor of the selected SDB dimension.
+        A pvalue for each factor of the selected SDB dimension.
         A low p-value indicates that the group likely contributes to the
         observed polarization.
-    :rtype: float
+    :rtype: dict[`FactorType`, float]
 
     :raises ValueError:
-        If the given lists are not the same length, or are empty.
+        If the given lists are not the same length, are empty,
+        are comprised of a single group, or a single comment.
 
     .. seealso::
         - :func:`dfu` – Computes the Distance from Unimodality.
@@ -205,6 +206,19 @@ def _validate_input(
             + f"len(comment_group)=={len(comment_group)}"
         )
 
+    if len(annotations) == 0:
+        raise ValueError("No annotations given.")
+
+    if len(np.unique(annotator_group)) < 2:
+        raise ValueError("Only one group was provided.")
+
+    if len(np.unique(comment_group)) < 2:
+        raise ValueError(
+            "Only one comment was provided. "
+            "The Aposteriori Unimodality Test is defined for discussions, "
+            "not individual comments."
+        )
+
 
 def _polarization_stat(
     all_comment_annotations: np.ndarray[float],
@@ -255,7 +269,7 @@ def _raw_significance(
     :type global_ndfus: `FactorType`
     :return: The aposteriori unimodality significance for each factor
     :rtype: dict[`FactorType`, float]
-    :raises ValueError: if there is a mismatch between the number of comments 
+    :raises ValueError: if there is a mismatch between the number of comments
         in the provided dictionary and the global_ndfus for any factor
     """
     if len(global_ndfus) == 0:
@@ -299,7 +313,7 @@ def _correct_significance(
     if len(raw_pvalues) == 0:
         return {}
 
-    if not np.any([0 <= np.array(x) <= 1 for x in raw_pvalues.values()]):
+    if np.any([p < 0 or p > 1 for p in raw_pvalues.values()]):
         raise ValueError("Invalid pvalues given for correction.")
 
     # place each pvalue in an ordered list
