@@ -53,36 +53,38 @@ def dfu(
     :raises ValueError: if input_data is empty
     :return: the nDFU score of the sequence
     """
-    # compute DFU
-    hist = _to_hist(input_data, bins=bins)
+    if bins <= 1:
+        raise ValueError("Number of bins must be at least two.")
 
-    if len(hist) == 0:
+    x = np.array(input_data)
+    hist = _to_hist(x, bins=bins)
+
+    if hist.size == 0:
         return np.nan
-    else:
-        max_value = max(hist)
 
-    pos_max = np.where(hist == max_value)[0][0]
+    max_value = np.max(hist)
+    pos_max = np.argmax(hist)
+
     # right search
-    max_diff = 0
-    for i in range(pos_max, len(hist) - 1):
-        diff = hist[i + 1] - hist[i]
-        if diff > max_diff:
-            max_diff = diff
-    for i in range(pos_max, 0, -1):
-        diff = hist[i - 1] - hist[i]
-        if diff > max_diff:
-            max_diff = diff
+    right_diffs = hist[pos_max+1:] - hist[pos_max:-1]
 
-    if normalized:
-        return max_diff / max_value
-    else:
-        return max_diff
+    # left search
+    max_ldiff = 0
+    if pos_max > 0:
+        left_diffs = hist[0:pos_max] - hist[1:pos_max + 1]
+        max_ldiff = (
+            left_diffs[left_diffs > 0].max() if np.any(left_diffs > 0) else 0
+        )
+
+    max_diff = max(right_diffs.max(), max_ldiff)
+
+    return max_diff / max_value if normalized else max_diff
 
 
 def aposteriori_unimodality(
-    annotations: list[float],
-    factor_group: list[Any],
-    comment_group: list[Any],
+    annotations: Iterable[float],
+    factor_group: Iterable[Any],
+    comment_group: Iterable[Any],
     bins: int,
 ) -> float:
     """
@@ -127,7 +129,6 @@ def aposteriori_unimodality(
         A low p-value indicates that the group likely contributes to the
         observed polarization.
     :rtype: float
-
 
     .. seealso::
         - :func:`dfu` – Computes the Distance from Unimodality.
@@ -294,7 +295,7 @@ def _validate_input(
         )
 
 
-def _to_hist(scores: Iterable[float], bins: int) -> np.ndarray:
+def _to_hist(scores: np.ndarray[float], bins: int) -> np.ndarray:
     """Creating a normalised histogram
     :param: scores: the ratings (not necessarily discrete)
     :param: num_bins: the number of bins to create

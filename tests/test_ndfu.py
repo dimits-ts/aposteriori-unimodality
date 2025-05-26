@@ -53,7 +53,7 @@ class TestDFU(unittest.TestCase):
 
     def test_random_binning_does_not_crash(self):
         data = self.rng.normal(0, 1, size=100)
-        for bins in [1, 3, 5, 10, 20]:
+        for bins in [3, 5, 10, 20, 105]:
             score = dfu(data, bins=bins, normalized=True)
             self.assertGreaterEqual(score, 0)
             self.assertLessEqual(score, 1)
