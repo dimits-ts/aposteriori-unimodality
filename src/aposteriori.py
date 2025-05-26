@@ -1,4 +1,5 @@
-from typing import Any, Iterable, TypeVar
+from typing import Any, TypeVar
+from collections.abc import Collection
 
 import numpy as np
 import scipy
@@ -8,7 +9,6 @@ import statsmodels.stats.multitest
 FactorType = TypeVar("Factor Type")
 
 
-# TODO: Collection instead of Iterable everywhere
 class _ListDict:
     """
     A dictionary appending multiple values with the same key
@@ -57,11 +57,11 @@ class _ListDict:
 
 # code adapted from John Pavlopoulos
 # https://github.com/ipavlopoulos/ndfu/blob/main/src/__init__.py
-def dfu(x: Iterable[float], bins: int, normalized: bool = False) -> float:
+def dfu(x: Collection[float], bins: int, normalized: bool = False) -> float:
     """
     Computes the Distance From Unimodality measure for a list of annotations
     :param: x: a sequence of annotations, not necessarily discrete
-    :type x: Iterable[float]
+    :type x: Collection[float]
     :param bins: number of bins. If data is discrete, it is advisable to use
         the number of modes. Example: An annotation task in the 1-5 LIKERT
         scale should use 5 bins.
@@ -70,13 +70,12 @@ def dfu(x: Iterable[float], bins: int, normalized: bool = False) -> float:
         (normalized Distance From Unimodality - nDFU)
     :type normalized: bool
     :raises ValueError: if input_data is empty or number of bins is less than 1
-    :return: the nDFU score of the sequence
+    :return: the DFU score of the sequence
     """
     if bins <= 1:
         raise ValueError("Number of bins must be at least two.")
 
     hist = _to_hist(x, bins=bins)
-
     if hist.size == 0:
         return np.nan
 
@@ -85,25 +84,24 @@ def dfu(x: Iterable[float], bins: int, normalized: bool = False) -> float:
 
     # right search
     right_diffs = hist[pos_max + 1 :] - hist[pos_max:-1]
+    max_rdiff = right_diffs.max(initial=0)
 
     # left search
-    max_ldiff = 0
     if pos_max > 0:
         left_diffs = hist[0:pos_max] - hist[1 : pos_max + 1]
-        max_ldiff = (
-            left_diffs[left_diffs > 0].max() if np.any(left_diffs > 0) else 0
-        )
+        max_ldiff = left_diffs[left_diffs > 0].max(initial=0)
+    else:
+        max_ldiff = 0
 
-    max_diff = max(right_diffs.max(), max_ldiff)
-
+    max_diff = max(max_rdiff, max_ldiff)
     dfu_stat = max_diff / max_value if normalized else max_diff
     return float(dfu_stat)
 
 
 def aposteriori_unimodality(
-    annotations: Iterable[float],
-    factor_group: Iterable[FactorType],
-    comment_group: Iterable[FactorType],
+    annotations: Collection[float],
+    factor_group: Collection[FactorType],
+    comment_group: Collection[FactorType],
     bins: int,
 ) -> float:
     """
@@ -195,9 +193,9 @@ def aposteriori_unimodality(
 
 
 def _validate_input(
-    annotations: Iterable[int],
-    annotator_group: Iterable[FactorType],
-    comment_group: Iterable[FactorType],
+    annotations: Collection[int],
+    annotator_group: Collection[FactorType],
+    comment_group: Collection[FactorType],
 ) -> None:
     if not (len(annotations) == len(annotator_group) == len(comment_group)):
         raise ValueError(
@@ -312,7 +310,7 @@ def _correct_significance(
     return corrected_pvalues_dict
 
 
-def _apply_correction(pvalues: Iterable[float], alpha: float) -> np.ndarray:
+def _apply_correction(pvalues: Collection[float], alpha: float) -> np.ndarray:
     corrected_stats = statsmodels.stats.multitest.multipletests(
         np.array(pvalues),
         alpha=alpha,
