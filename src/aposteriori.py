@@ -37,12 +37,12 @@ class _ListDict:
 # code adapted from John Pavlopoulos
 # https://github.com/ipavlopoulos/ndfu/blob/main/src/__init__.py
 def dfu(
-    input_data: Iterable[float], bins: int, normalized: bool = False
+    x: Iterable[float], bins: int, normalized: bool = False
 ) -> float:
     """
     Computes the Distance From Unimodality measure for a list of annotations
-    :param: input_data: a sequence of annotations, not necessarily discrete
-    :type input_data: Iterable[float]
+    :param: x: a sequence of annotations, not necessarily discrete
+    :type x: Iterable[float]
     :param bins: number of bins. If data is discrete, it is advisable to use
         the number of modes. Example: An annotation task in the 1-5 LIKERT
         scale should use 5 bins.
@@ -50,13 +50,12 @@ def dfu(
     :param normalized: set to true to normalize the measure to the [0,1] range
         (normalized Distance From Unimodality - nDFU)
     :type normalized: bool
-    :raises ValueError: if input_data is empty
+    :raises ValueError: if input_data is empty or number of bins is less than 1
     :return: the nDFU score of the sequence
     """
     if bins <= 1:
         raise ValueError("Number of bins must be at least two.")
 
-    x = np.array(input_data)
     hist = _to_hist(x, bins=bins)
 
     if hist.size == 0:
@@ -147,7 +146,7 @@ def aposteriori_unimodality(
     comment_group = np.array(comment_group)
 
     # keeps list for each factor, each value in the list is a comment
-    stats_by_factor = _ListDict()
+    factor_dict = _ListDict()
     global_ndfus = []  # ndfus when not partitioned by any factor
     all_factors = np.unique(factor_group)
 
@@ -162,19 +161,19 @@ def aposteriori_unimodality(
         comment_factor_ndfus = _polarization_stat(
             all_comment_annotations, comment_annotator_groups, bins=bins
         )
-        stats_by_factor = _update_stats_by_factor(
-            stats_by_factor, comment_factor_ndfus, all_factors
+        factor_dict = _update_factor_dict(
+            factor_dict, comment_factor_ndfus, all_factors
         )
 
         # update comment ndfu
         global_ndfus.append(dfu(all_comment_annotations, bins=bins))
 
-    raw_pvalues = _raw_significance(global_ndfus, stats_by_factor)
+    raw_pvalues = _raw_significance(global_ndfus, factor_dict)
     corrected_pvalues = _correct_significance(raw_pvalues, alpha=0.001)
     return corrected_pvalues
 
 
-def _update_stats_by_factor(
+def _update_factor_dict(
     old_stats: _ListDict, new_stats: dict[Any, float], all_factors: list
 ) -> _ListDict:
     """
