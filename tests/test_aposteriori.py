@@ -60,7 +60,7 @@ class TestAposterioriUnimodality(unittest.TestCase):
     def test_partitioned_bimodal_data_low_pvalue(self):
         annotations = [1] * 50 + [5] * 50
         factor_group = ["left"] * 50 + ["right"] * 50
-        comment_group = ["c1"] * 50 + ["c2"] * 50
+        comment_group = ["c1"] * 25 + ["c2"] * 25 + ["c1"] * 25 + ["c2"] * 25
         result = aposteriori_unimodality(
             annotations, factor_group, comment_group, bins=5
         )
@@ -70,7 +70,7 @@ class TestAposterioriUnimodality(unittest.TestCase):
     def test_random_noise_returns_high_pvalues(self):
         annotations = self.rng.normal(loc=3, scale=1, size=100).tolist()
         factor_group = ["X"] * 50 + ["Y"] * 50
-        comment_group = ["c1"] * 50 + ["c2"] * 50
+        comment_group = ["c1"] * 25 + ["c2"] * 25 + ["c1"] * 25 + ["c2"] * 25
         result = aposteriori_unimodality(
             annotations, factor_group, comment_group, bins=5
         )
@@ -206,7 +206,8 @@ class TestCorrectSignificance(unittest.TestCase):
             self.assertGreaterEqual(result[key], raw_pvals[key])
 
     def test_alpha_parameter_does_not_affect_output_values(self):
-        # Alpha often affects decision thresholds, not p-value correction itself
+        # Alpha often affects decision thresholds, not p-value correction
+        # itself
         raw_pvals = {"A": 0.01, "B": 0.04}
         result1 = _correct_significance(raw_pvals, alpha=0.05)
         result2 = _correct_significance(raw_pvals, alpha=0.01)

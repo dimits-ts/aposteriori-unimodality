@@ -76,8 +76,6 @@ def dfu(x: Collection[float], bins: int, normalized: bool = False) -> float:
         raise ValueError("Number of bins must be at least two.")
 
     hist = _to_hist(x, bins=bins)
-    if hist.size == 0:
-        return np.nan
 
     max_value = np.max(hist)
     pos_max = np.argmax(hist)
@@ -222,7 +220,7 @@ def _validate_input(
 
 def _polarization_stat(
     all_comment_annotations: np.ndarray[float],
-    feature_group: np.ndarray[FactorType],
+    annotator_group: np.ndarray[FactorType],
     bins: int,
 ) -> dict[FactorType, float]:
     """
@@ -232,7 +230,7 @@ def _polarization_stat(
     :param all_comment_annotations: An array containing all annotations
         for the current comment
     :type all_comment_annotations: np.ndarray[float]
-    :param feature_group: An array where each value is a distinct level of
+    :param annotator_group: An array where each value is a distinct level of
         the currently considered factor
     :type annotator_group: np.ndarray[`FactorType`]
     :param bins: number of annotation levels
@@ -241,15 +239,15 @@ def _polarization_stat(
         factor, for one comment
     :rtype: np.ndarray
     """
-    if all_comment_annotations.shape != feature_group.shape:
+    if all_comment_annotations.shape != annotator_group.shape:
         raise ValueError("Value and group arrays must be the same length.")
 
     if len(all_comment_annotations) == 0:
         raise ValueError("Empty annotation list given.")
 
     stats = {}
-    for factor in np.unique(feature_group):
-        factor_annotations = all_comment_annotations[feature_group == factor]
+    for factor in np.unique(annotator_group):
+        factor_annotations = all_comment_annotations[annotator_group == factor]
         if len(factor_annotations) == 0:
             stats[factor] = np.nan
         else:
