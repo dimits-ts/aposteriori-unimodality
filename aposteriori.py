@@ -36,9 +36,20 @@ class _ListDict:
 
 # code adapted from John Pavlopoulos
 # https://github.com/ipavlopoulos/ndfu/blob/main/src/__init__.py
-def ndfu(input_data: Iterable[float], bins: int) -> float:
-    """The normalized Distance From Unimodality measure
+def dfu(
+    input_data: Iterable[float], bins: int, normalized: bool = False
+) -> float:
+    """
+    Computes the Distance From Unimodality measure for a list of annotations
     :param: input_data: a sequence of annotations, not necessarily discrete
+    :type input_data: Iterable[float]
+    :param bins: number of bins. If data is discrete, it is advisable to use
+        the number of modes. Example: An annotation task in the 1-5 LIKERT
+        scale should use 5 bins.
+    :type bins: int
+    :param normalized: set to true to normalize the measure to the [0,1] range
+        (normalized Distance From Unimodality - nDFU)
+    :type normalized: bool
     :raises ValueError: if input_data is empty
     :return: the nDFU score of the sequence
     """
@@ -62,8 +73,10 @@ def ndfu(input_data: Iterable[float], bins: int) -> float:
         if diff > max_diff:
             max_diff = diff
 
-    # return normalized dfu
-    return max_diff / max_value
+    if normalized:
+        return max_diff / max_value
+    else:
+        return max_diff
 
 
 def aposteriori_unimodality(
@@ -78,9 +91,8 @@ def aposteriori_unimodality(
     factor_group = np.array(factor_group)
     comment_group = np.array(comment_group)
 
-    stats_by_factor = (
-        _ListDict()
-    )  # keeps list for each factor, each value in the list is a comment
+    # keeps list for each factor, each value in the list is a comment
+    stats_by_factor = _ListDict()
     global_ndfus = []  # ndfus when not partitioned by any factor
     all_factors = np.unique(factor_group)
 
@@ -100,7 +112,7 @@ def aposteriori_unimodality(
         )
 
         # update comment ndfu
-        global_ndfus.append(ndfu(all_comment_annotations, bins=bins))
+        global_ndfus.append(dfu(all_comment_annotations, bins=bins))
 
     raw_pvalues = _raw_significance(global_ndfus, stats_by_factor)
     corrected_pvalues = _correct_significance(raw_pvalues, alpha=0.001)
@@ -161,7 +173,7 @@ def _polarization_stat(
         if len(factor_annotations) == 0:
             stats[factor] = np.nan
         else:
-            stats[factor] = ndfu(factor_annotations, bins=bins)
+            stats[factor] = dfu(factor_annotations, bins=bins)
 
     return stats
 
@@ -240,6 +252,5 @@ def _to_hist(scores: Iterable[float], bins: int) -> np.ndarray:
         raise ValueError("Annotation list can not be empty.")
 
     # not keeping the values order when bins are not created
-    # normalize results using density=True to make stat invariant to scale
-    counts, bins = np.histogram(a=scores_array, bins=bins, density=True)
+    counts, bins = np.histogram(a=scores_array, bins=bins)
     return counts / counts.sum()
