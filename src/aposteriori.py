@@ -1,5 +1,4 @@
 from typing import Any, Iterable
-import copy
 
 import numpy as np
 import scipy
@@ -33,12 +32,28 @@ class _ListDict:
         else:
             self.dict[key] = [value]
 
+    def update_with_factors(
+        self, new_stats: dict[Any, float], all_factors: list
+    ):
+        """
+        Update the _ListDict with at most one extra value per factor, keeping
+        all internal lists at the same length.
+        If a factor isn't present in new_stats, append np.nan instead.
+
+        :param new_stats: Dictionary of {factor: stat}
+        :param all_factors: List of all possible factors
+            (ensures all keys updated)
+        """
+        for factor in all_factors:
+            if factor in new_stats:
+                self[factor] = new_stats[factor]
+            else:
+                self[factor] = np.nan
+
 
 # code adapted from John Pavlopoulos
 # https://github.com/ipavlopoulos/ndfu/blob/main/src/__init__.py
-def dfu(
-    x: Iterable[float], bins: int, normalized: bool = False
-) -> float:
+def dfu(x: Iterable[float], bins: int, normalized: bool = False) -> float:
     """
     Computes the Distance From Unimodality measure for a list of annotations
     :param: x: a sequence of annotations, not necessarily discrete
@@ -161,9 +176,7 @@ def aposteriori_unimodality(
         comment_factor_ndfus = _polarization_stat(
             all_comment_annotations, comment_annotator_groups, bins=bins
         )
-        factor_dict = _update_factor_dict(
-            factor_dict, comment_factor_ndfus, all_factors
-        )
+        factor_dict.update_with_factors(comment_factor_ndfus, all_factors)
 
         # update comment ndfu
         global_ndfus.append(dfu(all_comment_annotations, bins=bins))
@@ -171,36 +184,6 @@ def aposteriori_unimodality(
     raw_pvalues = _raw_significance(global_ndfus, factor_dict)
     corrected_pvalues = _correct_significance(raw_pvalues, alpha=0.001)
     return corrected_pvalues
-
-
-def _update_factor_dict(
-    old_stats: _ListDict, new_stats: dict[Any, float], all_factors: list
-) -> _ListDict:
-    """
-    Update the ListDict with at most one extra value per factor, keeping all
-    internal arrays at same length. If a factor isn't present, it is replaced
-    by a nan.
-
-    :param old_stats: The ListDict to be updated
-    :type stats_by_factor: _ListDict
-    :param new_stats: A dictionary holding pairs of factor:stat
-    :type new_stats: dict[Any, float]
-    :param all_factors: A list of all possible factors in the feature.
-        Needed to ensure that all internal arrays have the same length.
-    :type all_factors: list
-    """
-    updated_dict = copy.copy(old_stats)
-
-    for factor, ndfu in new_stats.items():
-        updated_dict[factor] = ndfu
-
-    # keep size of all groups the same even if no annotation from that factor
-    # was observed in a comment
-    for factor in all_factors:
-        if factor not in new_stats.keys():
-            updated_dict[factor] = np.nan
-
-    return updated_dict
 
 
 def _polarization_stat(
