@@ -1,8 +1,11 @@
-from typing import Any, Iterable
+from typing import Any, Iterable, TypeVar
 
 import numpy as np
 import scipy
 import statsmodels.stats.multitest
+
+
+FactorType = TypeVar("Factor Type")
 
 
 class _ListDict:
@@ -97,8 +100,8 @@ def dfu(x: Iterable[float], bins: int, normalized: bool = False) -> float:
 
 def aposteriori_unimodality(
     annotations: Iterable[float],
-    factor_group: Iterable[Any],
-    comment_group: Iterable[Any],
+    factor_group: Iterable[FactorType],
+    comment_group: Iterable[FactorType],
     bins: int,
 ) -> float:
     """
@@ -125,12 +128,12 @@ def aposteriori_unimodality(
         annotations were made by a male and female annotator respectively,
         the provided factor_group would be ["male", "female"].
         female annotator
-    :type factor_group: list[Any]
+    :type factor_group: list[`T`]
 
     :param comment_group:
         A list of comment identifiers, where each element associates an
         annotation with a specific comment in the discussion.
-    :type comment_group: list[Any]
+    :type comment_group: list[`T`]
 
     :param bins:
         The number of bins to use when computing the DFU polarization metric.
@@ -187,19 +190,22 @@ def aposteriori_unimodality(
 
 
 def _polarization_stat(
-    all_comment_annotations: np.ndarray, feature_group: np.ndarray, bins: int
-) -> dict[Any, float]:
+    all_comment_annotations: np.ndarray[float],
+    feature_group: np.ndarray[FactorType],
+    bins: int,
+) -> dict[FactorType, float]:
     """
-    Generate the polarization stat (ndfu diff stat) for each factor of the
+    Generate the polarization stat (dfu diff stat) for each factor of the
     selected feature, for one comment.
 
     :param all_comment_annotations: An array containing all annotations
         for the current comment
-    :type all_comment_annotations: np.ndarray
+    :type all_comment_annotations: np.ndarray[float]
     :param feature_group: An array where each value is a distinct level of
         the currently considered factor
-    :type annotator_group: np.ndarray
+    :type annotator_group: np.ndarray[`T`]
     :param bins: number of annotation levels
+    :type bins: int
     :return: The polarization stats for each level of the currently considered
         factor, for one comment
     :rtype: np.ndarray
@@ -228,7 +234,7 @@ def _correct_significance(
 
 def _raw_significance(
     global_ndfus: list[float], stats_by_factor: _ListDict
-) -> dict[Any, float]:
+) -> dict[FactorType, float]:
     """
     Performs a means test to determine the significance of
     differences in aposteriori statistics for a specific feature.
@@ -237,7 +243,7 @@ def _raw_significance(
         statistics for a feature.
     :type level_aposteriori_statistics: (list[float])
     :return: The aposteriori unimodality significance for each factor
-    :rtype: dict[Any, float]
+    :rtype: dict[`T`, float]
     """
     pvalues_by_factor = {}
 
@@ -265,8 +271,8 @@ def _apply_correction(pvalues: Iterable[float], alpha: float) -> np.ndarray:
 
 def _validate_input(
     annotations: list[int],
-    annotator_group: list[Any],
-    comment_group: list[Any],
+    annotator_group: list[FactorType],
+    comment_group: list[FactorType],
 ) -> None:
     if not (len(annotations) == len(annotator_group) == len(comment_group)):
         raise ValueError(
@@ -289,5 +295,5 @@ def _to_hist(scores: np.ndarray[float], bins: int) -> np.ndarray:
         raise ValueError("Annotation list can not be empty.")
 
     # not keeping the values order when bins are not created
-    counts, bins = np.histogram(a=scores_array, bins=bins)
-    return counts / counts.sum()
+    counts, bins = np.histogram(a=scores_array, bins=bins, density=True)
+    return counts
