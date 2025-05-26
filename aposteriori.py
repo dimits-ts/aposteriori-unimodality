@@ -7,6 +7,11 @@ import statsmodels.stats.multitest
 
 
 class _ListDict:
+    """
+    A dictionary appending multiple values with the same key
+    to a list instead of overwriting them.
+    """
+
     def __init__(self):
         self.dict = {}
 
@@ -31,15 +36,31 @@ class _ListDict:
 
 # code adapted from John Pavlopoulos
 # https://github.com/ipavlopoulos/ndfu/blob/main/src/__init__.py
-def ndfu(input_data: Iterable[float], num_bins: int = 5) -> float:
-    """The normalized Distance From Unimodality measure
+def dfu(
+    input_data: Iterable[float], bins: int, normalized: bool = False
+) -> float:
+    """
+    Computes the Distance From Unimodality measure for a list of annotations
     :param: input_data: a sequence of annotations, not necessarily discrete
+    :type input_data: Iterable[float]
+    :param bins: number of bins. If data is discrete, it is advisable to use
+        the number of modes. Example: An annotation task in the 1-5 LIKERT
+        scale should use 5 bins.
+    :type bins: int
+    :param normalized: set to true to normalize the measure to the [0,1] range
+        (normalized Distance From Unimodality - nDFU)
+    :type normalized: bool
     :raises ValueError: if input_data is empty
     :return: the nDFU score of the sequence
     """
     # compute DFU
-    hist = _to_hist(input_data, num_bins=num_bins)
-    max_value = max(hist)
+    hist = _to_hist(input_data, bins=bins)
+
+    if len(hist) == 0:
+        return np.nan
+    else:
+        max_value = max(hist)
+
     pos_max = np.where(hist == max_value)[0][0]
     # right search
     max_diff = 0
@@ -52,12 +73,17 @@ def ndfu(input_data: Iterable[float], num_bins: int = 5) -> float:
         if diff > max_diff:
             max_diff = diff
 
-    # return normalized dfu
-    return max_diff / max_value
+    if normalized:
+        return max_diff / max_value
+    else:
+        return max_diff
 
 
 def aposteriori_unimodality(
-    annotations: list[int], factor_group: list[Any], comment_group: list[Any]
+    annotations: list[int],
+    factor_group: list[Any],
+    comment_group: list[Any],
+    bins: int,
 ) -> float:
     # data prep
     _validate_input(annotations, factor_group, comment_group)
@@ -65,9 +91,8 @@ def aposteriori_unimodality(
     factor_group = np.array(factor_group)
     comment_group = np.array(comment_group)
 
-    stats_by_factor = (
-        _ListDict()
-    )  # keeps list for each factor, each value in the list is a comment
+    # keeps list for each factor, each value in the list is a comment
+    stats_by_factor = _ListDict()
     global_ndfus = []  # ndfus when not partitioned by any factor
     all_factors = np.unique(factor_group)
 
@@ -79,17 +104,19 @@ def aposteriori_unimodality(
         comment_annotator_groups = factor_group[is_in_curr_comment]
 
         # update results for each factor according to new comment
-        comment_factor_ndfus = _calculate_comment_factor_ndfus(
-            all_comment_annotations, comment_annotator_groups
+        comment_factor_ndfus = _polarization_stat(
+            all_comment_annotations, comment_annotator_groups, bins=bins
         )
         stats_by_factor = _update_stats_by_factor(
             stats_by_factor, comment_factor_ndfus, all_factors
         )
 
         # update comment ndfu
-        global_ndfus.append(ndfu(all_comment_annotations))
+        global_ndfus.append(dfu(all_comment_annotations, bins=bins))
 
-    return _get_overall_significance(global_ndfus, stats_by_factor)
+    raw_pvalues = _raw_significance(global_ndfus, stats_by_factor)
+    corrected_pvalues = _correct_significance(raw_pvalues, alpha=0.001)
+    return corrected_pvalues
 
 
 def _update_stats_by_factor(
@@ -122,11 +149,11 @@ def _update_stats_by_factor(
     return updated_dict
 
 
-def _calculate_comment_factor_ndfus(
-    all_comment_annotations: np.ndarray, feature_group: np.ndarray
+def _polarization_stat(
+    all_comment_annotations: np.ndarray, feature_group: np.ndarray, bins: int
 ) -> dict[Any, float]:
     """
-    Generate the aposteriori stat (ndfu diff stat) for each factor of the
+    Generate the polarization stat (ndfu diff stat) for each factor of the
     selected feature, for one comment.
 
     :param all_comment_annotations: An array containing all annotations
@@ -135,7 +162,8 @@ def _calculate_comment_factor_ndfus(
     :param feature_group: An array where each value is a distinct level of
         the currently considered factor
     :type annotator_group: np.ndarray
-    :return: The aposteriori stats for each level of the currently considered
+    :param bins: number of annotation levels
+    :return: The polarization stats for each level of the currently considered
         factor, for one comment
     :rtype: np.ndarray
     """
@@ -145,19 +173,20 @@ def _calculate_comment_factor_ndfus(
         if len(factor_annotations) == 0:
             stats[factor] = np.nan
         else:
-            stats[factor] = ndfu(factor_annotations)
+            stats[factor] = dfu(factor_annotations, bins=bins)
 
     return stats
 
 
-def _get_overall_significance(
-    global_ndfus: list[float], stats_by_factor: _ListDict, alpha: float = 0.05
+def _correct_significance(
+    raw_pvalues: Iterable[float], alpha: float = 0.05
 ) -> dict[Any, float]:
-    raw_stats = _raw_significance(global_ndfus, stats_by_factor)
-    keys, raw_pvalues = zip(*raw_stats.items())  # keep key-value order
-    corrected_pvalues = _correct_significance(raw_pvalues, alpha)
-    corrected_stats = dict(zip(keys, corrected_pvalues))
-    return corrected_stats
+    # place each pvalue in an ordered list
+    keys, raw_pvalue_ls = zip(*raw_pvalues.items())  # keep key-value order
+    corrected_pvalue_ls = _apply_correction(raw_pvalue_ls, alpha)
+    # repackage dictionary
+    corrected_pvalues_dict = dict(zip(keys, corrected_pvalue_ls))
+    return corrected_pvalues_dict
 
 
 def _raw_significance(
@@ -186,9 +215,7 @@ def _raw_significance(
     return pvalues_by_factor
 
 
-def _correct_significance(
-    pvalues: Iterable[float], alpha: float
-) -> np.ndarray:
+def _apply_correction(pvalues: Iterable[float], alpha: float) -> np.ndarray:
     corrected_stats = statsmodels.stats.multitest.multipletests(
         np.array(pvalues),
         alpha=alpha,
@@ -213,9 +240,7 @@ def _validate_input(
         )
 
 
-def _to_hist(
-    scores: Iterable[float], num_bins: int, normed: bool = True
-) -> np.ndarray:
+def _to_hist(scores: Iterable[float], bins: int) -> np.ndarray:
     """Creating a normalised histogram
     :param: scores: the ratings (not necessarily discrete)
     :param: num_bins: the number of bins to create
@@ -227,6 +252,5 @@ def _to_hist(
         raise ValueError("Annotation list can not be empty.")
 
     # not keeping the values order when bins are not created
-    counts, bins = np.histogram(a=scores_array, bins=num_bins)
-    counts_normed = counts / counts.sum()
-    return counts_normed if normed else counts
+    counts, bins = np.histogram(a=scores_array, bins=bins)
+    return counts / counts.sum()
