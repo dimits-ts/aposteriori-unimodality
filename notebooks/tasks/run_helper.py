@@ -36,6 +36,7 @@ def run_aposteriori(
 ) -> pd.Series:
     if bins == -1:
         bins = len(np.unique(df[value_col]))
+
     annotations, attributes, keys = extract_annotations_and_attributes(
         df=df,
         value_col=value_col,
