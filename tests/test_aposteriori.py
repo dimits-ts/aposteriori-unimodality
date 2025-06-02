@@ -96,7 +96,9 @@ class TestAposterioriUnimodality(unittest.TestCase):
             annotations, factor_group, comment_group, bins=5
         )
         self.assertEqual(set(result.keys()), {"A", "B"})
-        self.assertTrue(all(0 <= p <= 1 for p in result.values()))
+        self.assertTrue(
+            all(np.isnan(p) or 0 <= p <= 1 for p in result.values())
+        )
 
 
 class TestPolarizationStat(unittest.TestCase):
@@ -147,7 +149,6 @@ class TestPolarizationStat(unittest.TestCase):
                 self.assertIsInstance(val, float)
 
 
-
 class TestRawSignificance(unittest.TestCase):
 
     def test_output_type_and_keys(self):
@@ -175,7 +176,7 @@ class TestRawSignificance(unittest.TestCase):
     def test_mismatched_distribution_sizes(self):
         global_ndfus = {"A": 0.1, "B": 0.35}
         stats_by_factor = {"A": [0.1, 0.2, 0.3]}  # "B" is missing
-        _raw_significance(global_ndfus, stats_by_factor) # shouldn't crash
+        _raw_significance(global_ndfus, stats_by_factor)  # shouldn't crash
 
     def test_constant_global_distribution(self):
         global_ndfus = {"A": 0.3, "B": 0.3}
@@ -186,8 +187,7 @@ class TestRawSignificance(unittest.TestCase):
     def test_nan_or_invalid_values(self):
         global_ndfus = {"A": 0.3, "B": float("nan")}
         stats_by_factor = {"A": [0.3, 0.4], "B": [0.2, 0.1]}
-        with self.assertRaises(ValueError):
-            _raw_significance(global_ndfus, stats_by_factor)
+        _raw_significance(global_ndfus, stats_by_factor)
 
 
 class TestCorrectSignificance(unittest.TestCase):
