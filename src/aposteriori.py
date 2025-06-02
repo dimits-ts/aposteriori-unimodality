@@ -1,4 +1,4 @@
-from typing import Any, TypeVar, Iterable
+from typing import Any, TypeVar, Iterable, Generic
 from collections.abc import Collection
 
 import numpy as np
@@ -7,9 +7,11 @@ import statsmodels.stats.multitest
 
 
 FactorType = TypeVar("Factor Type")
+K = TypeVar('K')  # Key type
+V = TypeVar('V')  # Value type
 
 
-class _ListDict:
+class _ListDict(Generic[K, V]):
     """
     A dictionary appending multiple values with the same key
     to a list instead of overwriting them.
@@ -27,25 +29,25 @@ class _ListDict:
         """
         self.dict = {}
 
-    def keys(self) -> list[Any, list[Any]]:
+    def keys(self) -> list[K, list[V]]:
         return self.dict.keys()
 
-    def values(self) -> list[Any, list[Any]]:
+    def values(self) -> list[K, list[V]]:
         return self.dict.values()
 
-    def items(self) -> list[tuple[Any, list]]:
+    def items(self) -> list[tuple[K, list[V]]]:
         return self.dict.items()
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> list[V]:
         return self.dict[key]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: K, value: V):
         if key in self.dict:
             self.dict[key].append(value)
         else:
             self.dict[key] = [value]
 
-    def add_dict(self, new_stats: dict[Any, float]):
+    def add_dict(self, new_stats: dict[K, V]):
         """
         Update the _ListDict with at most one extra value per factor, keeping
         all internal lists at the same length.
@@ -104,6 +106,8 @@ def aposteriori_unimodality(
     factor_group: Collection[FactorType],
     comment_group: Collection[FactorType],
     bins: int,
+    iterations: int = 100,
+    alpha: float = 0.001,
 ) -> dict[FactorType, float]:
     """
     Perform the Aposteriori Unimodality Test to identify whether any annotator
@@ -122,7 +126,6 @@ def aposteriori_unimodality(
         annotation (e.g., a toxicity score) made by an annotator.
         Needs not be discrete.
     :type annotations: list[float]
-
     :param factor_group:
         A list indicating the group assignment (e.g., 'male', 'female') of
         the annotator who produced each annotation. For example, if two
@@ -130,24 +133,31 @@ def aposteriori_unimodality(
         the provided factor_group would be ["male", "female"].
         female annotator
     :type factor_group: list[`FactorType`]
-
     :param comment_group:
         A list of comment identifiers, where each element associates an
         annotation with a specific comment in the discussion.
     :type comment_group: list[`FactorType`]
-
     :param bins:
         The number of bins to use when computing the DFU polarization metric.
         If data is discrete, it is advisable to use the number of modes.
         Example: An annotation task in the 1-5 LIKERT scale should use 5 bins.
     :type bins: int
-
+    :param iterations:
+        The number of randomized groups compared against the original groups.
+        A larger number makes the method more accurate,
+        but also more computationally expensive.
+    :type iterations: int
+    :param alpha:
+        The alpha used for multi-hypothesis correction,
+        equal to 1-FWER (Family-wise error rate).
+        A higher alpha makes the test stronger in the context of multiple
+        hypotheses. It is advised to use the significance level of your test.
+    :type alpha: float
     :returns:
         A pvalue for each factor of the selected SDB dimension.
         A low p-value indicates that the group likely contributes to the
         observed polarization.
     :rtype: dict[`FactorType`, float]
-
     :raises ValueError:
         If the given lists are not the same length, are empty,
         are comprised of a single group, or a single comment.
@@ -347,7 +357,7 @@ def _raw_significance(
     differences in aposteriori statistics for a specific feature.
 
     :param global_ndfus: A list of aposteriori statistics for a feature.
-    :type global_ndfus: `FactorType`
+    :type global_ndfus: _ListDict
     :return: The aposteriori unimodality significance for each factor
     :rtype: dict[`FactorType`, float]
     :raises ValueError: if there is a mismatch between the number of comments
