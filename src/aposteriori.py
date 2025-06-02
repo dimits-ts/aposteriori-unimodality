@@ -16,7 +16,7 @@ class _ListDict:
     """
 
     # TODO: Properly implement key error
-    def __init__(self, all_factors: list):
+    def __init__(self):
         """
         Create a new ListDict which will hold arrays of equal length
         for the values of each key.
@@ -26,7 +26,6 @@ class _ListDict:
         :type all_factors: list
         """
         self.dict = {}
-        self.all_factors = all_factors
 
     def keys(self) -> list[Any, list[Any]]:
         return self.dict.keys()
@@ -46,19 +45,14 @@ class _ListDict:
         else:
             self.dict[key] = [value]
 
-    def update_with_factors(self, new_stats: dict[Any, float]):
+    def add_dict(self, new_stats: dict[Any, float]):
         """
         Update the _ListDict with at most one extra value per factor, keeping
         all internal lists at the same length.
-        If a factor isn't present in new_stats, append np.nan instead.
-
         :param new_stats: Dictionary of {factor: stat}
         """
-        for factor in self.all_factors:
-            if factor in new_stats:
-                self[factor] = new_stats[factor]
-            else:
-                self[factor] = np.nan
+        for factor in new_stats:
+            self[factor] = new_stats[factor]
 
     def __len__(self):
         return len(self.dict)
@@ -176,8 +170,8 @@ def aposteriori_unimodality(
 
     # keeps list for each factor, each value in the list is a comment
     all_factors = np.unique(factor_group)
-    factor_dict = _ListDict(all_factors)
-    randomized_ndfu_dict = _ListDict(all_factors)
+    factor_dict = _ListDict()
+    randomized_ndfu_dict = _ListDict()
 
     # select comment
     for curr_comment_id in np.unique(comment_group):
@@ -194,7 +188,7 @@ def aposteriori_unimodality(
         comment_factor_ndfus = _factor_polarization_stat(
             all_comment_annotations, comment_annotator_groups, bins=bins
         )
-        factor_dict.update_with_factors(comment_factor_ndfus)
+        factor_dict.add_dict(comment_factor_ndfus)
 
         # get ndfu of randomized comments
         comment_randomized_ndfus = _random_polarization_stat(
@@ -205,10 +199,10 @@ def aposteriori_unimodality(
             bins=bins,
             iterations=100,
         )
-        randomized_ndfu_dict.update_with_factors(comment_randomized_ndfus)
+        randomized_ndfu_dict.add_dict(comment_randomized_ndfus)
 
     raw_pvalues = _raw_significance(randomized_ndfu_dict, factor_dict)
-    corrected_pvalues = _correct_significance(raw_pvalues, alpha=0.001)
+    corrected_pvalues = _correct_significance(raw_pvalues, alpha=0.01)
     return corrected_pvalues
 
 
@@ -272,7 +266,7 @@ def _factor_polarization_stat(
         if len(factor_annotations) == 0:
             stats[factor] = np.nan
         else:
-            stats[factor] = dfu(factor_annotations, bins=bins)
+            stats[factor] = dfu(factor_annotations, bins=bins, normalized=True)
 
     return stats
 
@@ -287,7 +281,7 @@ def _random_polarization_stat(
     # Split annotations in len(group_lengths) groups,
     # each of which has a length equal to the entries in group_lengths.
     # Then for each group run _factor_polarization_stat
-    all_random_ndfus = _ListDict(all_factors)
+    all_random_ndfus = _ListDict()
     for i in range(iterations):
         random_groups = _random_partition(
             annotations, np.array(list(group_sizes.values()))
@@ -303,7 +297,7 @@ def _random_polarization_stat(
         random_ndfus = _factor_polarization_stat(
             random_annotations, pseudo_groups, bins
         )
-        all_random_ndfus.update_with_factors(random_ndfus)
+        all_random_ndfus.add_dict(random_ndfus)
 
     # return the average of all polarization stats for each factor
     mean_random_ndfu_dict = {
