@@ -7,7 +7,7 @@ from src.aposteriori import _ListDict
 class TestListDict(unittest.TestCase):
 
     def setUp(self):
-        self.ld = _ListDict()
+        self.ld = _ListDict(['a', 'b'])
 
     def test_set_and_get_single_value(self):
         self.ld['a'] = 1
@@ -52,31 +52,27 @@ class TestListDict(unittest.TestCase):
 
     def test_update_with_factors_basic(self):
         stats = {'a': 10, 'b': 20}
-        factors = ['a', 'b', 'c']
-        self.ld.update_with_factors(stats, factors)
+        self.ld.update_with_factors(stats)
         self.assertEqual(self.ld['a'], [10])
         self.assertEqual(self.ld['b'], [20])
-        self.assertTrue(np.isnan(self.ld['c'][0]))
+        with self.assertRaises(KeyError):
+            self.assertTrue(np.isnan(self.ld['c'][0]))
 
     def test_update_with_factors_multiple_calls(self):
-        factors = ['x', 'y']
-        self.ld.update_with_factors({'x': 1}, factors)
-        self.ld.update_with_factors({'y': 2}, factors)
-        self.assertEqual(self.ld['x'], [1, np.nan])
-        self.assertEqual(self.ld['y'], [np.nan, 2])
+        self.ld.update_with_factors({'a': 1})
+        self.ld.update_with_factors({'b': 2})
+        self.assertEqual(self.ld['a'], [1, np.nan])
+        self.assertEqual(self.ld['b'], [np.nan, 2])
 
     def test_update_with_factors_all_nan(self):
-        factors = ['k1', 'k2']
-        self.ld.update_with_factors({}, factors)
-        self.assertTrue(np.isnan(self.ld['k1'][0]))
-        self.assertTrue(np.isnan(self.ld['k2'][0]))
+        self.ld.update_with_factors({})
+        self.assertTrue(np.isnan(self.ld['a'][0]))
+        self.assertTrue(np.isnan(self.ld['b'][0]))
 
     def test_all_lists_equal_length(self):
-        factors = ['a', 'b', 'c']
-        self.ld.update_with_factors({'a': 1}, factors)
-        self.ld.update_with_factors({'b': 2}, factors)
-        self.ld.update_with_factors({'c': 3}, factors)
-        lengths = [len(self.ld[f]) for f in factors]
+        self.ld.update_with_factors({'a': 1})
+        self.ld.update_with_factors({'b': 2})
+        lengths = [len(self.ld[f]) for f in self.ld.keys()]
         self.assertEqual(len(set(lengths)), 1)  # All lengths equal
 
 

@@ -1,4 +1,4 @@
-from typing import Any, TypeVar
+from typing import Any, TypeVar, Iterable
 from collections.abc import Collection
 
 import numpy as np
@@ -15,8 +15,18 @@ class _ListDict:
     to a list instead of overwriting them.
     """
 
-    def __init__(self):
+    # TODO: Properly implement key error
+    def __init__(self, all_factors: list):
+        """
+        Create a new ListDict which will hold arrays of equal length
+        for the values of each key.
+
+        :param all_factors: List of all possible factors
+            (ensures all keys updated)
+        :type all_factors: list
+        """
         self.dict = {}
+        self.all_factors = all_factors
 
     def keys(self) -> list[Any, list[Any]]:
         return self.dict.keys()
@@ -36,23 +46,22 @@ class _ListDict:
         else:
             self.dict[key] = [value]
 
-    def update_with_factors(
-        self, new_stats: dict[Any, float], all_factors: list
-    ):
+    def update_with_factors(self, new_stats: dict[Any, float]):
         """
         Update the _ListDict with at most one extra value per factor, keeping
         all internal lists at the same length.
         If a factor isn't present in new_stats, append np.nan instead.
 
         :param new_stats: Dictionary of {factor: stat}
-        :param all_factors: List of all possible factors
-            (ensures all keys updated)
         """
-        for factor in all_factors:
+        for factor in self.all_factors:
             if factor in new_stats:
                 self[factor] = new_stats[factor]
             else:
                 self[factor] = np.nan
+
+    def __len__(self):
+        return len(self.dict)
 
 
 # code adapted from John Pavlopoulos
@@ -150,7 +159,7 @@ def aposteriori_unimodality(
         are comprised of a single group, or a single comment.
 
     .. seealso::
-        - :func:`dfu` – Computes the Distance from Unimodality.
+        - :func:`dfu` - Computes the Distance from Unimodality.
 
     .. note::
         The test is conservative by design and well-suited to annotation tasks
@@ -166,9 +175,9 @@ def aposteriori_unimodality(
     comment_group = np.array(comment_group)
 
     # keeps list for each factor, each value in the list is a comment
-    factor_dict = _ListDict()
-    global_ndfus = []  # ndfus when not partitioned by any factor
     all_factors = np.unique(factor_group)
+    factor_dict = _ListDict(all_factors)
+    randomized_ndfu_dict = _ListDict(all_factors)
 
     # select comment
     for curr_comment_id in np.unique(comment_group):
@@ -176,17 +185,29 @@ def aposteriori_unimodality(
         is_in_curr_comment = comment_group == curr_comment_id
         all_comment_annotations = annotations[is_in_curr_comment]
         comment_annotator_groups = factor_group[is_in_curr_comment]
+        lengths_by_factor = {
+            factor: np.sum(comment_annotator_groups == factor)
+            for factor in all_factors
+        }
 
         # update results for each factor according to new comment
-        comment_factor_ndfus = _polarization_stat(
+        comment_factor_ndfus = _factor_polarization_stat(
             all_comment_annotations, comment_annotator_groups, bins=bins
         )
-        factor_dict.update_with_factors(comment_factor_ndfus, all_factors)
+        factor_dict.update_with_factors(comment_factor_ndfus)
 
-        # update comment ndfu
-        global_ndfus.append(dfu(all_comment_annotations, bins=bins))
+        # get ndfu of randomized comments
+        comment_randomized_ndfus = _random_polarization_stat(
+            # number of observations per factor
+            annotations=all_comment_annotations,
+            group_sizes=lengths_by_factor,
+            all_factors=all_factors,
+            bins=bins,
+            iterations=100,
+        )
+        randomized_ndfu_dict.update_with_factors(comment_randomized_ndfus)
 
-    raw_pvalues = _raw_significance(global_ndfus, factor_dict)
+    raw_pvalues = _raw_significance(randomized_ndfu_dict, factor_dict)
     corrected_pvalues = _correct_significance(raw_pvalues, alpha=0.001)
     return corrected_pvalues
 
@@ -218,7 +239,7 @@ def _validate_input(
         )
 
 
-def _polarization_stat(
+def _factor_polarization_stat(
     all_comment_annotations: np.ndarray[float],
     annotator_group: np.ndarray[FactorType],
     bins: int,
@@ -256,8 +277,76 @@ def _polarization_stat(
     return stats
 
 
+def _random_polarization_stat(
+    annotations: np.ndarray[float],
+    group_sizes: dict[FactorType, int],
+    all_factors: Iterable[FactorType],
+    bins: int,
+    iterations: int,
+) -> dict[FactorType, float]:
+    # Split annotations in len(group_lengths) groups,
+    # each of which has a length equal to the entries in group_lengths.
+    # Then for each group run _factor_polarization_stat
+    all_random_ndfus = _ListDict(all_factors)
+    for i in range(iterations):
+        random_groups = _random_partition(
+            annotations, np.array(list(group_sizes.values()))
+        )
+        random_annotations = np.hstack(random_groups)
+        pseudo_groups = np.array(
+            [
+                factor
+                for factor, size in group_sizes.items()
+                for _ in range(size)
+            ]
+        )
+        random_ndfus = _factor_polarization_stat(
+            random_annotations, pseudo_groups, bins
+        )
+        all_random_ndfus.update_with_factors(random_ndfus)
+
+    # return the average of all polarization stats for each factor
+    mean_random_ndfu_dict = {
+        factor: np.mean(stats) for factor, stats in all_random_ndfus.items()
+    }
+    return mean_random_ndfu_dict
+
+
+def _random_partition(
+    arr: np.ndarray, sizes: np.ndarray[int]
+) -> list[np.ndarray]:
+    """
+    Randomly partition a numpy array into groups of given sizes.
+
+    Parameters:
+    - arr: numpy array to be partitioned.
+    - sizes: list of integers indicating the size of each group.
+
+    Returns:
+    - List of numpy arrays, each with the size specified in `sizes`.
+
+    Raises:
+    - ValueError: if the sum of sizes does not match the length of arr.
+    """
+    if sum(sizes) != len(arr):
+        raise ValueError(
+            f"Sum of sizes ({sum(sizes)}) must equal length "
+            f"of input array ({len(arr)})."
+        )
+
+    shuffled = np.random.default_rng().permutation(arr)
+    partitions = []
+    start = 0
+    for size in sizes:
+        end = start + size
+        partitions.append(shuffled[start:end])
+        start = end
+
+    return partitions
+
+
 def _raw_significance(
-    global_ndfus: list[float], stats_by_factor: _ListDict
+    global_ndfus: _ListDict, stats_by_factor: _ListDict
 ) -> dict[FactorType, float]:
     """
     Performs a means test to determine the significance of
@@ -275,21 +364,21 @@ def _raw_significance(
 
     pvalues_by_factor = {}
 
-    for factor, factor_ndfus in stats_by_factor.items():
-        x = global_ndfus
-        y = factor_ndfus
+    for factor in stats_by_factor.keys():
+        expected_mean = np.mean(global_ndfus[factor])
+        pol_stats = stats_by_factor[factor]
 
-        if len(x) != len(y):
-            raise ValueError(
-                f"Number of comments ({len(y)}) "
-                f"is different than number of global dfus ({len(x)}) "
-                f"for factor {factor}."
-            )
-
-        pvalue = scipy.stats.ttest_rel(
-            x, y, alternative="greater", nan_policy="omit"
-        ).pvalue
-        pvalues_by_factor[factor] = pvalue
+        if np.isnan(expected_mean):
+            # annotations are completely identical
+            pvalues_by_factor[factor] = 1
+        else:
+            pvalue = scipy.stats.ttest_1samp(
+                pol_stats,
+                expected_mean,
+                alternative="greater",
+                nan_policy="omit",
+            ).pvalue
+            pvalues_by_factor[factor] = pvalue
 
     return pvalues_by_factor
 
@@ -334,7 +423,8 @@ def _apply_correction(pvalues: Collection[float], alpha: float) -> np.ndarray:
 
 
 def _to_hist(scores: np.ndarray[float], bins: int) -> np.ndarray:
-    """Creating a normalised histogram
+    """
+    Creates a normalised histogram. Used for DFU calculation.
     :param: scores: the ratings (not necessarily discrete)
     :param: num_bins: the number of bins to create
     :param: normed: whether to normalise the counts or not, by default true
@@ -344,6 +434,5 @@ def _to_hist(scores: np.ndarray[float], bins: int) -> np.ndarray:
     if len(scores_array) == 0:
         raise ValueError("Annotation list can not be empty.")
 
-    # not keeping the values order when bins are not created
     counts, bins = np.histogram(a=scores_array, bins=bins, density=True)
     return counts

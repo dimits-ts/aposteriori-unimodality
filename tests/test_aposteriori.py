@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 
 from src.aposteriori import (
-    _polarization_stat,
+    _factor_polarization_stat,
     _raw_significance,
     _correct_significance,
     aposteriori_unimodality,
@@ -104,7 +104,7 @@ class TestPolarizationStat(unittest.TestCase):
     def test_basic_functionality(self):
         annotations = np.array([1, 2, 3, 1, 2, 3])
         groups = np.array(["A", "A", "A", "B", "B", "B"])
-        result = _polarization_stat(annotations, groups, bins=3)
+        result = _factor_polarization_stat(annotations, groups, bins=3)
         self.assertIsInstance(result, dict)
         self.assertEqual(set(result.keys()), {"A", "B"})
         for val in result.values():
@@ -113,13 +113,13 @@ class TestPolarizationStat(unittest.TestCase):
     def test_single_group(self):
         annotations = np.array([1, 1, 1])
         groups = np.array(["A", "A", "A"])
-        result = _polarization_stat(annotations, groups, bins=3)
+        result = _factor_polarization_stat(annotations, groups, bins=3)
         self.assertEqual(set(result.keys()), {"A"})
 
     def test_all_same_annotation(self):
         annotations = np.array([2, 2, 2, 2])
         groups = np.array(["X", "Y", "X", "Y"])
-        result = _polarization_stat(annotations, groups, bins=3)
+        result = _factor_polarization_stat(annotations, groups, bins=3)
         self.assertEqual(set(result.keys()), {"X", "Y"})
         for val in result.values():
             self.assertIsInstance(val, float)
@@ -128,29 +128,30 @@ class TestPolarizationStat(unittest.TestCase):
         annotations = np.array([])
         groups = np.array([])
         with self.assertRaises(ValueError):
-            _polarization_stat(annotations, groups, bins=3)
+            _factor_polarization_stat(annotations, groups, bins=3)
 
     def test_mismatched_lengths(self):
         annotations = np.array([1, 2])
         groups = np.array(["A"])
         with self.assertRaises(ValueError):
-            _polarization_stat(annotations, groups, bins=2)
+            _factor_polarization_stat(annotations, groups, bins=2)
 
     def test_bins_parameter_effect(self):
         annotations = np.array([1, 2, 3, 4])
         groups = np.array(["A", "A", "B", "B"])
         # Make sure it runs and output stays valid for different bin values
         for bins in [2, 3, 4]:
-            result = _polarization_stat(annotations, groups, bins=bins)
+            result = _factor_polarization_stat(annotations, groups, bins=bins)
             self.assertEqual(set(result.keys()), {"A", "B"})
             for val in result.values():
                 self.assertIsInstance(val, float)
 
 
+
 class TestRawSignificance(unittest.TestCase):
 
     def test_output_type_and_keys(self):
-        global_ndfus = [0.2, 0.3]
+        global_ndfus = {"A": 0.2, "B": 0.3}
         stats_by_factor = {"A": [0.3, 0.35], "B": [0.1, 0.15]}
         result = _raw_significance(global_ndfus, stats_by_factor)
         self.assertIsInstance(result, dict)
@@ -159,32 +160,32 @@ class TestRawSignificance(unittest.TestCase):
             self.assertIsInstance(val, float)
 
     def test_empty_inputs(self):
-        result = _correct_significance({})
+        global_ndfus = {}
+        stats_by_factor = {}
+        result = _raw_significance(global_ndfus, stats_by_factor)
         self.assertEqual(result, {})
 
     def test_only_one_factor(self):
-        global_ndfus = [0.1, 0.2]
+        global_ndfus = {"A": 0.15}
         stats_by_factor = {"A": [0.25, 0.3]}
         result = _raw_significance(global_ndfus, stats_by_factor)
         self.assertEqual(set(result.keys()), {"A"})
         self.assertIsInstance(result["A"], float)
 
     def test_mismatched_distribution_sizes(self):
-        global_ndfus = [0.1, 0.2, 0.35, 0.6]
-        stats_by_factor = {"A": [0.1, 0.2, 0.3], "B": [0.5]}
-        with self.assertRaises(ValueError):
-            _raw_significance(global_ndfus, stats_by_factor)
+        global_ndfus = {"A": 0.1, "B": 0.35}
+        stats_by_factor = {"A": [0.1, 0.2, 0.3]}  # "B" is missing
+        _raw_significance(global_ndfus, stats_by_factor) # shouldn't crash
 
     def test_constant_global_distribution(self):
-        global_ndfus = [0.3, 0.3]
+        global_ndfus = {"A": 0.3, "B": 0.3}
         stats_by_factor = {"A": [0.3, 0.4], "B": [0.2, 0.1]}
-        # Should still work even if global has no variance
         result = _raw_significance(global_ndfus, stats_by_factor)
         self.assertTrue(all(isinstance(val, float) for val in result.values()))
 
     def test_nan_or_invalid_values(self):
-        global_ndfus = [0.3, float("nan"), 0.2]
-        stats_by_factor = {"A": [0.3, 0.4]}
+        global_ndfus = {"A": 0.3, "B": float("nan")}
+        stats_by_factor = {"A": [0.3, 0.4], "B": [0.2, 0.1]}
         with self.assertRaises(ValueError):
             _raw_significance(global_ndfus, stats_by_factor)
 
