@@ -1,4 +1,4 @@
-from typing import Any, TypeVar, Iterable, Generic
+from typing import TypeVar, Iterable, Generic
 from collections.abc import Collection
 
 import numpy as np
@@ -7,8 +7,8 @@ import statsmodels.stats.multitest
 
 
 FactorType = TypeVar("Factor Type")
-K = TypeVar('K')  # Key type
-V = TypeVar('V')  # Value type
+K = TypeVar("K")  # Key type
+V = TypeVar("V")  # Value type
 
 
 class _ListDict(Generic[K, V]):
