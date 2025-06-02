@@ -1,4 +1,4 @@
-from typing import Any, TypeVar
+from typing import Any, TypeVar, Iterable, Generic
 from collections.abc import Collection
 
 import numpy as np
@@ -7,52 +7,57 @@ import statsmodels.stats.multitest
 
 
 FactorType = TypeVar("Factor Type")
+K = TypeVar('K')  # Key type
+V = TypeVar('V')  # Value type
 
 
-class _ListDict:
+class _ListDict(Generic[K, V]):
     """
     A dictionary appending multiple values with the same key
     to a list instead of overwriting them.
     """
 
+    # TODO: Properly implement key error
     def __init__(self):
+        """
+        Create a new ListDict which will hold arrays of equal length
+        for the values of each key.
+
+        :param all_factors: List of all possible factors
+            (ensures all keys updated)
+        :type all_factors: list
+        """
         self.dict = {}
 
-    def keys(self) -> list[Any, list[Any]]:
+    def keys(self) -> list[K, list[V]]:
         return self.dict.keys()
 
-    def values(self) -> list[Any, list[Any]]:
+    def values(self) -> list[K, list[V]]:
         return self.dict.values()
 
-    def items(self) -> list[tuple[Any, list]]:
+    def items(self) -> list[tuple[K, list[V]]]:
         return self.dict.items()
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> list[V]:
         return self.dict[key]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: K, value: V):
         if key in self.dict:
             self.dict[key].append(value)
         else:
             self.dict[key] = [value]
 
-    def update_with_factors(
-        self, new_stats: dict[Any, float], all_factors: list
-    ):
+    def add_dict(self, new_stats: dict[K, V]):
         """
         Update the _ListDict with at most one extra value per factor, keeping
         all internal lists at the same length.
-        If a factor isn't present in new_stats, append np.nan instead.
-
         :param new_stats: Dictionary of {factor: stat}
-        :param all_factors: List of all possible factors
-            (ensures all keys updated)
         """
-        for factor in all_factors:
-            if factor in new_stats:
-                self[factor] = new_stats[factor]
-            else:
-                self[factor] = np.nan
+        for factor in new_stats:
+            self[factor] = new_stats[factor]
+
+    def __len__(self):
+        return len(self.dict)
 
 
 # code adapted from John Pavlopoulos
@@ -101,6 +106,8 @@ def aposteriori_unimodality(
     factor_group: Collection[FactorType],
     comment_group: Collection[FactorType],
     bins: int,
+    iterations: int = 100,
+    alpha: float = 0.001,
 ) -> dict[FactorType, float]:
     """
     Perform the Aposteriori Unimodality Test to identify whether any annotator
@@ -119,7 +126,6 @@ def aposteriori_unimodality(
         annotation (e.g., a toxicity score) made by an annotator.
         Needs not be discrete.
     :type annotations: list[float]
-
     :param factor_group:
         A list indicating the group assignment (e.g., 'male', 'female') of
         the annotator who produced each annotation. For example, if two
@@ -127,30 +133,37 @@ def aposteriori_unimodality(
         the provided factor_group would be ["male", "female"].
         female annotator
     :type factor_group: list[`FactorType`]
-
     :param comment_group:
         A list of comment identifiers, where each element associates an
         annotation with a specific comment in the discussion.
     :type comment_group: list[`FactorType`]
-
     :param bins:
         The number of bins to use when computing the DFU polarization metric.
         If data is discrete, it is advisable to use the number of modes.
         Example: An annotation task in the 1-5 LIKERT scale should use 5 bins.
     :type bins: int
-
+    :param iterations:
+        The number of randomized groups compared against the original groups.
+        A larger number makes the method more accurate,
+        but also more computationally expensive.
+    :type iterations: int
+    :param alpha:
+        The alpha used for multi-hypothesis correction,
+        equal to 1-FWER (Family-wise error rate).
+        A higher alpha makes the test stronger in the context of multiple
+        hypotheses. It is advised to use the significance level of your test.
+    :type alpha: float
     :returns:
         A pvalue for each factor of the selected SDB dimension.
         A low p-value indicates that the group likely contributes to the
         observed polarization.
     :rtype: dict[`FactorType`, float]
-
     :raises ValueError:
         If the given lists are not the same length, are empty,
         are comprised of a single group, or a single comment.
 
     .. seealso::
-        - :func:`dfu` – Computes the Distance from Unimodality.
+        - :func:`dfu` - Computes the Distance from Unimodality.
 
     .. note::
         The test is conservative by design and well-suited to annotation tasks
@@ -166,9 +179,9 @@ def aposteriori_unimodality(
     comment_group = np.array(comment_group)
 
     # keeps list for each factor, each value in the list is a comment
-    factor_dict = _ListDict()
-    global_ndfus = []  # ndfus when not partitioned by any factor
     all_factors = np.unique(factor_group)
+    factor_dict = _ListDict()
+    randomized_ndfu_dict = _ListDict()
 
     # select comment
     for curr_comment_id in np.unique(comment_group):
@@ -176,18 +189,30 @@ def aposteriori_unimodality(
         is_in_curr_comment = comment_group == curr_comment_id
         all_comment_annotations = annotations[is_in_curr_comment]
         comment_annotator_groups = factor_group[is_in_curr_comment]
+        lengths_by_factor = {
+            factor: np.sum(comment_annotator_groups == factor)
+            for factor in all_factors
+        }
 
         # update results for each factor according to new comment
-        comment_factor_ndfus = _polarization_stat(
+        comment_factor_ndfus = _factor_polarization_stat(
             all_comment_annotations, comment_annotator_groups, bins=bins
         )
-        factor_dict.update_with_factors(comment_factor_ndfus, all_factors)
+        factor_dict.add_dict(comment_factor_ndfus)
 
-        # update comment ndfu
-        global_ndfus.append(dfu(all_comment_annotations, bins=bins))
+        # get ndfu of randomized comments
+        comment_randomized_ndfus = _random_polarization_stat(
+            # number of observations per factor
+            annotations=all_comment_annotations,
+            group_sizes=lengths_by_factor,
+            all_factors=all_factors,
+            bins=bins,
+            iterations=100,
+        )
+        randomized_ndfu_dict.add_dict(comment_randomized_ndfus)
 
-    raw_pvalues = _raw_significance(global_ndfus, factor_dict)
-    corrected_pvalues = _correct_significance(raw_pvalues, alpha=0.001)
+    raw_pvalues = _raw_significance(randomized_ndfu_dict, factor_dict)
+    corrected_pvalues = _correct_significance(raw_pvalues, alpha=0.01)
     return corrected_pvalues
 
 
@@ -218,7 +243,7 @@ def _validate_input(
         )
 
 
-def _polarization_stat(
+def _factor_polarization_stat(
     all_comment_annotations: np.ndarray[float],
     annotator_group: np.ndarray[FactorType],
     bins: int,
@@ -251,20 +276,88 @@ def _polarization_stat(
         if len(factor_annotations) == 0:
             stats[factor] = np.nan
         else:
-            stats[factor] = dfu(factor_annotations, bins=bins)
+            stats[factor] = dfu(factor_annotations, bins=bins, normalized=True)
 
     return stats
 
 
+def _random_polarization_stat(
+    annotations: np.ndarray[float],
+    group_sizes: dict[FactorType, int],
+    all_factors: Iterable[FactorType],
+    bins: int,
+    iterations: int,
+) -> dict[FactorType, float]:
+    # Split annotations in len(group_lengths) groups,
+    # each of which has a length equal to the entries in group_lengths.
+    # Then for each group run _factor_polarization_stat
+    all_random_ndfus = _ListDict()
+    for i in range(iterations):
+        random_groups = _random_partition(
+            annotations, np.array(list(group_sizes.values()))
+        )
+        random_annotations = np.hstack(random_groups)
+        pseudo_groups = np.array(
+            [
+                factor
+                for factor, size in group_sizes.items()
+                for _ in range(size)
+            ]
+        )
+        random_ndfus = _factor_polarization_stat(
+            random_annotations, pseudo_groups, bins
+        )
+        all_random_ndfus.add_dict(random_ndfus)
+
+    # return the average of all polarization stats for each factor
+    mean_random_ndfu_dict = {
+        factor: np.mean(stats) for factor, stats in all_random_ndfus.items()
+    }
+    return mean_random_ndfu_dict
+
+
+def _random_partition(
+    arr: np.ndarray, sizes: np.ndarray[int]
+) -> list[np.ndarray]:
+    """
+    Randomly partition a numpy array into groups of given sizes.
+
+    Parameters:
+    - arr: numpy array to be partitioned.
+    - sizes: list of integers indicating the size of each group.
+
+    Returns:
+    - List of numpy arrays, each with the size specified in `sizes`.
+
+    Raises:
+    - ValueError: if the sum of sizes does not match the length of arr.
+    """
+    if sum(sizes) != len(arr):
+        raise ValueError(
+            f"Sum of sizes ({sum(sizes)}) must equal length "
+            f"of input array ({len(arr)})."
+        )
+
+    shuffled = np.random.default_rng().permutation(arr)
+    partitions = []
+    start = 0
+    for size in sizes:
+        end = start + size
+        partitions.append(shuffled[start:end])
+        start = end
+
+    return partitions
+
+
 def _raw_significance(
-    global_ndfus: list[float], stats_by_factor: _ListDict
+    global_ndfus: _ListDict, stats_by_factor: _ListDict
 ) -> dict[FactorType, float]:
     """
     Performs a means test to determine the significance of
     differences in aposteriori statistics for a specific feature.
 
     :param global_ndfus: A list of aposteriori statistics for a feature.
-    :type global_ndfus: `FactorType`
+    :type global_ndfus: _ListDict
     :return: The aposteriori unimodality significance for each factor
     :rtype: dict[`FactorType`, float]
     :raises ValueError: if there is a mismatch between the number of comments
@@ -275,21 +368,21 @@ def _raw_significance(
 
     pvalues_by_factor = {}
 
-    for factor, factor_ndfus in stats_by_factor.items():
-        x = global_ndfus
-        y = factor_ndfus
+    for factor in stats_by_factor.keys():
+        expected_mean = np.mean(global_ndfus[factor])
+        pol_stats = stats_by_factor[factor]
 
-        if len(x) != len(y):
-            raise ValueError(
-                f"Number of comments ({len(y)}) "
-                f"is different than number of global dfus ({len(x)}) "
-                f"for factor {factor}."
-            )
-
-        pvalue = scipy.stats.ttest_rel(
-            x, y, alternative="greater", nan_policy="omit"
-        ).pvalue
-        pvalues_by_factor[factor] = pvalue
+        if np.isnan(expected_mean):
+            # annotations are completely identical
+            pvalues_by_factor[factor] = 1
+        else:
+            pvalue = scipy.stats.ttest_1samp(
+                pol_stats,
+                expected_mean,
+                alternative="less",
+                nan_policy="omit",
+            ).pvalue
+            pvalues_by_factor[factor] = pvalue
 
     return pvalues_by_factor
 
@@ -334,7 +427,8 @@ def _apply_correction(pvalues: Collection[float], alpha: float) -> np.ndarray:
 
 
 def _to_hist(scores: np.ndarray[float], bins: int) -> np.ndarray:
-    """Creating a normalised histogram
+    """
+    Creates a normalised histogram. Used for DFU calculation.
     :param: scores: the ratings (not necessarily discrete)
     :param: num_bins: the number of bins to create
     :param: normed: whether to normalise the counts or not, by default true
@@ -344,6 +438,5 @@ def _to_hist(scores: np.ndarray[float], bins: int) -> np.ndarray:
     if len(scores_array) == 0:
         raise ValueError("Annotation list can not be empty.")
 
-    # not keeping the values order when bins are not created
     counts, bins = np.histogram(a=scores_array, bins=bins, density=True)
     return counts
