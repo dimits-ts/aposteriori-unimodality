@@ -30,10 +30,12 @@
 
 \section{Methodology}
 
+In this section, we provide a formal mathematical formulation of the problem of attributing polarization to specific annotator characteristics (\S\ref{ssec:methodology:problem}), and offer an intuitive rationale for how established polarization metrics can be leveraged in this context (\S\ref{ssec:methodology:intuition}). We then introduce a comment-level measure that attributes polarization to individual \ac{SDB} factors (\S\ref{ssec:methodology:polstat}), and subsequently develop a statistical test that formalizes this attribution in a robust manner. Finally, we outline the technical details of the proposed methodology (\S\ref{ssec:methodology:details}).
+
 \subsection{Problem Formulation}
 \label{ssec:methodology:problem}
 
-Let $\{c(d,1), c(d,2), \ldots\}$ be the comments\footnote{Also referred to as “dialogue turns” in some publications.} of a discussion $d$. We assume that annotating a comment depends on three variables: its contents, the annotator's \ac{SDB}, and uncontrolled factors such as mood and personal experiences. Assuming that each comment is assigned multiple annotators, we can define the annotation set $A(d, i)$ for comment $c(d, i)$ as:\footnote{For the sake of simplicity, we use $c$ to mean any comment $c(d, i)$.}
+Let $\{c(d,1), c(d,2), \ldots\}$ be the comments of a discussion $d$.\footnote{"Comments" are also referred to as “dialogue turns” in some publications.} We assume that annotating a comment depends on three variables: its contents, the annotator's \ac{SDB}, and uncontrolled factors such as mood and personal experiences. Assuming that each comment is assigned multiple annotators, we can define the annotation set $A(d, i)$ for comment $c(d, i)$ as:\footnote{For the sake of simplicity, we use $c$ to mean any comment $c(d, i)$.}
 \begin{equation}
     A(c) = \{a(c, \theta) \mid i=1, 2, \ldots, \lvert d \rvert, \theta \in \Theta \}
 \end{equation}
@@ -48,7 +50,7 @@ Since our goal is to pinpoint which specific characteristics contribute to polar
 
 
 \subsection{Quantifying changes in polarization}
-\label{ssec:methodology:polstat}
+\label{ssec:methodology:intuition}
 
 The mechanism defined in \S\ref{ssec:methodology:problem} allows us to isolate the effects of each \ac{SDB} dimension $\sdbdim$, but we still lack a mechanism with which to analyze that effect. In this section, we present the "pol-statistic" (polarization statistic) as a comment-level tool which not only attributes polarization to a dimension $\sdbdim$, but also to specific groups within that dimension ($\sdbgroup \in \Sdbgroup(\sdbdim)$).
 
@@ -66,7 +68,9 @@ Intuitively, dimension $\sdbdim$ partially explains polarization when the annota
 % Intra group compared to inter-group?
  Given this observation, we would be tempted to aggregate all annotations for each comment in a discussion, and test whether intra-group polarization is greater than global polarization. However, this formulation would not work well, as illustrated in  Figure~\ref{fig:ndfu_multi_comment}. It features a hypothetical discussion with two comments, both of which are toxic, but where male and female annotators disagree on \emph{which} comment is the toxic one. If we aggregate the annotations for the two comments, the opposing polarization effects might balance each other out, leading to a false negative. In our example, while it is obvious that gender partly explains the polarization found in each of the individual comments ($nDFU_{all} \gg nDFU_{men}, nDFU_{all} \gg nDFU_{women}$), this observation is much harder to make when aggregating the two comments. To avoid this, we apply our statistic only on annotations that reference the same comment. 
  
+ 
  \subsection{The pol-statistic}
+ \label{ssec:methodology:polstat}
   
  The comment-level polarization statistic for group $\sdbgroup \in \sdbdim$ is obtained by:
  
@@ -125,9 +129,11 @@ We refer to this test as the \textit{``Aposteriori Unimodality Test''}, where a 
 \subsection{Technical Details}
 \label{ssec:methodology:details}
 
-The means test performed on the pol-statistics of each comment (Equations~\ref{eq:null_h},~\ref{eq:alt_h}) can be theoretically performed by most well-known statistical mean tests. In our case, we use the one one-sample Student t-test. Additionally, since we are simultaneously considering $\lvert \Sdbgroup(\sdbdim) \rvert$ hypotheses, we apply a multiple comparison correction to the resulting p-values. We choose the Bonferroni method \parencite{Bland170}, since it is widely used, generally conservative, and especially so towards correlated hypotheses \parencite{ChenFengYi2017}. The last point is important, since many annotation groups are likely to be inter-correlated (e.g., age categories such as $50-60$ and $60-70$ years). Furthermore, one of its biggest weaknesses (the presence of very large numbers of hypotheses \parencite{ChenFengYi2017}) is unlikely to be met in annotation tasks.
+The means test performed on the pol-statistics of each comment (Equations~\ref{eq:null_h},~\ref{eq:alt_h}) can be theoretically performed by most well-known statistical mean tests. In our case, we use the one one-sample Student t-test. 
 
-The Aposteriori Unimodality Test is actually parameterized by two more parameters: the $t$ parameter, which determines how many times we sample random partitions (Equation~\ref{eq:pol_expected}), and the \ac{FWER}, which is used to tune the strength of the multiple comparison correction mentioned above. We can increase the $t$ parameter to get a better estimate of the expected comment polarization, while increasing the computational cost of the method. We can also increase the \ac{FWER} to make our test more conservative towards multiple hypotheses \parencite{ChenFengYi2017}). In general, it is safe to set \ac{FWER} equal to the significance level of our test (e.g., $FWER = 0.95$ if we are looking for $p < 0.05$)
+Additionally, since we are simultaneously considering $\lvert \Sdbgroup(\sdbdim) \rvert$ hypotheses, we apply a multiple comparison correction to the resulting p-values. We choose the Bonferroni method \parencite{Bland170}, since it is widely used, generally conservative, and especially so towards correlated hypotheses \parencite{ChenFengYi2017}. The last point is important, since many annotation groups are likely to be inter-correlated (e.g., age categories such as $50-60$ and $60-70$ years). Furthermore, one of its biggest weaknesses (the presence of very large numbers of hypotheses \parencite{ChenFengYi2017}) is unlikely to be met in annotation tasks.
+
+The Aposteriori Unimodality Test is actually parameterized by two more parameters: the $t$ parameter, which determines how many times we sample random partitions (Equation~\ref{eq:pol_expected}), and the \ac{FWER}, which is used to tune the strength of the multiple comparison correction mentioned above. We can increase the $t$ parameter to get a better estimate of the expected comment polarization, while increasing the computational cost of the method. We can also increase the \ac{FWER} to make our test more conservative towards multiple hypotheses \parencite{ChenFengYi2017}). In general, it is safe to set \ac{FWER} equal to the significance level of our test (e.g., $\textit{FWER} = 0.95$ if we are looking for $p < 0.05$)
 
 
 \section{Acronyms}
