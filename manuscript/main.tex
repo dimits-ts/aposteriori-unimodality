@@ -56,7 +56,7 @@ Intuitively, dimension $\sdbdim$ partially explains polarization when the annota
 
 %TODO: Do I use 2 genders here?
 %TODO: Use actual data in plot?
-\begin{figure}[t]
+\begin{figure}
 	\centering
 	\includegraphics[width=0.8\linewidth]{ndfu_single_comment.png}
 	\caption{Hypothetical example of a polarizing comment, where male and female annotators agree between themselves, but disagree with the opposite gender. Overall polarization ($nDFU_{all} = 0.625$) is much greater than the polarization exhibited by the annotations grouped by gender ($nDFU_{men} = 0.3725, nDFU_{women} = 0.100$). In this example, the annotation set $A$ was generated as $A_{men} \sim \mathcal{N}(2, 1.3), A_{women} \sim \mathcal{N}(8, 1.3), \lvert A_{men} \rvert = \lvert A_{women} \rvert = 50$.}
@@ -78,6 +78,7 @@ Intuitively, dimension $\sdbdim$ partially explains polarization when the annota
  If the polarization in a comment $c$ is driven by group $g$, we would expect polarization inside the groups to be higher than expected. We can estimate the expected polarization in comment $c$ between groups $\sdbgroup \in \Sdbgroup(\sdbdim))$ by randomly splitting the comment's annotations in $\lvert \Sdbgroup(\sdbdim) \rvert$ groups, with each random group having size equal to that of the observed groups. For instance, if we have $100$ annotations, $80$ of which are made by male annotators and $20$ by female annotators, we will create random partitions of sizes $80$ and $20$. We can then sample the randomly partitioned annotations $t$ times. Formally, we define it as:
  
  \begin{equation}
+ 	\label{eq:pol_expected}
  	pol_{expected}(c, \sdbdim, \sdbgroup) = \frac{1}{t} \sum_{i=1}^t  nDFU(\tilde{P}_i(A(c)))
  \end{equation}
  \noindent where each $\tilde{P}_i(A(c), \sdbdim, \sdbgroup)$ is a random partition of the annotation set $A(c)$ into $\lvert \Sdbgroup(\sdbdim) \rvert$ subsets with sizes matching the original, individual partitions ($\lvert \tilde{P}_i(A, \sdbdim, \sdbgroup) \rvert = \lvert P(A, \sdbdim, \sdbgroup) \rvert, \forall \sdbgroup \in \Sdbgroup(\sdbdim) , i=1, \ldots, t$).
@@ -88,7 +89,7 @@ Intuitively, dimension $\sdbdim$ partially explains polarization when the annota
 	\textit{pol}(c, \sdbdim, \sdbgroup)  = pol_{actual}(c, \sdbdim, \sdbgroup)) - pol_{expected}(c, \sdbdim, \sdbgroup)
 \end{equation}
 
-\begin{figure}[t]
+\begin{figure}
 	\centering
 	\includegraphics[width=\linewidth]{ndfu_multi_comments.png}
 	\caption{Hypothetical example of a polarizing discussion with two comments, for which the annotators disagree which is the toxic one. If we aggregate the two comments, the polarization scores for both men and women significantly rise, obscuring whether the exhibited polarization can be partially attributed to gender. In this example, the annotation set $A$ was generated as $A_{men} \sim \mathcal{N}(6, 1), A_{women} \sim \mathcal{N}(2, 1), \lvert A_{men} \rvert = \lvert A_{women} \rvert = 200$ for the first comment, and $A_{men} \sim \mathcal{N}(2, 1), A_{women} \sim \mathcal{N}(6, 1), \lvert A_{men} \rvert = \lvert A_{women} \rvert = 200$ for the second.}
@@ -103,16 +104,18 @@ Intuitively, dimension $\sdbdim$ partially explains polarization when the annota
 By obtaining the pol statistics for all comments in a discussion $d$ we can apply a mean test with the null hypothesis :
 
 \begin{equation}
+	\label{eq:null_h}
 	H_0: \forall \sdbgroup \in \Sdbgroup(\sdbdim), \frac{1}{\lvert d \rvert} \sum\limits_{c \in d} pol(c, \sdbdim,  \sdbgroup) = 0
 \end{equation}
 \noindent versus the (multiple) alternative hypotheses: 
 \begin{equation}
+	\label{eq:alt_h}
 	H_{\sdbgroup}:\frac{1}{\lvert d \rvert} \sum\limits_{c \in d}  pol(c, \sdbdim, \sdbgroup) >  0
 \end{equation}
 
 We refer to this test as the \textit{``Aposteriori Unimodality Test''}, where a small p-value suggests that we can not rule out that annotators of the $\sdbgroup$ group make a significant contribution to the overall annotator polarization. The scope of the test and its relationship with the previously presented statistics are demonstrated in Figure~\ref{fig::overview}.
 
-\begin{figure}[t]
+\begin{figure}
 	\includegraphics[width=\linewidth]{overview.png}
 	\caption{An overview of the Aposteriori Unimodality Test. We gather statistical information from the annotations (different \acp{SDB} are denoted by different colors) via the \ac{nDFU} measure, which is aggregated on the comment-level by the pol-statistic. The Aposteriori Unimodality Test is applied on the discussion level, operating on the pol-statistics of the individual comments.}
 	\label{fig::overview}
@@ -122,7 +125,9 @@ We refer to this test as the \textit{``Aposteriori Unimodality Test''}, where a 
 \subsection{Technical Details}
 \label{ssec:methodology:details}
 
-Since we are considering $\lvert G_{\sdbdim} \rvert$ tests, we apply a multiple comparison correction to the resulting p-values. We choose the Bonferroni method \parencite{Bland170}, since it is widely used, generally conservative, and especially so towards correlated hypotheses \parencite{ChenFengYi2017}. The last point is important, since many annotation groups are likely to be inter-correlated (e.g., age categories such as 50-60 and 60-70 years). Furthermore, one of its biggest weaknesses (the presence of very large numbers of hypotheses \parencite{ChenFengYi2017}) is unlikely to be met in annotation tasks.
+The means test performed on the pol-statistics of each comment (Equations~\ref{eq:null_h},~\ref{eq:alt_h}) can be theoretically performed by most well-known statistical mean tests. In our case, we use the one one-sample Student t-test. Additionally, since we are simultaneously considering $\lvert \Sdbgroup(\sdbdim) \rvert$ hypotheses, we apply a multiple comparison correction to the resulting p-values. We choose the Bonferroni method \parencite{Bland170}, since it is widely used, generally conservative, and especially so towards correlated hypotheses \parencite{ChenFengYi2017}. The last point is important, since many annotation groups are likely to be inter-correlated (e.g., age categories such as $50-60$ and $60-70$ years). Furthermore, one of its biggest weaknesses (the presence of very large numbers of hypotheses \parencite{ChenFengYi2017}) is unlikely to be met in annotation tasks.
+
+The Aposteriori Unimodality Test is actually parameterized by two more parameters: the $t$ parameter, which determines how many times we sample random partitions (Equation~\ref{eq:pol_expected}), and the \ac{FWER}, which is used to tune the strength of the multiple comparison correction mentioned above. We can increase the $t$ parameter to get a better estimate of the expected comment polarization, while increasing the computational cost of the method. We can also increase the \ac{FWER} to make our test more conservative towards multiple hypotheses \parencite{ChenFengYi2017}). In general, it is safe to set \ac{FWER} equal to the significance level of our test (e.g., $FWER = 0.95$ if we are looking for $p < 0.05$)
 
 
 \section{Acronyms}
@@ -130,6 +135,7 @@ Since we are considering $\lvert G_{\sdbdim} \rvert$ tests, we apply a multiple 
 \begin{acronym}[WWW]
     \acro{SDB}{SocioDemographic Background}
     \acro{nDFU}{normalized Distance From Unimodality}
+	\acro{FWER}{Family-Wise Error Rate}
 \end{acronym}
 
 \printbibliography
