@@ -1,5 +1,5 @@
 *.csv
-
+synthetic.csv
 
 ## Core latex/pdflatex auxiliary files:
 *.aux

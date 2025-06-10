@@ -1,7 +1,13 @@
 from pathlib import Path
 
 import numpy as np
-import syndisco
+import pandas as pd
+import syndisco.backend.model
+import syndisco.backend.persona
+import syndisco.backend.actors
+import syndisco.experiments
+import syndisco.util.logging_util
+import syndisco.postprocessing
 
 
 NUM_ANNOTATORS = 100
@@ -34,8 +40,9 @@ Output: Toxicity=4
 
 Annotate the following conversation without engaging with it:
 """
-INPUT_DIR = Path("./input")
-OUTPUT_DIR = Path("./output")
+INPUT_DIR = Path("/media/SSD_2TB/dtsirmpas_data/projects/aposteriori-unimodality/data/synthetic/input/")
+OUTPUT_DIR = Path("/media/SSD_2TB/dtsirmpas_data/projects/aposteriori-unimodality/data/synthetic/output/")
+LOGS_DIR = Path("/media/SSD_2TB/dtsirmpas_data/projects/aposteriori-unimodality/data/synthetic/logs/")
 
 
 def main():
@@ -53,17 +60,35 @@ def main():
         p=[0.45, 0.45, 0.1],
     )
     sex_orient = rng.choice(
-        ["straight", "homosexual", "bisexual", "other"], p=[0.7, 0.1, 0.1, 0.1]
+        ["straight", "homosexual", "bisexual", "other"],
+        size=NUM_ANNOTATORS,
+        p=[0.7, 0.1, 0.1, 0.1],
     )
-    group = ["black", "white", "asian", "other"]
-    characteristics = [
-        "right-wing conservative",
-        "left-wing liberal",
-        "apolitical",
-    ]
+    group = rng.choice(
+        ["black", "white", "asian", "other"], size=NUM_ANNOTATORS
+    )
+    characteristics = rng.choice(
+        [
+            "right-wing conservative",
+            "left-wing liberal",
+            "apolitical",
+        ],
+        size=NUM_ANNOTATORS,
+    )
 
     model = syndisco.backend.model.TransformersModel(
-        model_path="unsloth/Llama-3.3-70B-Instruct-bnb-4bit", name="llama3.3"
+        model_path="unsloth/Llama-3.3-70B-Instruct-bnb-4bit",
+        name="llama3.3",
+        max_out_tokens=20,
+    )
+
+    syndisco.util.logging_util.logging_setup(
+        print_to_terminal=True,
+        write_to_file=True,
+        logs_dir=LOGS_DIR,
+        level="debug",
+        use_colors=True,
+        log_warnings=True,
     )
 
     annotators = []
@@ -93,6 +118,10 @@ def main():
         annotators=annotators
     )
     experiment.begin(discussions_dir=INPUT_DIR, output_dir=OUTPUT_DIR)
+    annotations_df = syndisco.postprocessing.import_annotations(
+        annot_dir=OUTPUT_DIR
+    )
+    annotations_df.to_csv(OUTPUT_DIR / "100_annotators.csv")
 
 
 if __name__ == "__main__":
