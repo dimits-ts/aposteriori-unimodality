@@ -1,5 +1,4 @@
-*.csv
-synthetic.csv
+attitudes_embedded.csv
 
 ## Core latex/pdflatex auxiliary files:
 *.aux
