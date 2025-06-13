@@ -52,7 +52,7 @@ LOGS_DIR = Path(
 
 def main():
     rng = np.random.default_rng(42)
-    ages = rng.uniform(low=15, high=90, size=NUM_ANNOTATORS)
+    ages = np.floor(rng.uniform(low=15, high=90, size=NUM_ANNOTATORS))
     education = rng.choice(
         ["high-school", "university", "none"], size=NUM_ANNOTATORS
     )
