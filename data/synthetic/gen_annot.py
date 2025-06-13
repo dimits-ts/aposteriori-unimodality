@@ -2,11 +2,10 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import syndisco.backend.model
-import syndisco.backend.persona
-import syndisco.backend.actors
+import syndisco.model
+import syndisco.actors
 import syndisco.experiments
-import syndisco.util.logging_util
+import syndisco.logging_util
 import syndisco.postprocessing
 
 
@@ -40,9 +39,15 @@ Output: Toxicity=4
 
 Annotate the following conversation without engaging with it:
 """
-INPUT_DIR = Path("/media/SSD_2TB/dtsirmpas_data/projects/aposteriori-unimodality/data/synthetic/input/")
-OUTPUT_DIR = Path("/media/SSD_2TB/dtsirmpas_data/projects/aposteriori-unimodality/data/synthetic/output/")
-LOGS_DIR = Path("/media/SSD_2TB/dtsirmpas_data/projects/aposteriori-unimodality/data/synthetic/logs/")
+INPUT_DIR = Path(
+    "/media/SSD_4TB_2/dtsirmpas/projects/aposteriori-unimodality/data/synthetic/input/"
+)
+OUTPUT_DIR = Path(
+    "/media/SSD_4TB_2/dtsirmpas/projects/aposteriori-unimodality/data/synthetic/output/"
+)
+LOGS_DIR = Path(
+    "/media/SSD_4TB_2/dtsirmpas/projects/aposteriori-unimodality/data/synthetic/logs/"
+)
 
 
 def main():
@@ -76,13 +81,13 @@ def main():
         size=NUM_ANNOTATORS,
     )
 
-    model = syndisco.backend.model.TransformersModel(
+    model = syndisco.model.TransformersModel(
         model_path="unsloth/Llama-3.3-70B-Instruct-bnb-4bit",
         name="llama3.3",
         max_out_tokens=20,
     )
 
-    syndisco.util.logging_util.logging_setup(
+    syndisco.logging_util.logging_setup(
         print_to_terminal=True,
         write_to_file=True,
         logs_dir=LOGS_DIR,
@@ -93,8 +98,8 @@ def main():
 
     annotators = []
     for i in range(NUM_ANNOTATORS):
-        persona = syndisco.backend.persona.LLMPersona(
-            username="",
+        persona = syndisco.actors.Persona(
+            username="annotator",
             age=ages[i],
             sex=sexes[i],
             sexual_orientation=sex_orient[i],
@@ -104,20 +109,21 @@ def main():
             special_instructions="",
             personality_characteristics=characteristics[i],
         )
-        actor = syndisco.backend.actors.LLMActor(
+        actor = syndisco.actors.Actor(
             model=model,
-            name="annotator",
-            attributes=persona.to_attribute_list(),
+            persona=persona,
             context=CONTEXT,
             instructions=INSTRUCTIONS,
-            actor_type=syndisco.backend.actors.ActorType.ANNOTATOR,
+            actor_type=syndisco.actors.ActorType.ANNOTATOR,
         )
         annotators.append(actor)
 
     experiment = syndisco.experiments.AnnotationExperiment(
         annotators=annotators
     )
-    experiment.begin(discussions_dir=INPUT_DIR, output_dir=OUTPUT_DIR)
+    experiment.begin(
+        discussions_dir=INPUT_DIR, output_dir=OUTPUT_DIR, verbose=False
+    )
     annotations_df = syndisco.postprocessing.import_annotations(
         annot_dir=OUTPUT_DIR
     )
