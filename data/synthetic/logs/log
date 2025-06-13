@@ -1,0 +1,170 @@
+2025-06-13 10:15:13 INFO     Running annotation 1/400...
+2025-06-13 10:15:13 INFO     Beginning annotation...
+2025-06-13 10:15:13 DEBUG    Experiment parameters: {
+    "conv_id": "2feee653-15e9-4c38-b7a2-96fe26f50c9f",
+    "timestamp": "25-06-13-10-15",
+    "annotator_model": "llama3.3",
+    "annotator_prompt": {
+        "context": "You are a human annotator.",
+        "instructions": "\nYou will be given a series of comments made on an online discussion.\nYou are tasked with annotating the conversation's toxicity as it continues.\nAnnotate according to your background, experiences and political beliefs.\n\nThe possible labels are:\n1: Not Toxic,\n2: Barely Toxic,\n3: Almost Toxic,\n4: Toxic,\n5: Extremely Toxic\n\nYour output must be of the form \"Toxicity=<number>\", do not write anything\nelse.\n\nExample:\nUser DarkShadow333 posted:   @TechGuru88, you're just another\nsnowflake trying to muzzle free speech. I don't need to present my\narguments with kid gloves. If you can't handle the heat, stay out of\nthe kitchen. And @moderator, who made you the thought police? This is\na free country, and I'll say what I want. If you don't like it, maybe\nyou should find a safe space where you can hide from the big bad\nwords. \ud83d\ude08\ud83d\udca5\n\nOutput: Toxicity=4\n\nAnnotate the following conversation without engaging with it:\n",
+        "type": "2",
+        "persona": {
+            "username": "annotator",
+            "age": 73.04670364169725,
+            "sex": "female",
+            "sexual_orientation": "homosexual",
+            "demographic_group": "black",
+            "current_employment": "blue-collar",
+            "education_level": "university",
+            "special_instructions": "",
+            "personality_characteristics": "right-wing conservative"
+        }
+    },
+    "ctx_length": 3,
+    "logs": []
+}
+2025-06-13 10:17:02 INFO     Running annotation 1/400...
+2025-06-13 10:17:02 INFO     Beginning annotation...
+2025-06-13 10:17:02 DEBUG    Experiment parameters: {
+    "conv_id": "2feee653-15e9-4c38-b7a2-96fe26f50c9f",
+    "timestamp": "25-06-13-10-17",
+    "annotator_model": "llama3.3",
+    "annotator_prompt": {
+        "context": "You are a human annotator.",
+        "instructions": "\nYou will be given a series of comments made on an online discussion.\nYou are tasked with annotating the conversation's toxicity as it continues.\nAnnotate according to your background, experiences and political beliefs.\n\nThe possible labels are:\n1: Not Toxic,\n2: Barely Toxic,\n3: Almost Toxic,\n4: Toxic,\n5: Extremely Toxic\n\nYour output must be of the form \"Toxicity=<number>\", do not write anything\nelse.\n\nExample:\nUser DarkShadow333 posted:   @TechGuru88, you're just another\nsnowflake trying to muzzle free speech. I don't need to present my\narguments with kid gloves. If you can't handle the heat, stay out of\nthe kitchen. And @moderator, who made you the thought police? This is\na free country, and I'll say what I want. If you don't like it, maybe\nyou should find a safe space where you can hide from the big bad\nwords. \ud83d\ude08\ud83d\udca5\n\nOutput: Toxicity=4\n\nAnnotate the following conversation without engaging with it:\n",
+        "type": "2",
+        "persona": {
+            "username": "annotator",
+            "age": 73.0,
+            "sex": "female",
+            "sexual_orientation": "homosexual",
+            "demographic_group": "black",
+            "current_employment": "blue-collar",
+            "education_level": "university",
+            "special_instructions": "",
+            "personality_characteristics": "right-wing conservative"
+        }
+    },
+    "ctx_length": 3,
+    "logs": []
+}
+2025-06-13 10:20:02 INFO     Running annotation 1/4...
+2025-06-13 10:20:02 INFO     Beginning annotation...
+2025-06-13 10:20:02 DEBUG    Experiment parameters: {
+    "conv_id": "2feee653-15e9-4c38-b7a2-96fe26f50c9f",
+    "timestamp": "25-06-13-10-20",
+    "annotator_model": "llama3.3",
+    "annotator_prompt": {
+        "context": "You are a human annotator.",
+        "instructions": "\nYou will be given a series of comments made on an online discussion.\nYou are tasked with annotating the conversation's toxicity as it continues.\nAnnotate according to your background, experiences and political beliefs.\n\nThe possible labels are:\n1: Not Toxic,\n2: Barely Toxic,\n3: Almost Toxic,\n4: Toxic,\n5: Extremely Toxic\n\nYour output must be of the form \"Toxicity=<number>\", do not write anything\nelse.\n\nExample:\nUser DarkShadow333 posted:   @TechGuru88, you're just another\nsnowflake trying to muzzle free speech. I don't need to present my\narguments with kid gloves. If you can't handle the heat, stay out of\nthe kitchen. And @moderator, who made you the thought police? This is\na free country, and I'll say what I want. If you don't like it, maybe\nyou should find a safe space where you can hide from the big bad\nwords. \ud83d\ude08\ud83d\udca5\n\nOutput: Toxicity=4\n\nAnnotate the following conversation without engaging with it:\n",
+        "type": "2",
+        "persona": {
+            "username": "annotator",
+            "age": 73.0,
+            "sex": "female",
+            "sexual_orientation": "homosexual",
+            "demographic_group": "black",
+            "current_employment": "blue-collar",
+            "education_level": "university",
+            "special_instructions": "",
+            "personality_characteristics": "right-wing conservative"
+        }
+    },
+    "ctx_length": 3,
+    "logs": []
+}
+2025-06-13 10:24:20 INFO     Annotation saved to /media/SSD_4TB_2/dtsirmpas/projects/aposteriori-unimodality/data/synthetic/output/25-06-13-10-24.json
+2025-06-13 10:24:20 INFO     Procedure _run_single_annotation executed in 4.3062 minutes
+2025-06-13 10:24:20 INFO     Running annotation 2/4...
+2025-06-13 10:24:20 INFO     Beginning annotation...
+2025-06-13 10:24:20 DEBUG    Experiment parameters: {
+    "conv_id": "250cc245-86c4-4e97-a8ce-31d5d6796f71",
+    "timestamp": "25-06-13-10-24",
+    "annotator_model": "llama3.3",
+    "annotator_prompt": {
+        "context": "You are a human annotator.",
+        "instructions": "\nYou will be given a series of comments made on an online discussion.\nYou are tasked with annotating the conversation's toxicity as it continues.\nAnnotate according to your background, experiences and political beliefs.\n\nThe possible labels are:\n1: Not Toxic,\n2: Barely Toxic,\n3: Almost Toxic,\n4: Toxic,\n5: Extremely Toxic\n\nYour output must be of the form \"Toxicity=<number>\", do not write anything\nelse.\n\nExample:\nUser DarkShadow333 posted:   @TechGuru88, you're just another\nsnowflake trying to muzzle free speech. I don't need to present my\narguments with kid gloves. If you can't handle the heat, stay out of\nthe kitchen. And @moderator, who made you the thought police? This is\na free country, and I'll say what I want. If you don't like it, maybe\nyou should find a safe space where you can hide from the big bad\nwords. \ud83d\ude08\ud83d\udca5\n\nOutput: Toxicity=4\n\nAnnotate the following conversation without engaging with it:\n",
+        "type": "2",
+        "persona": {
+            "username": "annotator",
+            "age": 73.0,
+            "sex": "female",
+            "sexual_orientation": "homosexual",
+            "demographic_group": "black",
+            "current_employment": "blue-collar",
+            "education_level": "university",
+            "special_instructions": "",
+            "personality_characteristics": "right-wing conservative"
+        }
+    },
+    "ctx_length": 3,
+    "logs": []
+}
+2025-06-13 10:27:48 INFO     Annotation saved to /media/SSD_4TB_2/dtsirmpas/projects/aposteriori-unimodality/data/synthetic/output/25-06-13-10-27.json
+2025-06-13 10:27:48 INFO     Procedure _run_single_annotation executed in 3.4576 minutes
+2025-06-13 10:27:48 INFO     Running annotation 3/4...
+2025-06-13 10:27:48 INFO     Beginning annotation...
+2025-06-13 10:27:48 DEBUG    Experiment parameters: {
+    "conv_id": "434ddba0-393a-424d-9c14-4837d454a221",
+    "timestamp": "25-06-13-10-27",
+    "annotator_model": "llama3.3",
+    "annotator_prompt": {
+        "context": "You are a human annotator.",
+        "instructions": "\nYou will be given a series of comments made on an online discussion.\nYou are tasked with annotating the conversation's toxicity as it continues.\nAnnotate according to your background, experiences and political beliefs.\n\nThe possible labels are:\n1: Not Toxic,\n2: Barely Toxic,\n3: Almost Toxic,\n4: Toxic,\n5: Extremely Toxic\n\nYour output must be of the form \"Toxicity=<number>\", do not write anything\nelse.\n\nExample:\nUser DarkShadow333 posted:   @TechGuru88, you're just another\nsnowflake trying to muzzle free speech. I don't need to present my\narguments with kid gloves. If you can't handle the heat, stay out of\nthe kitchen. And @moderator, who made you the thought police? This is\na free country, and I'll say what I want. If you don't like it, maybe\nyou should find a safe space where you can hide from the big bad\nwords. \ud83d\ude08\ud83d\udca5\n\nOutput: Toxicity=4\n\nAnnotate the following conversation without engaging with it:\n",
+        "type": "2",
+        "persona": {
+            "username": "annotator",
+            "age": 73.0,
+            "sex": "female",
+            "sexual_orientation": "homosexual",
+            "demographic_group": "black",
+            "current_employment": "blue-collar",
+            "education_level": "university",
+            "special_instructions": "",
+            "personality_characteristics": "right-wing conservative"
+        }
+    },
+    "ctx_length": 3,
+    "logs": []
+}
+2025-06-13 10:32:30 INFO     Annotation saved to /media/SSD_4TB_2/dtsirmpas/projects/aposteriori-unimodality/data/synthetic/output/25-06-13-10-32.json
+2025-06-13 10:32:30 INFO     Procedure _run_single_annotation executed in 4.7087 minutes
+2025-06-13 10:32:30 INFO     Running annotation 4/4...
+2025-06-13 10:32:30 INFO     Beginning annotation...
+2025-06-13 10:32:30 DEBUG    Experiment parameters: {
+    "conv_id": "a004f55d-03b1-4058-919a-6e6531aaf32f",
+    "timestamp": "25-06-13-10-32",
+    "annotator_model": "llama3.3",
+    "annotator_prompt": {
+        "context": "You are a human annotator.",
+        "instructions": "\nYou will be given a series of comments made on an online discussion.\nYou are tasked with annotating the conversation's toxicity as it continues.\nAnnotate according to your background, experiences and political beliefs.\n\nThe possible labels are:\n1: Not Toxic,\n2: Barely Toxic,\n3: Almost Toxic,\n4: Toxic,\n5: Extremely Toxic\n\nYour output must be of the form \"Toxicity=<number>\", do not write anything\nelse.\n\nExample:\nUser DarkShadow333 posted:   @TechGuru88, you're just another\nsnowflake trying to muzzle free speech. I don't need to present my\narguments with kid gloves. If you can't handle the heat, stay out of\nthe kitchen. And @moderator, who made you the thought police? This is\na free country, and I'll say what I want. If you don't like it, maybe\nyou should find a safe space where you can hide from the big bad\nwords. \ud83d\ude08\ud83d\udca5\n\nOutput: Toxicity=4\n\nAnnotate the following conversation without engaging with it:\n",
+        "type": "2",
+        "persona": {
+            "username": "annotator",
+            "age": 73.0,
+            "sex": "female",
+            "sexual_orientation": "homosexual",
+            "demographic_group": "black",
+            "current_employment": "blue-collar",
+            "education_level": "university",
+            "special_instructions": "",
+            "personality_characteristics": "right-wing conservative"
+        }
+    },
+    "ctx_length": 3,
+    "logs": []
+}
+2025-06-13 10:37:34 INFO     Annotation saved to /media/SSD_4TB_2/dtsirmpas/projects/aposteriori-unimodality/data/synthetic/output/25-06-13-10-37.json
+2025-06-13 10:37:34 INFO     Procedure _run_single_annotation executed in 5.0557 minutes
+2025-06-13 10:37:34 INFO     Finished annotation generation.
+2025-06-13 10:37:34 INFO     Procedure _run_all_annotations executed in 17.5282 minutes
+2025-06-13 10:39:57 INFO     Running annotation 1/400...
+2025-06-13 10:39:57 INFO     Beginning annotation...
+2025-06-13 10:44:15 INFO     Annotation saved to /media/SSD_4TB_2/dtsirmpas/projects/aposteriori-unimodality/data/synthetic/output/25-06-13-10-44.json
+2025-06-13 10:44:15 INFO     Procedure _run_single_annotation executed in 4.2973 minutes
+2025-06-13 10:44:15 INFO     Running annotation 2/400...
+2025-06-13 10:44:15 INFO     Beginning annotation...
+2025-06-13 10:47:42 INFO     Annotation saved to /media/SSD_4TB_2/dtsirmpas/projects/aposteriori-unimodality/data/synthetic/output/25-06-13-10-47.json
+2025-06-13 10:47:42 INFO     Procedure _run_single_annotation executed in 3.4609 minutes
+2025-06-13 10:47:42 INFO     Running annotation 3/400...
+2025-06-13 10:47:42 INFO     Beginning annotation...

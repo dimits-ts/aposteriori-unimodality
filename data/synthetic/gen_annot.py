@@ -45,6 +45,9 @@ INPUT_DIR = Path(
 OUTPUT_DIR = Path(
     "/media/SSD_4TB_2/dtsirmpas/projects/aposteriori-unimodality/data/synthetic/output/"
 )
+DATASET_OUTPUT_PATH = Path(
+    "/media/SSD_4TB_2/dtsirmpas/projects/aposteriori-unimodality/data/100_annotators.csv"
+)
 LOGS_DIR = Path(
     "/media/SSD_4TB_2/dtsirmpas/projects/aposteriori-unimodality/data/synthetic/logs/"
 )
@@ -91,7 +94,7 @@ def main():
         print_to_terminal=True,
         write_to_file=True,
         logs_dir=LOGS_DIR,
-        level="debug",
+        level="info",
         use_colors=True,
         log_warnings=True,
     )
@@ -127,7 +130,7 @@ def main():
     annotations_df = syndisco.postprocessing.import_annotations(
         annot_dir=OUTPUT_DIR
     )
-    annotations_df.to_csv(OUTPUT_DIR / "100_annotators.csv")
+    annotations_df.to_csv(DATASET_OUTPUT_PATH)
 
 
 if __name__ == "__main__":
