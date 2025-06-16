@@ -27,7 +27,38 @@ def extract_annotations_and_attributes(
     return all_annotations, all_attributes, all_keys
 
 
-def run_aposteriori(
+def results(
+    df,
+    discussion_id_col: str,
+    sdb_column: str,
+    value_col: str,
+    comment_key_col: str,
+) -> pd.DataFrame:
+    res_ls = []
+
+    # get results for each discussion
+    discussion_ids = df.reset_index()[discussion_id_col].unique()
+    for discussion_id in discussion_ids:
+        discussion_df = df
+        discussion_df = discussion_df.reset_index()
+        discussion_df = discussion_df[
+            discussion_df[discussion_id_col] == discussion_id
+        ]
+
+        res = _run_aposteriori(
+            discussion_df,
+            feature_col=sdb_column,
+            value_col=value_col,
+            comment_key_col=comment_key_col,
+        )
+        res_ls.append(res)
+
+    return pd.concat(
+        {_id: result for _id, result in zip(discussion_ids, res_ls)}, axis=1
+    )
+
+
+def _run_aposteriori(
     df: pd.DataFrame,
     value_col: str,
     feature_col: str,
@@ -51,5 +82,6 @@ def run_aposteriori(
         comment_group=keys,
         bins=bins,
         alpha=alpha,
+        iterations=1000
     )
     return pd.Series(stat)
