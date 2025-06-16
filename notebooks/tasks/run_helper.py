@@ -32,7 +32,8 @@ def run_aposteriori(
     value_col: str,
     feature_col: str,
     comment_key_col: str,
-    bins: int = -1
+    alpha: float = 0.01,
+    bins: int = -1,
 ) -> pd.Series:
     if bins == -1:
         bins = len(np.unique(df[value_col]))
@@ -49,5 +50,6 @@ def run_aposteriori(
         factor_group=attributes,
         comment_group=keys,
         bins=bins,
+        alpha=alpha,
     )
     return pd.Series(stat)
