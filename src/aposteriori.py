@@ -1,4 +1,4 @@
-from typing import TypeVar, Iterable, Generic
+from typing import TypeVar, Iterable, Generic, Any
 from collections.abc import Collection
 
 import numpy as np
@@ -107,7 +107,7 @@ def aposteriori_unimodality(
     comment_group: Collection[FactorType],
     bins: int,
     iterations: int = 100,
-    alpha: float = 0.001,
+    alpha: float = 0.1,
 ) -> dict[FactorType, float]:
     """
     Perform the Aposteriori Unimodality Test to identify whether any annotator
@@ -179,12 +179,12 @@ def aposteriori_unimodality(
     comment_group = np.array(comment_group)
 
     # keeps list for each factor, each value in the list is a comment
-    all_factors = np.unique(factor_group)
+    all_factors = _unique(factor_group)
     factor_dict = _ListDict()
     randomized_ndfu_dict = _ListDict()
 
     # select comment
-    for curr_comment_id in np.unique(comment_group):
+    for curr_comment_id in _unique(comment_group):
         # select only annotations relevant to this comment
         is_in_curr_comment = comment_group == curr_comment_id
         all_comment_annotations = annotations[is_in_curr_comment]
@@ -232,10 +232,10 @@ def _validate_input(
     if len(annotations) == 0:
         raise ValueError("No annotations given.")
 
-    if len(np.unique(annotator_group)) < 2:
+    if len(_unique(annotator_group)) < 2:
         raise ValueError("Only one group was provided.")
 
-    if len(np.unique(comment_group)) < 2:
+    if len(_unique(comment_group)) < 2:
         raise ValueError(
             "Only one comment was provided. "
             "The Aposteriori Unimodality Test is defined for discussions, "
@@ -271,7 +271,7 @@ def _factor_polarization_stat(
         raise ValueError("Empty annotation list given.")
 
     stats = {}
-    for factor in np.unique(annotator_group):
+    for factor in _unique(annotator_group):
         factor_annotations = all_comment_annotations[annotator_group == factor]
         if len(factor_annotations) == 0:
             stats[factor] = np.nan
@@ -438,3 +438,7 @@ def _to_hist(scores: np.ndarray[float], bins: int) -> np.ndarray:
 
     counts, bins = np.histogram(a=scores_array, bins=bins, density=True)
     return counts
+
+
+def _unique(x: Iterable[Any]) -> Iterable[Any]:
+    return set(x)

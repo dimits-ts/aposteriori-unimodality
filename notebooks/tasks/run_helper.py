@@ -19,7 +19,7 @@ def extract_annotations_and_attributes(
 
         if len(values) != len(factors):
             raise ValueError(
-                f"values {values} (length {len(values)}) \n"
+                f"Values {values} (length {len(values)}) \n"
                 f"have different length than factors{factors} "
                 f"(length {len(factors)})"
             )
@@ -44,7 +44,7 @@ def results(
     # get results for each discussion
     discussion_ids = df.reset_index()[discussion_id_col].unique()
     for discussion_id in tqdm(discussion_ids):
-        discussion_df = df
+        discussion_df = df.dropna(subset=sdb_column)
         discussion_df = discussion_df.reset_index()
         discussion_df = discussion_df[
             discussion_df[discussion_id_col] == discussion_id
@@ -68,7 +68,7 @@ def _run_aposteriori(
     value_col: str,
     feature_col: str,
     comment_key_col: str,
-    alpha: float = 0.01,
+    alpha: float = 0.1,
     bins: int = -1,
 ) -> pd.Series:
     if bins == -1:
