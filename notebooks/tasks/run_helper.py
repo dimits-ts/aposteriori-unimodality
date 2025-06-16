@@ -16,10 +16,14 @@ def extract_annotations_and_attributes(
         values = row[value_col]
         factors = row[feature_col]
         key = row[comment_key_col]
-        assert len(values) == len(
-            factors
-        ), f"values {values} (length {len(values)}) \n"
-        f"have different length than factors{factors} (length {len(factors)})"
+
+        if len(values) != len(factors):
+            raise ValueError(
+                f"values {values} (length {len(values)}) \n"
+                f"have different length than factors{factors} "
+                f"(length {len(factors)})"
+            )
+
         all_annotations.extend(values)
         all_attributes.extend(factors)
         # extend the key for each value in the above extracted list
@@ -83,6 +87,6 @@ def _run_aposteriori(
         comment_group=keys,
         bins=bins,
         alpha=alpha,
-        iterations=1000
+        iterations=1000,
     )
     return pd.Series(stat)
