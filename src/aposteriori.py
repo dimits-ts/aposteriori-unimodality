@@ -368,14 +368,10 @@ def _raw_significance(
 
     pvalues_by_factor = {}
 
-    for factor in stats_by_factor.keys():
-        expected_mean = np.mean(global_ndfus[factor])
-        pol_stats = stats_by_factor[factor]
-
-        if np.isnan(expected_mean):
-            # annotations are completely identical
-            pvalues_by_factor[factor] = 1
-        else:
+    try:
+        for factor in stats_by_factor.keys():
+            expected_mean = np.mean(global_ndfus[factor])
+            pol_stats = stats_by_factor[factor]
             pvalue = scipy.stats.ttest_1samp(
                 pol_stats,
                 expected_mean,
@@ -383,6 +379,8 @@ def _raw_significance(
                 nan_policy="omit",
             ).pvalue
             pvalues_by_factor[factor] = pvalue
+    except ValueError:
+        raise ValueError(f"Factor {factor} has no annotations.")
 
     return pvalues_by_factor
 
