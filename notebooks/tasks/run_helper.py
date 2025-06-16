@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from tqdm.auto import tqdm
 
 from src import aposteriori
 
@@ -38,7 +39,7 @@ def results(
 
     # get results for each discussion
     discussion_ids = df.reset_index()[discussion_id_col].unique()
-    for discussion_id in discussion_ids:
+    for discussion_id in tqdm(discussion_ids):
         discussion_df = df
         discussion_df = discussion_df.reset_index()
         discussion_df = discussion_df[
