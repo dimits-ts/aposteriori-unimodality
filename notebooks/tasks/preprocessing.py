@@ -13,3 +13,13 @@ def find_inconsistent_rows(df: pd.DataFrame) -> pd.DataFrame:
             inconsistent_rows.append(index)
 
     return df.loc[inconsistent_rows]
+
+
+def age_bracket(age: int) -> str:
+    if 10 <= age <= 30:
+        return "Young"
+    if age <= 50:
+        return "Middle Aged"
+    if age <= 120:
+        return "Old"
+    raise ValueError(f"Invalid age: {age}")
