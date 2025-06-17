@@ -332,9 +332,9 @@ def _random_partition(
     Raises:
     - ValueError: if the sum of sizes does not match the length of arr.
     """
-    if sum(sizes) != len(arr):
+    if np.sum(sizes) != len(arr):
         raise ValueError(
-            f"Sum of sizes ({sum(sizes)}) must equal length "
+            f"Sum of sizes ({np.sum(sizes)}) must equal length "
             f"of input array ({len(arr)})."
         )
 
