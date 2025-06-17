@@ -207,12 +207,12 @@ def aposteriori_unimodality(
             group_sizes=lengths_by_factor,
             all_factors=all_factors,
             bins=bins,
-            iterations=100,
+            iterations=iterations,
         )
         randomized_ndfu_dict.add_dict(comment_randomized_ndfus)
 
     raw_pvalues = _raw_significance(randomized_ndfu_dict, factor_dict)
-    corrected_pvalues = _correct_significance(raw_pvalues, alpha=0.01)
+    corrected_pvalues = _correct_significance(raw_pvalues, alpha=alpha)
     return corrected_pvalues
 
 
