@@ -1,5 +1,6 @@
 from typing import TypeVar, Iterable, Generic, Any
 from collections.abc import Collection
+import json
 
 import numpy as np
 import scipy
@@ -58,6 +59,9 @@ class _ListDict(Generic[K, V]):
 
     def __len__(self):
         return len(self.dict)
+
+    def __str__(self):
+        return json.dumps(self.dict)
 
 
 # code adapted from John Pavlopoulos
@@ -355,38 +359,41 @@ def _raw_significance(
     """
     Performs a means test to determine the significance of
     differences in aposteriori statistics for a specific feature.
-
-    :param global_ndfus: A list of aposteriori statistics for a feature.
-    :type global_ndfus: _ListDict
-    :return: The aposteriori unimodality significance for each factor
-    :rtype: dict[`FactorType`, float]
-    :raises ValueError: if there is a mismatch between the number of comments
-        in the provided dictionary and the global_ndfus for any factor
     """
     if len(global_ndfus) == 0:
         return {}
 
     pvalues_by_factor = {}
 
-    try:
-        for factor in stats_by_factor.keys():
-            expected_mean = np.mean(global_ndfus[factor])
-            pol_stats = stats_by_factor[factor]
+    for factor in stats_by_factor.keys():
+        factor_ndfus = global_ndfus[factor]
+        pol_stats = stats_by_factor[factor]
+
+        expected_mean = np.nanmean(factor_ndfus)
+        pol_stats = [val for val in pol_stats if not np.isnan(val)]
+
+        if len(pol_stats) == 0:
+            # If there's no data, fall back to NaN or skip entirely
+            pvalue = np.nan
+        elif pol_stats == factor_ndfus:
+            # If full polarization on both random and actual comment 
+            # annotations, assume the polarization is caused by the shape 
+            # of the underlying distribution
+            pvalue = 1
+        else:
             pvalue = scipy.stats.ttest_1samp(
                 pol_stats,
                 expected_mean,
                 alternative="less",
                 nan_policy="omit",
             ).pvalue
-            pvalues_by_factor[factor] = pvalue
-    except ValueError:
-        raise ValueError(f"Factor {factor} has no annotations.")
+        pvalues_by_factor[factor] = pvalue
 
     return pvalues_by_factor
 
 
 def _correct_significance(
-    raw_pvalues: dict[FactorType, float], alpha: float = 0.05
+    raw_pvalues: dict[FactorType, float], alpha: float
 ) -> dict[FactorType, float]:
     """
     Apply a statistical correction to pvalues from multiple alternative
@@ -394,11 +401,12 @@ def _correct_significance(
 
     :param raw_pvalues: the pvalue of each hypothesis
     :type raw_pvalues: dict[`FactorType`, float]
-    :param alpha: the target significance, defaults to 0.05
+    :param alpha: the target significance
     :type alpha: float, optional
     :return: the corrected pvalues for each hypothesis
     :rtype: dict[`FactorType`, float]
     """
+    #print("Raw pvalues:", raw_pvalues)
     if len(raw_pvalues) == 0:
         return {}
 
@@ -410,6 +418,7 @@ def _correct_significance(
     corrected_pvalue_ls = _apply_correction(raw_pvalue_ls, alpha)
     # repackage dictionary
     corrected_pvalues_dict = dict(zip(keys, corrected_pvalue_ls))
+    #print("Corrected pvalues: ", corrected_pvalue_ls)
     return corrected_pvalues_dict
 
 
@@ -417,7 +426,7 @@ def _apply_correction(pvalues: Collection[float], alpha: float) -> np.ndarray:
     corrected_stats = statsmodels.stats.multitest.multipletests(
         np.array(pvalues),
         alpha=alpha,
-        method="bonferroni",
+        method="fdr_bh",
         is_sorted=False,
         returnsorted=False,
     )
