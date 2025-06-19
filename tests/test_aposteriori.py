@@ -58,9 +58,10 @@ class TestAposterioriUnimodality(unittest.TestCase):
             )
 
     def test_partitioned_bimodal_data_low_pvalue(self):
+        # TODO: refactor this to include actual sampling
         annotations = [1] * 50 + [5] * 50
         factor_group = ["left"] * 50 + ["right"] * 50
-        comment_group = ["c1"] * 25 + ["c2"] * 25 + ["c1"] * 25 + ["c2"] * 25
+        comment_group = ["c1"] * 45 + ["c2"] * 5 + ["c1"] * 5 + ["c2"] * 45
         result = aposteriori_unimodality(
             annotations, factor_group, comment_group, bins=5
         )

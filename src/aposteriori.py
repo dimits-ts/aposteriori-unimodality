@@ -379,7 +379,7 @@ def _raw_significance(
             pvalue = scipy.stats.ttest_1samp(
                 pol_stats,
                 expected_mean,
-                alternative="less",
+                alternative="greater",
                 nan_policy="omit",
             ).pvalue
             pvalues_by_factor[factor] = pvalue
