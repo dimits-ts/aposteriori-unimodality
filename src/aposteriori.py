@@ -5,7 +5,7 @@ import numpy as np
 import scipy
 import statsmodels.stats.multitest
 
-from _list_dict import _ListDict
+from . import _list_dict
 
 
 FactorType = TypeVar("Factor Type")
@@ -131,8 +131,8 @@ def aposteriori_unimodality(
 
     # keeps list for each factor, each value in the list is a comment
     all_factors = _unique(factor_group)
-    factor_dict = _ListDict()
-    randomized_ndfu_dict = _ListDict()
+    factor_dict = _list_dict._ListDict()
+    randomized_ndfu_dict = _list_dict._ListDict()
 
     # select comment
     for curr_comment_id in _unique(comment_group):
@@ -242,7 +242,7 @@ def _random_polarization_stat(
     # Split annotations in len(group_lengths) groups,
     # each of which has a length equal to the entries in group_lengths.
     # Then for each group run _factor_polarization_stat
-    all_random_ndfus = _ListDict()
+    all_random_ndfus = _list_dict._ListDict()
     for i in range(iterations):
         random_groups = _random_partition(
             annotations, np.array(list(group_sizes.values()))
@@ -301,7 +301,7 @@ def _random_partition(
 
 
 def _raw_significance(
-    global_ndfus: _ListDict, stats_by_factor: _ListDict
+    global_ndfus: _list_dict._ListDict, stats_by_factor: _list_dict._ListDict
 ) -> dict[FactorType, float]:
     """
     Performs a means test to determine the significance of
