@@ -1,15 +1,15 @@
+from collections.abc import Sequence
+
 import pandas as pd
+import numpy as np
 
 
-def find_inconsistent_rows(df: pd.DataFrame) -> pd.DataFrame:
+def find_inconsistent_rows(df: pd.DataFrame, columns: list[str]) -> pd.Series:
     inconsistent_rows = []
 
     for index, row in df.iterrows():
-        list_lengths = [
-            len(row[col]) for col in df.columns if isinstance(row[col], list)
-        ]
+        list_lengths = [len(row[col]) for col in columns]
+        # check if any list has different length
+        inconsistent_rows.append(len(set(list_lengths)) > 1)
 
-        if len(set(list_lengths)) > 1:  # Check if lengths are inconsistent
-            inconsistent_rows.append(index)
-
-    return df.loc[inconsistent_rows]
+    return np.array(inconsistent_rows)

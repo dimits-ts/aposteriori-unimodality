@@ -188,7 +188,8 @@ class TestRawSignificance(unittest.TestCase):
     def test_nan_or_invalid_values(self):
         global_ndfus = {"A": 0.3, "B": float("nan")}
         stats_by_factor = {"A": [0.3, 0.4], "B": [0.2, 0.1]}
-        _raw_significance(global_ndfus, stats_by_factor)
+        with self.assertRaises(ValueError):
+            _raw_significance(global_ndfus, stats_by_factor)
 
 
 class TestCorrectSignificance(unittest.TestCase):

@@ -1,63 +1,14 @@
-from typing import Any, TypeVar, Iterable, Generic
+from typing import TypeVar, Iterable, Any
 from collections.abc import Collection
 
 import numpy as np
 import scipy
 import statsmodels.stats.multitest
 
+from . import _list_dict
+
 
 FactorType = TypeVar("Factor Type")
-K = TypeVar('K')  # Key type
-V = TypeVar('V')  # Value type
-
-
-class _ListDict(Generic[K, V]):
-    """
-    A dictionary appending multiple values with the same key
-    to a list instead of overwriting them.
-    """
-
-    # TODO: Properly implement key error
-    def __init__(self):
-        """
-        Create a new ListDict which will hold arrays of equal length
-        for the values of each key.
-
-        :param all_factors: List of all possible factors
-            (ensures all keys updated)
-        :type all_factors: list
-        """
-        self.dict = {}
-
-    def keys(self) -> list[K, list[V]]:
-        return self.dict.keys()
-
-    def values(self) -> list[K, list[V]]:
-        return self.dict.values()
-
-    def items(self) -> list[tuple[K, list[V]]]:
-        return self.dict.items()
-
-    def __getitem__(self, key) -> list[V]:
-        return self.dict[key]
-
-    def __setitem__(self, key: K, value: V):
-        if key in self.dict:
-            self.dict[key].append(value)
-        else:
-            self.dict[key] = [value]
-
-    def add_dict(self, new_stats: dict[K, V]):
-        """
-        Update the _ListDict with at most one extra value per factor, keeping
-        all internal lists at the same length.
-        :param new_stats: Dictionary of {factor: stat}
-        """
-        for factor in new_stats:
-            self[factor] = new_stats[factor]
-
-    def __len__(self):
-        return len(self.dict)
 
 
 # code adapted from John Pavlopoulos
@@ -107,7 +58,7 @@ def aposteriori_unimodality(
     comment_group: Collection[FactorType],
     bins: int,
     iterations: int = 100,
-    alpha: float = 0.001,
+    alpha: float = 0.1,
 ) -> dict[FactorType, float]:
     """
     Perform the Aposteriori Unimodality Test to identify whether any annotator
@@ -179,12 +130,12 @@ def aposteriori_unimodality(
     comment_group = np.array(comment_group)
 
     # keeps list for each factor, each value in the list is a comment
-    all_factors = np.unique(factor_group)
-    factor_dict = _ListDict()
-    randomized_ndfu_dict = _ListDict()
+    all_factors = _unique(factor_group)
+    factor_dict = _list_dict._ListDict()
+    randomized_ndfu_dict = _list_dict._ListDict()
 
     # select comment
-    for curr_comment_id in np.unique(comment_group):
+    for curr_comment_id in _unique(comment_group):
         # select only annotations relevant to this comment
         is_in_curr_comment = comment_group == curr_comment_id
         all_comment_annotations = annotations[is_in_curr_comment]
@@ -207,12 +158,12 @@ def aposteriori_unimodality(
             group_sizes=lengths_by_factor,
             all_factors=all_factors,
             bins=bins,
-            iterations=100,
+            iterations=iterations,
         )
         randomized_ndfu_dict.add_dict(comment_randomized_ndfus)
 
     raw_pvalues = _raw_significance(randomized_ndfu_dict, factor_dict)
-    corrected_pvalues = _correct_significance(raw_pvalues, alpha=0.01)
+    corrected_pvalues = _correct_significance(raw_pvalues, alpha=alpha)
     return corrected_pvalues
 
 
@@ -232,10 +183,10 @@ def _validate_input(
     if len(annotations) == 0:
         raise ValueError("No annotations given.")
 
-    if len(np.unique(annotator_group)) < 2:
+    if len(_unique(annotator_group)) < 2:
         raise ValueError("Only one group was provided.")
 
-    if len(np.unique(comment_group)) < 2:
+    if len(_unique(comment_group)) < 2:
         raise ValueError(
             "Only one comment was provided. "
             "The Aposteriori Unimodality Test is defined for discussions, "
@@ -271,7 +222,7 @@ def _factor_polarization_stat(
         raise ValueError("Empty annotation list given.")
 
     stats = {}
-    for factor in np.unique(annotator_group):
+    for factor in _unique(annotator_group):
         factor_annotations = all_comment_annotations[annotator_group == factor]
         if len(factor_annotations) == 0:
             stats[factor] = np.nan
@@ -291,7 +242,7 @@ def _random_polarization_stat(
     # Split annotations in len(group_lengths) groups,
     # each of which has a length equal to the entries in group_lengths.
     # Then for each group run _factor_polarization_stat
-    all_random_ndfus = _ListDict()
+    all_random_ndfus = _list_dict._ListDict()
     for i in range(iterations):
         random_groups = _random_partition(
             annotations, np.array(list(group_sizes.values()))
@@ -332,9 +283,9 @@ def _random_partition(
     Raises:
     - ValueError: if the sum of sizes does not match the length of arr.
     """
-    if sum(sizes) != len(arr):
+    if np.sum(sizes) != len(arr):
         raise ValueError(
-            f"Sum of sizes ({sum(sizes)}) must equal length "
+            f"Sum of sizes ({np.sum(sizes)}) must equal length "
             f"of input array ({len(arr)})."
         )
 
@@ -350,18 +301,11 @@ def _random_partition(
 
 
 def _raw_significance(
-    global_ndfus: _ListDict, stats_by_factor: _ListDict
+    global_ndfus: _list_dict._ListDict, stats_by_factor: _list_dict._ListDict
 ) -> dict[FactorType, float]:
     """
     Performs a means test to determine the significance of
     differences in aposteriori statistics for a specific feature.
-
-    :param global_ndfus: A list of aposteriori statistics for a feature.
-    :type global_ndfus: _ListDict
-    :return: The aposteriori unimodality significance for each factor
-    :rtype: dict[`FactorType`, float]
-    :raises ValueError: if there is a mismatch between the number of comments
-        in the provided dictionary and the global_ndfus for any factor
     """
     if len(global_ndfus) == 0:
         return {}
@@ -369,12 +313,20 @@ def _raw_significance(
     pvalues_by_factor = {}
 
     for factor in stats_by_factor.keys():
-        expected_mean = np.mean(global_ndfus[factor])
+        factor_ndfus = global_ndfus[factor]
         pol_stats = stats_by_factor[factor]
 
-        if np.isnan(expected_mean):
-            # annotations are completely identical
-            pvalues_by_factor[factor] = 1
+        expected_mean = np.nanmean(factor_ndfus)
+        pol_stats = [val for val in pol_stats if not np.isnan(val)]
+
+        if len(pol_stats) == 0:
+            # If there's no data, fall back to NaN or skip entirely
+            pvalue = np.nan
+        elif pol_stats == factor_ndfus:
+            # If full polarization on both random and actual comment 
+            # annotations, assume the polarization is caused by the shape 
+            # of the underlying distribution
+            pvalue = 1
         else:
             pvalue = scipy.stats.ttest_1samp(
                 pol_stats,
@@ -382,13 +334,13 @@ def _raw_significance(
                 alternative="greater",
                 nan_policy="omit",
             ).pvalue
-            pvalues_by_factor[factor] = pvalue
+        pvalues_by_factor[factor] = pvalue
 
     return pvalues_by_factor
 
 
 def _correct_significance(
-    raw_pvalues: dict[FactorType, float], alpha: float = 0.05
+    raw_pvalues: dict[FactorType, float], alpha: float
 ) -> dict[FactorType, float]:
     """
     Apply a statistical correction to pvalues from multiple alternative
@@ -396,11 +348,12 @@ def _correct_significance(
 
     :param raw_pvalues: the pvalue of each hypothesis
     :type raw_pvalues: dict[`FactorType`, float]
-    :param alpha: the target significance, defaults to 0.05
+    :param alpha: the target significance
     :type alpha: float, optional
     :return: the corrected pvalues for each hypothesis
     :rtype: dict[`FactorType`, float]
     """
+    #print("Raw pvalues:", raw_pvalues)
     if len(raw_pvalues) == 0:
         return {}
 
@@ -412,6 +365,7 @@ def _correct_significance(
     corrected_pvalue_ls = _apply_correction(raw_pvalue_ls, alpha)
     # repackage dictionary
     corrected_pvalues_dict = dict(zip(keys, corrected_pvalue_ls))
+    #print("Corrected pvalues: ", corrected_pvalue_ls)
     return corrected_pvalues_dict
 
 
@@ -419,7 +373,7 @@ def _apply_correction(pvalues: Collection[float], alpha: float) -> np.ndarray:
     corrected_stats = statsmodels.stats.multitest.multipletests(
         np.array(pvalues),
         alpha=alpha,
-        method="bonferroni",
+        method="fdr_bh",
         is_sorted=False,
         returnsorted=False,
     )
@@ -440,3 +394,7 @@ def _to_hist(scores: np.ndarray[float], bins: int) -> np.ndarray:
 
     counts, bins = np.histogram(a=scores_array, bins=bins, density=True)
     return counts
+
+
+def _unique(x: Iterable[Any]) -> Iterable[Any]:
+    return set(x)
