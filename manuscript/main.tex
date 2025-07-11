@@ -95,7 +95,7 @@ Given this observation, we would be tempted to aggregate all annotations in a di
  The difference between the observed and expected polarization for a comment $c$ given group $\sdbgroup \in \Sdbgroup(\sdbdim)$ is then given by the "pol-statistic", defined as: 
  
  \begin{equation}
-	\textit{pol}(c, \sdbdim, \sdbgroup)  = pol_{actual}(c, \sdbdim, \sdbgroup)) - pol_{expected}(c, \sdbdim, \sdbgroup)
+	\textit{pol}(c, \sdbdim, \sdbgroup)  = pol_{actual}(c, \sdbdim, \sdbgroup) - pol_{expected}(c, \sdbdim, \sdbgroup)
 \end{equation}
 
 
@@ -115,6 +115,12 @@ By obtaining the pol statistics for all comments in a discussion $d$ we can appl
 	H_{\sdbgroup}:\frac{1}{\lvert d \rvert} \sum\limits_{c \in d}  pol(c, \sdbdim, \sdbgroup) >  0
 \end{equation}
 
+Alternatively, we could define a single alternative hypothesis:
+\begin{equation}
+	\label{eq:single_alt_h}
+	H_a: \max_{\sdbgroup \in \Sdbgroup(\sdbdim)}\frac{1}{\lvert d \rvert} \sum\limits_{c \in d}  pol(c, \sdbdim, \sdbgroup) >  0
+\end{equation}
+
 We refer to this test as the \textit{``Aposteriori Unimodality Test''}, where a small p-value suggests that we can not rule out that annotators of the $\sdbgroup$ group make a significant contribution to the overall annotator polarization. The scope of the test and its relationship with the previously presented statistics are demonstrated in Figure~\ref{fig::overview}.
 
 Our test assumes that there exist enough annotations in each comment and \ac{SDB} group to create a faithful histogram for \ac{nDFU} to effectively calculate polarization. Even in the presence of relatively few annotations however, assuming accurate \ac{nDFU} scores, the means test should provide a faithful estimate since we are aggregating annotations by comment.
@@ -129,9 +135,7 @@ Our test assumes that there exist enough annotations in each comment and \ac{SDB
 \subsection{Technical Details}
 \label{ssec:methodology:details}
 
-The means test performed on the pol-statistics of each comment (Equations~\ref{eq:null_h},~\ref{eq:alt_h}) can be theoretically performed by most well-known statistical mean tests. In our case, we use the one one-sample Student t-test, since discussions are typically comprised of a moderately large amount of comments.
-
-Additionally, since we are simultaneously considering $\lvert \Sdbgroup(\sdbdim) \rvert$ hypotheses, we apply a multiple comparison correction to the resulting p-values. We choose the Bonferroni method \parencite{Bland170}, since it is widely used, generally conservative, and especially so towards correlated hypotheses \parencite{ChenFengYi2017}. The last point is important, since many annotation groups are likely to be inter-correlated (e.g., age categories such as $50-60$ and $60-70$ years). Furthermore, one of its biggest weaknesses (the presence of very large numbers of hypotheses \parencite{ChenFengYi2017}) is unlikely to be met in annotation tasks.
+The means test performed on the pol-statistics of each comment (Equations~\ref{eq:null_h},~\ref{eq:alt_h}) can be theoretically performed by most well-known statistical mean tests. In our case, we use the one one-sample Student t-test, since discussions are typically comprised of a moderately large amount of comments. Additionally, in the case of simultaneously considering $\lvert \Sdbgroup(\sdbdim) \rvert$ hypotheses, we apply a multiple comparison correction to the resulting p-values. We choose the Holms method \parencite{holms}.
 
 Our test is actually parameterized by two more parameters: the $t$ parameter, which determines how many times we sample random partitions (Equation~\ref{eq:pol_expected}), and the \ac{FWER}, which is used to tune the strength of the multiple comparison correction mentioned above. We can increase the $t$ parameter to get a better estimate of the expected comment polarization, while increasing the computational cost of the method. We can also increase the \ac{FWER} to make our test more conservative towards multiple hypotheses \parencite{ChenFengYi2017}). In general, it is safe to set \ac{FWER} equal to the significance level of our test (e.g., $\textit{FWER} = 0.95$ if we are looking for $p < 0.05$)
 
