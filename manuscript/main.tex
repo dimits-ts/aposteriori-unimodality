@@ -39,7 +39,7 @@ Let $d = \{c_1, c_2, \ldots\}$ be a dataset $d$ composed of $\lvert d \rvert$ an
 
 Each set of annotations features a certain degree of \textit{polarization}. Unpolarized annotations are usually unimodal, which makes intuitive sense. Even in scenarios with high inter-annotator disagreement, there is a difference between the annotators disagreeing on the details (which would be shown roughly as a bell curve around the median annotation), and them fundamentally disagreeing with each other (which would likely be shown as a multimodal distribution). \textcite{pavlopoulos-likas-2024} create a polarization metric, the ``\ac{nDFU}'', which measures whether an annotation set shows no polarization (unimodal distribution --- $nDFU=0$), up to complete polarization (multimodal distribution --- $nDFU=1$). 
 
-Since our goal is to pinpoint which specific characteristics contribute to polarization, we need a mechanism to isolate individual attributes within a \ac{SDB}. $\Theta$ can be one of multiple ``dimensions'' (e.g., age, sex, educational level), which are composed of various groups ($\theta_1, \theta_2, \ldots \in \Theta$). Thus, we will define a test that, given that polarization exists, tests whether the \ac{nDFU} of a data-point can be partially explained by $\theta_i$.
+Since our goal is to pinpoint which specific characteristics contribute to polarization, we need to isolate individual groups within a \ac{SDB}. $\Theta$ can be one of multiple ``dimensions'' (e.g., age, sex, educational level), which are composed of various groups ($\theta_1, \theta_2, \ldots \in \Theta$). Thus, we will define a test that, given that annotation polarization exists, tests whether the \ac{nDFU} of a data-point's annotations can be partially explained by $\theta_i$.
 
 
 \subsection{Quantifying changes in polarization}
@@ -100,7 +100,7 @@ In our example, while it is obvious that gender partly explains the polarization
 \subsection{The Aposteriori Unimodality Test}
 \label{ssec:methodology:aposteriori}
 
-By obtaining the pol-statistics for all data-points in a dataset $d$ we can apply a mean test with the null hypothesis :
+By obtaining the pol-statistics for all data-points in a dataset $d$ we can apply a mean test with the null hypothesis:
 
 \begin{equation}
 	\label{eq:null_h}
@@ -114,7 +114,7 @@ By obtaining the pol-statistics for all data-points in a dataset $d$ we can appl
 
 We refer to this test as the \textit{``Aposteriori Unimodality Test''}, where a small p-value suggests that we can not rule out that annotators of the $\theta_i$ group make a significant contribution to the overall annotator polarization. The scope of the test and its relationship with the previously presented statistics are demonstrated in Figure~\ref{fig::overview}.
 
-Our test assumes that there exist enough annotations in each data-point and \ac{SDB} group to create a faithful histogram for \ac{nDFU} to effectively calculate polarization. Even in the presence of relatively few annotations however, assuming accurate \ac{nDFU} scores, the means test should provide a faithful estimate since we are aggregating annotations by data-point.
+Our test assumes that (1) there exist enough data-points to reliably run the means-test, and (2) enough annotations in each data-point and \ac{SDB} group to estimate the \textit{pol-statistics}. We discuss the former assumption in \S\ref{ssec: results:num_annotators}. The latter can be safely assumed for most datasets, either because they feature enough data-points to reliably assume normal residuals, or by implementing the means test with a non-parametric test, such as the Wilcoxon signed-rank test \parencite{wilcoxon-1945}.
 
 \begin{figure}
 	\includegraphics[width=\linewidth]{overview.png}
@@ -126,14 +126,49 @@ Our test assumes that there exist enough annotations in each data-point and \ac{
 \subsection{Technical Details}
 \label{ssec:methodology:details}
 
-The means test performed on the pol-statistics of each data-point (Equations~\ref{eq:null_h},~\ref{eq:alt_h}) can be theoretically performed by most well-known statistical mean tests. In our case, we use the one one-sample Student t-test, since discussions are typically comprised of a moderately large amount of data-points. Additionally, in the case of simultaneously considering $\lvert \Sdbgroup(\sdbdim) \rvert$ hypotheses, we apply a multiple comparison correction to the resulting p-values. We choose the Holms method \parencite{holms}.
+The means test performed on the pol-statistics of each data-point (Equations~\ref{eq:null_h},~\ref{eq:alt_h}) can be theoretically performed by most well-known statistical mean tests. In our case, we use the one one-sample Student t-test, since discussions are typically comprised of a moderately large amount of data-points. Additionally, in the case of simultaneously considering $\lvert \Theta \rvert$ hypotheses, we apply a multiple comparison correction to the resulting p-values. We choose the Holms method \parencite{holms}.
 
 Our test is actually parameterized by two more parameters: the $t$ parameter, which determines how many times we sample random partitions (Equation~\ref{eq:pol_expected}), and the \ac{FWER}, which is used to tune the strength of the multiple comparison correction mentioned above. We can increase the $t$ parameter to get a better estimate of the expected data-point polarization, while increasing the computational cost of the method. We can also increase the \ac{FWER} to make our test more conservative towards multiple hypotheses \parencite{ChenFengYi2017}). In general, it is safe to set \ac{FWER} equal to the significance level of our test (e.g., $\textit{FWER} = 0.95$ if we are looking for $p < 0.05$)
+
+
+\section{Results}
+
+We apply our test on four datasets; two human-annotated datasets, and two with comments and annotations generated by \acp{LLM}.
+
+\subsection{Human Datasets}
+
+We use the datasets provided by \textcite{kumar-et-al-2021} and \textcite{sap-etal-2022-annotators}. The datasets feature various online comments, each annotated by a number of human annotators ($5$ and $4-6$ annotators per comment respectively). The \textcite{sap-etal-2022-annotators} dataset includes racism annotations for $626$ Twitter/X comments, and standard \ac{SDB} information (age, race, education, gender). The \textcite{kumar-et-al-2021} dataset measures toxicity on various online comments, and the provided \acp{SDB} include mostly annotator experiences (e.g., whether they have been personally targeted online) as well as standard \ac{SDB} information such as sexual orientation, age and education. Since the dataset is extensive ($XXXX$ tweets), we only select a sample of $5000$ comments. This is due both to computational constraints, as well as statistical tests being unreliable on large enough samples \cite{trafimow2018manipulating}. Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{SDB} dimensions can partially explain polarization in the toxicity/racism annotations. 
+
+With respect to the \textcite{kumar-et-al-2021} dataset, we find statistically significant differences for Conservatives ($p=0.0486)$, parents ($p=0.000039$), religious people (``religion: very important'' --- $p = 0.00073$), young people (``ages: 25-35'' --- $p = 0.001681$), as well as people that have not encountered toxic content ($p=0.007374$), and people who have been targeted in the past ($p=0.004186$). We can not claim that transgender annotators, annotators with differing stances on whether toxic comments are problematic, annotators with different education or sexual orientation, contribute to the polarization within the dataset.
+
+Concerning the \textcite{sap-etal-2022-annotators} dataset, we find statistically significant results for white ($p = 6.531785e-08$), and male ($p=0.01289$) annotators, but not for age or educational level.
+
+
+\subsection{Synthetic Datasets}
+
+We use two synthetic datasets; one is the \ac{VMD} presented in \textcite{tsirmpas2025scalableevaluationonlinefacilitation}. This dataset features $140$ discussions, each having $14$ comments (and usually up to $14$ facilitator comments), each comment annotated by 10 \ac{LLM} annotators, each supplied with a different \ac{SDB}. The second dataset, is an extension of \ac{VMD}, where we select four random unmoderated discussions, and employ 100 distinct \ac{LLM} annotators.
+
+We find no statistically significant results in any of the \ac{SDB} dimensions, in any of the datasets (annotator age, gender, sexual orientation, education, employment and political alignment). While polarization does exist in the dataset, %TODO: show a graph of ndfu
+it can not be attributed to any of the synthetic \ac{SDB} groups. This suggests that \ac{SDB} prompting can not be used to simulate annotations for human groups, which is consistent with relevant literature on the topic \parencite{anthis_2025,hewitt2024predicting,rossi_2024,jansen_2023,bisbee_2023,neumann_2025}.
+
+
+\subsection{Effect of number of annotators}
+\label{ssec: results:num_annotators}
+
+In \S\ref{ssec:methodology:aposteriori} we mentioned that the test relies on enough annotations for each \ac{SDB} group and data-point. This can be an issue, given the cost required to utilize multiple human annotators for each data-point \parencite{rossi_2024}. Figure~\ref{fig::std_error} demonstrates the effect of the number of annotators to the \textit{pol-statistic} estimation. We use the $100$-annotator synthetic dataset and sample progressively $3-100$ annotators with replacement, then calculate the standard error with the mean \textit{pol-statistic}. As expected, the standard error is inversely proportional to the number of annotators, although the difference is not catastrophic, even for a low number of annotators.
+
+\begin{figure}
+	\includegraphics[width=\linewidth]{ndfu_std_error_sample_size.png}
+	\caption{Standard error of the \textit{pol-statistic} when sampled with replacement from the $100$-annotator synthetic dataset for various number of annotators.}
+	\label{fig::std_error}
+\end{figure}
 
 
 \section{Acronyms}
 
 \begin{acronym}[WWW]
+    \acro{VMD}{Virtual Moderation Dataset}
+    \acro{LLM}{Large Language Model}
     \acro{SDB}{SocioDemographic Background}
     \acro{nDFU}{normalized Distance From Unimodality}
 	\acro{FWER}{Family-Wise Error Rate}
