@@ -4,7 +4,7 @@
 \usepackage{acronym}
 \usepackage[backend=bibtex]{biblatex}
 
-\title{Aposteriori Unimodality}
+\title{Aposteriori Unimodality: A statistical tool attributing polarization to sociodemographic groups}
 \author{Dimitris Tsirmpas, John Pavlopoulos}
 \date{March 2025}
 
@@ -33,7 +33,7 @@ However, this estimation may not be suitable for all tasks. For example, one of 
 
 While polarization metrics already exist \parencite{Pavlopoulos2023, pavlopoulos-likas-2024}, there currently exists no mechanism detecting \textit{which} groups cause this polarization. \textcite{pavlopoulos-likas-2024} propose a mechanism which can detect only extreme cases, where the polarization of a set of annotations is zero, and the polarization of the sub-groups is bigger than zero. This mechanism does not take into account inherent variance in the data, violates the assumption of independent samples (by comparing a subset of the data with the data themselves), and one of its core assumptions (the existence of comments featuring zero polarization) is empirically seldom met in real-world datasets.
 
-In this paper, we propose the ``Aposteriori Unimodality Test'', a statistical test that attributes polarization to individual annotator sociodemographic groups. We provide a formulation which avoids known issues of dependent samples and low numbers of annotations per data-point. We also identify and avoid issues not yet acknowledged in literature, such as conflicting polarization directions. We apply our test to four datasets; two with human comments and annotations \parencite{sap-etal-2022-annotators, kumar-et-al-2021}, and two generated and annotated by \ac{LLM} agents \cite{tsirmpas2025scalableevaluationonlinefacilitation}. We find interesting patterns in polarization in the human datasets, and verify current findings in literature w.r.t. \ac{LLM} \ac{SDB} prompts.
+In this paper, we propose the ``Aposteriori Unimodality Test'', a statistical test that attributes polarization to individual annotator sociodemographic groups. We provide a formulation which avoids known issues of dependent samples and low numbers of annotations per data-point. We also identify and avoid issues not yet acknowledged in literature, such as the presence of inherent polarization and conflicting polarization directions. We apply our test to four datasets; two with human comments and annotations \parencite{sap-etal-2022-annotators, kumar-et-al-2021}\footnote{We thank the authors for giving us access to these datasets.}, and two generated and annotated by \ac{LLM} agents \cite{tsirmpas2025scalableevaluationonlinefacilitation}. We find interesting patterns in polarization in the human datasets, and verify current findings in literature w.r.t. \ac{LLM} \ac{SDB} prompts.
 
 
 \section{Methodology}
@@ -59,17 +59,16 @@ Each set of annotations features a certain degree of \textit{polarization}. Unpo
 \subsection{Quantifying changes in polarization}
 \label{ssec:methodology:intuition}
 
-Intuitively, $\theta$ partially explains the polarization of a data-point $c$ when the annotations grouped by $\theta$ are more polarized compared to the full set of annotations. Figure~\ref{fig:ndfu_single_data-point} exhibits a hypothetical example where a misogynistic comment is annotated for toxicity by male and female annotators. The annotations are generally polarized ($nDFU_{all} = 0.625$). The annotations by female annotators exhibit low polarization between themselves ($nDFU_{women} = 0.1$), since most agree the data-point is toxic. The set of male annotations, also shows low polarization ($nDFU_{men} = 0.3725$), but for the opposite reason---most men agree that it is \emph{not} toxic. This suggests that the overall polarization is driven by disagreements between male and female annotators.
+Intuitively, $\theta$ partially explains the polarization of a data-point $c$ when the annotations grouped by $\theta$ are more polarized compared to the full set of annotations. Figure~\ref{fig:ndfu_combined} exhibits a hypothetical example where a misogynistic comment is annotated for toxicity by male and female annotators\footnote{The use of only two predominant genders is made only for the purposes of demonstration.}. The annotations are generally polarized ($nDFU_{all} = 0.625$). The annotations by female annotators exhibit low polarization between themselves ($nDFU_{women} = 0.1$), since most agree the data-point is toxic. The set of male annotations, also shows low polarization ($nDFU_{men} = 0.3725$), but for the opposite reason---most men agree that it is \emph{not} toxic. This suggests that the overall polarization is driven by disagreements between male and female annotators.
 
 \begin{figure}
 	\centering
 	\includegraphics[width=0.8\linewidth]{ndfu_combined.png}
-	\caption{Hypothetical example of a polarizing comment, where male and female annotators agree between themselves, but disagree with the opposite gender. Overall polarization ($nDFU_{all} = 0.625$) is much greater than the polarization exhibited by the annotations grouped by gender ($nDFU_{men} = 0.3725, nDFU_{women} = 0.1$). %In this example, the annotation set $A$ was generated as $A_{men} \sim \mathcal{N}(2, 1.3), A_{women} \sim \mathcal{N}(8, 1.3), \lvert A_{men} \rvert = \lvert A_{women} \rvert = 50$.
-    }
-	\label{fig:ndfu_single_data-point}
+	\caption{Hypothetical example of a polarizing comment, where male and female annotators agree between themselves, but disagree with the opposite gender. Overall polarization ($nDFU_{all} = 0.625$) is much greater than the polarization exhibited by the annotations grouped by gender ($nDFU_{men} = 0.3725, nDFU_{women} = 0.1$).}
+	\label{fig:ndfu_combined}
 \end{figure}
 
-Given this observation, we would be tempted to aggregate all annotations in the dataset and compare the polarization of each $\theta$ with the full set of annotations $A(c)$. However, this formulation would not work well. Figure~\ref{fig:ndfu_multi_data-point} illustrates a hypothetical discussion with two comments, both of which are toxic, but where male and female annotators disagree on \emph{which} comment is the toxic one. If we aggregate the annotations to a single discussion, the opposing polarization effects might balance each other out, leading to a false negative. In simpler terms, polarization has a \textit{direction}, and care must be taken to not combine polarization effects of opposite directions.
+Given this observation, we would be tempted to aggregate all annotations in the dataset and compare the polarization of each $\theta$ with the full set of annotations $A(c)$. However, this formulation would not work well. Figure~\ref{fig:ndfu_discussion} illustrates a hypothetical discussion with two comments, both of which are toxic, but where male and female annotators disagree on \emph{which} comment is the toxic one. If we aggregate the annotations to a single discussion, the opposing polarization effects might balance each other out, leading to a false negative. In simpler terms, polarization has a \textit{direction}, and care must be taken to not combine polarization effects of opposite directions.
 
 In our example, while it is obvious that gender partly explains the polarization found in each of the individual comments ($nDFU_{all} \gg nDFU_{men}, nDFU_{all} \gg nDFU_{women}$), this observation is much harder to make when aggregating the two comments. This is graphically shown as the presence of three bimodal distributions instead of two unimodal distributions, and one bimodal (aggregated) distribution. To avoid this, we apply our statistic only on annotations that reference the same data-point.
 
@@ -78,9 +77,8 @@ In our example, while it is obvious that gender partly explains the polarization
     \includegraphics[width=0.3\linewidth]{ndfu_comment1.png}
     \includegraphics[width=0.3 \linewidth]{ndfu_comment2.png}
 	\includegraphics[width=0.3 \linewidth]{ndfu_discussion.png}
-	\caption{Hypothetical example of a polarizing discussion with two comments, for which the annotators disagree on which is the toxic one. If we aggregate the two comments, the polarization scores for both men and women significantly rise, obscuring whether the exhibited polarization can be partially attributed to gender. %In this example, the annotation set $A$ was generated as $A_{men} \sim \mathcal{N}(6, 1), A_{women} \sim \mathcal{N}(2, 1), \lvert A_{men} \rvert = \lvert A_{women} \rvert = 200$ for the first data-point, and $A_{men} \sim \mathcal{N}(2, 1), A_{women} \sim \mathcal{N}(6, 1), \lvert A_{men} \rvert = \lvert A_{women} \rvert = 200$ for the second.
-    }
-	\label{fig:ndfu_multi_data-point}
+	\caption{Hypothetical example of a polarizing discussion with two comments, for which the annotators disagree on which is the toxic one. If we aggregate the two comments, the polarization scores for both men and women significantly rise, obscuring whether the exhibited polarization can be partially attributed to gender.}
+	\label{fig:ndfu_discussion}
 \end{figure*}
 
  
@@ -148,6 +146,7 @@ Our test is actually parameterized by two more parameters: the $t$ parameter, wh
 
 
 \section{Results}
+\label{sec:results}
 
 We apply our test on four datasets; two human-annotated datasets, and two with comments and annotations generated by \acp{LLM}.
 
@@ -185,7 +184,22 @@ In \S\ref{ssec:methodology:aposteriori} we mentioned that the test relies on eno
 We introduced the ``Aposteriori Unimodality Test'', a statistical test that detects whether certain sociodemographic groups partly cause polarization in annotations. Our test is resistant to low samples of annotations, bypasses common statistical issues such as sample dependence, and avoids newly-discovered issues such as the presence of inherent polarization and polarization direction. We apply our test two human-generated and two \ac{LLM}-generated datasets and find interesting patterns on the former, and verify current literature on \ac{LLM} \ac{SDB} prompting on the latter.
 
 
-\section{Acronyms}
+\section{Limitations}
+
+Since there are no other established tests that attribute polarization to sociodemographic characteristics, there is no way to verify that the results presented in \S\ref{sec:results} are accurate. Similarly, there is no qualitative way of evaluating our test, other than observations on the (non-) efficacy of \ac{LLM} {SDB} prompting and our own intuition. Lastly, while our test seems to work sufficiently well with a small number of annotators per data-point, we still encourage researchers using this test to have at least a few annotators of each sociodemographic group that is being tested, in their dataset.
+
+
+\section{Ethical Considerations}
+
+While our works aims to help protect marginalized and disadvantaged groups by attributing polarization to certain subgroups, it can be taken advantage of by malicious actors. Given a dataset with fine-grained \ac{SDB} information, these actors can use our test to target specific vulnerable groups. We thus urge researchers to keep datasets including such information protected, and provided to others only under explicit permission.
+
+\printbibliography
+
+
+\appendix
+\section{Appendix}
+
+\subsection{Acronyms}
 
 \begin{acronym}[WWW]
     \acro{VMD}{Virtual Moderation Dataset}
@@ -195,6 +209,32 @@ We introduced the ``Aposteriori Unimodality Test'', a statistical test that dete
 	\acro{FWER}{Family-Wise Error Rate}
 \end{acronym}
 
-\printbibliography
+
+\subsection{Demonstrative examples}
+
+Our paper uses synthetic examples to demonstrate the intuition behind the Aposteriori Unimodality test. These examples use random sampling of manually selected distributions. Table~\ref{tab:synthetic_annotation_sets} summarizes the synthetic annotation distributions used to demonstrate the Aposteriori Unimodality test. In each scenario, annotations for men and women were sampled independently from Gaussian distributions with distinct parameters.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Figure} & \textbf{Group} & \textbf{Distribution} & \textbf{Size} \\
+\hline
+Figure~\ref{fig:ndfu_combined}
+  & $A_{men}$   & $\mathcal{N}(2, 1.3)$  & 50 \\
+  & $A_{women}$ & $\mathcal{N}(8, 1.3)$  & 50 \\
+\hline
+Figure~\ref{fig:ndfu_discussion} (1st comment)
+  & $A_{men}$   & $\mathcal{N}(6, 1)$  & 200 \\
+  & $A_{women}$ & $\mathcal{N}(2, 1)$  & 200 \\
+\hline
+Figure~\ref{fig:ndfu_discussion} (2nd comment) 
+  & $A_{men}$   & $\mathcal{N}(2, 1)$  & 200 \\
+  & $A_{women}$ & $\mathcal{N}(6, 1)$  & 200 \\
+\hline
+\end{tabular}
+\caption{Synthetic annotation sets used to illustrate the Aposteriori Unimodality test. Each group corresponds to samples drawn from a Gaussian distribution with specified mean and standard deviation.}
+\label{tab:synthetic_annotation_sets}
+\end{table}
 
 \end{document}
