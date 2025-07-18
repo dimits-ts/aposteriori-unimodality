@@ -24,6 +24,18 @@
 
 \maketitle
 
+
+\section{Introduction}
+
+Annotations are essential for a wide range of tasks, especially in fields such as content moderation and toxicity and racism detection. Typically, annotation tasks show each data-point (e.g., social media comments) to a set of annotators with different \acp{SDB}, in order to mitigate personal and sociodemographic biases and thus acquire a robust estimation of the desired metrics. The ``faithfulness'' of that estimate is then computed with the use of ``disagreement metrics'' such as Cohen's Kappa \cite{Cohen_1960}. 
+
+However, this estimation may not be suitable for all tasks. For example, one of the purposes of content moderation is to protect marginalized or disadvantaged groups, but metrics such as Cohen's Kappa may overlook comments that are toxic and harmful to these groups in particular. If a comment targets marginalized groups, there can be cases where most annotators (belonging by definition in the majority groups) overlook it, while the (few) marginalized annotators vehemently disagree in vain. In these cases, it is more useful to measure \textit{polarization} instead of disagreement.
+
+While polarization metrics already exist \parencite{Pavlopoulos2023, pavlopoulos-likas-2024}, there currently exists no mechanism detecting \textit{which} groups cause this polarization. \textcite{pavlopoulos-likas-2024} propose a mechanism which can detect only extreme cases, where the polarization of a set of annotations is zero, and the polarization of the sub-groups is bigger than zero. This mechanism does not take into account inherent variance in the data, violates the assumption of independent samples (by comparing a subset of the data with the data themselves), and one of its core assumptions (the existence of comments featuring zero polarization) is empirically seldom met in real-world datasets.
+
+In this paper, we propose the ``Aposteriori Unimodality Test'', a statistical test that attributes polarization to individual annotator sociodemographic groups. We provide a formulation which avoids known issues of dependent samples and low numbers of annotations per data-point. We also identify and avoid issues not yet acknowledged in literature, such as conflicting polarization directions. We apply our test to four datasets; two with human comments and annotations \parencite{sap-etal-2022-annotators, kumar-et-al-2021}, and two generated and annotated by \ac{LLM} agents \cite{tsirmpas2025scalableevaluationonlinefacilitation}. We find interesting patterns in polarization in the human datasets, and verify current findings in literature w.r.t. \ac{LLM} \ac{SDB} prompts.
+
+
 \section{Methodology}
 \label{sec:methodology}
 
