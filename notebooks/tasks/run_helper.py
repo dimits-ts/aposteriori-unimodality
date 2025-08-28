@@ -86,7 +86,6 @@ def _run_aposteriori(
         factor_group=attributes,
         comment_group=keys,
         bins=bins,
-        alpha=alpha,
         iterations=200,
     )
     return pd.Series(stat)

@@ -2,8 +2,6 @@ from typing import TypeVar, Iterable, Any
 from collections.abc import Collection
 
 import numpy as np
-import scipy
-import statsmodels.stats.multitest
 
 from . import _list_dict
 
@@ -37,12 +35,12 @@ def dfu(x: Collection[float], bins: int, normalized: bool = False) -> float:
     pos_max = np.argmax(hist)
 
     # right search
-    right_diffs = hist[pos_max + 1 :] - hist[pos_max:-1]
+    right_diffs = hist[pos_max+1:] - hist[pos_max:-1]
     max_rdiff = right_diffs.max(initial=0)
 
     # left search
     if pos_max > 0:
-        left_diffs = hist[0:pos_max] - hist[1 : pos_max + 1]
+        left_diffs = hist[0:pos_max] - hist[1:pos_max + 1]
         max_ldiff = left_diffs[left_diffs > 0].max(initial=0)
     else:
         max_ldiff = 0
@@ -58,7 +56,6 @@ def aposteriori_unimodality(
     comment_group: Collection[FactorType],
     bins: int,
     iterations: int = 100,
-    alpha: float = 0.1,
 ) -> dict[FactorType, float]:
     """
     Perform the Aposteriori Unimodality Test to identify whether any annotator
@@ -69,8 +66,7 @@ def aposteriori_unimodality(
     This method tests whether partitioning annotations by a specific factor
     (such as gender or age group) systematically reduces within-group
     polarization (as measured by Distance from Unimodality, DFU), relative to
-    the global polarization. It aggregates comment-level polarization
-    differences and performs statistical testing across the discussion.
+    the global polarization.
 
     :param annotations:
         A list of annotation scores, where each element corresponds to an
@@ -98,16 +94,14 @@ def aposteriori_unimodality(
         A larger number makes the method more accurate,
         but also more computationally expensive.
     :type iterations: int
-    :param alpha:
-        The alpha used for multi-hypothesis correction,
-        equal to 1-FWER (Family-wise error rate).
-        A higher alpha makes the test stronger in the context of multiple
-        hypotheses. It is advised to use the significance level of your test.
-    :type alpha: float
     :returns:
-        A pvalue for each factor of the selected SDB dimension.
-        A low p-value indicates that the group likely contributes to the
-        observed polarization.
+        The apunim kappa value for each factor of the selected SDB dimension.
+        If kappa~=0, the polarization can be explained by chance.
+        If kappa>0, increased polarization can not be explained by chance,
+        but rather must be partially caused by differences between
+        the SDB groups.
+        If kappa<0, the decrease in polarization is partially caused by 
+        differences between the SDB groups. 
     :rtype: dict[`FactorType`, float]
     :raises ValueError:
         If the given lists are not the same length, are empty,
@@ -117,9 +111,6 @@ def aposteriori_unimodality(
         - :func:`dfu` - Computes the Distance from Unimodality.
 
     .. note::
-        The test is conservative by design and well-suited to annotation tasks
-        with a small number of group comparisons.
-        Recommended to use with discussions having numerous comments.
         The test is relatively robust even with a small number of annotations
         per comment.
     """
@@ -162,9 +153,12 @@ def aposteriori_unimodality(
         )
         randomized_ndfu_dict.add_dict(comment_randomized_ndfus)
 
-    raw_pvalues = _raw_significance(randomized_ndfu_dict, factor_dict)
-    corrected_pvalues = _correct_significance(raw_pvalues, alpha=alpha)
-    return corrected_pvalues
+    apunim_kappa = _apunim_kappa(
+        observed_factors=factor_dict,
+        randomized_factors=randomized_ndfu_dict,
+        all_factors=all_factors,
+    )
+    return apunim_kappa
 
 
 def _validate_input(
@@ -300,84 +294,29 @@ def _random_partition(
     return partitions
 
 
-def _raw_significance(
-    global_ndfus: _list_dict._ListDict, stats_by_factor: _list_dict._ListDict
-) -> dict[FactorType, float]:
-    """
-    Performs a means test to determine the significance of
-    differences in aposteriori statistics for a specific feature.
-    """
-    if len(global_ndfus) == 0:
-        return {}
+def _apunim_kappa(
+    observed_factors: dict[FactorType, float],
+    randomized_factors: dict[FactorType, float],
+    all_factors: Iterable[FactorType],
+) -> float:
+    observed_means = {
+        f: np.nanmean(vals) for f, vals in observed_factors.items()
+    }
+    randomized_means = {
+        f: np.nanmean(vals) for f, vals in randomized_factors.items()
+    }
 
-    pvalues_by_factor = {}
-
-    for factor in stats_by_factor.keys():
-        factor_ndfus = global_ndfus[factor]
-        pol_stats = stats_by_factor[factor]
-
-        expected_mean = np.nanmean(factor_ndfus)
-        pol_stats = [val for val in pol_stats if not np.isnan(val)]
-
-        if len(pol_stats) == 0:
-            # If there's no data, fall back to NaN or skip entirely
-            pvalue = np.nan
-        elif pol_stats == factor_ndfus:
-            # If full polarization on both random and actual comment 
-            # annotations, assume the polarization is caused by the shape 
-            # of the underlying distribution
-            pvalue = 1
+    # Cohen's kappa style formula
+    apunim_kappa = {}
+    for f in all_factors:
+        O_f = observed_means[f]
+        E_f = randomized_means[f]
+        if np.isnan(O_f) or np.isnan(E_f) or E_f >= 1.0:
+            apunim_kappa[f] = np.nan
         else:
-            pvalue = scipy.stats.ttest_1samp(
-                pol_stats,
-                expected_mean,
-                alternative="greater",
-                nan_policy="omit",
-            ).pvalue
-        pvalues_by_factor[factor] = pvalue
+            apunim_kappa[f] = (O_f - E_f) / (1.0 - E_f)
 
-    return pvalues_by_factor
-
-
-def _correct_significance(
-    raw_pvalues: dict[FactorType, float], alpha: float
-) -> dict[FactorType, float]:
-    """
-    Apply a statistical correction to pvalues from multiple alternative
-    hypotheses.
-
-    :param raw_pvalues: the pvalue of each hypothesis
-    :type raw_pvalues: dict[`FactorType`, float]
-    :param alpha: the target significance
-    :type alpha: float, optional
-    :return: the corrected pvalues for each hypothesis
-    :rtype: dict[`FactorType`, float]
-    """
-    #print("Raw pvalues:", raw_pvalues)
-    if len(raw_pvalues) == 0:
-        return {}
-
-    if np.any([p < 0 or p > 1 for p in raw_pvalues.values()]):
-        raise ValueError("Invalid pvalues given for correction.")
-
-    # place each pvalue in an ordered list
-    keys, raw_pvalue_ls = zip(*raw_pvalues.items())  # keep key-value order
-    corrected_pvalue_ls = _apply_correction(raw_pvalue_ls, alpha)
-    # repackage dictionary
-    corrected_pvalues_dict = dict(zip(keys, corrected_pvalue_ls))
-    #print("Corrected pvalues: ", corrected_pvalue_ls)
-    return corrected_pvalues_dict
-
-
-def _apply_correction(pvalues: Collection[float], alpha: float) -> np.ndarray:
-    corrected_stats = statsmodels.stats.multitest.multipletests(
-        np.array(pvalues),
-        alpha=alpha,
-        method="fdr_bh",
-        is_sorted=False,
-        returnsorted=False,
-    )
-    return corrected_stats[1]
+    return apunim_kappa
 
 
 def _to_hist(scores: np.ndarray[float], bins: int) -> np.ndarray:
