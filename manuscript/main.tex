@@ -4,7 +4,7 @@
 \usepackage{acronym}
 \usepackage[backend=bibtex]{biblatex}
 
-\title{Aposteriori Unimodality: A statistical tool attributing polarization to sociodemographic groups}
+\title{Aposteriori Unimodality: Attributing polarization to sociodemographic groups}
 \author{Dimitris Tsirmpas, John Pavlopoulos}
 \date{March 2025}
 
@@ -33,33 +33,33 @@ However, this estimation may not be suitable for all tasks. For example, one of 
 
 While polarization metrics already exist \parencite{Pavlopoulos2023, pavlopoulos-likas-2024}, there currently exists no mechanism detecting \textit{which} groups cause this polarization. \textcite{pavlopoulos-likas-2024} propose a mechanism which can detect only extreme cases, where the polarization of a set of annotations is zero, and the polarization of the sub-groups is bigger than zero. This mechanism does not take into account inherent variance in the data, violates the assumption of independent samples (by comparing a subset of the data with the data themselves), and one of its core assumptions (the existence of comments featuring zero polarization) is empirically seldom met in real-world datasets.
 
-In this paper, we propose the ``Aposteriori Unimodality Test'', a statistical test that attributes polarization to individual annotator sociodemographic groups. We provide a formulation which avoids known issues of dependent samples and low numbers of annotations per data-point. We also identify and avoid issues not yet acknowledged in literature, such as the presence of inherent polarization and conflicting polarization directions. We apply our test to four datasets; two with human comments and annotations \parencite{sap-etal-2022-annotators, kumar-et-al-2021}\footnote{We thank the authors for giving us access to these datasets.}, and two generated and annotated by \ac{LLM} agents \cite{tsirmpas2025scalableevaluationonlinefacilitation}. We find interesting patterns in polarization in the human datasets, and verify current findings in literature w.r.t. \ac{LLM} \ac{SDB} prompts.
+In this paper, we propose the ``Aposteriori Unimodality Measure'', a statistic that attributes polarization to individual annotator sociodemographic groups. We provide a formulation which avoids known issues of dependent samples and low numbers of annotations per data-point. We also identify and avoid issues not yet acknowledged in literature, such as the presence of inherent polarization and conflicting polarization directions. We apply our test to four datasets; two with human comments and annotations \parencite{sap-etal-2022-annotators, kumar-et-al-2021}\footnote{We thank the authors for giving us access to these datasets.}, and two generated and annotated by \ac{LLM} agents \cite{tsirmpas2025scalableevaluationonlinefacilitation}. We find interesting patterns in polarization in the human datasets, and verify current findings in literature w.r.t. \ac{LLM} \ac{SDB} prompts.
 
 
 \section{Methodology}
 \label{sec:methodology}
 
-In this section, we provide a formal mathematical formulation of the problem of attributing polarization to specific annotator characteristics (\S\ref{ssec:methodology:problem}), and offer an intuitive rationale for how established polarization metrics can be leveraged in this context (\S\ref{ssec:methodology:intuition}). We then introduce a data-point-level measure that attributes polarization to individual \ac{SDB} groups (\S\ref{ssec:methodology:polstat}), and subsequently develop a statistical test that formalizes this attribution. Finally, we outline the technical details of the proposed methodology (\S\ref{ssec:methodology:details}).
+In this section, we provide a formal mathematical formulation for the problem of attributing polarization to specific annotator characteristics (\S\ref{ssec:methodology:problem}), and offer an intuitive rationale for how established polarization metrics can be leveraged (\S\ref{ssec:methodology:intuition}). We then introduce a data-point-level statistic that attributes polarization to individual \ac{SDB} groups (\S\ref{ssec:methodology:polstat}), and subsequently develop a statistic that generalizes this mechanism to an entire dataset.
 
 
 \subsection{Problem Formulation}
 \label{ssec:methodology:problem}
 
-Since our goal is to pinpoint which specific characteristics contribute to polarization, we need to isolate individual groups within a \ac{SDB}. Let $\Theta$ be one of multiple ``dimensions'' the set of all annotator \ac{SDB} groups for a single dimension (e.g. ``male'', ``female'' and ``non-binary'' if we are investigating annotator gender).
+\paragraph{SocioDemographic Backgrounds }Since our goal is to pinpoint which specific characteristics contribute to polarization, we need to isolate individual groups within a \ac{SDB}. Let $\Theta$ be one of multiple ``dimensions'' the set of all annotator \ac{SDB} groups for a single dimension (e.g. ``male'', ``female'' and ``non-binary'' if we are investigating annotator gender).
 
-Now let $d = \{c_1, c_2, \ldots\}$ be a dataset composed of multiple annotated data-points. We assume that annotating a data-point depends on three variables: its contents, the annotator's \ac{SDB}, and uncontrolled factors such as mood and personal experiences. Assuming that each data-point $c$ is assigned multiple annotators, we can define its annotation set $A(c)$ as:
+\paragraph{Annotations} Now let $d = \{c_1, c_2, \ldots\}$ be a dataset composed of multiple annotated data-points. We assume that annotating a data-point depends on three variables: its contents, the annotator's \ac{SDB}, and uncontrolled factors such as mood and personal experiences. Assuming that each data-point $c$ is assigned multiple annotators, we can define its annotation set $A(c)$ as:
 \begin{equation}
     A(c) = \{a(c; \theta) \mid \theta \in \Theta \}
 \end{equation}
 \noindent where  $a(c; \theta)$ is a single annotation for $c$, given by an annotator belonging to the sociodemographic group $\theta$.
 
-Each set of annotations features a certain degree of \textit{polarization}. Unpolarized annotations are usually unimodal, which makes intuitive sense; there is a difference between the annotators disagreeing on the details (which would be shown roughly as a bell curve around the median annotation), and them fundamentally disagreeing with each other (which would likely be shown as a multimodal distribution). \textcite{pavlopoulos-likas-2024} create a polarization metric, the ``\ac{nDFU}'', which measures whether an annotation set shows no polarization (unimodal distribution --- $nDFU \rightarrow 0$), up to complete polarization (multimodal distribution --- $nDFU \rightarrow 1$). Thus, we will define a test that, given that annotation polarization exists, tests whether the \ac{nDFU} of a data-point's annotations can be partially explained by $\theta$.
+\paragraph{Polarization} Each set of annotations features a certain degree of \textit{polarization}. Unpolarized annotations are usually unimodal, which makes intuitive sense; there is a difference between the annotators disagreeing on the details (which would be shown roughly as a bell curve around the median annotation), and them fundamentally disagreeing with each other (which would likely be shown as a multimodal distribution). \textcite{pavlopoulos-likas-2024} create a polarization metric, the ``\ac{nDFU}'', which measures whether an annotation set shows no polarization (unimodal distribution --- $nDFU \rightarrow 0$), up to complete polarization (multimodal distribution --- $nDFU \rightarrow 1$). Thus, we will define a test that, given that annotation polarization exists, tests whether the \ac{nDFU} of a data-point's annotations can be partially explained by $\theta$.
 
 
 \subsection{Quantifying changes in polarization}
 \label{ssec:methodology:intuition}
 
-Intuitively, $\theta$ partially explains the polarization of a data-point $c$ when the annotations grouped by $\theta$ are more polarized compared to the full set of annotations. Figure~\ref{fig:ndfu_combined} exhibits a hypothetical example where a misogynistic comment is annotated for toxicity by male and female annotators\footnote{The use of only two predominant genders is made only for the purposes of demonstration.}. The annotations are generally polarized ($nDFU_{all} = 0.625$). The annotations by female annotators exhibit low polarization between themselves ($nDFU_{women} = 0.1$), since most agree the data-point is toxic. The set of male annotations, also shows low polarization ($nDFU_{men} = 0.3725$), but for the opposite reason---most men agree that it is \emph{not} toxic. This suggests that the overall polarization is driven by disagreements between male and female annotators.
+\paragraph{Data-point polarization} Intuitively, $\theta$ partially explains the polarization of a data-point $c$ when the annotations grouped by $\theta$ are more polarized compared to the full set of annotations. Figure~\ref{fig:ndfu_combined} exhibits a hypothetical example where a misogynistic comment is annotated for toxicity by male and female annotators.\footnote{The use of only two predominant genders is made only for the purposes of demonstration.} The annotations are generally polarized ($nDFU_{all} = 0.625$). The annotations by female annotators exhibit low polarization between themselves ($nDFU_{women} = 0.1$), since most agree the data-point is toxic. The set of male annotations, also shows low polarization ($nDFU_{men} = 0.3725$), but for the opposite reason---most men agree that it is \emph{not} toxic. This suggests that the overall polarization is driven by disagreements between male and female annotators.
 
 \begin{figure}
 	\centering
@@ -68,7 +68,7 @@ Intuitively, $\theta$ partially explains the polarization of a data-point $c$ wh
 	\label{fig:ndfu_combined}
 \end{figure}
 
-Given this observation, we would be tempted to aggregate all annotations in the dataset and compare the polarization of each $\theta$ with the full set of annotations $A(c)$. However, this formulation would not work well. Figure~\ref{fig:ndfu_discussion} illustrates a hypothetical discussion with two comments, both of which are toxic, but where male and female annotators disagree on \emph{which} comment is the toxic one. If we aggregate the annotations to a single discussion, the opposing polarization effects might balance each other out, leading to a false negative. In simpler terms, polarization has a \textit{direction}, and care must be taken to not combine polarization effects of opposite directions.
+\paragraph{Dataset polarization} Given this observation, we would be tempted to aggregate all annotations in the dataset and compare the polarization of each $\theta$ with the full set of annotations $A(c)$. However, this formulation would not work well. Figure~\ref{fig:ndfu_discussion} illustrates a hypothetical discussion with two comments, both of which are toxic, but where male and female annotators disagree on \emph{which} comment is the toxic one. If we aggregate the annotations to a single discussion, the opposing polarization effects might balance each other out, leading to a false negative. In simpler terms, polarization has a \textit{direction}, and care must be taken to not combine polarization effects of opposite directions.
 
 In our example, while it is obvious that gender partly explains the polarization found in each of the individual comments ($nDFU_{all} \gg nDFU_{men}, nDFU_{all} \gg nDFU_{women}$), this observation is much harder to make when aggregating the two comments. This is graphically shown as the presence of three bimodal distributions instead of two unimodal distributions, and one bimodal (aggregated) distribution. To avoid this, we apply our statistic only on annotations that reference the same data-point.
 
@@ -96,7 +96,7 @@ The observed polarization of a data-point on the group of annotations $\theta$ c
  \end{equation}
  \noindent where $P(A(c), \theta_i) = \{a(c; \theta) \in A(c) | \theta=\theta_i\}$ is the partition of $A$ for a data-point $c$, for which its annotators belong to the \ac{SDB} group $\theta_i$.
  
- We can estimate the inherent polarization in data-point $c$ by bootstrapping. We randomly partition the data-point's annotations in $\lvert \Theta \rvert$ groups, with matching group sizes (e.g., if we have $100$ annotations, $80$ of which are made by male annotators and $20$ by female annotators, we will create random partitions of sizes $80$ and $20$). We can then sample the randomly partitioned annotations $t$ times. Formally, the expected inherent polarization will be given by:
+ We can estimate the inherent polarization in data-point $c$ by bootstrapping. We randomly partition the data-point's annotations in $\lvert \Theta \rvert$ groups, with matching group sizes (e.g., if we have $100$ annotations, $80$ of which are made by male annotators and $20$ by female annotators, we will create random partitions of sizes $80$ and $20$). The randomly partitioned annotations are then sampled $t$ times. Formally, the expected inherent polarization will be given by:
  
  \begin{equation}
  	\label{eq:pol_expected}
@@ -104,45 +104,36 @@ The observed polarization of a data-point on the group of annotations $\theta$ c
  \end{equation}
  \noindent where $\tilde{P}_i$ is the random partition operator with matching group sizes.
  
- The difference between the observed and expected polarization for a data-point $c$ given group $\theta_i$ is then given by the ``pol-statistic'', defined as: 
+ The difference between the observed and expected polarization for a data-point $c$ given group $\theta$ is then given by the ``pol-statistic'', defined as: 
 
  \begin{equation}
-	\textit{pol-stat}(c, \theta_i)  = pol(c, \theta_i) - \bar{pol}(c)
+	\textit{pol-stat}(c, \theta)  = pol(c, \theta) - \bar{pol}(c)
 \end{equation}
 
 
-\subsection{The Aposteriori Unimodality Test}
+\subsection{Aposteriori Unimodality}
 \label{ssec:methodology:aposteriori}
 
-By obtaining the pol-statistics for all data-points in a dataset $d$ we can apply any statistical means test with the null hypothesis:
-
+By obtaining the pol-statistics for all data-points in a dataset $d$ for \ac{SDB} $\theta$, we can get the mean observed polarization for the dataset:
 \begin{equation}
-	\label{eq:null_h}
-	H_0: \forall \theta \in \Theta, \frac{1}{\lvert d \rvert} \sum\limits_{c \in d} \textit{pol-stat}(c, \theta) \le 0
-\end{equation}
-\noindent versus the (multiple) alternative hypotheses: 
+	pol_{O}(d, \theta) = \frac{1}{\lvert d \rvert} \sum_{c \in d}\textit{pol-stat}(c, \theta)
+\end{equation} 
+\noindent and similarly the mean expected dataset polarization:
 \begin{equation}
-	\label{eq:alt_h}
-	H_{\theta_i}:\frac{1}{\lvert d \rvert} \sum\limits_{c \in d} \textit{pol-stat}(c, \theta_i) >  0
+	pol_{E}(d) = \frac{1}{\lvert d \rvert} \sum_{c \in d}\bar{pol}(c)
+\end{equation}
+\noindent We can then define the Aposteriori Unimodality Statistic with a formulation inspired by Cohen's Kappa \cite{Cohen_1960}, as:
+\begin{equation}
+	apunim(d, \theta) = 1 - \frac{1 - pol_O(d, \theta)}{1 - pol_E(d)}
 \end{equation}
 
-We refer to this test as the \textit{``Aposteriori Unimodality Test''}, where a small p-value suggests that we can not rule out that annotators of the $\theta_i$ group make a significant contribution to the overall annotator polarization. The scope of the test and its relationship with the previously presented statistics are demonstrated in Figure~\ref{fig::overview}. The presence of multiple hypotheses demands a p-value correction (\S\ref{ssec:methodology:details}).
-
-Our test assumes that (1) there exist enough data-points to reliably run the means-test, and (2) enough annotations in each data-point and \ac{SDB} group to estimate the \textit{pol-statistics}. We discuss the former assumption in \S\ref{ssec: results:num_annotators}. The latter can be safely assumed for most datasets, either because they feature enough data-points to reliably assume normal residuals, or by implementing the means test with a non-parametric test, such as the Wilcoxon signed-rank test \parencite{wilcoxon-1945}.
+The statistic is technically unbounded, but typically resides in the $[-1. 1]$ range. If $apunim \approx 0$, the exhibited polarization among annotators of group $\theta$ does not surpass what would be expected by chance. If $apunim > 0$, then the group partially explains a rise in polarization. Unlike Cohen's Kappa, the case of $apunim < 0$ does have meaning; the group actually exhibits lower polarization compared to the whole. The scope of the statistic and its relationship with the previously presented statistics are demonstrated in Figure~\ref{fig::overview}. 
 
 \begin{figure}
 	\includegraphics[width=\linewidth]{overview.png}
 	\caption{An overview of the Aposteriori Unimodality Test. We gather statistical information from the annotations (different \acp{SDB} are denoted by different colors) via the \ac{nDFU} measure, which is aggregated on the data-point-level by the pol-statistic. The Aposteriori Unimodality Test is applied on the discussion level, operating on the pol-statistics of the individual data-points.}
 	\label{fig::overview}
 \end{figure}
-
-
-\subsection{Technical Details}
-\label{ssec:methodology:details}
-
-The means test performed on the pol-statistics of each data-point (Equations~\ref{eq:null_h},~\ref{eq:alt_h}) can be theoretically performed by most well-known statistical mean tests. In our case, we use the one one-sample Student t-test, since discussions are typically comprised of a moderately large amount of data-points. Additionally, in the case of simultaneously considering $\lvert \Theta \rvert$ hypotheses, we apply a multiple comparison correction to the resulting p-values. We choose the Holms method \parencite{holms}.
-
-Our test is actually parameterized by two more parameters: the $t$ parameter, which determines how many times we sample random partitions (Equation~\ref{eq:pol_expected}), and the \ac{FWER}, which is used to tune the strength of the multiple comparison correction mentioned above. We can increase the $t$ parameter to get a better estimate of the expected data-point polarization, while increasing the computational cost of the method. We can also increase the \ac{FWER} to make our test more conservative towards multiple hypotheses \parencite{ChenFengYi2017}). In general, it is safe to set \ac{FWER} equal to the significance level of our test (e.g., $\textit{FWER} = 0.95$ if we are looking for $p < 0.05$)
 
 
 \section{Results}
