@@ -100,8 +100,8 @@ def aposteriori_unimodality(
         If kappa>0, increased polarization can not be explained by chance,
         but rather must be partially caused by differences between
         the SDB groups.
-        If kappa<0, the decrease in polarization is partially caused by 
-        differences between the SDB groups. 
+        If kappa<0, the decrease in polarization is partially caused by
+        differences between the SDB groups.
     :rtype: dict[`FactorType`, float]
     :raises ValueError:
         If the given lists are not the same length, are empty,
