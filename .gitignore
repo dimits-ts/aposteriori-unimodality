@@ -1,9 +1,4 @@
-attitudes_embedded.csv
-attitudes_embedded.csv.zip
-dataset.csv
-dataset.zip
-kumar_dataset.zip
-toxicity_ratings.json
+data/
 
 ## Core latex/pdflatex auxiliary files:
 *.aux
