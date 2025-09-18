@@ -121,7 +121,7 @@ def aposteriori_unimodality(
         per comment. The pvalue estimation is non-parametric.
     """
     # data prep
-    _validate_input(annotations, factor_group, comment_group)
+    _validate_input(annotations, factor_group, comment_group, iterations, bins)
     annotations = np.array(annotations)
     factor_group = np.array(factor_group)
     comment_group = np.array(comment_group)
@@ -193,6 +193,8 @@ def _validate_input(
     annotations: Collection[int],
     annotator_group: Collection[FactorType],
     comment_group: Collection[FactorType],
+    iterations: int,
+    bins: int
 ) -> None:
     if not (len(annotations) == len(annotator_group) == len(comment_group)):
         raise ValueError(
@@ -214,6 +216,12 @@ def _validate_input(
             "The Aposteriori Unimodality Test is defined for discussions, "
             "not individual comments."
         )
+
+    if iterations < 1:
+        raise ValueError("iterations must be at least 1.")
+
+    if bins < 2:
+        raise ValueError("Number of bins has to be at least 2.")
 
 
 def _factor_dfu_stat(
@@ -273,9 +281,6 @@ def _apriori_polarization_stat(
     :param iterations: number of random partitions to sample
     :return: dict mapping factor -> list[float] (length == iterations)
     """
-    if iterations < 1:
-        raise ValueError("iterations must be at least 1.")
-
     # order of factors must be preserved so results align
     factors = list(group_sizes.keys())
     sizes = np.array([group_sizes[f] for f in factors], dtype=int)
