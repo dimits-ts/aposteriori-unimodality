@@ -428,4 +428,5 @@ def _to_hist(scores: np.ndarray[float], bins: int) -> np.ndarray:
 
 
 def _unique(x: Iterable[Any]) -> Iterable[Any]:
-    return set(x)
+    # preserve first-seen order
+    return list(dict.fromkeys(x))
