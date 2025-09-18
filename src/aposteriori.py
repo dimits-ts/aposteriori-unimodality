@@ -254,10 +254,11 @@ def _random_polarization_stat(
         pseudo_groups = np.array(
             [
                 factor
-                for factor, size in group_sizes.items()
-                for _ in range(size)
+                for factor in all_factors
+                for _ in range(group_sizes[factor])
             ]
         )
+
         random_ndfus = _factor_polarization_stat(
             random_annotations, pseudo_groups, bins
         )
@@ -330,8 +331,13 @@ def _apunim_kappa(
 
             # Non-parametric p-value: proportion of randomized
             # kappas >= observed kappa
+            # two-sided since kappa can be negative
             randomized_kappas = [(r - E_f) / (1.0 - E_f) for r in R_f_samples]
-            p_value = np.mean([rk >= kappa for rk in randomized_kappas])
+            n = len(randomized_kappas)
+            abs_count = sum(
+                1 for rk in randomized_kappas if abs(rk) >= abs(kappa)
+            )
+            p_value = (abs_count + 1) / (n + 1)
 
             result[f] = ApunimResult(kappa, p_value)
 
