@@ -39,12 +39,12 @@ def dfu(x: Collection[float], bins: int, normalized: bool = False) -> float:
     pos_max = np.argmax(hist)
 
     # right search
-    right_diffs = hist[pos_max + 1 :] - hist[pos_max:-1]
+    right_diffs = hist[pos_max+1:] - hist[pos_max:-1]
     max_rdiff = right_diffs.max(initial=0)
 
     # left search
     if pos_max > 0:
-        left_diffs = hist[0:pos_max] - hist[1 : pos_max + 1]
+        left_diffs = hist[0:pos_max] - hist[1:pos_max + 1]
         max_ldiff = left_diffs[left_diffs > 0].max(initial=0)
     else:
         max_ldiff = 0
@@ -127,8 +127,8 @@ def aposteriori_unimodality(
     comment_group = np.array(comment_group)
 
     all_factors = _unique(factor_group)
-    factor_dict = _list_dict._ListDict()
-    randomized_ndfu_dict = _list_dict._ListDict()
+    observed_dfu_dict = _list_dict._ListDict()
+    apriori_dfu_dict = _list_dict._ListDict()
 
     # gather stats per comment
     for curr_comment_id in _unique(comment_group):
@@ -140,7 +140,7 @@ def aposteriori_unimodality(
             for factor in all_factors
         }
 
-        factor_dict.add_dict(
+        observed_dfu_dict.add_dict(
             _factor_dfu_stat(
                 all_comment_annotations,
                 comment_annotator_groups,
@@ -148,7 +148,7 @@ def aposteriori_unimodality(
             )
         )
 
-        randomized_ndfu_dict.add_dict(
+        apriori_dfu_dict.add_dict(
             _apriori_polarization_stat(
                 annotations=all_comment_annotations,
                 group_sizes=lengths_by_factor,
@@ -161,7 +161,8 @@ def aposteriori_unimodality(
     raw_results = {}
     for factor in all_factors:
         res = _aposteriori_polarization_stat(
-            factor_dict[factor], randomized_ndfu_dict[factor]
+            observed_dfu_dict[factor],
+            [np.nanmean(x) for x in apriori_dfu_dict[factor]],
         )
         raw_results[factor] = res
 
@@ -194,7 +195,7 @@ def _validate_input(
     annotator_group: Collection[FactorType],
     comment_group: Collection[FactorType],
     iterations: int,
-    bins: int
+    bins: int,
 ) -> None:
     if not (len(annotations) == len(annotator_group) == len(comment_group)):
         raise ValueError(
@@ -339,15 +340,19 @@ def _random_partition(
 
 
 def _aposteriori_polarization_stat(
-    observed_vals: list[float],
-    randomized_vals: list[float],
+    observed_mean_dfus: list[float],
+    randomized_mean_dfus: list[float],
 ) -> ApunimResult:
     """
     Compute Cohen's kappa-style AP-unimodality statistic and
     non-parametric p-value for a single factor.
     """
-    O_f = np.nanmean(observed_vals)
-    E_f = np.nanmean(randomized_vals) if len(randomized_vals) > 0 else np.nan
+    O_f = np.nanmean(observed_mean_dfus)
+    E_f = (
+        np.nanmean(randomized_mean_dfus)
+        if len(randomized_mean_dfus) > 0
+        else np.nan
+    )
 
     if np.isnan(O_f) or np.isnan(E_f) or E_f >= 1.0:
         return ApunimResult(np.nan, np.nan)
@@ -361,7 +366,7 @@ def _aposteriori_polarization_stat(
 
     kappa = (O_f - E_f) / (1.0 - E_f)
 
-    rk_arr = np.array([(r - E_f) / (1.0 - E_f) for r in randomized_vals])
+    rk_arr = np.array([(r - E_f) / (1.0 - E_f) for r in randomized_mean_dfus])
     abs_count = np.sum(np.abs(rk_arr) >= abs(kappa))
     p_value = (abs_count + 1) / (len(rk_arr) + 1)
 
