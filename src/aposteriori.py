@@ -35,12 +35,12 @@ def dfu(x: Collection[float], bins: int, normalized: bool = False) -> float:
     pos_max = np.argmax(hist)
 
     # right search
-    right_diffs = hist[pos_max+1:] - hist[pos_max:-1]
+    right_diffs = hist[pos_max + 1 :] - hist[pos_max:-1]
     max_rdiff = right_diffs.max(initial=0)
 
     # left search
     if pos_max > 0:
-        left_diffs = hist[0:pos_max] - hist[1:pos_max + 1]
+        left_diffs = hist[0:pos_max] - hist[1 : pos_max + 1]
         max_ldiff = left_diffs[left_diffs > 0].max(initial=0)
     else:
         max_ldiff = 0
@@ -232,10 +232,10 @@ def _random_polarization_stat(
     all_factors: Iterable[FactorType],
     bins: int,
     iterations: int,
-) -> dict[FactorType, float]:
-    # Split annotations in len(group_lengths) groups,
-    # each of which has a length equal to the entries in group_lengths.
-    # Then for each group run _factor_polarization_stat
+) -> dict[FactorType, list[float]]:
+    """
+    Returns all randomized nDFU values per factor for empirical p-value computation.
+    """
     all_random_ndfus = _list_dict._ListDict()
     for i in range(iterations):
         random_groups = _random_partition(
@@ -254,11 +254,8 @@ def _random_polarization_stat(
         )
         all_random_ndfus.add_dict(random_ndfus)
 
-    # return the average of all polarization stats for each factor
-    mean_random_ndfu_dict = {
-        factor: np.mean(stats) for factor, stats in all_random_ndfus.items()
-    }
-    return mean_random_ndfu_dict
+    # Keep all iterations for each factor
+    return dict(all_random_ndfus.items())
 
 
 def _random_partition(
@@ -296,27 +293,41 @@ def _random_partition(
 
 def _apunim_kappa(
     observed_factors: dict[FactorType, float],
-    randomized_factors: dict[FactorType, float],
+    randomized_factors: dict[
+        FactorType, list[float]
+    ],  # assume multiple randomized samples
     all_factors: Iterable[FactorType],
-) -> float:
+) -> dict[FactorType, dict[str, float]]:
+    """
+    Computes Cohen's kappa style AP-unimodality statistic and non-parametric p-value.
+
+    Returns a dictionary per factor with keys:
+        'kappa': the observed kappa
+        'p_value': non-parametric p-value
+    """
     observed_means = {
         f: np.nanmean(vals) for f, vals in observed_factors.items()
     }
-    randomized_means = {
-        f: np.nanmean(vals) for f, vals in randomized_factors.items()
-    }
 
-    # Cohen's kappa style formula
-    apunim_kappa = {}
+    result = {}
     for f in all_factors:
         O_f = observed_means[f]
-        E_f = randomized_means[f]
-        if np.isnan(O_f) or np.isnan(E_f) or E_f >= 1.0:
-            apunim_kappa[f] = np.nan
-        else:
-            apunim_kappa[f] = (O_f - E_f) / (1.0 - E_f)
+        R_f_samples = randomized_factors[f]
+        E_f = np.nanmean(R_f_samples) if len(R_f_samples) > 0 else np.nan
 
-    return apunim_kappa
+        if np.isnan(O_f) or np.isnan(E_f) or E_f >= 1.0:
+            result[f] = {"kappa": np.nan, "p_value": np.nan}
+        else:
+            kappa = (O_f - E_f) / (1.0 - E_f)
+
+            # Non-parametric p-value: proportion of randomized 
+            # kappas >= observed kappa
+            randomized_kappas = [(r - E_f) / (1.0 - E_f) for r in R_f_samples]
+            p_value = np.mean([rk >= kappa for rk in randomized_kappas])
+
+            result[f] = {"kappa": kappa, "p_value": p_value}
+
+    return result
 
 
 def _to_hist(scores: np.ndarray[float], bins: int) -> np.ndarray:
