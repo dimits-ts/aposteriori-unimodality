@@ -1,6 +1,7 @@
 from typing import TypeVar, Iterable, Any
 from collections import namedtuple
 from collections.abc import Collection
+import statsmodels.stats.multitest
 
 import numpy as np
 
@@ -58,6 +59,7 @@ def aposteriori_unimodality(
     comment_group: Collection[FactorType],
     bins: int,
     iterations: int = 100,
+    alpha: float = 0.05,
 ) -> dict[FactorType, ApunimResult]:
     """
     Perform the Aposteriori Unimodality Test to identify whether any annotator
@@ -156,12 +158,15 @@ def aposteriori_unimodality(
         )
         randomized_ndfu_dict.add_dict(comment_randomized_ndfus)
 
-    apunim_kappa = _apunim_kappa(
+    results = _apunim_kappa(
         observed_factors=factor_dict,
         randomized_factors=randomized_ndfu_dict,
         all_factors=all_factors,
     )
-    return apunim_kappa
+    corrected_results = _apply_correction_to_results(
+        raw_results=results, alpha=alpha
+    )
+    return corrected_results
 
 
 def _validate_input(
@@ -297,9 +302,7 @@ def _random_partition(
 
 def _apunim_kappa(
     observed_factors: dict[FactorType, float],
-    randomized_factors: dict[
-        FactorType, list[float]
-    ],  # assume multiple randomized samples
+    randomized_factors: dict[FactorType, list[float]],
     all_factors: Iterable[FactorType],
 ) -> dict[FactorType, ApunimResult]:
     """
@@ -333,6 +336,79 @@ def _apunim_kappa(
             result[f] = ApunimResult(kappa, p_value)
 
     return result
+
+
+def _apply_correction_to_results(
+    raw_results: dict, alpha: float = 0.05  # dict[FactorType, ApunimResult]
+) -> dict[FactorType, ApunimResult]:
+    """
+    Apply multiple hypothesis correction to p-values in ApunimResult dict.
+
+    :param kappa_results: dict of ApunimResult from _apunim_kappa
+    :param alpha: significance level for correction
+    :return: dict of ApunimResultCorrected with corrected p-values
+    """
+    # Extract raw p-values, ignoring NaNs
+    raw_pvalues = {
+        f: res.pvalue
+        for f, res in raw_results.items()
+        if res.pvalue is not np.nan
+    }
+
+    # Apply correction
+    corrected_pvalues = _correct_significance(raw_pvalues, alpha)
+
+    # Build new dict with corrected p-values
+    corrected_results = {}
+    for f, res in raw_results.items():
+        corrected_p = corrected_pvalues.get(f, np.nan)
+        corrected_results[f] = ApunimResult(
+            value=res.value,
+            pvalue=corrected_p,
+        )
+
+    return corrected_results
+
+
+def _correct_significance(
+    raw_pvalues: dict[FactorType, float], alpha: float
+) -> dict[FactorType, float]:
+    """
+    Apply a statistical correction to pvalues from multiple alternative
+    hypotheses.
+
+    :param raw_pvalues: the pvalue of each hypothesis
+    :type raw_pvalues: dict[`FactorType`, float]
+    :param alpha: the target significance
+    :type alpha: float, optional
+    :return: the corrected pvalues for each hypothesis
+    :rtype: dict[`FactorType`, float]
+    """
+    # print("Raw pvalues:", raw_pvalues)
+    if len(raw_pvalues) == 0:
+        return {}
+
+    if np.any([p < 0 or p > 1 for p in raw_pvalues.values()]):
+        raise ValueError("Invalid pvalues given for correction.")
+
+    # place each pvalue in an ordered list
+    keys, raw_pvalue_ls = zip(*raw_pvalues.items())  # keep key-value order
+    corrected_pvalue_ls = _apply_correction(raw_pvalue_ls, alpha)
+    # repackage dictionary
+    corrected_pvalues_dict = dict(zip(keys, corrected_pvalue_ls))
+    # print("Corrected pvalues: ", corrected_pvalue_ls)
+    return corrected_pvalues_dict
+
+
+def _apply_correction(pvalues: Collection[float], alpha: float) -> np.ndarray:
+    corrected_stats = statsmodels.stats.multitest.multipletests(
+        np.array(pvalues),
+        alpha=alpha,
+        method="fdr_bh",
+        is_sorted=False,
+        returnsorted=False,
+    )
+    return corrected_stats[1]
 
 
 def _to_hist(scores: np.ndarray[float], bins: int) -> np.ndarray:
