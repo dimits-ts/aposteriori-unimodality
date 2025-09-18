@@ -63,7 +63,10 @@ class TestAposterioriUnimodality(unittest.TestCase):
         )
         self.assertEqual(set(result.keys()), {"A", "B"})
         self.assertTrue(
-            all(np.isnan(p.pvalue) or 0 <= p.pvalue <= 1 for p in result.values())
+            all(
+                np.isnan(p.pvalue) or 0 <= p.pvalue <= 1
+                for p in result.values()
+            )
         )
 
 

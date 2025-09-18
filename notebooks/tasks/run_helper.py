@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from tqdm.auto import tqdm
 
 from src import aposteriori
 
@@ -43,8 +42,8 @@ def results(
 
     # get results for each discussion
     discussion_ids = df.reset_index()[discussion_id_col].unique()
-    for discussion_id in tqdm(discussion_ids):
-        discussion_df = df.dropna(subset=sdb_column)
+    for discussion_id in discussion_ids:
+        discussion_df = df.dropna(subset=[sdb_column])
         discussion_df = discussion_df.reset_index()
         discussion_df = discussion_df[
             discussion_df[discussion_id_col] == discussion_id
@@ -58,9 +57,23 @@ def results(
         )
         res_ls.append(res)
 
-    return pd.concat(
-        {_id: result for _id, result in zip(discussion_ids, res_ls)}, axis=1
-    )
+    # each element in res_ls is a dict[FactorType, ApunimResult]
+    # convert to DataFrame: MultiIndex (discussion_id, factor)
+    # -> columns: value, pvalue
+    all_dfs = []
+    for discussion_id, res_dict in zip(discussion_ids, res_ls):
+        df_disc = pd.DataFrame(
+            {
+                factor: {"value": r.value, "pvalue": r.pvalue}
+                for factor, r in res_dict.items()
+            }
+        ).T
+        df_disc.columns = pd.MultiIndex.from_product(
+            [[discussion_id], df_disc.columns]
+        )
+        all_dfs.append(df_disc)
+
+    return pd.concat(all_dfs, axis=1)
 
 
 def _run_aposteriori(
@@ -68,9 +81,9 @@ def _run_aposteriori(
     value_col: str,
     feature_col: str,
     comment_key_col: str,
-    alpha: float = 0.1,
     bins: int = -1,
-) -> pd.Series:
+    iterations: int = 500
+) -> dict:
     if bins == -1:
         bins = len(np.unique(df[value_col]))
 
@@ -81,11 +94,13 @@ def _run_aposteriori(
         comment_key_col=comment_key_col,
     )
 
-    stat = aposteriori.aposteriori_unimodality(
+    # aposteriori_unimodality now returns dict[FactorType, ApunimResult]
+    result_dict = aposteriori.aposteriori_unimodality(
         annotations=annotations,
         factor_group=attributes,
         comment_group=keys,
         bins=bins,
-        iterations=200,
+        iterations=iterations,
     )
-    return pd.Series(stat)
+
+    return result_dict
