@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 
 from src.aposteriori import (
-    _factor_polarization_stat,
+    _factor_dfu_stat,
     aposteriori_unimodality,
 )
 
@@ -75,7 +75,7 @@ class TestPolarizationStat(unittest.TestCase):
     def test_basic_functionality(self):
         annotations = np.array([1, 2, 3, 1, 2, 3])
         groups = np.array(["A", "A", "A", "B", "B", "B"])
-        result = _factor_polarization_stat(annotations, groups, bins=3)
+        result = _factor_dfu_stat(annotations, groups, bins=3)
         self.assertIsInstance(result, dict)
         self.assertEqual(set(result.keys()), {"A", "B"})
         for val in result.values():
@@ -84,13 +84,13 @@ class TestPolarizationStat(unittest.TestCase):
     def test_single_group(self):
         annotations = np.array([1, 1, 1])
         groups = np.array(["A", "A", "A"])
-        result = _factor_polarization_stat(annotations, groups, bins=3)
+        result = _factor_dfu_stat(annotations, groups, bins=3)
         self.assertEqual(set(result.keys()), {"A"})
 
     def test_all_same_annotation(self):
         annotations = np.array([2, 2, 2, 2])
         groups = np.array(["X", "Y", "X", "Y"])
-        result = _factor_polarization_stat(annotations, groups, bins=3)
+        result = _factor_dfu_stat(annotations, groups, bins=3)
         self.assertEqual(set(result.keys()), {"X", "Y"})
         for val in result.values():
             self.assertIsInstance(val, float)
@@ -99,20 +99,20 @@ class TestPolarizationStat(unittest.TestCase):
         annotations = np.array([])
         groups = np.array([])
         with self.assertRaises(ValueError):
-            _factor_polarization_stat(annotations, groups, bins=3)
+            _factor_dfu_stat(annotations, groups, bins=3)
 
     def test_mismatched_lengths(self):
         annotations = np.array([1, 2])
         groups = np.array(["A"])
         with self.assertRaises(ValueError):
-            _factor_polarization_stat(annotations, groups, bins=2)
+            _factor_dfu_stat(annotations, groups, bins=2)
 
     def test_bins_parameter_effect(self):
         annotations = np.array([1, 2, 3, 4])
         groups = np.array(["A", "A", "B", "B"])
         # Make sure it runs and output stays valid for different bin values
         for bins in [2, 3, 4]:
-            result = _factor_polarization_stat(annotations, groups, bins=bins)
+            result = _factor_dfu_stat(annotations, groups, bins=bins)
             self.assertEqual(set(result.keys()), {"A", "B"})
             for val in result.values():
                 self.assertIsInstance(val, float)

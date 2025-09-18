@@ -141,7 +141,7 @@ def aposteriori_unimodality(
         }
 
         factor_dict.add_dict(
-            _factor_polarization_stat(
+            _factor_dfu_stat(
                 all_comment_annotations,
                 comment_annotator_groups,
                 bins=bins,
@@ -152,17 +152,18 @@ def aposteriori_unimodality(
             _apriori_polarization_stat(
                 annotations=all_comment_annotations,
                 group_sizes=lengths_by_factor,
-                all_factors=all_factors,
                 bins=bins,
                 iterations=iterations,
             )
         )
 
     # compute raw results per factor
-    raw_results = {
-        f: _aposteriori_polarization_stat(factor_dict[f], randomized_ndfu_dict[f])
-        for f in all_factors
-    }
+    raw_results = {}
+    for factor in all_factors:
+        res = _aposteriori_polarization_stat(
+            factor_dict[factor], randomized_ndfu_dict[factor]
+        )
+        raw_results[factor] = res
 
     # extract valid p-values for correction
     factors_with_pvals = [
@@ -174,20 +175,17 @@ def aposteriori_unimodality(
 
     # apply correction
     corrected_pvals = _apply_correction_to_results(raw_pvals, alpha)
-
-    # reassemble results dict
-    corrected_results = {
-        f: ApunimResult(
-            value=raw_results[f].value,
+    corrected_results = {}
+    for factor in all_factors:
+        # reassemble results dict
+        corrected_results[factor] = ApunimResult(
+            value=raw_results[factor].value,
             pvalue=(
-                corrected_pvals[factors_with_pvals.index(f)]
-                if f in factors_with_pvals
+                corrected_pvals[factors_with_pvals.index(factor)]
+                if factor in factors_with_pvals
                 else np.nan
             ),
         )
-        for f in all_factors
-    }
-
     return corrected_results
 
 
@@ -218,7 +216,7 @@ def _validate_input(
         )
 
 
-def _factor_polarization_stat(
+def _factor_dfu_stat(
     all_comment_annotations: np.ndarray[float],
     annotator_group: np.ndarray[FactorType],
     bins: int,
@@ -259,26 +257,45 @@ def _factor_polarization_stat(
 def _apriori_polarization_stat(
     annotations: np.ndarray[float],
     group_sizes: dict[FactorType, int],
-    all_factors: Iterable[FactorType],
     bins: int,
     iterations: int,
 ) -> dict[FactorType, list[float]]:
-    results = {f: [] for f in all_factors}
-    sizes = np.array([group_sizes[f] for f in all_factors])
+    """
+    For a single comment's annotations, generate `iterations` random partitions
+    that respect the given group_sizes, compute the normalized DFU for each
+    resulting group, and return a dict mapping factor -> list of DFU values
+    (one value per iteration).
+
+    :param annotations: 1D numpy array of annotation values for the comment
+    :param group_sizes:
+        dict mapping factor -> size for that factor in this comment
+    :param bins: number of bins to use when computing DFU
+    :param iterations: number of random partitions to sample
+    :return: dict mapping factor -> list[float] (length == iterations)
+    """
+    if iterations < 1:
+        raise ValueError("iterations must be at least 1.")
+
+    # order of factors must be preserved so results align
+    factors = list(group_sizes.keys())
+    sizes = np.array([group_sizes[f] for f in factors], dtype=int)
+
+    if np.sum(sizes) != len(annotations):
+        raise ValueError(
+            "Sum of provided group sizes must equal the number of annotations."
+        )
+
+    # prepare result lists
+    results: dict[FactorType, list[float]] = {f: [] for f in factors}
 
     for _ in range(iterations):
-        random_groups = _random_partition(annotations, sizes)
-        random_annotations = np.hstack(random_groups)
-        pseudo_groups = np.array(
-            [f for f, size in zip(all_factors, sizes) for _ in range(size)]
-        )
-
-        random_ndfus = _factor_polarization_stat(
-            random_annotations, pseudo_groups, bins
-        )
-
-        for f, val in random_ndfus.items():
-            results[f].append(float(val))
+        partitions = _random_partition(annotations, sizes)
+        # partitions is a list of numpy arrays in the same order as `factors`
+        for f, part in zip(factors, partitions):
+            if part.size == 0:
+                results[f].append(np.nan)
+            else:
+                results[f].append(dfu(part, bins=bins))
 
     return results
 
