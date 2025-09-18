@@ -38,12 +38,12 @@ def dfu(x: Collection[float], bins: int, normalized: bool = False) -> float:
     pos_max = np.argmax(hist)
 
     # right search
-    right_diffs = hist[pos_max+1:] - hist[pos_max:-1]
+    right_diffs = hist[pos_max + 1 :] - hist[pos_max:-1]
     max_rdiff = right_diffs.max(initial=0)
 
     # left search
     if pos_max > 0:
-        left_diffs = hist[0:pos_max] - hist[1:pos_max+1]
+        left_diffs = hist[0:pos_max] - hist[1 : pos_max + 1]
         max_ldiff = left_diffs[left_diffs > 0].max(initial=0)
     else:
         max_ldiff = 0
@@ -352,7 +352,7 @@ def _apply_correction_to_results(
     raw_pvalues = {
         f: res.pvalue
         for f, res in raw_results.items()
-        if res.pvalue is not np.nan
+        if not (res.pvalue is None or np.isnan(res.pvalue))
     }
 
     # Apply correction
