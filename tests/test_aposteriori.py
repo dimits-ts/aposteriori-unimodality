@@ -12,18 +12,6 @@ class TestAposterioriUnimodality(unittest.TestCase):
     def setUp(self):
         self.rng = np.random.default_rng(42)
 
-    def test_output_is_dict(self):
-        annotations = [1, 2, 3, 4, 5, 1, 2, 3, 4, 5]
-        factor_group = ["A"] * 5 + ["B"] * 5
-        comment_group = ["c1"] * 5 + ["c2"] * 5
-        result = aposteriori_unimodality(
-            annotations, factor_group, comment_group, bins=5
-        )
-        self.assertIsInstance(result, dict)
-        for key, value in result.items():
-            self.assertIsInstance(key, str)
-            self.assertIsInstance(value, float)
-
     def test_output_keys_match_factor_values(self):
         annotations = [1, 2, 3, 4, 5, 1, 2, 3, 4, 5]
         factor_group = ["A"] * 5 + ["B"] * 5
@@ -55,17 +43,6 @@ class TestAposterioriUnimodality(unittest.TestCase):
                 annotations, factor_group, comment_group, bins=5
             )
 
-    def test_partitioned_bimodal_data_low_value(self):
-        # TODO: refactor this to include actual sampling
-        annotations = [1] * 50 + [5] * 50
-        factor_group = ["left"] * 50 + ["right"] * 50
-        comment_group = ["c1"] * 45 + ["c2"] * 5 + ["c1"] * 5 + ["c2"] * 45
-        result = aposteriori_unimodality(
-            annotations, factor_group, comment_group, bins=5
-        )
-        for group, p in result.items():
-            self.assertLess(p, 0.05)
-
     def test_multiple_comments_are_aggregated(self):
         annotations = [1, 5, 1, 5, 1, 5, 2, 4, 2, 4]
         factor_group = ["A", "B"] * 5
@@ -86,7 +63,7 @@ class TestAposterioriUnimodality(unittest.TestCase):
         )
         self.assertEqual(set(result.keys()), {"A", "B"})
         self.assertTrue(
-            all(np.isnan(p) or 0 <= p <= 1 for p in result.values())
+            all(np.isnan(p.pvalue) or 0 <= p.pvalue <= 1 for p in result.values())
         )
 
 

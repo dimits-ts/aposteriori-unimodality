@@ -1,4 +1,5 @@
 from typing import TypeVar, Iterable, Any
+from collections import namedtuple
 from collections.abc import Collection
 
 import numpy as np
@@ -6,6 +7,7 @@ import numpy as np
 from . import _list_dict
 
 
+ApunimResult = namedtuple("ApunimResult", ["value", "pvalue"])
 FactorType = TypeVar("Factor Type")
 
 
@@ -35,12 +37,12 @@ def dfu(x: Collection[float], bins: int, normalized: bool = False) -> float:
     pos_max = np.argmax(hist)
 
     # right search
-    right_diffs = hist[pos_max + 1 :] - hist[pos_max:-1]
+    right_diffs = hist[pos_max+1:] - hist[pos_max:-1]
     max_rdiff = right_diffs.max(initial=0)
 
     # left search
     if pos_max > 0:
-        left_diffs = hist[0:pos_max] - hist[1 : pos_max + 1]
+        left_diffs = hist[0:pos_max] - hist[1:pos_max+1]
         max_ldiff = left_diffs[left_diffs > 0].max(initial=0)
     else:
         max_ldiff = 0
@@ -56,7 +58,7 @@ def aposteriori_unimodality(
     comment_group: Collection[FactorType],
     bins: int,
     iterations: int = 100,
-) -> dict[FactorType, float]:
+) -> dict[FactorType, ApunimResult]:
     """
     Perform the Aposteriori Unimodality Test to identify whether any annotator
     group, defined by a particular Socio-Demographic Beackground (SDB)
@@ -95,14 +97,15 @@ def aposteriori_unimodality(
         but also more computationally expensive.
     :type iterations: int
     :returns:
-        The apunim kappa value for each factor of the selected SDB dimension.
-        If kappa~=0, the polarization can be explained by chance.
-        If kappa>0, increased polarization can not be explained by chance,
+        A named tuple containing the apunim metric ("value")
+        and pvalue ("pvalue") for each factor of the selected SDB dimension.
+        If value~=0, the polarization can be explained by chance.
+        If value>0, increased polarization can not be explained by chance,
         but rather must be partially caused by differences between
         the SDB groups.
-        If kappa<0, the decrease in polarization is partially caused by
+        If value<0, the decrease in polarization is partially caused by
         differences between the SDB groups.
-    :rtype: dict[`FactorType`, float]
+    :rtype: dict[`FactorType`, ApunimResult]
     :raises ValueError:
         If the given lists are not the same length, are empty,
         are comprised of a single group, or a single comment.
@@ -112,7 +115,7 @@ def aposteriori_unimodality(
 
     .. note::
         The test is relatively robust even with a small number of annotations
-        per comment.
+        per comment. The pvalue estimation is non-parametric.
     """
     # data prep
     _validate_input(annotations, factor_group, comment_group)
@@ -234,7 +237,8 @@ def _random_polarization_stat(
     iterations: int,
 ) -> dict[FactorType, list[float]]:
     """
-    Returns all randomized nDFU values per factor for empirical p-value computation.
+    Returns all randomized nDFU values per factor for empirical p-value
+    computation.
     """
     all_random_ndfus = _list_dict._ListDict()
     for i in range(iterations):
@@ -297,9 +301,10 @@ def _apunim_kappa(
         FactorType, list[float]
     ],  # assume multiple randomized samples
     all_factors: Iterable[FactorType],
-) -> dict[FactorType, dict[str, float]]:
+) -> dict[FactorType, ApunimResult]:
     """
-    Computes Cohen's kappa style AP-unimodality statistic and non-parametric p-value.
+    Computes Cohen's kappa style AP-unimodality statistic and
+    non-parametric p-value.
 
     Returns a dictionary per factor with keys:
         'kappa': the observed kappa
@@ -316,16 +321,16 @@ def _apunim_kappa(
         E_f = np.nanmean(R_f_samples) if len(R_f_samples) > 0 else np.nan
 
         if np.isnan(O_f) or np.isnan(E_f) or E_f >= 1.0:
-            result[f] = {"kappa": np.nan, "p_value": np.nan}
+            result[f] = ApunimResult(np.nan, np.nan)
         else:
             kappa = (O_f - E_f) / (1.0 - E_f)
 
-            # Non-parametric p-value: proportion of randomized 
+            # Non-parametric p-value: proportion of randomized
             # kappas >= observed kappa
             randomized_kappas = [(r - E_f) / (1.0 - E_f) for r in R_f_samples]
             p_value = np.mean([rk >= kappa for rk in randomized_kappas])
 
-            result[f] = {"kappa": kappa, "p_value": p_value}
+            result[f] = ApunimResult(kappa, p_value)
 
     return result
 
