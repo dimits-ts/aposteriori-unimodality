@@ -126,14 +126,12 @@ def aposteriori_unimodality(
     factor_group = np.array(factor_group)
     comment_group = np.array(comment_group)
 
-    # keeps list for each factor, each value in the list is a comment
     all_factors = _unique(factor_group)
     factor_dict = _list_dict._ListDict()
     randomized_ndfu_dict = _list_dict._ListDict()
 
-    # select comment
+    # gather stats per comment
     for curr_comment_id in _unique(comment_group):
-        # select only annotations relevant to this comment
         is_in_curr_comment = comment_group == curr_comment_id
         all_comment_annotations = annotations[is_in_curr_comment]
         comment_annotator_groups = factor_group[is_in_curr_comment]
@@ -142,32 +140,54 @@ def aposteriori_unimodality(
             for factor in all_factors
         }
 
-        # update results for each factor according to new comment
-        comment_factor_ndfus = _factor_polarization_stat(
-            all_comment_annotations, comment_annotator_groups, bins=bins
+        factor_dict.add_dict(
+            _factor_polarization_stat(
+                all_comment_annotations,
+                comment_annotator_groups,
+                bins=bins,
+            )
         )
-        factor_dict.add_dict(comment_factor_ndfus)
 
-        # get ndfu of randomized comments
-        comment_randomized_ndfus = _random_polarization_stat(
-            # number of observations per factor
-            annotations=all_comment_annotations,
-            group_sizes=lengths_by_factor,
-            all_factors=all_factors,
-            bins=bins,
-            iterations=iterations,
+        randomized_ndfu_dict.add_dict(
+            _random_polarization_stat(
+                annotations=all_comment_annotations,
+                group_sizes=lengths_by_factor,
+                all_factors=all_factors,
+                bins=bins,
+                iterations=iterations,
+            )
         )
-        randomized_ndfu_dict.add_dict(comment_randomized_ndfus)
 
-    results = _apunim_kappa(
-        observed_factors=factor_dict,
-        randomized_factors=randomized_ndfu_dict,
-        all_factors=all_factors,
-    )
-    corrected_results = _apply_correction_to_results(
-        raw_results=results, alpha=alpha
-    )
+    # compute raw results per factor
+    raw_results = {
+        f: _apunim_kappa(factor_dict[f], randomized_ndfu_dict[f])
+        for f in all_factors
+    }
+
+    # extract valid p-values for correction
+    factors_with_pvals = [
+        f for f, res in raw_results.items()
+        if res.pvalue is not None and not np.isnan(res.pvalue)
+    ]
+    raw_pvals = [raw_results[f].pvalue for f in factors_with_pvals]
+
+    # apply correction
+    corrected_pvals = _apply_correction_to_results(raw_pvals, alpha)
+
+    # reassemble results dict
+    corrected_results = {
+        f: ApunimResult(
+            value=raw_results[f].value,
+            pvalue=(
+                corrected_pvals[factors_with_pvals.index(f)]
+                if f in factors_with_pvals else np.nan
+            ),
+        )
+        for f in all_factors
+    }
+
     return corrected_results
+
 
 
 def _validate_input(
@@ -216,7 +236,7 @@ def _factor_polarization_stat(
     :type bins: int
     :return: The polarization stats for each level of the currently considered
         factor, for one comment
-    :rtype: np.ndarray
+    :rtype: dict[FactorType, float]
     """
     if all_comment_annotations.shape != annotator_group.shape:
         raise ValueError("Value and group arrays must be the same length.")
@@ -242,31 +262,24 @@ def _random_polarization_stat(
     bins: int,
     iterations: int,
 ) -> dict[FactorType, list[float]]:
-    """
-    Returns all randomized nDFU values per factor for empirical p-value
-    computation.
-    """
-    all_random_ndfus = _list_dict._ListDict()
-    for i in range(iterations):
-        random_groups = _random_partition(
-            annotations, np.array(list(group_sizes.values()))
-        )
+    results = {f: [] for f in all_factors}
+    sizes = np.array([group_sizes[f] for f in all_factors])
+
+    for _ in range(iterations):
+        random_groups = _random_partition(annotations, sizes)
         random_annotations = np.hstack(random_groups)
         pseudo_groups = np.array(
-            [
-                factor
-                for factor in all_factors
-                for _ in range(group_sizes[factor])
-            ]
+            [f for f, size in zip(all_factors, sizes) for _ in range(size)]
         )
 
         random_ndfus = _factor_polarization_stat(
             random_annotations, pseudo_groups, bins
         )
-        all_random_ndfus.add_dict(random_ndfus)
 
-    # Keep all iterations for each factor
-    return dict(all_random_ndfus.items())
+        for f, val in random_ndfus.items():
+            results[f].append(float(val))
+
+    return results
 
 
 def _random_partition(
@@ -303,87 +316,49 @@ def _random_partition(
 
 
 def _apunim_kappa(
-    observed_factors: dict[FactorType, float],
-    randomized_factors: dict[FactorType, list[float]],
-    all_factors: Iterable[FactorType],
-) -> dict[FactorType, ApunimResult]:
+    observed_vals: list[float],
+    randomized_vals: list[float],
+) -> ApunimResult:
     """
-    Computes Cohen's kappa style AP-unimodality statistic and
-    non-parametric p-value.
-
-    Returns a dictionary per factor with keys:
-        'kappa': the observed kappa
-        'p_value': non-parametric p-value
+    Compute Cohen's kappa-style AP-unimodality statistic and
+    non-parametric p-value for a single factor.
     """
-    observed_means = {
-        f: np.nanmean(vals) for f, vals in observed_factors.items()
-    }
+    O_f = np.nanmean(observed_vals)
+    E_f = np.nanmean(randomized_vals) if len(randomized_vals) > 0 else np.nan
 
-    result = {}
-    for f in all_factors:
-        O_f = observed_means[f]
-        R_f_samples = randomized_factors[f]
-        E_f = np.nanmean(R_f_samples) if len(R_f_samples) > 0 else np.nan
+    if np.isnan(O_f) or np.isnan(E_f) or E_f >= 1.0:
+        return ApunimResult(np.nan, np.nan)
 
-        if 1 - E_f < 1e-12:
-            # f E_f is 1.0 you get division by zero
-            # (which we handle by returning NaN),
-            # but if E_f is close to 1 the kappa becomes numerically unstable.
-            warnings.warn(
-                "Apriori polarization is close to 1, "
-                "the apunim estimation may be unreliable"
-            )
+    if 1 - E_f < 1e-12:
+        warnings.warn(
+            "Apriori polarization is close to 1, "
+            "the apunim estimation may be unreliable"
+        )
+        return ApunimResult(np.nan, np.nan)
 
-        if np.isnan(O_f) or np.isnan(E_f) or E_f >= 1.0:
-            result[f] = ApunimResult(np.nan, np.nan)
-        else:
-            kappa = (O_f - E_f) / (1.0 - E_f)
+    kappa = (O_f - E_f) / (1.0 - E_f)
 
-            # Non-parametric p-value: proportion of randomized
-            # kappas >= observed kappa
-            # two-sided since kappa can be negative
-            randomized_kappas = [(r - E_f) / (1.0 - E_f) for r in R_f_samples]
-            n = len(randomized_kappas)
-            abs_count = sum(
-                1 for rk in randomized_kappas if abs(rk) >= abs(kappa)
-            )
-            p_value = (abs_count + 1) / (n + 1)
+    rk_arr = np.array([(r - E_f) / (1.0 - E_f) for r in randomized_vals])
+    abs_count = np.sum(np.abs(rk_arr) >= abs(kappa))
+    p_value = (abs_count + 1) / (len(rk_arr) + 1)
 
-            result[f] = ApunimResult(kappa, p_value)
-
-    return result
+    return ApunimResult(kappa, p_value)
 
 
 def _apply_correction_to_results(
-    raw_results: dict, alpha: float = 0.05  # dict[FactorType, ApunimResult]
-) -> dict[FactorType, ApunimResult]:
+    pvalues: Collection[float], alpha: float = 0.05
+) -> np.ndarray:
     """
-    Apply multiple hypothesis correction to p-values in ApunimResult dict.
-
-    :param kappa_results: dict of ApunimResult from _apunim_kappa
-    :param alpha: significance level for correction
-    :return: dict of ApunimResultCorrected with corrected p-values
+    Apply multiple hypothesis correction to a list of p-values.
+    Returns corrected p-values in the same order.
     """
-    # Extract raw p-values, ignoring NaNs
-    raw_pvalues = {
-        f: res.pvalue
-        for f, res in raw_results.items()
-        if not (res.pvalue is None or np.isnan(res.pvalue))
-    }
+    if len(pvalues) == 0:
+        return np.array([])
 
-    # Apply correction
-    corrected_pvalues = _correct_significance(raw_pvalues, alpha)
+    if np.any((np.array(pvalues) < 0) | (np.array(pvalues) > 1)):
+        raise ValueError("Invalid pvalues given for correction.")
 
-    # Build new dict with corrected p-values
-    corrected_results = {}
-    for f, res in raw_results.items():
-        corrected_p = corrected_pvalues.get(f, np.nan)
-        corrected_results[f] = ApunimResult(
-            value=res.value,
-            pvalue=corrected_p,
-        )
-
-    return corrected_results
+    return _apply_correction(pvalues, alpha)
 
 
 def _correct_significance(
