@@ -149,7 +149,7 @@ def aposteriori_unimodality(
         )
 
         randomized_ndfu_dict.add_dict(
-            _random_polarization_stat(
+            _apriori_polarization_stat(
                 annotations=all_comment_annotations,
                 group_sizes=lengths_by_factor,
                 all_factors=all_factors,
@@ -160,13 +160,14 @@ def aposteriori_unimodality(
 
     # compute raw results per factor
     raw_results = {
-        f: _apunim_kappa(factor_dict[f], randomized_ndfu_dict[f])
+        f: _aposteriori_polarization_stat(factor_dict[f], randomized_ndfu_dict[f])
         for f in all_factors
     }
 
     # extract valid p-values for correction
     factors_with_pvals = [
-        f for f, res in raw_results.items()
+        f
+        for f, res in raw_results.items()
         if res.pvalue is not None and not np.isnan(res.pvalue)
     ]
     raw_pvals = [raw_results[f].pvalue for f in factors_with_pvals]
@@ -180,14 +181,14 @@ def aposteriori_unimodality(
             value=raw_results[f].value,
             pvalue=(
                 corrected_pvals[factors_with_pvals.index(f)]
-                if f in factors_with_pvals else np.nan
+                if f in factors_with_pvals
+                else np.nan
             ),
         )
         for f in all_factors
     }
 
     return corrected_results
-
 
 
 def _validate_input(
@@ -255,7 +256,7 @@ def _factor_polarization_stat(
     return stats
 
 
-def _random_polarization_stat(
+def _apriori_polarization_stat(
     annotations: np.ndarray[float],
     group_sizes: dict[FactorType, int],
     all_factors: Iterable[FactorType],
@@ -315,7 +316,7 @@ def _random_partition(
     return partitions
 
 
-def _apunim_kappa(
+def _aposteriori_polarization_stat(
     observed_vals: list[float],
     randomized_vals: list[float],
 ) -> ApunimResult:
@@ -359,36 +360,6 @@ def _apply_correction_to_results(
         raise ValueError("Invalid pvalues given for correction.")
 
     return _apply_correction(pvalues, alpha)
-
-
-def _correct_significance(
-    raw_pvalues: dict[FactorType, float], alpha: float
-) -> dict[FactorType, float]:
-    """
-    Apply a statistical correction to pvalues from multiple alternative
-    hypotheses.
-
-    :param raw_pvalues: the pvalue of each hypothesis
-    :type raw_pvalues: dict[`FactorType`, float]
-    :param alpha: the target significance
-    :type alpha: float, optional
-    :return: the corrected pvalues for each hypothesis
-    :rtype: dict[`FactorType`, float]
-    """
-    # print("Raw pvalues:", raw_pvalues)
-    if len(raw_pvalues) == 0:
-        return {}
-
-    if np.any([p < 0 or p > 1 for p in raw_pvalues.values()]):
-        raise ValueError("Invalid pvalues given for correction.")
-
-    # place each pvalue in an ordered list
-    keys, raw_pvalue_ls = zip(*raw_pvalues.items())  # keep key-value order
-    corrected_pvalue_ls = _apply_correction(raw_pvalue_ls, alpha)
-    # repackage dictionary
-    corrected_pvalues_dict = dict(zip(keys, corrected_pvalue_ls))
-    # print("Corrected pvalues: ", corrected_pvalue_ls)
-    return corrected_pvalues_dict
 
 
 def _apply_correction(pvalues: Collection[float], alpha: float) -> np.ndarray:
