@@ -1,8 +1,9 @@
 from typing import TypeVar, Iterable, Any
 from collections import namedtuple
 from collections.abc import Collection
-import statsmodels.stats.multitest
+import warnings
 
+import statsmodels.stats.multitest
 import numpy as np
 
 from . import _list_dict
@@ -323,6 +324,15 @@ def _apunim_kappa(
         O_f = observed_means[f]
         R_f_samples = randomized_factors[f]
         E_f = np.nanmean(R_f_samples) if len(R_f_samples) > 0 else np.nan
+
+        if 1 - E_f < 1e-12:
+            # f E_f is 1.0 you get division by zero
+            # (which we handle by returning NaN),
+            # but if E_f is close to 1 the kappa becomes numerically unstable.
+            warnings.warn(
+                "Apriori polarization is close to 1, "
+                "the apunim estimation may be unreliable"
+            )
 
         if np.isnan(O_f) or np.isnan(E_f) or E_f >= 1.0:
             result[f] = ApunimResult(np.nan, np.nan)
