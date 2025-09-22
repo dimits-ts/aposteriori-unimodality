@@ -266,7 +266,7 @@ def _factor_dfu_stat(
         if len(factor_annotations) == 0:
             stats[factor] = np.nan
         else:
-            stats[factor] = dfu(factor_annotations, bins=bins, normalized=True)
+            stats[factor] = dfu(factor_annotations, bins=bins)
 
     return stats
 
