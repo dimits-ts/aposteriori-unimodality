@@ -100,6 +100,10 @@ def aposteriori_unimodality(
         A larger number makes the method more accurate,
         but also more computationally expensive.
     :type iterations: int
+    :param alpha:
+        The target statistical significance. Used to apply pvalue correction
+        for multiple comparisons. Set alpha=-1 to disable pvalue corrections.
+    :type alpha: float
     :returns:
         A named tuple containing the apunim metric ("value")
         and pvalue ("pvalue") for each factor of the selected SDB dimension.
@@ -159,36 +163,39 @@ def aposteriori_unimodality(
         )
 
     # compute raw results per factor
-    raw_results = {}
+    results = {}
     for factor in all_factors:
         res = _aposteriori_polarization_stat(
             observed_dfu_dict[factor],
             apriori_dfu_dict[factor],
         )
-        raw_results[factor] = res
+        results[factor] = res
 
     # extract valid p-values for correction
     factors_with_pvals = [
         f
-        for f, res in raw_results.items()
+        for f, res in results.items()
         if res.pvalue is not None and not np.isnan(res.pvalue)
     ]
-    raw_pvals = [raw_results[f].pvalue for f in factors_with_pvals]
+    pvalues = [results[f].pvalue for f in factors_with_pvals]
 
-    # apply correction
-    corrected_pvals = _apply_correction_to_results(raw_pvals, alpha)
-    corrected_results = {}
-    for factor in all_factors:
-        # reassemble results dict
-        corrected_results[factor] = ApunimResult(
-            value=raw_results[factor].value,
-            pvalue=(
-                corrected_pvals[factors_with_pvals.index(factor)]
-                if factor in factors_with_pvals
-                else np.nan
-            ),
-        )
-    return corrected_results
+    if alpha != -1:
+        # apply correction
+        pvalues = _apply_correction_to_results(pvalues, alpha)
+        corrected_results = {}
+        for factor in all_factors:
+            # reassemble results dict
+            corrected_results[factor] = ApunimResult(
+                value=results[factor].value,
+                pvalue=(
+                    pvalues[factors_with_pvals.index(factor)]
+                    if factor in factors_with_pvals
+                    else np.nan
+                ),
+            )
+        results = corrected_results
+
+    return results
 
 
 def _validate_input(
@@ -372,7 +379,7 @@ def _aposteriori_kappa(
         return np.nan
 
     E_f = np.mean(means)
-    if np.isclose(E_f, 1, 10e-3):
+    if np.isclose(E_f, 1, atol=10e-3):
         warnings.warn(
             "Estimated polarization is very close to max. "
             "The aposteriori test may be unreliable."
