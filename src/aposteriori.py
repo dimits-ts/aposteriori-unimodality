@@ -4,12 +4,13 @@ from collections.abc import Collection
 
 import statsmodels.stats.multitest
 import numpy as np
+import numpy.typing
 
 from . import _list_dict
 
 
 ApunimResult = namedtuple("ApunimResult", ["value", "pvalue"])
-FactorType = TypeVar("Factor Type")
+FactorType = TypeVar("FactorType")
 
 
 # code adapted from John Pavlopoulos
@@ -38,12 +39,12 @@ def dfu(x: Collection[float], bins: int, normalized: bool = False) -> float:
     pos_max = np.argmax(hist)
 
     # right search
-    right_diffs = hist[pos_max+1:] - hist[pos_max:-1]
+    right_diffs = hist[pos_max + 1:] - hist[pos_max:-1]
     max_rdiff = right_diffs.max(initial=0)
 
     # left search
     if pos_max > 0:
-        left_diffs = hist[0:pos_max] - hist[1:pos_max + 1]
+        left_diffs = hist[0:pos_max] - hist[1: pos_max + 1]
         max_ldiff = left_diffs[left_diffs > 0].max(initial=0)
     else:
         max_ldiff = 0
@@ -225,8 +226,8 @@ def _validate_input(
 
 
 def _factor_dfu_stat(
-    all_comment_annotations: np.ndarray[float],
-    annotator_group: np.ndarray[FactorType],
+    all_comment_annotations: numpy.typing.NDArray[float],
+    annotator_group: numpy.typing.NDArray[FactorType],
     bins: int,
 ) -> dict[FactorType, float]:
     """
@@ -235,10 +236,10 @@ def _factor_dfu_stat(
 
     :param all_comment_annotations: An array containing all annotations
         for the current comment
-    :type all_comment_annotations: np.ndarray[float]
+    :type all_comment_annotations: numpy.typing.NDArray[float]
     :param annotator_group: An array where each value is a distinct level of
         the currently considered factor
-    :type annotator_group: np.ndarray[`FactorType`]
+    :type annotator_group: numpy.typing.NDArray[`FactorType`]
     :param bins: number of annotation levels
     :type bins: int
     :return: The polarization stats for each level of the currently considered
@@ -263,7 +264,7 @@ def _factor_dfu_stat(
 
 
 def _apriori_polarization_stat(
-    annotations: np.ndarray[float],
+    annotations: numpy.typing.NDArray[float],
     group_sizes: dict[FactorType, int],
     bins: int,
     iterations: int,
@@ -306,8 +307,8 @@ def _apriori_polarization_stat(
 
 
 def _random_partition(
-    arr: np.ndarray, sizes: np.ndarray[int]
-) -> list[np.ndarray]:
+    arr: numpy.typing.NDArray, sizes: numpy.typing.NDArray[int]
+) -> list[numpy.typing.NDArray]:
     """
     Randomly partition a numpy array into groups of given sizes.
 
@@ -400,7 +401,7 @@ def _safe_nanmean(arr):
 
 def _apply_correction_to_results(
     pvalues: Collection[float], alpha: float = 0.05
-) -> np.ndarray:
+) -> numpy.typing.NDArray:
     """
     Apply multiple hypothesis correction to a list of p-values.
     Returns corrected p-values in the same order.
@@ -414,7 +415,9 @@ def _apply_correction_to_results(
     return _apply_correction(pvalues, alpha)
 
 
-def _apply_correction(pvalues: Collection[float], alpha: float) -> np.ndarray:
+def _apply_correction(
+    pvalues: Collection[float], alpha: float
+) -> numpy.typing.NDArray:
     corrected_stats = statsmodels.stats.multitest.multipletests(
         np.array(pvalues),
         alpha=alpha,
@@ -425,7 +428,9 @@ def _apply_correction(pvalues: Collection[float], alpha: float) -> np.ndarray:
     return corrected_stats[1]
 
 
-def _to_hist(scores: np.ndarray[float], bins: int) -> np.ndarray:
+def _to_hist(
+    scores: numpy.typing.NDArray[float], bins: int
+) -> numpy.typing.NDArray:
     """
     Creates a normalised histogram. Used for DFU calculation.
     :param: scores: the ratings (not necessarily discrete)
