@@ -1,7 +1,6 @@
 from typing import TypeVar, Iterable, Any
 from collections import namedtuple
 from collections.abc import Collection
-import warnings
 
 import statsmodels.stats.multitest
 import numpy as np
@@ -162,7 +161,7 @@ def aposteriori_unimodality(
     for factor in all_factors:
         res = _aposteriori_polarization_stat(
             observed_dfu_dict[factor],
-            [np.nanmean(x) for x in apriori_dfu_dict[factor]],
+            apriori_dfu_dict[factor],
         )
         raw_results[factor] = res
 
@@ -340,35 +339,38 @@ def _random_partition(
 
 
 def _aposteriori_polarization_stat(
-    observed_mean_dfus: list[float],
-    randomized_mean_dfus: list[float],
+    observed_dfus: list[float],
+    randomized_dfus: list[list[float]],
 ) -> ApunimResult:
     """
     Compute Cohen's kappa-style AP-unimodality statistic and
     non-parametric p-value for a single factor.
     """
-    O_f = np.nanmean(observed_mean_dfus)
-    E_f = (
-        np.nanmean(randomized_mean_dfus)
-        if len(randomized_mean_dfus) > 0
-        else np.nan
-    )
+    # TODO: the error is here. we should give means to the stat estimation,
+    # but not the pvalue estimation
+    O_f = np.nanmean(observed_dfus)
+    E_f = np.nanmean([np.nanmean(r) for r in randomized_dfus])
 
-    if np.isnan(O_f) or np.isnan(E_f) or E_f >= 1.0:
-        return ApunimResult(np.nan, np.nan)
-
-    if 1 - E_f < 1e-12:
-        warnings.warn(
-            "Apriori polarization is close to 1, "
-            "the apunim estimation may be unreliable"
-        )
+    if np.isnan(O_f) or np.isnan(E_f):
+        print(O_f, E_f)
         return ApunimResult(np.nan, np.nan)
 
     kappa = (O_f - E_f) / (1.0 - E_f)
 
-    rk_arr = np.array([(r - E_f) / (1.0 - E_f) for r in randomized_mean_dfus])
-    abs_count = np.sum(np.abs(rk_arr) >= abs(kappa))
-    p_value = (abs_count + 1) / (len(rk_arr) + 1)
+    # compute kappa for each randomization (null distribution)
+    kappa_null = []
+    for r in randomized_dfus:
+        O_r = np.nanmean(r)
+        E_r = np.nanmean(
+            [np.nanmean(rr) for rr in randomized_dfus if rr is not r]
+        )
+        if not (np.isnan(O_r) or np.isnan(E_r)):
+            kappa_null.append((O_r - E_r) / (1.0 - E_r))
+
+    kappa_null = np.array(kappa_null)
+
+    # two sided test
+    p_value = np.mean(np.abs(kappa_null) >= abs(kappa))
 
     return ApunimResult(kappa, p_value)
 
