@@ -82,7 +82,7 @@ def _run_aposteriori(
     feature_col: str,
     comment_key_col: str,
     bins: int = -1,
-    iterations: int = 100,
+    iterations: int = 5000,
     alpha: float = -1
 ) -> dict:
     if bins == -1:
