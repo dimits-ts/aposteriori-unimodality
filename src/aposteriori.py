@@ -137,7 +137,7 @@ def aposteriori_unimodality(
         all_comment_annotations = annotations[is_in_curr_comment]
         comment_annotator_groups = factor_group[is_in_curr_comment]
         lengths_by_factor = {
-            factor: np.sum(comment_annotator_groups == factor)
+            factor: np.count_nonzero(comment_annotator_groups == factor)
             for factor in all_factors
         }
 
