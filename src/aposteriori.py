@@ -1,6 +1,7 @@
 from typing import TypeVar, Iterable, Any
 from collections import namedtuple
 from collections.abc import Collection
+import warnings
 
 import statsmodels.stats.multitest
 import numpy as np
@@ -357,10 +358,17 @@ def _aposteriori_polarization_stat(
     # filters out all-nan expected values which may crop up
     means = [_safe_nanmean(r) for r in randomized_dfus]
     means = [m for m in means if not np.isnan(m)]
-
     if len(means) == 0:
         return ApunimResult(np.nan, np.nan)
+
     E_f = np.mean(means)
+    if np.isclose(E_f, 1, 10e-3):
+        warnings.warn(
+            "Estimated polarization is very close to max. "
+            "The aposteriori test may be unreliable."
+        )
+    if E_f == 1:
+        return ApunimResult(np.nan, np.nan)
 
     kappa = (O_f - E_f) / (1.0 - E_f)
 
