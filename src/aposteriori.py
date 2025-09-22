@@ -352,6 +352,16 @@ def _aposteriori_polarization_stat(
     # observed mean
     if len(observed_dfus) == 0 or np.all(np.isnan(observed_dfus)):
         return ApunimResult(np.nan, np.nan)
+
+    kappa = _aposteriori_kappa(observed_dfus, randomized_dfus)
+    p_value = _aposteriori_pvalue(randomized_dfus, kappa)
+
+    return ApunimResult(kappa, p_value)
+
+
+def _aposteriori_kappa(
+    observed_dfus: list[float], randomized_dfus: list[list[float]]
+) -> float:
     O_f = np.nanmean(observed_dfus)
 
     # expected mean from randomizations
@@ -359,7 +369,7 @@ def _aposteriori_polarization_stat(
     means = [_safe_nanmean(r) for r in randomized_dfus]
     means = [m for m in means if not np.isnan(m)]
     if len(means) == 0:
-        return ApunimResult(np.nan, np.nan)
+        return np.nan
 
     E_f = np.mean(means)
     if np.isclose(E_f, 1, 10e-3):
@@ -368,9 +378,17 @@ def _aposteriori_polarization_stat(
             "The aposteriori test may be unreliable."
         )
     if E_f == 1:
-        return ApunimResult(np.nan, np.nan)
+        return np.nan
 
     kappa = (O_f - E_f) / (1.0 - E_f)
+    return kappa
+
+
+def _aposteriori_pvalue(
+    randomized_dfus: list[list[float]], kappa: float
+) -> float:
+    if np.isnan(kappa):
+        return np.nan
 
     # null distribution
     kappa_null = []
@@ -388,13 +406,9 @@ def _aposteriori_polarization_stat(
         E_r = np.mean(other_means)
         kappa_null.append((O_r - E_r) / (1.0 - E_r))
 
-    if len(kappa_null) == 0:
-        return ApunimResult(kappa, np.nan)
-
     kappa_null = np.array(kappa_null)
     p_value = np.mean(np.abs(kappa_null) >= abs(kappa))  # two-sided
-
-    return ApunimResult(kappa, p_value)
+    return p_value
 
 
 def _safe_nanmean(arr):
