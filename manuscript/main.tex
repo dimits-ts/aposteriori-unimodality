@@ -138,6 +138,12 @@ The statistic is technically unbounded, but typically resides in the $[-1. 1]$ r
 \end{figure}
 
 
+\subsection{Technical Details}
+\label{ssec:methodology:details}
+
+Since we are simultaneously considering $\lvert \Theta \rvert$ hypotheses, we apply a multiple comparison correction to the resulting p-values. We choose the Holms method \parencite{holms}. The test is parameterized by \ac{FWER}, which is used to tune the strength of the correction; we can increase this value to make our test more conservative towards multiple hypotheses \parencite{ChenFengYi2017}). In general, it is safe to set \ac{FWER} equal to the significance level of our test (e.g., $\textit{FWER} = 0.95$ if we are looking for $p < 0.05$).
+
+
 \section{Results}
 \label{sec:results}
 
