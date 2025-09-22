@@ -346,33 +346,56 @@ def _aposteriori_polarization_stat(
     Compute Cohen's kappa-style AP-unimodality statistic and
     non-parametric p-value for a single factor.
     """
-    # TODO: the error is here. we should give means to the stat estimation,
-    # but not the pvalue estimation
-    O_f = np.nanmean(observed_dfus)
-    E_f = np.nanmean([np.nanmean(r) for r in randomized_dfus])
 
-    if np.isnan(O_f) or np.isnan(E_f):
-        print(O_f, E_f)
+    # observed mean
+    if len(observed_dfus) == 0 or np.all(np.isnan(observed_dfus)):
         return ApunimResult(np.nan, np.nan)
+    O_f = np.nanmean(observed_dfus)
+
+    # expected mean from randomizations
+    # filters out all-nan expected values which may crop up
+    means = [_safe_nanmean(r) for r in randomized_dfus]
+    means = [m for m in means if not np.isnan(m)]
+
+    if len(means) == 0:
+        return ApunimResult(np.nan, np.nan)
+    E_f = np.mean(means)
 
     kappa = (O_f - E_f) / (1.0 - E_f)
 
-    # compute kappa for each randomization (null distribution)
+    # null distribution
     kappa_null = []
-    for r in randomized_dfus:
+    for i, r in enumerate(randomized_dfus):
+        if len(r) == 0 or np.all(np.isnan(r)):
+            continue
         O_r = np.nanmean(r)
-        E_r = np.nanmean(
-            [np.nanmean(rr) for rr in randomized_dfus if rr is not r]
-        )
-        if not (np.isnan(O_r) or np.isnan(E_r)):
-            kappa_null.append((O_r - E_r) / (1.0 - E_r))
+        other_means = [
+            _safe_nanmean(rr) for j, rr in enumerate(randomized_dfus) if j != i
+        ]
+        other_means = [m for m in other_means if not np.isnan(m)]
+
+        if len(other_means) == 0:
+            continue
+        E_r = np.mean(other_means)
+        kappa_null.append((O_r - E_r) / (1.0 - E_r))
+
+    if len(kappa_null) == 0:
+        return ApunimResult(kappa, np.nan)
 
     kappa_null = np.array(kappa_null)
-
-    # two sided test
-    p_value = np.mean(np.abs(kappa_null) >= abs(kappa))
+    p_value = np.mean(np.abs(kappa_null) >= abs(kappa))  # two-sided
 
     return ApunimResult(kappa, p_value)
+
+
+def _safe_nanmean(arr):
+    arr = np.asarray(arr)
+    if arr.size == 0:
+        return np.nan
+    arr = arr[np.isfinite(arr)]  # drop NaNs
+    if arr.size == 0:
+        return np.nan
+    return np.mean(arr)
 
 
 def _apply_correction_to_results(
