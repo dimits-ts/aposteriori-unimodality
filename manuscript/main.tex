@@ -47,11 +47,13 @@ In this section, we provide a formal mathematical formulation for the problem of
 
 \paragraph{SocioDemographic Backgrounds }Since our goal is to pinpoint which specific characteristics contribute to polarization, we need to isolate individual groups within a \ac{SDB}. Let $\Theta$ be one of multiple ``dimensions'' the set of all annotator \ac{SDB} groups for a single dimension (e.g. ``male'', ``female'' and ``non-binary'' if we are investigating annotator gender).
 
-\paragraph{Annotations} Now let $d = \{c_1, c_2, \ldots\}$ be a dataset composed of multiple annotated data-points. We assume that annotating a data-point depends on three variables: its contents, the annotator's \ac{SDB}, and uncontrolled factors such as mood and personal experiences. Assuming that each data-point $c$ is assigned multiple annotators, we can define its annotation set $A(c)$ as:
+\paragraph{Annotations} Now let $d = \{c_1, c_2, \ldots\}$ be a dataset composed of multiple annotated data-points. We assume that annotating a data-point depends on three variables: its contents, the annotator's \ac{SDB}, and uncontrolled factors such as mood and personal experiences. Assuming that each data-point $c$ is assigned multiple annotators, we can define the annotation multi-set $A(c)=  \{(a, \theta) \}$, where $a$ is a single annotation. As an example, the annotations for a comment in a sentiment analysis task would be formulated as:
+
 \begin{equation}
-    A(c) = \{a(c; \theta) \mid \theta \in \Theta \}
+	\begin{split}
+		&A(\textit{"Could be better, could be wose"}) = \\ &\{(\textit{positive}, female), (\textit{positive}, male), (\textit{negative}, female), \ldots\}
+	\end{split}
 \end{equation}
-\noindent where  $a(c; \theta)$ is a single annotation for $c$, given by an annotator belonging to the sociodemographic group $\theta$.
 
 \paragraph{Polarization} Each set of annotations features a certain degree of \textit{polarization}. Unpolarized annotations are usually unimodal, which makes intuitive sense; there is a difference between the annotators disagreeing on the details (which would be shown roughly as a bell curve around the median annotation), and them fundamentally disagreeing with each other (which would likely be shown as a multimodal distribution). \textcite{pavlopoulos-likas-2024} create a polarization metric, the ``\ac{nDFU}'', which measures whether an annotation set shows no polarization (unimodal distribution --- $nDFU \rightarrow 0$), up to complete polarization (multimodal distribution --- $nDFU \rightarrow 1$). Thus, we will define a test that, given that annotation polarization exists, tests whether the \ac{nDFU} of a data-point's annotations can be partially explained by $\theta$.
 
@@ -100,14 +102,14 @@ The observed polarization of a data-point on the group of annotations $\theta$ c
  
  \begin{equation}
  	\label{eq:pol_expected}
- 	\bar{pol}(c) = \frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{P}_i(A(c)))
+ 	\frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{P}_i(A(c)))
  \end{equation}
  \noindent where $\tilde{P}_i$ is the random partition operator with matching group sizes.
  
  The difference between the observed and expected polarization for a data-point $c$ given group $\theta$ is then given by the ``pol-statistic'', defined as: 
 
  \begin{equation}
-	\textit{pol-stat}(c, \theta)  = pol(c, \theta) - \bar{pol}(c)
+	\textit{pol-stat}(c, \theta)  = pol(c, \theta) - \frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{P}_i(A(c)))
 \end{equation}
 
 
@@ -116,15 +118,16 @@ The observed polarization of a data-point on the group of annotations $\theta$ c
 
 By obtaining the pol-statistics for all data-points in a dataset $d$ for \ac{SDB} $\theta$, we can get the mean observed polarization for the dataset:
 \begin{equation}
-	pol_{O}(d, \theta) = \frac{1}{\lvert d \rvert} \sum_{c \in d}\textit{pol-stat}(c, \theta)
+	pol_{O}(d, \theta) = \frac{1}{\lvert d \rvert} \sum_{c \in d} (pol(c, \theta) - \frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{P}_i(A(c))))
 \end{equation} 
 \noindent and similarly the mean expected dataset polarization:
 \begin{equation}
-	pol_{E}(d) = \frac{1}{\lvert d \rvert} \sum_{c \in d}\bar{pol}(c)
+	pol_{E}(d) = \frac{1}{\lvert d \rvert} \sum_{c \in d} \sum_{i=1}^t  \textit{nDFU}(\tilde{P}_i(A(c)))
 \end{equation}
+
 \noindent We can then define the Aposteriori Unimodality Statistic with a formulation inspired by Cohen's Kappa \cite{Cohen_1960}, as:
 \begin{equation}
-	apunim(d, \theta) = 1 - \frac{1 - pol_O(d, \theta)}{1 - pol_E(d)}
+	apunim(d, \theta) = \frac{pol_O(d, \theta) - pol_E(d)}{1 - pol_E(d)}
 \end{equation}
 
 The statistic is technically unbounded, but typically resides in the $[-1. 1]$ range. If $apunim \approx 0$, the exhibited polarization among annotators of group $\theta$ does not surpass what would be expected by chance. If $apunim > 0$, then the group partially explains a rise in polarization. Unlike Cohen's Kappa, the case of $apunim < 0$ does have meaning; the group actually exhibits lower polarization compared to the whole. The scope of the statistic and its relationship with the previously presented statistics are demonstrated in Figure~\ref{fig::overview}. 
