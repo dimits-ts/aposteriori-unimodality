@@ -361,7 +361,7 @@ def _aposteriori_polarization_stat(
         return ApunimResult(np.nan, np.nan)
 
     kappa = _aposteriori_kappa(observed_dfus, randomized_dfus)
-    p_value = _aposteriori_pvalue(randomized_dfus, kappa)
+    p_value = _aposteriori_pvalue(randomized_dfus, kappa, two_sided=False)
 
     return ApunimResult(kappa, p_value)
 
@@ -392,7 +392,7 @@ def _aposteriori_kappa(
 
 
 def _aposteriori_pvalue(
-    randomized_dfus: list[list[float]], kappa: float
+    randomized_dfus: list[list[float]], kappa: float, two_sided: bool
 ) -> float:
     if np.isnan(kappa):
         return np.nan
@@ -414,7 +414,11 @@ def _aposteriori_pvalue(
         kappa_null.append((O_r - E_r) / (1.0 - E_r))
 
     kappa_null = np.array(kappa_null)
-    p_value = np.mean(np.abs(kappa_null) >= abs(kappa))  # two-sided
+
+    if two_sided:
+        p_value = np.mean(np.abs(kappa_null) >= abs(kappa))  # two-sided
+    else:
+        p_value = np.mean(kappa_null >= kappa)
     return p_value
 
 
