@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pandas as pd
 import numpy as np
 from tqdm.auto import tqdm
@@ -8,7 +10,6 @@ from src import aposteriori
 def run_all_results(
     df: pd.DataFrame,
     sdb_columns: list[str],
-    discussion_id_col: str,
     value_col: str,
     comment_key_col: str,
 ) -> pd.DataFrame:
@@ -36,15 +37,11 @@ def run_all_results(
         the second index are the factors within that column,
         and the columns are `kappa` and `pvalue`.
     """
-
     results = []
 
-    for sdb_column in tqdm(
-        sdb_columns, desc="Evaluating SDB dimensions"
-    ):
+    for sdb_column in tqdm(sdb_columns, desc="Evaluating SDB dimensions"):
         res_df = run_result(
             df,
-            discussion_id_col=discussion_id_col,
             sdb_column=sdb_column,
             value_col=value_col,
             comment_key_col=comment_key_col,
@@ -64,6 +61,21 @@ def run_all_results(
     combined_df.sort_index(inplace=True)
 
     return combined_df
+
+
+def results_to_latex(
+    res_df: pd.DataFrame, output_path: Path, dataset_name: str
+) -> None:
+    res_df.to_latex(
+        buf=output_path,
+        longtable=True,
+        caption=(
+            "Aposteriori Unimodality kappa and pvalue results "
+            f"for the {dataset_name} dataset"
+        ),
+        label=f"tab:results_{dataset_name}",
+    )
+    print(f"Results exported to {output_path.resolve()}")
 
 
 def extract_annotations_and_attributes(
@@ -95,47 +107,18 @@ def extract_annotations_and_attributes(
 
 def run_result(
     df,
-    discussion_id_col: str,
     sdb_column: str,
     value_col: str,
     comment_key_col: str,
 ) -> pd.DataFrame:
-    res_ls = []
-
-    # get results for each discussion
-    discussion_ids = df.reset_index()[discussion_id_col].unique()
-    for discussion_id in discussion_ids:
-        discussion_df = df.dropna(subset=[sdb_column])
-        discussion_df = discussion_df.reset_index()
-        discussion_df = discussion_df[
-            discussion_df[discussion_id_col] == discussion_id
-        ]
-
-        res = _run_aposteriori(
-            discussion_df,
-            feature_col=sdb_column,
-            value_col=value_col,
-            comment_key_col=comment_key_col,
-        )
-        res_ls.append(res)
-
-    # each element in res_ls is a dict[FactorType, ApunimResult]
-    # convert to DataFrame: MultiIndex (discussion_id, factor)
-    # -> columns: value, pvalue
-    all_dfs = []
-    for discussion_id, res_dict in zip(discussion_ids, res_ls):
-        df_disc = pd.DataFrame(
-            {
-                factor: {"kappa": r.kappa, "pvalue": r.pvalue}
-                for factor, r in res_dict.items()
-            }
-        ).T
-        df_disc.columns = pd.MultiIndex.from_product(
-            [[discussion_id], df_disc.columns]
-        )
-        all_dfs.append(df_disc)
-
-    return pd.concat(all_dfs, axis=1)
+    df = df.dropna(subset=[sdb_column])
+    res = _run_aposteriori(
+        df,
+        feature_col=sdb_column,
+        value_col=value_col,
+        comment_key_col=comment_key_col,
+    )
+    return pd.DataFrame(res).T
 
 
 def _run_aposteriori(

@@ -17,5 +17,9 @@ def get_rand_col(
     df: pd.DataFrame, sample_annot_col: str, num_bins: int = 4
 ) -> pd.Series:
     return df[sample_annot_col].apply(
-        lambda x: [np.random.randint(1, num_bins) for _ in range(len(x))]
+        lambda x: (
+            [np.random.randint(1, num_bins + 1) for _ in range(len(x))]
+            if x is not None
+            else []
+        )
     )
