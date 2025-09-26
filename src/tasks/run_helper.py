@@ -106,7 +106,7 @@ def extract_annotations_and_attributes(
 
 
 def run_result(
-    df,
+    df: pd.DataFrame,
     sdb_column: str,
     value_col: str,
     comment_key_col: str,
@@ -118,7 +118,10 @@ def run_result(
         value_col=value_col,
         comment_key_col=comment_key_col,
     )
-    return pd.DataFrame(res).T
+
+    res_df = pd.DataFrame(res).T
+    res_df = res_df.rename(columns={0: "kappa", 1: "pvalue"})
+    return res_df
 
 
 def _run_aposteriori(
