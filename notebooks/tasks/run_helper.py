@@ -1,7 +1,69 @@
 import pandas as pd
 import numpy as np
+from tqdm.auto import tqdm
 
 from src import aposteriori
+
+
+def run_all_results(
+    df: pd.DataFrame,
+    sdb_columns: list[str],
+    discussion_id_col: str,
+    value_col: str,
+    comment_key_col: str,
+) -> pd.DataFrame:
+    """
+    Runs tasks.run_helper.results for each sdb_column and combines the results
+    into a single MultiIndex DataFrame.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input DataFrame.
+    sdb_columns : list
+        List of sdb_column names to analyze.
+    discussion_id_col : str
+        Column name representing the discussion ID.
+    value_col : str
+        Column name with the value (e.g., toxic_score).
+    comment_key_col : str
+        Column name with the comment key.
+
+    Returns
+    -------
+    pd.DataFrame
+        A hierarchical DataFrame where the first index is sdb_column,
+        the second index are the factors within that column,
+        and the columns are `kappa` and `pvalue`.
+    """
+
+    results = []
+
+    for sdb_column in tqdm(
+        sdb_columns, desc="Evaluating SDB dimensions"
+    ):
+        res_df = run_result(
+            df,
+            discussion_id_col=discussion_id_col,
+            sdb_column=sdb_column,
+            value_col=value_col,
+            comment_key_col=comment_key_col,
+        )
+        # Ensure index is named (factor values)
+        res_df.index.name = sdb_column
+        # Add a column to store which sdb_column this came from
+        res_df["sdb_column"] = sdb_column
+        results.append(res_df)
+
+    # Concatenate all results and build a MultiIndex
+    combined_df = pd.concat(results)
+    combined_df.set_index("sdb_column", append=True, inplace=True)
+    combined_df = combined_df.reorder_levels(
+        ["sdb_column", combined_df.index.names[0]]
+    )
+    combined_df.sort_index(inplace=True)
+
+    return combined_df
 
 
 def extract_annotations_and_attributes(
@@ -31,7 +93,7 @@ def extract_annotations_and_attributes(
     return all_annotations, all_attributes, all_keys
 
 
-def results(
+def run_result(
     df,
     discussion_id_col: str,
     sdb_column: str,
@@ -64,7 +126,7 @@ def results(
     for discussion_id, res_dict in zip(discussion_ids, res_ls):
         df_disc = pd.DataFrame(
             {
-                factor: {"value": r.value, "pvalue": r.pvalue}
+                factor: {"kappa": r.kappa, "pvalue": r.pvalue}
                 for factor, r in res_dict.items()
             }
         ).T
@@ -83,7 +145,7 @@ def _run_aposteriori(
     comment_key_col: str,
     bins: int = -1,
     iterations: int = 100,
-    alpha: float = -1
+    alpha: float = 0.1,
 ) -> dict:
     if bins == -1:
         bins = len(np.unique(df[value_col]))
@@ -102,7 +164,7 @@ def _run_aposteriori(
         comment_group=keys,
         bins=bins,
         iterations=iterations,
-        alpha=alpha
+        alpha=alpha,
     )
 
     return result_dict
