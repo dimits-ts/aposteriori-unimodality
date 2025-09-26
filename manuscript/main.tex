@@ -1,6 +1,7 @@
 \documentclass{article}
 \usepackage{graphicx}
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{acronym}
 \usepackage[backend=bibtex]{biblatex}
 
@@ -104,12 +105,6 @@ The observed polarization of a data-point on the group of annotations $\theta$ c
  	\frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{P}_i(A(c)))
  \end{equation}
  \noindent where $\tilde{P}_i$ is the random partition operator with matching group sizes.
- 
- The difference between the observed and expected polarization for a data-point $c$ given group $\theta$ is then given by the ``pol-statistic'', defined as: 
-
- \begin{equation}
-	\textit{pol-stat}(c, \theta)  = pol(c, \theta) - \frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{P}_i(A(c)))
-\end{equation}
 
 
 \subsection{Aposteriori Unimodality}
@@ -119,17 +114,24 @@ By obtaining the pol-statistics for all data-points in a dataset $d$ for \ac{SDB
 \begin{equation}
 	pol_{O}(d, \theta) = \frac{1}{\lvert d \rvert} \sum_{c \in d} (pol(c, \theta) - \frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{P}_i(A(c))))
 \end{equation} 
-\noindent and similarly the mean expected dataset polarization:
+\noindent and similarly the mean apriori dataset polarization:
 \begin{equation}
 	pol_{E}(d) = \frac{1}{\lvert d \rvert} \sum_{c \in d} \sum_{i=1}^t  \textit{nDFU}(\tilde{P}_i(A(c)))
 \end{equation}
 
-\noindent We can then define the Aposteriori Unimodality Statistic with a formulation inspired by Cohen's Kappa \cite{Cohen_1960}, as:
+\noindent We can then define the Aposteriori Unimodality Statistic ($\kappa$) with a formulation inspired by Cohen's Kappa \cite{Cohen_1960}, as:
 \begin{equation}
-	apunim(d, \theta) = \frac{pol_O(d, \theta) - pol_E(d)}{1 - pol_E(d)}
+	\kappa = apunim(d, \theta) = \frac{pol_O(d, \theta) - pol_E(d)}{1 - pol_E(d)}
 \end{equation}
 
-The statistic is technically unbounded, but typically resides in the $[-1. 1]$ range. If $apunim \approx 0$, the exhibited polarization among annotators of group $\theta$ does not surpass what would be expected by chance. If $apunim > 0$, then the group partially explains a rise in polarization. Unlike Cohen's Kappa, the case of $apunim < 0$ does have meaning; the group actually exhibits lower polarization compared to the whole. The scope of the statistic and its relationship with the previously presented statistics are demonstrated in Figure~\ref{fig::overview}. 
+The statistic is technically unbounded, but typically resides in the $[-1, 1]$ range. If $\kappa \approx 0$, the exhibited polarization among annotators of group $\theta$ does not surpass what would be expected by chance. If $\kappa > 0$, then the group partially explains a rise in polarization. Unlike Cohen's Kappa, the case of $\kappa < 0$ does have meaning; the group actually exhibits lower polarization compared to the whole. The scope of the statistic and its relationship with the previously presented statistics are demonstrated in Figure~\ref{fig::overview}. 
+
+Like most metrics, we also include a p-value alongside the $\kappa$ value. This can be computed either non-parametrically, by repeatedly shuffling annotations and computing a null distribution of $apunim$, or parametrically, by assuming a normal distribution (which is generally a safe assumption if $t \geq 30$). %TODO: citation?
+In the latter case, we compute:
+ 
+\begin{equation}
+	z = \frac{\hat{\kappa}  - \mathop{\mathbb{E}}[\kappa]}{SE(\hat{\kappa})}, p = 1 - \mathop{\Phi}(z)
+\end{equation}
 
 \begin{figure}
 	\includegraphics[width=\linewidth]{overview.png}
@@ -141,7 +143,7 @@ The statistic is technically unbounded, but typically resides in the $[-1. 1]$ r
 \subsection{Technical Details}
 \label{ssec:methodology:details}
 
-Since we are simultaneously considering $\lvert \Theta \rvert$ hypotheses, we apply a multiple comparison correction to the resulting p-values. We choose the Holms method \parencite{holms}. The test is parameterized by \ac{FWER}, which is used to tune the strength of the correction; we can increase this value to make our test more conservative towards multiple hypotheses \parencite{ChenFengYi2017}). In general, it is safe to set \ac{FWER} equal to the significance level of our test (e.g., $\textit{FWER} = 0.95$ if we are looking for $p < 0.05$).
+Since we are simultaneously considering $\lvert \Theta \rvert$ hypotheses, we apply a multiple comparison correction to the resulting p-values. We choose the Holms method \parencite{holms}. The test is parameterized by the \ac{FWER}, which is used to tune the strength of the correction; we can increase this value to make our test more conservative towards multiple hypotheses \parencite{ChenFengYi2017}). In general, it is safe to set \ac{FWER} equal to the significance level of our test (e.g., $\textit{FWER} = 0.95$ if we are looking for $p < 0.05$).
 
 
 \section{Results}
