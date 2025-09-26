@@ -2,8 +2,8 @@ import ast
 
 import pandas as pd
 
-import tasks.run_helper
-import tasks.preprocessing
+from .tasks import preprocessing
+from .tasks import run_helper
 
 
 def base_df():
@@ -33,7 +33,7 @@ def base_df():
 
 def main():
     df = base_df()
-    df["random"] = tasks.preprocessing.get_rand_col(df, "sex_annot")
+    df["random"] = preprocessing.get_rand_col(df, "sex_annot")
 
     sdb_columns = [
         "age_annot",
@@ -42,7 +42,7 @@ def main():
         "current_employment_annot",
         "sex_annot",
     ]
-    res = tasks.run_helper.run_all_results(
+    res = run_helper.run_all_results(
         df=df,
         sdb_columns=sdb_columns,
         value_col="Toxicity",
@@ -50,7 +50,7 @@ def main():
     )
     print(res)
 
-    rand_res = tasks.run_helper.run_result(
+    rand_res = run_helper.run_result(
         df,
         sdb_column="random",
         value_col="Toxicity",

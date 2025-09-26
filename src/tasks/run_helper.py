@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 from tqdm.auto import tqdm
 
-from src import aposteriori
+from ..apunim import aposteriori
 
 
 def run_all_results(
