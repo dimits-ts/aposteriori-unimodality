@@ -11,7 +11,7 @@ import numpy.typing
 from . import _list_dict
 
 
-ApunimResult = namedtuple("ApunimResult", ["value", "pvalue"])
+ApunimResult = namedtuple("ApunimResult", ["kappa", "pvalue"])
 FactorType = TypeVar("FactorType")
 
 
@@ -106,13 +106,13 @@ def aposteriori_unimodality(
         for multiple comparisons. Set alpha=-1 to disable pvalue corrections.
     :type alpha: float
     :returns:
-        A named tuple containing the apunim metric ("value")
+        A named tuple containing the apunim metric ("kappa")
         and pvalue ("pvalue") for each factor of the selected SDB dimension.
-        If value~=0, the polarization can be explained by chance.
-        If value>0, increased polarization can not be explained by chance,
+        If kappa~=0, the polarization can be explained by chance.
+        If kappa>0, increased polarization can not be explained by chance,
         but rather must be partially caused by differences between
         the SDB groups.
-        If value<0, the decrease in polarization is partially caused by
+        If kappa<0, the decrease in polarization is partially caused by
         differences between the SDB groups.
     :rtype: dict[`FactorType`, ApunimResult]
     :raises ValueError:
@@ -187,7 +187,7 @@ def aposteriori_unimodality(
         for factor in all_factors:
             # reassemble results dict
             corrected_results[factor] = ApunimResult(
-                value=results[factor].value,
+                kappa=results[factor].kappa,
                 pvalue=(
                     pvalues[factors_with_pvals.index(factor)]
                     if factor in factors_with_pvals
