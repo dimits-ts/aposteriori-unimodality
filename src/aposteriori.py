@@ -4,6 +4,7 @@ from collections.abc import Collection
 import warnings
 
 import statsmodels.stats.multitest
+import scipy.stats
 import numpy as np
 import numpy.typing
 
@@ -310,7 +311,6 @@ def _apriori_polarization_stat(
                 results[f].append(np.nan)
             else:
                 results[f].append(dfu(part, bins=bins))
-
     return results
 
 
@@ -350,18 +350,24 @@ def _random_partition(
 def _aposteriori_polarization_stat(
     observed_dfus: list[float],
     randomized_dfus: list[list[float]],
+    parametric: bool = False,
+    two_sided: bool = False,
 ) -> ApunimResult:
     """
-    Compute Cohen's kappa-style AP-unimodality statistic and
-    non-parametric p-value for a single factor.
+    Compute AP-unimodality statistic and p-value.
     """
-
-    # observed mean
     if len(observed_dfus) == 0 or np.all(np.isnan(observed_dfus)):
         return ApunimResult(np.nan, np.nan)
 
     kappa = _aposteriori_kappa(observed_dfus, randomized_dfus)
-    p_value = _aposteriori_pvalue(randomized_dfus, kappa, two_sided=False)
+    if parametric:
+        p_value = _aposteriori_pvalue_parametric(
+            randomized_dfus, kappa, two_sided=two_sided
+        )
+    else:
+        p_value = _aposteriori_pvalue_nonparametric(
+            randomized_dfus, kappa, two_sided=two_sided
+        )
 
     return ApunimResult(kappa, p_value)
 
@@ -391,13 +397,16 @@ def _aposteriori_kappa(
     return kappa
 
 
-def _aposteriori_pvalue(
-    randomized_dfus: list[list[float]], kappa: float, two_sided: bool
+def _aposteriori_pvalue_parametric(
+    randomized_dfus: list[list[float]], kappa: float, two_sided: bool = False
 ) -> float:
+    """
+    Parametric p-value estimation for κ using a normal approximation.
+    """
     if np.isnan(kappa):
         return np.nan
 
-    # null distribution
+    # compute null distribution of kappa as before
     kappa_null = []
     for i, r in enumerate(randomized_dfus):
         if len(r) == 0 or np.all(np.isnan(r)):
@@ -407,16 +416,54 @@ def _aposteriori_pvalue(
             _safe_nanmean(rr) for j, rr in enumerate(randomized_dfus) if j != i
         ]
         other_means = [m for m in other_means if not np.isnan(m)]
-
         if len(other_means) == 0:
             continue
         E_r = np.mean(other_means)
         kappa_null.append((O_r - E_r) / (1.0 - E_r))
 
     kappa_null = np.array(kappa_null)
+    if len(kappa_null) < 2:
+        return np.nan  # insufficient data
 
+    # estimate mean and standard error
+    mu = np.mean(kappa_null)
+    sigma = np.std(kappa_null, ddof=1)
+
+    # z-score for observed κ
+    z = (kappa - mu) / sigma
+
+    # compute parametric p-value
     if two_sided:
-        p_value = np.mean(np.abs(kappa_null) >= abs(kappa))  # two-sided
+        p_value = 2 * (1 - scipy.stats.norm.cdf(abs(z)))
+    else:
+        p_value = 1 - scipy.stats.norm.cdf(z)
+
+    return p_value
+
+
+def _aposteriori_pvalue_nonparametric(
+    randomized_dfus: list[list[float]], kappa: float, two_sided: bool
+) -> float:
+    if np.isnan(kappa):
+        return np.nan  # null distribution
+
+    kappa_null = []
+    for i, r in enumerate(randomized_dfus):
+        if len(r) == 0 or np.all(np.isnan(r)):
+            continue
+        O_r = np.nanmean(r)
+        other_means = [
+            _safe_nanmean(rr) for j, rr in enumerate(randomized_dfus) if j != i
+        ]
+        other_means = [m for m in other_means if not np.isnan(m)]
+        if len(other_means) == 0:
+            continue
+        E_r = np.mean(other_means)
+        kappa_null.append((O_r - E_r) / (1.0 - E_r))
+
+    kappa_null = np.array(kappa_null)
+    if two_sided:
+        p_value = np.mean(np.abs(kappa_null) >= abs(kappa))
     else:
         p_value = np.mean(kappa_null >= kappa)
     return p_value
