@@ -13,4 +13,5 @@ dependencies:
   - scikit-learn
   - scipy
   - statsmodels
+  - parallel
   
