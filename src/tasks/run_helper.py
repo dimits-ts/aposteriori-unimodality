@@ -66,6 +66,8 @@ def run_all_results(
 def results_to_latex(
     res_df: pd.DataFrame, output_path: Path, dataset_name: str
 ) -> None:
+    export_name = dataset_name.split()[0].lower()
+    table_name = f"tab:results_{export_name}"
     res_df.to_latex(
         buf=output_path,
         longtable=True,
@@ -73,9 +75,10 @@ def results_to_latex(
             "Aposteriori Unimodality kappa and pvalue results "
             f"for the {dataset_name} dataset"
         ),
-        label=f"tab:results_{dataset_name}",
+        label=table_name,
+        escape=True
     )
-    print(f"Results exported to {output_path.resolve()}")
+    print(f"Table {table_name} exported to {output_path.resolve()}")
 
 
 def extract_annotations_and_attributes(

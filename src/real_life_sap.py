@@ -70,6 +70,11 @@ def main(dataset_path: Path, output_dir: Path):
         comment_key_col="tweet",
     )
     print(res)
+    run_helper.results_to_latex(
+        res,
+        output_path=output_dir / "res_sap.tex",
+        dataset_name=DATASET_NAME,
+    )
 
     rand_res = run_helper.run_result(
         df,
@@ -81,8 +86,8 @@ def main(dataset_path: Path, output_dir: Path):
 
     run_helper.results_to_latex(
         rand_res,
-        output_path=output_dir / "res_sap.tex",
-        dataset_name=DATASET_NAME,
+        output_path=output_dir / "random_res_sap.tex",
+        dataset_name=f"random_{DATASET_NAME}",
     )
     print(f"Finished {DATASET_NAME} dataset.")
 

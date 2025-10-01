@@ -3,6 +3,8 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{acronym}
+\usepackage{longtable}
+\usepackage{booktabs}
 \usepackage[backend=bibtex]{biblatex}
 
 \title{Aposteriori Unimodality: Attributing polarization to sociodemographic groups}
@@ -155,9 +157,10 @@ We apply our test on four datasets; two human-annotated datasets, and two with c
 
 We use the datasets provided by \textcite{kumar-et-al-2021} and \textcite{sap-etal-2022-annotators}. The datasets feature various online comments, each annotated by a number of human annotators ($5$ and $4-6$ annotators per comment respectively). The \textcite{sap-etal-2022-annotators} dataset includes racism annotations for $626$ Twitter/X comments, and standard \ac{SDB} information (age, race, education, gender). The \textcite{kumar-et-al-2021} dataset measures toxicity on various online comments, and the provided \acp{SDB} include mostly annotator experiences (e.g., whether they have been personally targeted online) as well as standard \ac{SDB} information such as sexual orientation, age and education. Since the dataset is extensive ($XXXX$ tweets), we only select a sample of $5000$ comments. This is due both to computational constraints, as well as statistical tests being unreliable on large enough samples \cite{trafimow2018manipulating}. Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{SDB} dimensions can partially explain polarization in the toxicity/racism annotations. 
 
-With respect to the \textcite{kumar-et-al-2021} dataset, we find statistically significant differences for Conservatives ($p=0.0486)$, parents ($p=0.000039$), religious people (``religion: very important'' --- $p = 0.00073$), young people (``ages: 25-35'' --- $p = 0.001681$), as well as people that have not encountered toxic content ($p=0.007374$), and people who have been targeted in the past ($p=0.004186$). We can not claim that transgender annotators, annotators with differing stances on whether toxic comments are problematic, or annotators with different education or sexual orientation, contribute to the polarization within the dataset.
+The results for the \textcite{kumar-et-al-2021} and \textcite{sap-etal-2022-annotators} datasets can be found in Tables~\ref{tab:res_kumar},~\ref{tab:res_kumar} respectively.
 
-Concerning the \textcite{sap-etal-2022-annotators} dataset, we find statistically significant results for white ($p = 6.531785e-08$), and male ($p=0.01289$) annotators, but not for age or educational level.
+\input{./generated/res_sap.tex}
+\input{./generated/res_kumar.tex}
 
 
 \subsection{Synthetic Datasets}
@@ -166,6 +169,11 @@ We use two synthetic datasets; one is the \ac{VMD} presented in \textcite{tsirmp
 
 We find no statistically significant results in any of the \ac{SDB} dimensions, in any of the datasets (annotator age, gender, sexual orientation, education, employment and political alignment). While polarization does exist in the dataset, %TODO: show a graph of ndfu
 it can not be attributed to any of the synthetic \ac{SDB} groups. This suggests that \ac{SDB} prompting can not be used to simulate annotations for human groups, which is consistent with relevant literature on the topic \parencite{anthis_2025,hewitt2024predicting,rossi_2024,jansen_2023,bisbee_2023,neumann_2025}.
+
+The results for the \ac{VMD} and 100-annotator datasets can be found in Tables~\ref{tab:res_vmd},~\ref{tab:res_100} respectively.
+
+\input{./generated/res_synthetic_100.tex}
+\input{./generated/res_synthetic_vmd.tex}
 
 
 \subsection{Effect of number of annotators}
