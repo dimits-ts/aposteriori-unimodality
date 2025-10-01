@@ -7,6 +7,8 @@ import pandas as pd
 from .tasks import preprocessing
 from .tasks import run_helper
 
+DATASET_NAME = "100 Annotator Synthetic"
+
 
 def base_df(dataset_path: Path):
     df = pd.read_csv(
@@ -85,8 +87,9 @@ def main(dataset_path: Path, output_dir: Path):
     run_helper.results_to_latex(
         rand_res,
         output_path=output_dir / "res_synthetic_100.tex",
-        dataset_name="100 Annotator Synthetic",
+        dataset_name=DATASET_NAME,
     )
+    print(f"Finished {DATASET_NAME} dataset.")
 
 
 if __name__ == "__main__":

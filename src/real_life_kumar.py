@@ -6,6 +6,8 @@ import pandas as pd
 from .tasks import preprocessing
 from .tasks import run_helper
 
+DATASET_NAME = "Kumar et al 2021"
+
 
 def base_df(dataset_path: Path):
     df = pd.read_json(dataset_path, lines=True)
@@ -73,8 +75,9 @@ def main(dataset_path: Path, output_dir: Path):
     run_helper.results_to_latex(
         rand_res,
         output_path=output_dir / "res_kumar.tex",
-        dataset_name="Kumar et al 2222",
+        dataset_name=DATASET_NAME,
     )
+    print(f"Finished {DATASET_NAME} dataset.")
 
 
 if __name__ == "__main__":

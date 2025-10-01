@@ -7,6 +7,9 @@ from .tasks import preprocessing
 from .tasks import run_helper
 
 
+DATASET_NAME = "Sap et al 2022"
+
+
 def base_df(dataset_path: Path):
     df = pd.read_pickle(dataset_path)
     df = df.loc[
@@ -79,8 +82,9 @@ def main(dataset_path: Path, output_dir: Path):
     run_helper.results_to_latex(
         rand_res,
         output_path=output_dir / "res_sap.tex",
-        dataset_name="Sap et al 2222",
+        dataset_name=DATASET_NAME,
     )
+    print(f"Finished {DATASET_NAME} dataset.")
 
 
 if __name__ == "__main__":
