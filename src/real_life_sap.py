@@ -1,11 +1,14 @@
+import argparse
+from pathlib import Path
+
 import pandas as pd
 
 from .tasks import preprocessing
 from .tasks import run_helper
 
 
-def base_df():
-    df = pd.read_pickle("data/attitudes_embedded.csv")
+def base_df(dataset_path: Path):
+    df = pd.read_pickle(dataset_path)
     df = df.loc[
         :,
         [
@@ -52,8 +55,8 @@ def _process_age_list(x, bins):
         return None
 
 
-def main():
-    df = base_df()
+def main(dataset_path: Path, output_dir: Path):
+    df = base_df(dataset_path)
     df["random"] = preprocessing.get_rand_col(df, "annotatorAge")
 
     sdb_columns = ["annotatorAge", "annotatorRace", "annotatorGender"]
@@ -73,6 +76,31 @@ def main():
     )
     print(rand_res)
 
+    run_helper.results_to_latex(
+        rand_res,
+        output_path=output_dir / "res_sap.tex",
+        dataset_name="Sap et al 2222",
+    )
+
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description=(
+            "Classify forum comments using taxonomy categories and an LLM."
+        )
+    )
+    parser.add_argument(
+        "--dataset-path",
+        required=True,
+        help="Path to the full dataset CSV file.",
+    )
+    parser.add_argument(
+        "--latex-output-dir",
+        required=True,
+        help="Directory for the latex result files.",
+    )
+    args = parser.parse_args()
+    main(
+        dataset_path=Path(args.dataset_path),
+        output_dir=Path(args.latex_output_dir),
+    )
