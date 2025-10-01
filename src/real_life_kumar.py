@@ -7,6 +7,7 @@ from .tasks import preprocessing
 from .tasks import run_helper
 
 DATASET_NAME = "Kumar et al 2021"
+NUM_COMMENTS = 500
 
 
 def base_df(dataset_path: Path):
@@ -16,6 +17,20 @@ def base_df(dataset_path: Path):
     ratings_df = pd.json_normalize(df.ratings)
     df = pd.concat([df.reset_index(), ratings_df.reset_index()], axis=1)
     df = df.drop(columns=["ratings", "index"])
+    # shorten names
+    df = df.replace(
+        {
+            (
+                "High school graduate (high school diploma or equivalent "
+                "including GED)"
+            ): "High School graduate",
+            "Associate degree in college (2-year)": "Associate degree",
+            "Bachelor's degree in college (4-year)": "Bachelor's degree",
+            "Less than high school degree": "No high school",
+            "Professional degree (JD, MD)": "Professional degree",
+            "Some college but no degree": "College, no degree"
+        }
+    )
 
     df = df.loc[
         :,
@@ -35,7 +50,8 @@ def base_df(dataset_path: Path):
         ],
     ]
     df = df.groupby("comment").agg(list)
-    df = df.head(5000)
+    print(f"Selecting {NUM_COMMENTS} out of {len(df)} total comments.")
+    df = df.sample(NUM_COMMENTS)
     df = df.reset_index()
     return df
 

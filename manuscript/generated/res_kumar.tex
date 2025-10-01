@@ -2,13 +2,13 @@
 \caption{Aposteriori Unimodality kappa and pvalue results for the Kumar et al 2021 dataset} \label{tab:results_kumar} \\
 \toprule
  &  & kappa & pvalue \\
-sdb\_column &  &  &  \\
+SDB Feature &  &  &  \\
 \midrule
 \endfirsthead
 \caption[]{Aposteriori Unimodality kappa and pvalue results for the Kumar et al 2021 dataset} \\
 \toprule
  &  & kappa & pvalue \\
-sdb\_column &  &  &  \\
+SDB Feature &  &  &  \\
 \midrule
 \endhead
 \midrule
@@ -17,64 +17,63 @@ sdb\_column &  &  &  \\
 \endfoot
 \bottomrule
 \endlastfoot
-\multirow[t]{8}{*}{age\_range} & 18 - 24 & 0.083815 & 1.000000 \\
- & 25 - 34 & -0.039417 & 1.000000 \\
- & 35 - 44 & -0.021290 & 1.000000 \\
- & 45 - 54 & -0.016532 & 1.000000 \\
- & 55 - 64 & 0.009611 & 1.000000 \\
- & 65 or older & -0.089426 & 1.000000 \\
+\multirow[t]{7}{*}{age\_range} & 18 - 24 & -0.050677 & 1.000000 \\
+ & 25 - 34 & 0.008582 & 1.000000 \\
+ & 35 - 44 & 0.027843 & 1.000000 \\
+ & 45 - 54 & -0.141928 & 1.000000 \\
+ & 55 - 64 & -0.601067 & 1.000000 \\
+ & 65 or older & -0.440283 & 1.000000 \\
  & Prefer not to say & 0.000000 & 1.000000 \\
- & Under 18 & 0.000000 & 1.000000 \\
 \cline{1-4}
-\multirow[t]{11}{*}{education} & Associate degree in college (2-year) & 0.094741 & 1.000000 \\
- & Bachelor's degree in college (4-year) & -0.041051 & 1.000000 \\
- & Doctoral degree & -1.324184 & 1.000000 \\
- & High school graduate (high school diploma or equivalent including GED) & 0.033939 & 1.000000 \\
- & Less than high school degree & -0.623926 & 1.000000 \\
- & Master's degree & -0.039515 & 1.000000 \\
+\multirow[t]{11}{*}{education} & Associate degree & 0.207132 & 1.000000 \\
+ & Bachelor's degree & 0.005575 & 1.000000 \\
+ & College, no degree & 0.058869 & 1.000000 \\
+ & Doctoral degree & 0.000000 & 1.000000 \\
+ & High School graduate & -0.023855 & 1.000000 \\
+ & Master's degree & 0.019555 & 1.000000 \\
+ & No high school & 1.462148 & 0.476190 \\
  & Other & 0.000000 & 1.000000 \\
  & Prefer not to say & 0.000000 & 1.000000 \\
- & Professional degree (JD, MD) & -0.059417 & 1.000000 \\
- & Some college but no degree & 0.010671 & 1.000000 \\
+ & Professional degree & -0.014878 & 1.000000 \\
+ & NaN & 0.000000 & NaN \\
+\cline{1-4}
+\multirow[t]{3}{*}{identify\_as\_transgender} & No & -0.006034 & 1.000000 \\
+ & Prefer not to say & 0.000000 & 1.000000 \\
+ & Yes & 0.261680 & 1.000000 \\
+\cline{1-4}
+\multirow[t]{3}{*}{is\_parent} & No & 0.045570 & 0.800000 \\
+ & Prefer not to say & 0.608633 & 0.800000 \\
+ & Yes & -0.095962 & 0.800000 \\
+\cline{1-4}
+\multirow[t]{6}{*}{lgbtq\_status} & Bisexual & -0.017489 & 1.000000 \\
+ & Heterosexual & -0.004702 & 1.000000 \\
+ & Homosexual & 0.216210 & 1.000000 \\
+ & Other & 0.000000 & 1.000000 \\
+ & Prefer not to say & 0.406901 & 1.000000 \\
  & NaN & 0.000000 & 1.000000 \\
 \cline{1-4}
-\multirow[t]{3}{*}{identify\_as\_transgender} & No & -0.005865 & 0.953586 \\
- & Prefer not to say & -0.063229 & 0.953586 \\
- & Yes & -0.049841 & 0.953586 \\
+\multirow[t]{2}{*}{personally\_been\_target} & False & 0.018363 & 0.595533 \\
+ & True & -0.054084 & 0.595533 \\
 \cline{1-4}
-\multirow[t]{3}{*}{is\_parent} & No & 0.046722 & 0.808811 \\
- & Prefer not to say & 0.546877 & 0.961390 \\
- & Yes & -0.020586 & 0.808811 \\
+\multirow[t]{2}{*}{personally\_seen\_toxic\_content} & False & -0.033449 & 0.606061 \\
+ & True & 0.000545 & 0.606061 \\
 \cline{1-4}
-\multirow[t]{6}{*}{lgbtq\_status} & Bisexual & -0.083151 & 0.995122 \\
- & Heterosexual & 0.004871 & 0.995122 \\
- & Homosexual & -0.018760 & 0.995122 \\
- & Other & -0.481204 & 0.995122 \\
- & Prefer not to say & 0.146375 & 0.995122 \\
- & NaN & -0.025169 & 0.995122 \\
+\multirow[t]{5}{*}{political\_affilation} & Conservative & -0.066794 & 1.000000 \\
+ & Independent & 0.017013 & 1.000000 \\
+ & Liberal & 0.040908 & 1.000000 \\
+ & Other & 0.000000 & 1.000000 \\
+ & Prefer not to say & -0.060458 & 1.000000 \\
 \cline{1-4}
-\multirow[t]{2}{*}{personally\_been\_target} & False & 0.005209 & 0.591648 \\
- & True & -0.017871 & 0.591648 \\
+\multirow[t]{5}{*}{religion\_important} & Not important & 0.135714 & 1.000000 \\
+ & Not too important & 0.204991 & 1.000000 \\
+ & Prefer not to say & 0.000000 & 1.000000 \\
+ & Somewhat important & -0.125532 & 1.000000 \\
+ & Very important & 0.021082 & 1.000000 \\
 \cline{1-4}
-\multirow[t]{2}{*}{personally\_seen\_toxic\_content} & False & -0.055425 & 0.630769 \\
- & True & 0.024477 & 0.630769 \\
-\cline{1-4}
-\multirow[t]{5}{*}{political\_affilation} & Conservative & -0.019920 & 0.934579 \\
- & Independent & 0.005465 & 0.934579 \\
- & Liberal & 0.028717 & 0.934579 \\
- & Other & -0.002419 & 0.934579 \\
- & Prefer not to say & -0.050161 & 0.934579 \\
-\cline{1-4}
-\multirow[t]{5}{*}{religion\_important} & Not important & 0.084829 & 0.976261 \\
- & Not too important & 0.008141 & 0.976261 \\
- & Prefer not to say & 0.406466 & 0.976261 \\
- & Somewhat important & -0.067623 & 0.976261 \\
- & Very important & -0.030333 & 0.976261 \\
-\cline{1-4}
-\multirow[t]{5}{*}{toxic\_comments\_problem} & Frequently a problem & 0.017670 & 0.863248 \\
- & Not a problem & -0.052810 & 0.863248 \\
- & Occasionally a problem & -0.025090 & 0.863248 \\
- & Rarely a problem & -0.026873 & 0.863248 \\
- & Very frequently a problem & 0.022473 & 0.863248 \\
+\multirow[t]{5}{*}{toxic\_comments\_problem} & Frequently a problem & -0.056956 & 0.912409 \\
+ & Not a problem & -0.122050 & 0.912409 \\
+ & Occasionally a problem & -0.041402 & 0.912409 \\
+ & Rarely a problem & -0.079962 & 0.912409 \\
+ & Very frequently a problem & -0.087124 & 0.912409 \\
 \cline{1-4}
 \end{longtable}

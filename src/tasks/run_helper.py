@@ -49,14 +49,14 @@ def run_all_results(
         # Ensure index is named (factor values)
         res_df.index.name = sdb_column
         # Add a column to store which sdb_column this came from
-        res_df["sdb_column"] = sdb_column
+        res_df["SDB Feature"] = sdb_column
         results.append(res_df)
 
     # Concatenate all results and build a MultiIndex
     combined_df = pd.concat(results)
-    combined_df.set_index("sdb_column", append=True, inplace=True)
+    combined_df.set_index("SDB Feature", append=True, inplace=True)
     combined_df = combined_df.reorder_levels(
-        ["sdb_column", combined_df.index.names[0]]
+        ["SDB Feature", combined_df.index.names[0]]
     )
     combined_df.sort_index(inplace=True)
 
@@ -66,6 +66,9 @@ def run_all_results(
 def results_to_latex(
     res_df: pd.DataFrame, output_path: Path, dataset_name: str
 ) -> None:
+    # this should be done automatically but pandas is having a stroke
+    res_df = res_df.replace("_", r"\_")
+
     export_name = dataset_name.split()[0].lower()
     table_name = f"tab:results_{export_name}"
     res_df.to_latex(
