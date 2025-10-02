@@ -1,3 +1,4 @@
+import argparse
 from pathlib import Path
 
 import numpy as np
@@ -15,35 +16,34 @@ LESSER_LABEL_SIZE = 14
 DIFF_COMMENTS_SIZE = 200
 INTUITION_SIZE = 50
 NUM_BINS = 10
-GRAPH_DIR = Path("graphs")
 
 
-def dfu_plots(colors: list[str]) -> None:
+def dfu_plots(colors: list[str], graph_dir: Path) -> None:
     d1 = _truncated_normal(loc=2, scale=1.3, size=INTUITION_SIZE)
     d2 = _truncated_normal(loc=8, scale=1.3, size=INTUITION_SIZE)
     d_all = np.hstack([d1, d2])
 
     _dfu_plot(
         data=d1,
-        graph_path=GRAPH_DIR / "ndfu_men.png",
+        graph_path=graph_dir / "ndfu_men.png",
         label="men",
         color=colors[0],
     )
     _dfu_plot(
         data=d2,
-        graph_path=GRAPH_DIR / "ndfu_women.png",
+        graph_path=graph_dir / "ndfu_women.png",
         label="women",
         color=colors[1],
     )
     _dfu_plot(
         data=d_all,
-        graph_path=GRAPH_DIR / "ndfu_all.png",
+        graph_path=graph_dir / "ndfu_all.png",
         label="all",
         color=colors[2],
     )
     _combined_dfu_plot(
         datasets=[d1, d2, d_all],
-        graph_path=GRAPH_DIR / "ndfu_combined.png",
+        graph_path=graph_dir / "ndfu_combined.png",
         labels=["men", "women", "all"],
         colors=colors,
     )
@@ -80,7 +80,7 @@ def _combined_dfu_plot(
     plt.close()
 
 
-def discussion_example():
+def discussion_example(graph_dir: Path) -> None:
     misogynist_comment = """
     ``A: Men are naturally more suited for leadership because they’re more
     decisive. Women are too emotional to handle real responsibility.``
@@ -108,19 +108,19 @@ def discussion_example():
         misogynist_comment,
         d_woman_comment2,
         d_man_comment2,
-        GRAPH_DIR / "ndfu_comment2.png",
+        graph_dir / "ndfu_comment2.png",
     )
     _plot_example_individual(
         misandrist_comment,
         d_woman_comment1,
         d_man_comment1,
-        GRAPH_DIR / "ndfu_comment1.png",
+        graph_dir / "ndfu_comment1.png",
     )
     _plot_example_individual(
         discussion_comment,
         d_woman,
         d_man,
-        GRAPH_DIR / "ndfu_discussion.png",
+        graph_dir / "ndfu_discussion.png",
     )
 
 
@@ -193,4 +193,13 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description=("Create demonstrative plots to explain apunim.")
+    )
+    parser.add_argument(
+        "--graph-dir",
+        required=True,
+        help="Directory for the graphs.",
+    )
+    args = parser.parse_args()
+    main(graph_dir=Path(args.graph_dir))

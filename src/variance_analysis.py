@@ -1,4 +1,5 @@
 import typing
+import argparse
 from pathlib import Path
 
 import pandas as pd
@@ -10,10 +11,6 @@ from tqdm.auto import tqdm
 from .tasks import graphs
 from . import synthetic_100
 from .apunim import aposteriori
-
-
-INPUT_PATH = Path("data/100_annotators.csv")
-GRAPH_DIR = Path("graphs")
 
 
 def sample_se_vs_sample_size_unimodality(
@@ -118,8 +115,8 @@ def plot_variance_curve(results_df: pd.DataFrame, graph_path: Path) -> None:
     plt.close()
 
 
-def main():
-    df = synthetic_100.base_df(dataset_path=INPUT_PATH)
+def main(dataset_path: Path, graph_dir: Path):
+    df = synthetic_100.base_df(dataset_path=dataset_path)
     res_df = sample_se_vs_sample_size_unimodality(
         df=df.reset_index(),
         annotation_col="toxicity",
@@ -132,9 +129,23 @@ def main():
         iters=1000,
     )
     plot_variance_curve(
-        res_df, graph_path=GRAPH_DIR / "ndfu_std_error_sample_size.png"
+        res_df, graph_path=graph_dir / "ndfu_std_error_sample_size.png"
     )
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description=("Create plots analyzing effect of #annotators.")
+    )
+    parser.add_argument(
+        "--dataset-path",
+        required=True,
+        help="Path to the 100 annotator CSV file.",
+    )
+    parser.add_argument(
+        "--graph-dir",
+        required=True,
+        help="Directory for the graphs.",
+    )
+    args = parser.parse_args()
+    main(dataset_path=Path(args.dataset_path), graph_dir=Path(args.graph_dir))
