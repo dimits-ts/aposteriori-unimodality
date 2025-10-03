@@ -17,7 +17,7 @@ FactorType = TypeVar("FactorType")
 
 # code adapted from John Pavlopoulos
 # https://github.com/ipavlopoulos/ndfu/blob/main/src/__init__.py
-def dfu(x: Collection[float], bins: int, normalized: bool = False) -> float:
+def dfu(x: Collection[float], bins: int, normalized: bool = True) -> float:
     """
     Computes the Distance From Unimodality measure for a list of annotations
     :param: x: a sequence of annotations, not necessarily discrete
