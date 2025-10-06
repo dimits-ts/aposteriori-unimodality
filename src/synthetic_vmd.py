@@ -7,71 +7,70 @@ import pandas as pd
 from .tasks import preprocessing
 from .tasks import run_helper
 
-DATASET_NAME = "Virtual Moderation Dataset"
 
+class VMDDataset(preprocessing.Dataset):
+    def __init__(self, dataset_path: Path):
+        self.df = VMDDataset._base_df(dataset_path)
 
-def base_df(dataset_path: Path) -> pd.DataFrame:
-    syn_df = pd.read_csv(
-        dataset_path,
-        converters={
-            "annot_personality_characteristics": ast.literal_eval,
-            "Toxicity": ast.literal_eval,
-            "Argument Quality": ast.literal_eval,
-            "age_annot": ast.literal_eval,
-            "sex_annot": ast.literal_eval,
-            "sexual_orientation_annot": ast.literal_eval,
-            "current_employment_annot": ast.literal_eval,
-            "education_level_annot": ast.literal_eval,
-        },
-    )
-    syn_df["comment_key"] = syn_df.message + syn_df.conv_id
-    syn_df["fake_index"] = 1
+    def get_name(self) -> str:
+        return "Virtual Moderation Dataset"
 
-    syn_df.Toxicity = syn_df.Toxicity.apply(lambda x: [int(tox) for tox in x])
+    def get_dataset(self) -> pd.DataFrame:
+        return self.df
 
-    syn_df.age_annot = syn_df.age_annot.apply(
-        lambda ls: [int(x) for x in ls]
-    ).apply(lambda x: pd.cut(x, bins=4))
-    return syn_df
+    def get_sdb_columns(self) -> list[str]:
+        return (
+            [
+                "age_annot",
+                "sex_annot",
+                "sexual_orientation_annot",
+                "current_employment_annot",
+                "education_level_annot",
+            ],
+        )
+
+    def get_comment_key_column(self) -> str:
+        return "comment_key"
+
+    def get_annotation_column(self) -> str:
+        return "Toxicity"
+
+    @staticmethod
+    def base_df(dataset_path: Path) -> pd.DataFrame:
+        syn_df = pd.read_csv(
+            dataset_path,
+            converters={
+                "annot_personality_characteristics": ast.literal_eval,
+                "Toxicity": ast.literal_eval,
+                "Argument Quality": ast.literal_eval,
+                "age_annot": ast.literal_eval,
+                "sex_annot": ast.literal_eval,
+                "sexual_orientation_annot": ast.literal_eval,
+                "current_employment_annot": ast.literal_eval,
+                "education_level_annot": ast.literal_eval,
+            },
+        )
+        syn_df["comment_key"] = syn_df.message + syn_df.conv_id
+        syn_df["fake_index"] = 1
+
+        syn_df.Toxicity = syn_df.Toxicity.apply(
+            lambda x: [int(tox) for tox in x]
+        )
+
+        syn_df.age_annot = syn_df.age_annot.apply(
+            lambda ls: [int(x) for x in ls]
+        ).apply(lambda x: pd.cut(x, bins=4))
+        syn_df["random"] = preprocessing.get_rand_col(syn_df, "sex_annot")
+        return syn_df
 
 
 def main(dataset_path: Path, output_dir: Path):
-    df = base_df(dataset_path)
-    df["random"] = preprocessing.get_rand_col(df, "sex_annot")
-
-    sdb_columns = [
-        "age_annot",
-        "sexual_orientation_annot",
-        "education_level_annot",
-        "current_employment_annot",
-        "sex_annot",
-    ]
-    res = run_helper.run_all_results(
-        df=df,
-        sdb_columns=sdb_columns,
-        value_col="Toxicity",
-        comment_key_col="comment_key",
+    ds = VMDDataset(dataset_path=dataset_path)
+    run_helper.run_experiments_on_dataset(
+        ds=ds,
+        full_latex_path=output_dir / "res_synthetic_vmd.tex",
+        random_latex_path=output_dir / "random_res_synthetic_vmd.tex",
     )
-    print(res)
-    run_helper.results_to_latex(
-        res,
-        output_path=output_dir / "res_synthetic_vmd.tex",
-        dataset_name=DATASET_NAME,
-    )
-
-    rand_res = run_helper.run_result(
-        df,
-        sdb_column="random",
-        value_col="Toxicity",
-        comment_key_col="comment_key",
-    )
-    print(rand_res)
-    run_helper.results_to_latex(
-        rand_res,
-        output_path=output_dir / "random_res_synthetic_vmd.tex",
-        dataset_name=f"random_{DATASET_NAME}",
-    )
-    print(f"Finished {DATASET_NAME} dataset.")
 
 
 if __name__ == "__main__":

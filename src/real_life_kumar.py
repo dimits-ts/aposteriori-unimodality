@@ -6,37 +6,21 @@ import pandas as pd
 from .tasks import preprocessing
 from .tasks import run_helper
 
-DATASET_NAME = "Kumar et al 2021"
 NUM_COMMENTS = 500
 
 
-def base_df(dataset_path: Path):
-    df = pd.read_json(dataset_path, lines=True)
-    df = df.explode(column="ratings")
+class KumarDataset(preprocessing.Dataset):
+    def __init__(self, dataset_path: Path, num_samples: int):
+        self.df = KumarDataset._base_df(dataset_path, num_samples)
 
-    ratings_df = pd.json_normalize(df.ratings)
-    df = pd.concat([df.reset_index(), ratings_df.reset_index()], axis=1)
-    df = df.drop(columns=["ratings", "index"])
-    # shorten names
-    df = df.replace(
-        {
-            (
-                "High school graduate (high school diploma or equivalent "
-                "including GED)"
-            ): "High School graduate",
-            "Associate degree in college (2-year)": "Associate degree",
-            "Bachelor's degree in college (4-year)": "Bachelor's degree",
-            "Less than high school degree": "No high school",
-            "Professional degree (JD, MD)": "Professional degree",
-            "Some college but no degree": "College, no degree"
-        }
-    )
+    def get_name(self) -> str:
+        return "Kumar et al. 2021"
 
-    df = df.loc[
-        :,
-        [
-            "comment",
-            "toxic_score",
+    def get_dataset(self) -> pd.DataFrame:
+        return self.df
+
+    def get_sdb_columns(self) -> list[str]:
+        return [
             "personally_seen_toxic_content",
             "personally_been_target",
             "identify_as_transgender",
@@ -47,58 +31,70 @@ def base_df(dataset_path: Path):
             "political_affilation",
             "is_parent",
             "religion_important",
-        ],
-    ]
-    df = df.groupby("comment").agg(list)
-    print(f"Selecting {NUM_COMMENTS} out of {len(df)} total comments.")
-    df = df.sample(NUM_COMMENTS)
-    df = df.reset_index()
-    return df
+        ]
+
+    def get_comment_key_column(self) -> str:
+        return "score"
+
+    def get_annotation_column(self) -> str:
+        return "toxic_score"
+
+    @staticmethod
+    def _base_df(dataset_path: Path, num_samples: int) -> pd.DataFrame:
+        df = pd.read_json(dataset_path, lines=True)
+        df = df.explode(column="ratings")
+
+        ratings_df = pd.json_normalize(df.ratings)
+        df = pd.concat([df.reset_index(), ratings_df.reset_index()], axis=1)
+        df = df.drop(columns=["ratings", "index"])
+        # shorten names
+        df = df.replace(
+            {
+                (
+                    "High school graduate (high school diploma or equivalent "
+                    "including GED)"
+                ): "High School graduate",
+                "Associate degree in college (2-year)": "Associate degree",
+                "Bachelor's degree in college (4-year)": "Bachelor's degree",
+                "Less than high school degree": "No high school",
+                "Professional degree (JD, MD)": "Professional degree",
+                "Some college but no degree": "College, no degree",
+            }
+        )
+
+        df = df.loc[
+            :,
+            [
+                "comment",
+                "toxic_score",
+                "personally_seen_toxic_content",
+                "personally_been_target",
+                "identify_as_transgender",
+                "toxic_comments_problem",
+                "education",
+                "age_range",
+                "lgbtq_status",
+                "political_affilation",
+                "is_parent",
+                "religion_important",
+            ],
+        ]
+        df = df.groupby("comment").agg(list)
+        print(f"Selecting {num_samples} out of {len(df)} total comments.")
+        df = df.sample(num_samples)
+        df = df.reset_index()
+        df["random"] = preprocessing.get_rand_col(df, "education")
+        return df
 
 
 def main(dataset_path: Path, output_dir: Path):
-    df = base_df(dataset_path)
-    df["random"] = preprocessing.get_rand_col(df, "education")
-    sdb_columns = [
-        "personally_seen_toxic_content",
-        "personally_been_target",
-        "identify_as_transgender",
-        "toxic_comments_problem",
-        "education",
-        "age_range",
-        "lgbtq_status",
-        "political_affilation",
-        "is_parent",
-        "religion_important",
-    ]
+    ds = KumarDataset(dataset_path=dataset_path, num_samples=NUM_COMMENTS)
 
-    res = run_helper.run_all_results(
-        df=df,
-        sdb_columns=sdb_columns,
-        value_col="toxic_score",
-        comment_key_col="comment",
+    run_helper.run_experiments_on_dataset(
+        ds=ds,
+        full_latex_path=output_dir / "res_kumar.tex",
+        random_latex_path=output_dir / "random_res_kumar.tex",
     )
-    print(res)
-    run_helper.results_to_latex(
-        res,
-        output_path=output_dir / "res_kumar.tex",
-        dataset_name=DATASET_NAME,
-    )
-
-    rand_res = run_helper.run_result(
-        df,
-        sdb_column="random",
-        value_col="toxic_score",
-        comment_key_col="comment",
-    )
-    print(rand_res)
-
-    run_helper.results_to_latex(
-        rand_res,
-        output_path=output_dir / "random_res_kumar.tex",
-        dataset_name=f"random_{DATASET_NAME}",
-    )
-    print(f"Finished {DATASET_NAME} dataset.")
 
 
 if __name__ == "__main__":
