@@ -175,7 +175,7 @@ def _run_aposteriori(
     alpha: float = 0.1,
 ) -> dict:
     if bins == -1:
-        bins = len(np.unique(df[value_col]))
+        bins = len(np.unique(np.concatenate(df[value_col])))
 
     annotations, attributes, keys = extract_annotations_and_attributes(
         df=df,
