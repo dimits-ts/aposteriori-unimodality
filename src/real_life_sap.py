@@ -124,6 +124,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     main(
         dataset_path=Path(args.dataset_path),
-        output_dir=Path(args.latex_output_dir),
-        graph_path=Path(args.graph_output_dir)
+        latex_output_dir=Path(args.latex_output_dir),
+        graph_output_dir=Path(args.graph_output_dir)
     )

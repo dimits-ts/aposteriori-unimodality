@@ -19,15 +19,13 @@ class VMDDataset(preprocessing.Dataset):
         return self.df
 
     def get_sdb_columns(self) -> list[str]:
-        return (
-            [
-                "Age",
-                "Gender",
-                "Sexual Orientation",
-                "Employment",
-                "Education",
-            ],
-        )
+        return [
+            "Age",
+            "Gender",
+            "Sexual Orientation",
+            "Employment",
+            "Education",
+        ]
 
     def get_comment_key_column(self) -> str:
         return "comment_key"
@@ -67,7 +65,7 @@ class VMDDataset(preprocessing.Dataset):
                 "sex_annot": "Gender",
                 "sexual_orientation_annot": "Sexual Orientation",
                 "current_employment_annot": "Employment",
-                "education_level_annot": "Education"
+                "education_level_annot": "Education",
             }
         )
         return syn_df
@@ -79,7 +77,7 @@ def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
         ds=ds,
         full_latex_path=latex_output_dir / "res_synthetic_vmd.tex",
         random_latex_path=latex_output_dir / "random_res_synthetic_vmd.tex",
-        graph_path=graph_output_dir / "synthetic_vmd.png"
+        graph_path=graph_output_dir / "synthetic_vmd.png",
     )
 
 
@@ -107,6 +105,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     main(
         dataset_path=Path(args.dataset_path),
-        output_dir=Path(args.latex_output_dir),
-        graph_path=Path(args.graph_output_dir)
+        latex_output_dir=Path(args.latex_output_dir),
+        graph_output_dir=Path(args.graph_output_dir),
     )

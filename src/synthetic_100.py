@@ -19,17 +19,15 @@ class HundredDataset(preprocessing.Dataset):
         return self.df
 
     def get_sdb_columns(self) -> list[str]:
-        return (
-            [
-                "Age",
-                "Gender",
-                "Sexual Orientation",
-                "Ethnicity",
-                "Employment",
-                "annot_education_level",
-                "Political Affiliation",
-            ],
-        )
+        return [
+            "Age",
+            "Gender",
+            "Sexual Orientation",
+            "Ethnicity",
+            "Employment",
+            "Education",
+            "Political Affiliation",
+        ]
 
     def get_comment_key_column(self) -> str:
         return "comment_key"
@@ -93,7 +91,7 @@ class HundredDataset(preprocessing.Dataset):
                 "annot_current_employment": "Employment",
                 "annot_education_level": "Education",
                 "annot_politics": "Political Affiliation",
-                "toxicity": "Toxicity"
+                "toxicity": "Toxicity",
             }
         )
         return df
@@ -105,7 +103,7 @@ def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
         ds,
         full_latex_path=latex_output_dir / "res_synthetic_100.tex",
         random_latex_path=latex_output_dir / "random_res_synthetic_100.tex",
-        graph_path=graph_output_dir / "synthetic_100.png"
+        graph_path=graph_output_dir / "synthetic_100.png",
     )
 
 
@@ -133,6 +131,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     main(
         dataset_path=Path(args.dataset_path),
-        output_dir=Path(args.latex_output_dir),
-        graph_path=Path(args.graph_output_dir)
+        latex_output_dir=Path(args.latex_output_dir),
+        graph_output_dir=Path(args.graph_output_dir),
     )

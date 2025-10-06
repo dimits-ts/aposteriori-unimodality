@@ -34,7 +34,6 @@ def run_experiments_on_dataset(
         comment_key_col=ds.get_comment_key_column(),
     )
     print(rand_res)
-
     results_to_latex(
         rand_res,
         output_path=random_latex_path,
@@ -76,7 +75,6 @@ def run_all_results(
         and the columns are `kappa` and `pvalue`.
     """
     results = []
-
     for sdb_column in tqdm(sdb_columns, desc="Evaluating SDB dimensions"):
         res_df = run_result(
             df,
@@ -155,7 +153,6 @@ def run_result(
     value_col: str,
     comment_key_col: str,
 ) -> pd.DataFrame:
-    df = df.dropna(subset=[sdb_column])
     res = _run_aposteriori(
         df,
         feature_col=sdb_column,
