@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from src.aposteriori import dfu
+from src.apunim.aposteriori import dfu
 
 
 class TestDFU(unittest.TestCase):

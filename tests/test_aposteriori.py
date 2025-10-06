@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 
-from src.aposteriori import (
+from src.apunim.aposteriori import (
     _factor_dfu_stat,
     aposteriori_unimodality,
 )
