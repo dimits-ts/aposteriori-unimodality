@@ -89,13 +89,14 @@ class SapDataset(preprocessing.Dataset):
             return None
 
 
-def main(dataset_path: Path, output_dir: Path):
+def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
     ds = SapDataset(dataset_path=dataset_path)
 
     run_helper.run_experiments_on_dataset(
         ds=ds,
-        full_latex_path=output_dir / "res_sap.tex",
-        random_latex_path=output_dir / "random_res_sap.tex",
+        full_latex_path=latex_output_dir / "res_sap.tex",
+        random_latex_path=latex_output_dir / "random_res_sap.tex",
+        graph_path=graph_output_dir / "sap.png"
     )
 
 
@@ -115,8 +116,14 @@ if __name__ == "__main__":
         required=True,
         help="Directory for the latex result files.",
     )
+    parser.add_argument(
+        "--graph-output-dir",
+        required=True,
+        help="Directory for graphs.",
+    )
     args = parser.parse_args()
     main(
         dataset_path=Path(args.dataset_path),
         output_dir=Path(args.latex_output_dir),
+        graph_path=Path(args.graph_output_dir)
     )

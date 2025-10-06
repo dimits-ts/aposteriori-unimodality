@@ -5,11 +5,14 @@ import numpy as np
 from tqdm.auto import tqdm
 
 from ..apunim import aposteriori
-from .tasks import preprocessing
+from . import preprocessing, graphs
 
 
 def run_experiments_on_dataset(
-    ds: preprocessing.Dataset, full_latex_path: Path, random_latex_path: Path
+    ds: preprocessing.Dataset,
+    full_latex_path: Path,
+    random_latex_path: Path,
+    graph_path: Path,
 ) -> None:
     res = run_all_results(
         df=ds.get_dataset(),
@@ -37,6 +40,8 @@ def run_experiments_on_dataset(
         output_path=random_latex_path,
         dataset_name=f"random_{ds.get_name()}",
     )
+
+    graphs.polarization_plot(ds=ds, output_path=graph_path)
     print(f"Finished {ds.get_name()} dataset.")
 
 

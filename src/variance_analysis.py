@@ -143,9 +143,12 @@ if __name__ == "__main__":
         help="Path to the 100 annotator CSV file.",
     )
     parser.add_argument(
-        "--graph-dir",
+        "--graph-output-dir",
         required=True,
         help="Directory for the graphs.",
     )
     args = parser.parse_args()
-    main(dataset_path=Path(args.dataset_path), graph_dir=Path(args.graph_dir))
+    main(
+        dataset_path=Path(args.dataset_path),
+        graph_dir=Path(args.graph_output_dir),
+    )
