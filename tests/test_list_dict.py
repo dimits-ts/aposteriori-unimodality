@@ -1,6 +1,6 @@
 import unittest
 
-from src.aposteriori import _ListDict
+from src._list_dict import _ListDict
 
 
 class TestListDict(unittest.TestCase):

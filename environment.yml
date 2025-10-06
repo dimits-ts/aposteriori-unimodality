@@ -1,4 +1,4 @@
-name: apunim
+name: apunim-experiments
 channels:
   - defaults
   - conda-forge
@@ -6,13 +6,12 @@ dependencies:
   - python
   - pandas
   - numpy
-  - matplotlib
   - seaborn
   - tqdm
-  - moreutils
-  - scikit-learn
   - notebook 
   - ipywidgets
-  - statsmodels
+  - scikit-learn
   - scipy
+  - statsmodels
+  - parallel
   
