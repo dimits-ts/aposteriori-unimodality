@@ -21,23 +21,23 @@ class KumarDataset(preprocessing.Dataset):
 
     def get_sdb_columns(self) -> list[str]:
         return [
-            "personally_seen_toxic_content",
-            "personally_been_target",
-            "identify_as_transgender",
-            "toxic_comments_problem",
-            "education",
-            "age_range",
-            "lgbtq_status",
-            "political_affilation",
-            "is_parent",
-            "religion_important",
+            "Seen Toxicity",
+            "Has Been Targeted",
+            "Is Transgender",
+            "Thinks Toxicity Is Problem",
+            "Education",
+            "Age",
+            "Sexual Orientation",
+            "Political Affiliation",
+            "Is Parent",
+            "Thinks Religion Is Important",
         ]
 
     def get_comment_key_column(self) -> str:
         return "score"
 
     def get_annotation_column(self) -> str:
-        return "toxic_score"
+        return "Toxicity"
 
     @staticmethod
     def _base_df(dataset_path: Path, num_samples: int) -> pd.DataFrame:
@@ -84,6 +84,22 @@ class KumarDataset(preprocessing.Dataset):
         df = df.sample(num_samples)
         df = df.reset_index()
         df["random"] = preprocessing.get_rand_col(df, "education")
+
+        df = df.rename(
+            columns={
+                "personally_seen_toxic_content": "Seen Toxicity",
+                "personally_been_target": "Has Been Targeted",
+                "identify_as_transgender": "Is Transgender",
+                "toxic_comments_problem": "Thinks Toxicity Is Problem",
+                "education": "Education",
+                "age_range": "Age",
+                "lgbtq_status": "Sexual Orientation",
+                "political_affilation": "Political Affiliation",
+                "is_parent": "Is Parent",
+                "religion_important": "Thinks Religion Is Important",
+                "toxic_score": "Toxicity",
+            }
+        )
         return df
 
 

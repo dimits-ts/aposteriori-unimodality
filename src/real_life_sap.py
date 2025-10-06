@@ -19,16 +19,16 @@ class SapDataset(preprocessing.Dataset):
 
     def get_sdb_columns(self) -> list[str]:
         return [
-            "annotatorAge",
-            "annotatorRace",
-            "annotatorGender",
+            "Age",
+            "Ethnicity",
+            "Gender",
         ]
 
     def get_comment_key_column(self) -> str:
         return "tweet"
 
     def get_annotation_column(self) -> str:
-        return "racism"
+        return "Racism"
 
     @staticmethod
     def _base_df(dataset_path: Path, num_samples: int) -> pd.DataFrame:
@@ -65,6 +65,15 @@ class SapDataset(preprocessing.Dataset):
         )
         df = df.dropna()
         df["random"] = preprocessing.get_rand_col(df, "annotatorAge")
+
+        df = df.rename(
+            columns={
+                "racism": "Racism",
+                "annotatorAge": "Age",
+                "annotatorRace": "Ethnicity",
+                "annotatorGender": "Gender",
+            }
+        )
         return df
 
     @staticmethod

@@ -21,11 +21,11 @@ class VMDDataset(preprocessing.Dataset):
     def get_sdb_columns(self) -> list[str]:
         return (
             [
-                "age_annot",
-                "sex_annot",
-                "sexual_orientation_annot",
-                "current_employment_annot",
-                "education_level_annot",
+                "Age",
+                "Gender",
+                "Sexual Orientation",
+                "Employment",
+                "Education",
             ],
         )
 
@@ -51,7 +51,6 @@ class VMDDataset(preprocessing.Dataset):
             },
         )
         syn_df["comment_key"] = syn_df.message + syn_df.conv_id
-        syn_df["fake_index"] = 1
 
         syn_df.Toxicity = syn_df.Toxicity.apply(
             lambda x: [int(tox) for tox in x]
@@ -61,6 +60,16 @@ class VMDDataset(preprocessing.Dataset):
             lambda ls: [int(x) for x in ls]
         ).apply(lambda x: pd.cut(x, bins=4))
         syn_df["random"] = preprocessing.get_rand_col(syn_df, "sex_annot")
+
+        syn_df = syn_df.rename(
+            columns={
+                "age_annot": "Age",
+                "sex_annot": "Gender",
+                "sexual_orientation_annot": "Sexual Orientation",
+                "current_employment_annot": "Employment",
+                "education_level_annot": "Education"
+            }
+        )
         return syn_df
 
 

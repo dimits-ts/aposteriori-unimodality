@@ -21,13 +21,13 @@ class HundredDataset(preprocessing.Dataset):
     def get_sdb_columns(self) -> list[str]:
         return (
             [
-                "annot_age",
-                "annot_sex",
-                "annot_sexual_orientation",
-                "annot_demographic_group",
-                "annot_current_employment",
+                "Age",
+                "Gender",
+                "Sexual Orientation",
+                "Ethnicity",
+                "Employment",
                 "annot_education_level",
-                "annot_politics",
+                "Political Affiliation",
             ],
         )
 
@@ -35,7 +35,7 @@ class HundredDataset(preprocessing.Dataset):
         return "comment_key"
 
     def get_annotation_column(self) -> str:
-        return "toxicity"
+        return "Toxicity"
 
     @staticmethod
     def _base_df(dataset_path: Path):
@@ -83,6 +83,19 @@ class HundredDataset(preprocessing.Dataset):
         )
         df["random"] = preprocessing.get_rand_col(df, "annot_sex")
         df = df.reset_index()
+
+        df = df.rename(
+            columns={
+                "annot_age": "Age",
+                "annot_sex": "Gender",
+                "annot_sexual_orientation": "Sexual Orientation",
+                "annot_demographic_group": "Ethnicity",
+                "annot_current_employment": "Employment",
+                "annot_education_level": "Education",
+                "annot_politics": "Political Affiliation",
+                "toxicity": "Toxicity"
+            }
+        )
         return df
 
 
