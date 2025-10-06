@@ -116,12 +116,12 @@ def plot_variance_curve(results_df: pd.DataFrame, graph_path: Path) -> None:
 
 
 def main(dataset_path: Path, graph_dir: Path):
-    df = synthetic_100.base_df(dataset_path=dataset_path)
+    ds = synthetic_100.HundredDataset(dataset_path=dataset_path)
     res_df = sample_se_vs_sample_size_unimodality(
-        df=df.reset_index(),
-        annotation_col="toxicity",
-        group_col="annot_sex",
-        comment_col="message_id",
+        df=ds.get_dataset().reset_index(),
+        annotation_col=ds.get_annotation_column(),
+        group_col="Gender",
+        comment_col=ds.get_comment_key_column(),
         bins=5,
         min_size=3,
         max_size=100,
