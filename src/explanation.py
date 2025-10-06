@@ -18,6 +18,80 @@ INTUITION_SIZE = 50
 NUM_BINS = 10
 
 
+def plot_annotation_distributions(
+    graph_dir: Path,
+    n_annotators: int = 10,
+    n_annotations: int = 100,
+    variance: float = 0.3,
+    random_seed: int = 42,
+) -> None:
+    np.random.seed(random_seed)
+
+    unimodal = [
+        np.random.normal(loc=5, scale=variance, size=n_annotations)
+        for _ in range(n_annotators)
+    ]
+    bimodal = [
+        np.concatenate(
+            [
+                np.random.normal(3, variance, n_annotations // 2),
+                np.random.normal(5, variance, n_annotations // 2),
+            ]
+        )
+        for _ in range(n_annotators)
+    ]
+    multimodal = [
+        np.concatenate(
+            [
+                np.random.normal(2, variance, n_annotations // 3),
+                np.random.normal(5, variance, n_annotations // 3),
+                np.random.normal(8, variance, n_annotations // 3),
+            ]
+        )
+        for _ in range(n_annotators)
+    ]
+    uniform = [
+        np.random.uniform(0, 10, n_annotations) for _ in range(n_annotators)
+    ]
+
+    fig, axs = plt.subplots(2, 2, figsize=(12, 10))
+    plt.subplots_adjust(hspace=0.3, wspace=0.3)
+
+    def plot_matrix(ax, data, title):
+        all_x = []
+        all_y = []
+        for i, y in enumerate(data):
+            all_x.extend([i] * len(y))
+            all_y.extend(y)
+        all_x = np.array(all_x)
+        all_y = np.array(all_y)
+
+        # Compute point density
+        xy = np.vstack([all_x, all_y])
+        z = scipy.stats.gaussian_kde(xy)(xy)
+
+        sc = ax.scatter(
+            all_x,
+            all_y,
+            c=z,
+            s=30,
+            edgecolor="black",
+            cmap="viridis",
+            alpha=0.7,
+        )
+        ax.set_title(title)
+        ax.set_xticks(range(n_annotators))
+        ax.set_ylim(1, 10)
+        plt.colorbar(sc, ax=ax, label="Density")
+
+    plot_matrix(axs[0, 0], unimodal, "Low Disagreement\nLow Polarization")
+    plot_matrix(axs[0, 1], uniform, "High Disagreement\nLow Polarization")
+    plot_matrix(axs[1, 0], bimodal, "Low Disagreement\nHigh Polarization")
+    plot_matrix(axs[1, 1], multimodal, "High Disagreement\nHigh Polarization")
+
+    graphs.save_plot(graph_dir / "disagreement_vs_polarization.png")
+
+
 def dfu_plots(colors: list[str], graph_dir: Path) -> None:
     d1 = _truncated_normal(loc=2, scale=1.3, size=INTUITION_SIZE)
     d2 = _truncated_normal(loc=8, scale=1.3, size=INTUITION_SIZE)
@@ -182,14 +256,16 @@ def _plot_example_individual(
     plt.close()
 
 
-def main():
+def main(graph_dir: Path):
     sns.set_theme(style="whitegrid")
     plt.rcParams.update({"text.usetex": True, "font.family": "Helvetica"})
     np.random.seed(seed=42)
     colors = sns.color_palette()
 
-    dfu_plots(colors)
-    discussion_example()
+    dfu_plots(colors, graph_dir)
+    discussion_example(graph_dir)
+
+    plot_annotation_distributions(graph_dir)
 
 
 if __name__ == "__main__":
@@ -197,9 +273,9 @@ if __name__ == "__main__":
         description=("Create demonstrative plots to explain apunim.")
     )
     parser.add_argument(
-        "--graph-dir",
+        "--graph-output-dir",
         required=True,
         help="Directory for the graphs.",
     )
     args = parser.parse_args()
-    main(graph_dir=Path(args.graph_dir))
+    main(graph_dir=Path(args.graph_output_dir))
