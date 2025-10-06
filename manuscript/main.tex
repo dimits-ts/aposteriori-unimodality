@@ -54,7 +54,7 @@ In this section, we provide a formal mathematical formulation for the problem of
 
 \begin{equation}
 	\begin{split}
-		&A(\textit{"Could be better, could be wose"}) = \\ &\{(\textit{positive}, female), (\textit{positive}, male), (\textit{negative}, female), \ldots\}
+		&A(\textit{"Could be better, could be worse"}) = \\ &\{(\textit{positive}, female), (\textit{positive}, male), (\textit{negative}, female), \ldots\}
 	\end{split}
 \end{equation}
 
@@ -115,11 +115,11 @@ The observed polarization of a data-point on the group of annotations $\theta$ c
 
 By obtaining the pol-statistics for all data-points in a dataset $d$ for \ac{SDB} $\theta$, we can get the mean observed polarization for the dataset:
 \begin{equation}
-	pol_{O}(d, \theta) = \frac{1}{\lvert d \rvert} \sum_{c \in d} (pol(c, \theta) - \frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{P}_i(A(c))))
+	pol_{O}(d, \theta) = \frac{1}{\lvert d \rvert} \sum_{c \in d} pol(c, \theta)
 \end{equation} 
 \noindent and similarly the mean apriori dataset polarization:
 \begin{equation}
-	pol_{E}(d) = \frac{1}{\lvert d \rvert} \sum_{c \in d} \sum_{i=1}^t  \textit{nDFU}(\tilde{P}_i(A(c)))
+	pol_{E}(d) = \frac{1}{\lvert d \rvert} \sum_{c \in d} \frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{P}_i(A(c)))
 \end{equation}
 
 \noindent We can then define the Aposteriori Unimodality Statistic ($\kappa$) with a formulation inspired by Cohen's Kappa \cite{Cohen_1960}, as:
@@ -127,7 +127,7 @@ By obtaining the pol-statistics for all data-points in a dataset $d$ for \ac{SDB
 	\kappa = apunim(d, \theta) = \frac{pol_O(d, \theta) - pol_E(d)}{1 - pol_E(d)}
 \end{equation}
 
-The statistic is technically unbounded, but typically resides in the $[-1, 1]$ range. If $\kappa \approx 0$, the exhibited polarization among annotators of group $\theta$ does not surpass what would be expected by chance. If $\kappa > 0$, then the group partially explains a rise in polarization. Unlike Cohen's Kappa, the case of $\kappa < 0$ does have meaning; the group actually exhibits lower polarization compared to the whole. The scope of the statistic and its relationship with the previously presented statistics are demonstrated in Figure~\ref{fig::overview}. 
+If $\kappa \approx 0$, the exhibited polarization among annotators of group $\theta$ does not surpass what would be expected by chance. If $\kappa > 0$, then the group partially explains a rise in polarization. Unlike Cohen's Kappa, the case of $\kappa < 0$ does have meaning; the group actually exhibits lower polarization compared to the whole. The scope of the statistic and its relationship with the previously presented statistics are demonstrated in Figure~\ref{fig::overview}. 
 
 Like most metrics, we also include a p-value alongside the $\kappa$ value. This can be computed either non-parametrically, by repeatedly shuffling annotations and computing a null distribution of $apunim$, or parametrically, by assuming a normal distribution (which is generally a safe assumption if $t \geq 30$). %TODO: citation?
 In the latter case, we compute:
