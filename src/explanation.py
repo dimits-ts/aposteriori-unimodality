@@ -134,8 +134,10 @@ def plot_annotation_distributions(
         "Annotator disagreement (variance) vs polarization (clustering)"
     )
 
-    plt.savefig(graph_dir / "disagreement_vs_polarization_discrete.png")
-    plt.show()
+    graphs.save_plot(
+        graph_dir / "disagreement_vs_polarization.png"
+    )
+    plt.close()
 
 
 def dfu_plots(colors: list[str], graph_dir: Path) -> None:
