@@ -6,7 +6,7 @@ import pandas as pd
 from .tasks import preprocessing
 from .tasks import run_helper
 
-NUM_COMMENTS = 500
+NUM_COMMENTS = 10000
 
 
 class KumarDataset(preprocessing.Dataset):
@@ -81,7 +81,7 @@ class KumarDataset(preprocessing.Dataset):
         ]
         df = df.groupby("comment").agg(list)
         print(f"Selecting {num_samples} out of {len(df)} total comments.")
-        df = df.sample(num_samples)
+        df = df.sample(num_samples, random_state=42)
         df = df.reset_index()
         df["random"] = preprocessing.get_rand_col(df, "education")
 
