@@ -32,6 +32,15 @@ class _ListDict(Generic[K, V]):
 
     def items(self) -> list[tuple[K, list[V]]]:
         return self.dict.items()
+    
+    def add_dict(self, new_stats: dict[K, V]):
+        """
+        Update the _ListDict with at most one extra value per factor, keeping
+        all internal lists at the same length.
+        :param new_stats: Dictionary of {factor: stat}
+        """
+        for factor in new_stats:
+            self[factor] = new_stats[factor]
 
     def __getitem__(self, key) -> list[V]:
         return self.dict[key]
@@ -42,14 +51,8 @@ class _ListDict(Generic[K, V]):
         else:
             self.dict[key] = [value]
 
-    def add_dict(self, new_stats: dict[K, V]):
-        """
-        Update the _ListDict with at most one extra value per factor, keeping
-        all internal lists at the same length.
-        :param new_stats: Dictionary of {factor: stat}
-        """
-        for factor in new_stats:
-            self[factor] = new_stats[factor]
+    def __contains__(self, key: K) -> bool:
+        return key in self.dict
 
     def __len__(self):
         return len(self.dict)

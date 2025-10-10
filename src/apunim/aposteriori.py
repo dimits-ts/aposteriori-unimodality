@@ -41,12 +41,12 @@ def dfu(x: Collection[float], bins: int, normalized: bool = True) -> float:
     pos_max = np.argmax(hist)
 
     # right search
-    right_diffs = hist[pos_max + 1 :] - hist[pos_max:-1]
+    right_diffs = hist[pos_max + 1:] - hist[pos_max:-1]
     max_rdiff = right_diffs.max(initial=0)
 
     # left search
     if pos_max > 0:
-        left_diffs = hist[0:pos_max] - hist[1 : pos_max + 1]
+        left_diffs = hist[0:pos_max] - hist[1: pos_max + 1]
         max_ldiff = left_diffs[left_diffs > 0].max(initial=0)
     else:
         max_ldiff = 0
@@ -133,23 +133,39 @@ def aposteriori_unimodality(
     comment_group = np.array(comment_group)
 
     all_factors = _unique(factor_group)
-    observed_dfu_dict = _list_dict._ListDict()
-    apriori_dfu_dict = _list_dict._ListDict()
 
-    # gather stats per comment
+    # --- FIRST LOOP: Identify valid comments ---
+    valid_comments = []
     for curr_comment_id in _unique(comment_group):
         is_in_curr_comment = comment_group == curr_comment_id
         all_comment_annotations = annotations[is_in_curr_comment]
-
-        # skip unpolarized comments
-        if np.isclose(
-            a=dfu(all_comment_annotations, bins=bins, normalized=True),
-            b=0,
-            atol=0.01,
-        ):
-            continue
-
         comment_annotator_groups = factor_group[is_in_curr_comment]
+
+        if _comment_is_valid(
+            comment_annotations=all_comment_annotations,
+            comment_annotator_groups=comment_annotator_groups,
+            bins=bins,
+        ):
+            valid_comments.append(curr_comment_id)
+
+    if not valid_comments:
+        raise ValueError("No polarized comments found.")
+
+    valid_mask = np.isin(comment_group, valid_comments)
+    annotations = annotations[valid_mask]
+    factor_group = factor_group[valid_mask]
+    comment_group = comment_group[valid_mask]
+    # update all_factors in case some factors no longer have comments
+    all_factors = _unique(factor_group)
+
+    # gather stats per comment
+    observed_dfu_dict = _list_dict._ListDict()
+    apriori_dfu_dict = _list_dict._ListDict()
+    for curr_comment_id in valid_comments:
+        is_in_curr_comment = comment_group == curr_comment_id
+        all_comment_annotations = annotations[is_in_curr_comment]
+        comment_annotator_groups = factor_group[is_in_curr_comment]
+
         lengths_by_factor = {
             factor: np.count_nonzero(comment_annotator_groups == factor)
             for factor in all_factors
@@ -173,6 +189,7 @@ def aposteriori_unimodality(
         )
 
     # compute raw results per factor
+    # if there exist comments of that factor left after filtering
     results = {}
     for factor in all_factors:
         res = _aposteriori_polarization_stat(
@@ -241,6 +258,52 @@ def _validate_input(
 
     if bins < 2:
         raise ValueError("Number of bins has to be at least 2.")
+
+
+def _comment_is_valid(
+    comment_annotations: Collection[float],
+    comment_annotator_groups: Collection[FactorType],
+    bins: int,
+) -> bool:
+    """
+    A comment is valid if:
+      1. It shows polarization (DFU > 0)
+      2. It has at least two distinct annotator groups
+      3. At least two of those groups have >= 2 annotations each
+    """
+
+    # --- Check for polarization ---
+    has_polarization = not np.isclose(
+        dfu(comment_annotations, bins=bins, normalized=True),
+        0,
+        atol=0.01,
+    )
+
+    # --- Clean annotator groups ---
+    # Convert to list and remove None/NaN values safely
+    groups = []
+    for g in comment_annotator_groups:
+        if g is None:
+            continue
+        if isinstance(g, float) and np.isnan(g):
+            continue
+        groups.append(g)
+
+    if len(groups) < 2:
+        return False  # not enough valid annotators
+
+    # --- Count occurrences per group ---
+    group_counts = {}
+    for g in groups:
+        group_counts[g] = group_counts.get(g, 0) + 1
+
+    # --- Apply lenient validity rule ---
+    num_groups = len(group_counts)
+    groups_with_two_or_more = sum(c >= 2 for c in group_counts.values())
+
+    sufficient_groups = num_groups >= 2 and groups_with_two_or_more >= 2
+
+    return has_polarization and sufficient_groups
 
 
 def _factor_dfu_stat(
