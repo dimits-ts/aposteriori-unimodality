@@ -13,7 +13,9 @@ def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
     df = ds.get_dataset()
     annotation_col = ds.get_annotation_column()
     sdb_columns = ds.get_sdb_columns()
-    bins = len(np.unique(np.concatenate(df[ds.get_annotation_column()])))
+    bins = len(
+        np.unique(np.concatenate(df[ds.get_annotation_column()].to_list()))
+    )
 
     records = []
     for sdb_col in sdb_columns:

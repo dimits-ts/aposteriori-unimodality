@@ -34,7 +34,7 @@ class KumarDataset(preprocessing.Dataset):
         ]
 
     def get_comment_key_column(self) -> str:
-        return "score"
+        return "comment"
 
     def get_annotation_column(self) -> str:
         return "Toxicity"

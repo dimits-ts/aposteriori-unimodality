@@ -31,7 +31,7 @@ class SapDataset(preprocessing.Dataset):
         return "Racism"
 
     @staticmethod
-    def _base_df(dataset_path: Path, num_samples: int) -> pd.DataFrame:
+    def _base_df(dataset_path: Path) -> pd.DataFrame:
         df = pd.read_pickle(dataset_path)
         df = df.loc[
             :,
