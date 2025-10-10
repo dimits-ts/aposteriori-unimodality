@@ -18,24 +18,24 @@ INTUITION_SIZE = 50
 NUM_BINS = 10
 
 
-def plot_annotation_distributions(
-    graph_dir: Path,
-    n_annotators: int = 10,
-    n_annotations: int = 100,
-    variance: float = 0.3,
-    random_seed: int = 42,
-) -> None:
-    np.random.seed(random_seed)
+def _discrete_normal(loc, scale, size):
+    vals = np.random.normal(loc, scale, size)
+    vals = np.clip(
+        np.round(vals), 1, 5
+    )  # round to nearest integer between 1-5
+    return vals
 
+
+def _prepare_distributions(n_annotators, n_annotations, variance):
     unimodal = [
-        np.random.normal(loc=5, scale=variance, size=n_annotations)
+        _discrete_normal(3, variance, n_annotations)
         for _ in range(n_annotators)
     ]
     bimodal = [
         np.concatenate(
             [
-                np.random.normal(3, variance, n_annotations // 2),
-                np.random.normal(5, variance, n_annotations // 2),
+                _discrete_normal(2, variance, n_annotations // 2),
+                _discrete_normal(4, variance, n_annotations // 2),
             ]
         )
         for _ in range(n_annotators)
@@ -43,53 +43,99 @@ def plot_annotation_distributions(
     multimodal = [
         np.concatenate(
             [
-                np.random.normal(2, variance, n_annotations // 3),
-                np.random.normal(5, variance, n_annotations // 3),
-                np.random.normal(8, variance, n_annotations // 3),
+                _discrete_normal(1, variance, n_annotations // 3),
+                _discrete_normal(3, variance, n_annotations // 3),
+                _discrete_normal(5, variance, n_annotations // 3),
             ]
         )
         for _ in range(n_annotators)
     ]
     uniform = [
-        np.random.uniform(0, 10, n_annotations) for _ in range(n_annotators)
+        np.random.randint(1, 6, n_annotations) for _ in range(n_annotators)
     ]
+    return unimodal, bimodal, multimodal, uniform
+
+
+def _plot_matrix(
+    ax, data, n_annotators, title, horizontal_jitter=0.25, vertical_jitter=0.15
+):
+    all_x = []
+    all_y = []
+    for i, values in enumerate(data):
+        # Horizontal jitter for annotator separation
+        x_jittered = i + np.random.uniform(
+            -horizontal_jitter, horizontal_jitter, size=len(values)
+        )
+        # Vertical jitter to show overlapping points
+        y_jittered = values + np.random.uniform(
+            -vertical_jitter, vertical_jitter, size=len(values)
+        )
+        all_x.extend(x_jittered)
+        all_y.extend(y_jittered)
+
+    all_x = np.array(all_x)
+    all_y = np.array(all_y)
+
+    # Compute KDE for density
+    xy = np.vstack([all_x, all_y])
+    z = scipy.stats.gaussian_kde(xy)(xy)
+
+    sc = ax.scatter(
+        all_x, all_y, c=z, s=40, edgecolor="black", cmap="viridis", alpha=0.7
+    )
+
+    ax.set_xlabel("Annotators")
+    ax.set_xticks(range(n_annotators))
+    ax.set_xticklabels([str(i + 1) for i in range(n_annotators)])
+    ax.set_xlim(-0.5, n_annotators - 0.5)
+
+    ax.set_ylabel("Toxicity")
+    ax.set_yticks([1, 2, 3, 4, 5])
+
+    ax.set_ylim(0.8, 5.2)
+
+    ax.set_title(title)
+    plt.colorbar(sc, ax=ax, label="Density")
+
+
+def plot_annotation_distributions(
+    graph_dir: Path,
+    n_annotators: int = 10,
+    n_annotations: int = 100,
+    variance: float = 0.5,
+    random_seed: int = 42,
+):
+    np.random.seed(random_seed)
+
+    unimodal, bimodal, multimodal, uniform = _prepare_distributions(
+        n_annotators, n_annotations, variance
+    )
 
     fig, axs = plt.subplots(2, 2, figsize=(12, 10))
     plt.subplots_adjust(hspace=0.3, wspace=0.3)
 
-    def plot_matrix(ax, data, title):
-        all_x = []
-        all_y = []
-        for i, y in enumerate(data):
-            all_x.extend([i] * len(y))
-            all_y.extend(y)
-        all_x = np.array(all_x)
-        all_y = np.array(all_y)
+    _plot_matrix(
+        axs[0, 0], unimodal, n_annotators, "Low Disagreement\nLow Polarization"
+    )
+    _plot_matrix(
+        axs[0, 1], uniform, n_annotators, "High Disagreement\nLow Polarization"
+    )
+    _plot_matrix(
+        axs[1, 0], bimodal, n_annotators, "Low Disagreement\nHigh Polarization"
+    )
+    _plot_matrix(
+        axs[1, 1],
+        multimodal,
+        n_annotators,
+        "High Disagreement\nHigh Polarization",
+    )
 
-        # Compute point density
-        xy = np.vstack([all_x, all_y])
-        z = scipy.stats.gaussian_kde(xy)(xy)
+    fig.suptitle(
+        "Annotator disagreement (variance) vs polarization (clustering)"
+    )
 
-        sc = ax.scatter(
-            all_x,
-            all_y,
-            c=z,
-            s=30,
-            edgecolor="black",
-            cmap="viridis",
-            alpha=0.7,
-        )
-        ax.set_title(title)
-        ax.set_xticks(range(n_annotators))
-        ax.set_ylim(1, 10)
-        plt.colorbar(sc, ax=ax, label="Density")
-
-    plot_matrix(axs[0, 0], unimodal, "Low Disagreement\nLow Polarization")
-    plot_matrix(axs[0, 1], uniform, "High Disagreement\nLow Polarization")
-    plot_matrix(axs[1, 0], bimodal, "Low Disagreement\nHigh Polarization")
-    plot_matrix(axs[1, 1], multimodal, "High Disagreement\nHigh Polarization")
-
-    graphs.save_plot(graph_dir / "disagreement_vs_polarization.png")
+    plt.savefig(graph_dir / "disagreement_vs_polarization_discrete.png")
+    plt.show()
 
 
 def dfu_plots(colors: list[str], graph_dir: Path) -> None:
