@@ -34,7 +34,7 @@ class VMDDataset(preprocessing.Dataset):
         return "Toxicity"
 
     @staticmethod
-    def base_df(dataset_path: Path) -> pd.DataFrame:
+    def _base_df(dataset_path: Path) -> pd.DataFrame:
         syn_df = pd.read_csv(
             dataset_path,
             converters={

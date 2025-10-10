@@ -41,12 +41,12 @@ def dfu(x: Collection[float], bins: int, normalized: bool = True) -> float:
     pos_max = np.argmax(hist)
 
     # right search
-    right_diffs = hist[pos_max + 1:] - hist[pos_max:-1]
+    right_diffs = hist[pos_max + 1 :] - hist[pos_max:-1]
     max_rdiff = right_diffs.max(initial=0)
 
     # left search
     if pos_max > 0:
-        left_diffs = hist[0:pos_max] - hist[1: pos_max + 1]
+        left_diffs = hist[0:pos_max] - hist[1 : pos_max + 1]
         max_ldiff = left_diffs[left_diffs > 0].max(initial=0)
     else:
         max_ldiff = 0
@@ -140,6 +140,15 @@ def aposteriori_unimodality(
     for curr_comment_id in _unique(comment_group):
         is_in_curr_comment = comment_group == curr_comment_id
         all_comment_annotations = annotations[is_in_curr_comment]
+
+        # skip unpolarized comments
+        if np.isclose(
+            a=dfu(all_comment_annotations, bins=bins, normalized=True),
+            b=0,
+            atol=0.01,
+        ):
+            continue
+
         comment_annotator_groups = factor_group[is_in_curr_comment]
         lengths_by_factor = {
             factor: np.count_nonzero(comment_annotator_groups == factor)
