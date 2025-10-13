@@ -3,14 +3,13 @@ from pathlib import Path
 
 import pandas as pd
 
-from .tasks import preprocessing
-from .tasks import run_helper
+from .tasks import preprocessing, run_helper, graphs
 
 NUM_COMMENTS = 10000
 
 
 class KumarDataset(preprocessing.Dataset):
-    def __init__(self, dataset_path: Path, num_samples: int):
+    def __init__(self, dataset_path: Path, num_samples: int | None=None):
         self.df = KumarDataset._base_df(dataset_path, num_samples)
 
     def get_name(self) -> str:
@@ -40,7 +39,7 @@ class KumarDataset(preprocessing.Dataset):
         return "Toxicity"
 
     @staticmethod
-    def _base_df(dataset_path: Path, num_samples: int) -> pd.DataFrame:
+    def _base_df(dataset_path: Path, num_samples: int | None) -> pd.DataFrame:
         df = pd.read_json(dataset_path, lines=True)
         df = df.explode(column="ratings")
 
@@ -80,8 +79,11 @@ class KumarDataset(preprocessing.Dataset):
             ],
         ]
         df = df.groupby("comment").agg(list)
-        print(f"Selecting {num_samples} out of {len(df)} total comments.")
-        df = df.sample(num_samples, random_state=42)
+
+        if num_samples is not None:
+            print(f"Selecting {num_samples} out of {len(df)} total comments.")
+            df = df.sample(num_samples, random_state=42)
+
         df = df.reset_index()
         df["random"] = preprocessing.get_rand_col(df, "education")
 
@@ -104,13 +106,19 @@ class KumarDataset(preprocessing.Dataset):
 
 
 def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
+    """
     ds = KumarDataset(dataset_path=dataset_path, num_samples=NUM_COMMENTS)
 
     run_helper.run_experiments_on_dataset(
         ds=ds,
         full_latex_path=latex_output_dir / "res_kumar.tex",
         random_latex_path=latex_output_dir / "random_res_kumar.tex",
-        graph_path=graph_output_dir / "kumar.png"
+        graph_path=graph_output_dir / "kumar.png",
+    )
+    """
+    ds = KumarDataset(dataset_path=dataset_path)
+    graphs.polarization_plot(
+        ds=ds, output_path=graph_output_dir / "kumar_full.png"
     )
 
 
@@ -139,5 +147,5 @@ if __name__ == "__main__":
     main(
         dataset_path=Path(args.dataset_path),
         latex_output_dir=Path(args.latex_output_dir),
-        graph_output_dir=Path(args.graph_output_dir)
+        graph_output_dir=Path(args.graph_output_dir),
     )
