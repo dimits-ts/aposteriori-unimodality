@@ -30,6 +30,7 @@
 
 
 \section{Introduction}
+\label{sec:intro}
 
 Annotations are essential for a wide range of tasks, especially in fields such as content moderation, toxicity detection and hate speech detection. These tasks are especially essential for training systems that protect vulnerable and minority groups in online spaces, where they are often targeted \parencite{un_hate_speech_targets, ucdavis_hate_speech}. However, annotations for such tasks are subjective, and are usually based on majority-group annotators. This may limit the usefulness of the data, or even lead to biased and misconfigured systems.
 
@@ -69,50 +70,48 @@ In this section, we provide a formal mathematical formulation for the problem of
 
 \paragraph{SocioDemographic Backgrounds }Since our goal is to pinpoint which specific characteristics contribute to polarization, we need to isolate individual groups within a \ac{SDB}. Let $\Theta$ be one of multiple ``dimensions'' the set of all annotator \ac{SDB} groups for a single dimension (e.g. ``male'', ``female'' and ``non-binary'' if we are investigating annotator gender).
 
-\paragraph{Annotations} Now let $d = \{c_1, c_2, \ldots\}$ be a dataset composed of multiple annotated data-points. We assume that annotating a data-point depends on three variables: its contents, the annotator's \ac{SDB}, and uncontrolled factors such as mood and personal experiences. Assuming that each data-point $c$ is assigned multiple annotators, we can define the annotation multi-set $A(c)=  \{(a, \theta) \}$, where $a$ is a single annotation. As an example, the annotations for a comment in a sentiment analysis task would be formulated as:
+\paragraph{Annotations} Now let $d = \{c_1, c_2, \ldots\}$ be a dataset composed of multiple annotated data points. We assume that annotating a data point depends on two variables: inherent (``apriori'') controversy, and the (``aposteriori'') annotator's \ac{SDB}, as well as uncontrolled factors such as mood and personal experiences (noise). Assuming that each data-point $c$ is assigned multiple annotators, we can define the annotation multi-set $A(c)=  \{(a, \theta) \}$, where $a$ is a single annotation. As an example, the annotations for a comment in a sentiment analysis task would be formulated as:
 
 \begin{equation}
 	\begin{split}
-		&A(\textit{"Could be better, could be worse"}) = \\ &\{(\textit{positive}, female), (\textit{positive}, male), (\textit{negative}, female), \ldots\}
+		&A(\textit{"Could be better, could be worse"}) = \\ &\{(\textit{positive}, female), (\textit{negative},  male), \\ & (\textit{positive}, female), \ldots\}
 	\end{split}
 \end{equation}
 
-\paragraph{Polarization} Each set of annotations features a certain degree of \textit{polarization}. Unpolarized annotations are usually unimodal, which makes intuitive sense; there is a difference between the annotators disagreeing on the details (which would be shown roughly as a bell curve around the median annotation), and them fundamentally disagreeing with each other (which would likely be shown as a multimodal distribution). \textcite{pavlopoulos-likas-2024} create a polarization metric, the ``\ac{nDFU}'', which measures whether an annotation set shows no polarization (unimodal distribution --- $nDFU \rightarrow 0$), up to complete polarization (multimodal distribution --- $nDFU \rightarrow 1$). Thus, we will define a test that, given that annotation polarization exists, tests whether the \ac{nDFU} of a data-point's annotations can be partially explained by $\theta$.
+\paragraph{Polarization} Each set of annotations features a certain degree of \emph{polarization}. Unpolarized annotations are usually unimodal; the annotators disagree on the details (which would be shown roughly as a bell curve around the median annotation), not fundamentally (which would likely be shown as a multimodal distribution). \textcite{pavlopoulos-likas-2024} create a polarization metric, the ``\ac{nDFU}'', which measures whether an annotation set shows no polarization (unimodal distribution --- $nDFU \rightarrow 0$), up to complete polarization (multimodal distribution --- $nDFU \rightarrow 1$). Thus, we need a metric that measures how much the \ac{nDFU} of a data point can be partially explained by $\theta$ (given that polarization exists).
 
 
 \subsection{Quantifying changes in polarization}
 \label{ssec:methodology:intuition}
 
-\paragraph{Data-point polarization} Intuitively, $\theta$ partially explains the polarization of a data-point $c$ when the annotations grouped by $\theta$ are more polarized compared to the full set of annotations. Figure~\ref{fig:ndfu_combined} exhibits a hypothetical example where a misogynistic comment is annotated for toxicity by male and female annotators.\footnote{The use of only two predominant genders is made only for the purposes of demonstration.} The annotations are generally polarized ($nDFU_{all} = 0.625$). The annotations by female annotators exhibit low polarization between themselves ($nDFU_{women} = 0.1$), since most agree the data-point is toxic. The set of male annotations, also shows low polarization ($nDFU_{men} = 0.3725$), but for the opposite reason---most men agree that it is \emph{not} toxic. This suggests that the overall polarization is driven by disagreements between male and female annotators.
-
-\begin{figure}
+\begin{figure*}[t]
 	\centering
-	\includegraphics[width=0.8\linewidth]{ndfu_combined.png}
-	\caption{Hypothetical example of a polarizing comment, where male and female annotators agree between themselves, but disagree with the opposite gender. Overall polarization ($nDFU_{all} = 0.625$) is much greater than the polarization exhibited by the annotations grouped by gender ($nDFU_{men} = 0.3725, nDFU_{women} = 0.1$).}
-	\label{fig:ndfu_combined}
-\end{figure}
-
-\paragraph{Dataset polarization} Given this observation, we would be tempted to aggregate all annotations in the dataset and compare the polarization of each $\theta$ with the full set of annotations $A(c)$. However, this formulation would not work well. Figure~\ref{fig:ndfu_discussion} illustrates a hypothetical discussion with two comments, both of which are toxic, but where male and female annotators disagree on \emph{which} comment is the toxic one. If we aggregate the annotations to a single discussion, the opposing polarization effects might balance each other out, leading to a false negative. In simpler terms, polarization has a \textit{direction}, and care must be taken to not combine polarization effects of opposite directions.
-
-In our example, while it is obvious that gender partly explains the polarization found in each of the individual comments ($nDFU_{all} \gg nDFU_{men}, nDFU_{all} \gg nDFU_{women}$), this observation is much harder to make when aggregating the two comments. This is graphically shown as the presence of three bimodal distributions instead of two unimodal distributions, and one bimodal (aggregated) distribution. To avoid this, we apply our statistic only on annotations that reference the same data-point.
-
-\begin{figure*}
-	\centering
-    \includegraphics[width=0.3\linewidth]{ndfu_comment1.png}
-    \includegraphics[width=0.3 \linewidth]{ndfu_comment2.png}
+	\includegraphics[width=0.3\linewidth]{ndfu_comment1.png}
+	\includegraphics[width=0.3 \linewidth]{ndfu_comment2.png}
 	\includegraphics[width=0.3 \linewidth]{ndfu_discussion.png}
 	\caption{Hypothetical example of a polarizing discussion with two comments, for which the annotators disagree on which is the toxic one. If we aggregate the two comments, the polarization scores for both men and women significantly rise, obscuring whether the exhibited polarization can be partially attributed to gender.}
 	\label{fig:ndfu_discussion}
 \end{figure*}
 
- 
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=0.8\linewidth]{ndfu_combined.png}
+	\caption{Hypothetical example of a polarizing comment, where male and female annotators agree between themselves, but disagree with the opposite gender. Overall polarization is much greater than the polarization exhibited by the annotations grouped by gender.}
+	\label{fig:ndfu_combined}
+\end{figure}
+
+\paragraph{Single data point polarization} Intuitively, $\theta$ partially explains the polarization of a data point $c$ when the annotations grouped by $\theta$ are more polarized compared to the full set of annotations. Figure~\ref{fig:ndfu_combined} exhibits a hypothetical example where a misogynistic comment is annotated for toxicity by male and female annotators.\footnote{The use of only two predominant genders is made only for the purposes of demonstration.} The annotations are generally polarized ($nDFU_{all} = 0.625$). The annotations by female annotators exhibit low polarization between themselves ($nDFU_{women} = 0.1$), since most agree the data-point is toxic. The set of male annotations, also shows low polarization ($nDFU_{men} = 0.3725$), but for the opposite reason---most men agree that it is \emph{not} toxic. This suggests that the overall polarization is driven by disagreements between male and female annotators.
+
+\paragraph{Dataset polarization} Given this observation, we would be tempted to aggregate all annotations in the dataset and compare the polarization of each $\theta$ with the full set of annotations $A(c)$. In fact this is very tempting since aggregating annotations solves the very real and important problem of annotation scarcity; each data point may be annotated by only 5 annotators, leading to a best-case 3-2 split between groups.
+
+However, this formulation would not work well. Figure~\ref{fig:ndfu_discussion} illustrates a hypothetical discussion with two comments, both of which are toxic, but where male and female annotators disagree on \emph{which} comment is the toxic one. If we aggregate the annotations to a single discussion, the opposing polarization effects might balance each other out, leading to a false negative. This example demonstrates that polarization has a \textit{direction}, which is not captured by the $nDFU$ metric which is symmetric. Thus, care must be taken to not combine polarization effects of opposite directions. 
  
  \subsection{The pol-statistic}
  \label{ssec:methodology:polstat}
   
-As demonstrated above, it is necessary to define a statistic for each individual data-point. We thus introduce the \textit{``pol-statistic''}, which quantifies the change in \ac{nDFU} when annotations are grouped by $\theta \in \Theta$.
+As demonstrated above, it is necessary to define a metric for the polarization attribution of each individual data point. We thus introduce the \textit{``pol-statistic''}, which quantifies the change in \ac{nDFU} when annotations are grouped by $\theta \in \Theta$.
 
-In order to define this statistic, we need to measure (1) the polarization of a data-point when grouped by $\theta$, and (2) the ``inherent'' polarization present in the annotations, which is driven by either the contents of the data-point, or by the uncontrolled factors mentioned in \S\ref{ssec:methodology:problem}. Note that we can not directly compare the $\theta$-subset of annotations with the full set of annotations, since any statistical comparison between them violates the assumption of independent samples. %Removing the subset from the full set of annotations on the other hand, may introduce selection bias, especially when considering interactions between subgroups and confounding variables. % TODO: does this even make sense?
+In order to define this statistic, we need to measure (1) the polarization of a data-point when grouped by $\theta$, and (2) the ``apriori'' polarization \S~\ref{sec:intro} present in the annotations, which is driven by either the inherent controversy of the data-point. Note that we can not directly compare the $\theta$-subset of annotations with the full set of annotations, since any statistical comparison between them violates the assumption of independent samples. %Removing the subset from the full set of annotations on the other hand, may introduce selection bias, especially when considering interactions between subgroups and confounding variables. % TODO: does this even make sense?
 
 The observed polarization of a data-point on the group of annotations $\theta$ can be directly computed as: 
  \begin{equation}
@@ -120,7 +119,7 @@ The observed polarization of a data-point on the group of annotations $\theta$ c
  \end{equation}
  \noindent where $P(A(c), \theta_i) = \{a(c; \theta) \in A(c) | \theta=\theta_i\}$ is the partition of $A$ for a data-point $c$, for which its annotators belong to the \ac{SDB} group $\theta_i$.
  
- We can estimate the inherent polarization in data-point $c$ by bootstrapping. We randomly partition the data-point's annotations in $\lvert \Theta \rvert$ groups, with matching group sizes (e.g., if we have $100$ annotations, $80$ of which are made by male annotators and $20$ by female annotators, we will create random partitions of sizes $80$ and $20$). The randomly partitioned annotations are then sampled $t$ times. Formally, the expected inherent polarization will be given by:
+ We can estimate the apriori polarization in data point $c$ by bootstrapping. We randomly partition the annotations in $\lvert \Theta \rvert$ groups, with matching group sizes (e.g., if we have $100$ annotations, $80$ of which are made by male annotators and $20$ by female annotators, we will create random partitions of sizes $80$ and $20$). The randomly partitioned annotations are then sampled $t$ times. Formally, the expected inherent polarization will be given by:
  
  \begin{equation}
  	\label{eq:pol_expected}
@@ -132,21 +131,21 @@ The observed polarization of a data-point on the group of annotations $\theta$ c
 \subsection{Aposteriori Unimodality}
 \label{ssec:methodology:aposteriori}
 
-By obtaining the pol-statistics for all data-points in a dataset $d$ for \ac{SDB} $\theta$, we can get the mean observed polarization for the dataset:
+By obtaining the pol-statistics for all data-points in a dataset $d$ for \ac{SDB} $\theta$, we can get the mean aposteriori polarization for the dataset:
 \begin{equation}
-	pol_{O}(d, \theta) = \frac{1}{\lvert d \rvert} \sum_{c \in d} pol(c, \theta)
+	pol_{apost}(d, \theta) = \frac{1}{\lvert d \rvert} \sum_{c \in d} pol(c, \theta)
 \end{equation} 
 \noindent and similarly the mean apriori dataset polarization:
 \begin{equation}
-	pol_{E}(d) = \frac{1}{\lvert d \rvert} \sum_{c \in d} \frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{P}_i(A(c)))
+	pol_{apriori}(d) = \frac{1}{\lvert d \rvert} \sum_{c \in d} \frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{P}_i(A(c)))
 \end{equation}
 
-\noindent We can then define the Aposteriori Unimodality Statistic ($\kappa$) with a formulation inspired by Cohen's Kappa \cite{Cohen_1960}, as:
+\noindent We can then define the \emph{Apunim Statistic} as:
 \begin{equation}
-	\kappa = apunim(d, \theta) = \frac{pol_O(d, \theta) - pol_E(d)}{1 - pol_E(d)}
+	apunim(d, \theta) = \frac{pol_{apost}(d, \theta) - pol_{apriori}(d)}{1 - pol_{apriori}(d)}
 \end{equation}
 
-If $\kappa \approx 0$, the exhibited polarization among annotators of group $\theta$ does not surpass what would be expected by chance. If $\kappa > 0$, then the group partially explains a rise in polarization. Unlike Cohen's Kappa, the case of $\kappa < 0$ does have meaning; the group actually exhibits lower polarization compared to the whole. The scope of the statistic and its relationship with the previously presented statistics are demonstrated in Figure~\ref{fig::overview}. 
+If $apunim(d, \theta) \approx 0$, the exhibited polarization among annotators of group $\theta$ does not surpass what would be expected by chance. If $apunim(d, \theta) > 0$, then the group partially explains a rise in polarization, and inversely for the case $apunim(d, \theta) < 0$. The scope of the statistic and its relationship with the previously presented statistics are demonstrated in Figure~\ref{fig::overview}. 
 
 Like most metrics, we also include a p-value alongside the $\kappa$ value. This can be computed either non-parametrically, by repeatedly shuffling annotations and computing a null distribution of $apunim$, or parametrically, by assuming a normal distribution (which is generally a safe assumption if $t \geq 30$). %TODO: citation?
 In the latter case, we compute:
