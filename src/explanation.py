@@ -27,9 +27,7 @@ def _discrete_normal(loc, scale, size):
 
 
 def _prepare_distributions(n_annotators, n_annotations, variance):
-    special_indices = [1, 9]
-
-    def make_distribution(base_means):
+    def make_distribution(base_means, special_indices=[]):
         data = []
         for i in range(n_annotators):
             if i in special_indices:
@@ -51,13 +49,13 @@ def _prepare_distributions(n_annotators, n_annotations, variance):
         return data
 
     unimodal = make_distribution([3])
-    bimodal = make_distribution([2, 4])
-    multimodal = make_distribution([1, 3, 5])
+    bimodal = make_distribution([3], special_indices=[1, 9])
+    multimodal = make_distribution([1, 3, 5], special_indices=[1, 9])
     uniform = [
         np.random.randint(1, 6, n_annotations) for _ in range(n_annotators)
     ]
 
-    return unimodal, bimodal, multimodal, uniform, special_indices
+    return unimodal, bimodal, multimodal, uniform, [1, 9]
 
 
 def _plot_matrix(
