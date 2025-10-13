@@ -50,7 +50,7 @@ def _prepare_distributions(n_annotators, n_annotations, variance):
 
     unimodal = make_distribution([3])
     bimodal = make_distribution([3], special_indices=[1, 9])
-    multimodal = make_distribution([1, 3, 5], special_indices=[1, 9])
+    multimodal = make_distribution([1, 3], special_indices=[1, 9])
     uniform = [
         np.random.randint(1, 6, n_annotations) for _ in range(n_annotators)
     ]
