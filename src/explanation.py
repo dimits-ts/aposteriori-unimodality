@@ -267,13 +267,13 @@ def discussion_example(graph_dir: Path) -> None:
         misogynist_comment,
         d_woman_comment2,
         d_man_comment2,
-        graph_dir / "ndfu_comment2.png",
+        graph_dir / "ndfu_comment1.png",
     )
     _plot_example_individual(
         misandrist_comment,
         d_woman_comment1,
         d_man_comment1,
-        graph_dir / "ndfu_comment1.png",
+        graph_dir / "ndfu_comment2.png",
     )
     _plot_example_individual(
         discussion_comment,
