@@ -27,40 +27,52 @@ def _discrete_normal(loc, scale, size):
 
 
 def _prepare_distributions(n_annotators, n_annotations, variance):
-    unimodal = [
-        _discrete_normal(3, variance, n_annotations)
-        for _ in range(n_annotators)
-    ]
-    bimodal = [
-        np.concatenate(
-            [
-                _discrete_normal(2, variance, n_annotations // 2),
-                _discrete_normal(4, variance, n_annotations // 2),
+    special_indices = [1, 9]
+
+    def make_distribution(base_means):
+        data = []
+        for i in range(n_annotators):
+            if i in special_indices:
+                mean_shift = 1
+            else:
+                mean_shift = 0
+
+            distributions = [
+                _discrete_normal(
+                    base_mean + mean_shift, variance, n_annotations
+                )
+                for base_mean in base_means
             ]
-        )
-        for _ in range(n_annotators)
-    ]
-    multimodal = [
-        np.concatenate(
-            [
-                _discrete_normal(1, variance, n_annotations // 3),
-                _discrete_normal(3, variance, n_annotations // 3),
-                _discrete_normal(5, variance, n_annotations // 3),
-            ]
-        )
-        for _ in range(n_annotators)
-    ]
+            data.append(
+                np.concatenate(distributions)
+                if len(distributions) > 1
+                else distributions[0]
+            )
+        return data
+
+    unimodal = make_distribution([3])
+    bimodal = make_distribution([2, 4])
+    multimodal = make_distribution([1, 3, 5])
     uniform = [
         np.random.randint(1, 6, n_annotations) for _ in range(n_annotators)
     ]
-    return unimodal, bimodal, multimodal, uniform
+
+    return unimodal, bimodal, multimodal, uniform, special_indices
 
 
 def _plot_matrix(
-    ax, data, n_annotators, title, horizontal_jitter=0.25, vertical_jitter=0.15
+    ax,
+    data,
+    n_annotators,
+    title,
+    highlight_indices=None,
+    horizontal_jitter=0.25,
+    vertical_jitter=0.15,
 ):
-    all_x = []
-    all_y = []
+    highlight_indices = highlight_indices or []
+
+    all_x, all_y = [], []
+
     for i, values in enumerate(data):
         # Horizontal jitter for annotator separation
         x_jittered = i + np.random.uniform(
@@ -70,6 +82,7 @@ def _plot_matrix(
         y_jittered = values + np.random.uniform(
             -vertical_jitter, vertical_jitter, size=len(values)
         )
+
         all_x.extend(x_jittered)
         all_y.extend(y_jittered)
 
@@ -80,63 +93,88 @@ def _plot_matrix(
     xy = np.vstack([all_x, all_y])
     z = scipy.stats.gaussian_kde(xy)(xy)
 
+    # Scatter plot (all annotators the same)
     sc = ax.scatter(
-        all_x, all_y, c=z, s=40, edgecolor="black", cmap="viridis", alpha=0.7
+        all_x,
+        all_y,
+        c=z,
+        s=40,
+        edgecolor="black",
+        cmap="viridis",
+        alpha=0.7,
     )
 
+    # Axes formatting
     ax.set_xlabel("Annotators")
-    ax.set_xticks(range(n_annotators))
-    ax.set_xticklabels([str(i + 1) for i in range(n_annotators)])
     ax.set_xlim(-0.5, n_annotators - 0.5)
-
-    ax.set_ylabel("Toxicity")
+    ax.set_ylabel("Hate Speech")
     ax.set_yticks([1, 2, 3, 4, 5])
-
     ax.set_ylim(0.8, 5.2)
-
     ax.set_title(title)
+
+    tick_labels = []
+    for i in range(n_annotators):
+        if i in highlight_indices:
+            tick_labels.append("☪️")  # Trans pride flag emoji
+        else:
+            tick_labels.append("✝️")
+
+    ax.set_xticks(range(n_annotators))
+    ax.set_xticklabels(tick_labels, fontsize=14)
+
     plt.colorbar(sc, ax=ax, label="Density")
 
 
 def plot_annotation_distributions(
     graph_dir: Path,
     n_annotators: int = 10,
-    n_annotations: int = 100,
-    variance: float = 0.5,
+    n_annotations: int = 25,
+    variance: float = 0.3,
     random_seed: int = 42,
 ):
     np.random.seed(random_seed)
 
-    unimodal, bimodal, multimodal, uniform = _prepare_distributions(
-        n_annotators, n_annotations, variance
+    unimodal, bimodal, multimodal, uniform, highlight_indices = (
+        _prepare_distributions(n_annotators, n_annotations, variance)
     )
 
     fig, axs = plt.subplots(2, 2, figsize=(12, 10))
     plt.subplots_adjust(hspace=0.3, wspace=0.3)
 
     _plot_matrix(
-        axs[0, 0], unimodal, n_annotators, "Low Disagreement\nLow Polarization"
+        axs[0, 0],
+        unimodal,
+        n_annotators,
+        "Low Disagreement\nLow Polarization",
+        highlight_indices,
     )
     _plot_matrix(
-        axs[0, 1], uniform, n_annotators, "High Disagreement\nLow Polarization"
+        axs[0, 1],
+        uniform,
+        n_annotators,
+        "High Disagreement\nLow Polarization",
+        highlight_indices,
     )
     _plot_matrix(
-        axs[1, 0], bimodal, n_annotators, "Low Disagreement\nHigh Polarization"
+        axs[1, 0],
+        bimodal,
+        n_annotators,
+        "Low Disagreement\nHigh Polarization",
+        highlight_indices,
     )
     _plot_matrix(
         axs[1, 1],
         multimodal,
         n_annotators,
         "High Disagreement\nHigh Polarization",
+        highlight_indices,
     )
 
     fig.suptitle(
         "Annotator disagreement (variance) vs polarization (clustering)"
     )
 
-    graphs.save_plot(
-        graph_dir / "disagreement_vs_polarization.png"
-    )
+    graphs.save_plot(graph_dir / "disagreement_vs_polarization.png")
     plt.close()
 
 
@@ -313,6 +351,8 @@ def main(graph_dir: Path):
     dfu_plots(colors, graph_dir)
     discussion_example(graph_dir)
 
+    plt.rcParams["font.family"] = "Symbola"
+    plt.rcParams["text.usetex"] = False
     plot_annotation_distributions(graph_dir)
 
 
