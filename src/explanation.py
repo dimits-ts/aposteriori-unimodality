@@ -149,16 +149,16 @@ def plot_annotation_distributions(
     )
     _plot_matrix(
         axs[0, 1],
-        uniform,
+        bimodal,
         n_annotators,
-        "High Disagreement\nLow Polarization",
+        "Low Disagreement\nHigh Polarization",
         highlight_indices,
     )
     _plot_matrix(
         axs[1, 0],
-        bimodal,
+        uniform,
         n_annotators,
-        "Low Disagreement\nHigh Polarization",
+        "High Disagreement\nLow Polarization",
         highlight_indices,
     )
     _plot_matrix(
