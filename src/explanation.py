@@ -107,6 +107,7 @@ def _plot_matrix(
     ax.set_xlim(-0.5, n_annotators - 0.5)
     ax.set_ylabel("Hate Speech")
     ax.set_yticks([1, 2, 3, 4, 5])
+    ax.set_yticklabels(["☺", "🙂", "😐", "😠", "🤬"])
     ax.set_ylim(0.8, 5.2)
     ax.set_title(title)
 
