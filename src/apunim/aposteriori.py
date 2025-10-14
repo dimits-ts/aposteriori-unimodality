@@ -60,7 +60,7 @@ def aposteriori_unimodality(
     annotations: Collection[float],
     factor_group: Collection[FactorType],
     comment_group: Collection[FactorType],
-    bins: int,
+    num_bins: int | None = None,
     iterations: int = 100,
     alpha: float = 0.05,
     seed: int | None = None,
@@ -92,11 +92,14 @@ def aposteriori_unimodality(
         A list of comment identifiers, where each element associates an
         annotation with a specific comment in the discussion.
     :type comment_group: list[`FactorType`]
-    :param bins:
+    :param num_bins:
         The number of bins to use when computing the DFU polarization metric.
         If data is discrete, it is advisable to use the number of modes.
         Example: An annotation task in the 1-5 LIKERT scale should use 5 bins.
-    :type bins: int
+        None to create as many bins as the distinct values in the annotations.
+        WARNING: If set to None, check whether all possible values are
+        represented at least once in the provided annotation.
+    :type num_bins: int
     :param iterations:
         The number of randomized groups compared against the original groups.
         A larger number makes the method more accurate,
@@ -130,6 +133,11 @@ def aposteriori_unimodality(
         per comment. The pvalue estimation is non-parametric.
     """
     rng = np.random.default_rng(seed=seed)
+    bins = (
+        num_bins
+        if num_bins is not None
+        else len(np.unique(np.concatenate(annotations.to_list())))
+    )
 
     # data prep
     _validate_input(annotations, factor_group, comment_group, iterations, bins)
@@ -190,7 +198,7 @@ def aposteriori_unimodality(
                 group_sizes=lengths_by_factor,
                 bins=bins,
                 iterations=iterations,
-                rng=rng
+                rng=rng,
             )
         )
 
@@ -355,7 +363,7 @@ def _apriori_polarization_stat(
     group_sizes: dict[FactorType, int],
     bins: int,
     iterations: int,
-    rng: np.random.Generator
+    rng: np.random.Generator,
 ) -> dict[FactorType, list[float]]:
     """
     For a single comment's annotations, generate `iterations` random partitions

@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pandas as pd
-import numpy as np
 from tqdm.auto import tqdm
 
 from ..apunim import aposteriori
@@ -170,13 +169,9 @@ def _run_aposteriori(
     value_col: str,
     feature_col: str,
     comment_key_col: str,
-    bins: int = -1,
     iterations: int = 100,
     alpha: float = 0.1,
 ) -> dict:
-    if bins == -1:
-        bins = len(np.unique(np.concatenate(df[value_col].to_list())))
-
     annotations, attributes, keys = extract_annotations_and_attributes(
         df=df,
         value_col=value_col,
@@ -189,9 +184,9 @@ def _run_aposteriori(
         annotations=annotations,
         factor_group=attributes,
         comment_group=keys,
-        bins=bins,
         iterations=iterations,
         alpha=alpha,
+        seed=42
     )
 
     return result_dict
