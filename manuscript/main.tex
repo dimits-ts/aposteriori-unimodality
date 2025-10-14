@@ -157,6 +157,24 @@ If $apunim(d, \theta) \approx 0$, the exhibited polarization among annotators of
 While it is possible to obtain p-value results for the apunim values being larger or less than 0 respectively, we find that the inherent variance of our statistic makes a p-value estimation worthless ($p \gg 0.1$). Nevertheless, we include a definition for parametric and non-parametric p-value estimation, and our results in Appendix~\ref{app:pvalue}.
 
 
+\subsection{Reliability of the pol statistic}
+
+
+\begin{figure}[t]
+	\includegraphics[width=\linewidth]{ndfu_std_error_sample_size.png}
+	\caption{Standard error of the \textit{pol-statistic} when sampled with replacement from the 100 LLM-annotator synthetic dataset for various number of annotators.}
+	\label{fig::std_error}
+\end{figure}
+
+In \S\ref{ssec:methodology:aposteriori} we mentioned that the test relies on enough annotations for each \ac{SDB} group and data-point. This can be an issue, given the cost required to utilize multiple human annotators for each data-point \parencite{rossi_2024}. 
+
+We use a subset of synthetic discussions from a synthetic dataset, the \ac{VMD} \parencite{tsirmpas2025scalableevaluationonlinefacilitation}. We use 100 LLM annotators  with different SDB characteristics and sample progressively 3-100 annotators with replacement, then calculate the standard error with the mean \emph{pol-statistic}. As expected, the standard error is inversely proportional to the number of annotators, although the difference is not great, even for a low number of annotators.
+
+Figure~\ref{fig::std_error} demonstrates the effect of the number of annotators to the \textit{pol-statistic} estimation. We can see that the pol statistic becomes consistent with about 15 annotators per comment. After about 80 annotators, we start to get diminishing results. This highlights a core limitation of the apunim metric.
+% TODO: Why use LLM discussions and not human ones? What are the LLM annotator characeristics? What the fuck are you doing?
+
+
+
 \section{Datasets}
 
 \begin{figure*}[t]
@@ -179,17 +197,6 @@ Assuming a confidence level of $\alpha=0.1$ we test whether any of the provided 
 
 \input{./generated/res_sap.tex}
 \input{./generated/res_kumar.tex}
-
-\subsection{Effect of number of annotators}
-\label{ssec: results:num_annotators}
-
-In \S\ref{ssec:methodology:aposteriori} we mentioned that the test relies on enough annotations for each \ac{SDB} group and data-point. This can be an issue, given the cost required to utilize multiple human annotators for each data-point \parencite{rossi_2024}. Figure~\ref{fig::std_error} demonstrates the effect of the number of annotators to the \textit{pol-statistic} estimation. We use the $100$-annotator synthetic dataset and sample progressively $3-100$ annotators with replacement, then calculate the standard error with the mean \textit{pol-statistic}. As expected, the standard error is inversely proportional to the number of annotators, although the difference is not great, even for a low number of annotators.
-
-\begin{figure}
-	\includegraphics[width=\linewidth]{ndfu_std_error_sample_size.png}
-	\caption{Standard error of the \textit{pol-statistic} when sampled with replacement from the $100$-annotator synthetic dataset for various number of annotators.}
-	\label{fig::std_error}
-\end{figure}
 
 
 \section{Conclusion}
