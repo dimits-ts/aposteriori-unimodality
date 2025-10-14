@@ -98,6 +98,45 @@ def run_all_results(
     return combined_df
 
 
+def run_result(
+    df: pd.DataFrame,
+    sdb_column: str,
+    value_col: str,
+    comment_key_col: str,
+) -> pd.DataFrame:
+    res = _run_aposteriori(
+        df,
+        feature_col=sdb_column,
+        value_col=value_col,
+        comment_key_col=comment_key_col,
+    )
+
+    # Validate expected structure
+    if not (
+        isinstance(res, dict)
+        and set(res.keys())
+        == {"apunim", "pvalue_parametric", "pvalue_nonparametric"}
+        and all(isinstance(v, dict) for v in res.values())
+    ):
+        raise ValueError(
+            "Unexpected result format from _run_aposteriori. "
+            "Expected a dict with keys {'apunim', 'pvalue_parametric', "
+            "'pvalue_nonparametric'}, "
+            "each mapping to a dict[FactorType, float]."
+        )
+
+    # Convert to DataFrame
+    res_df = pd.DataFrame(
+        {
+            "apunim": pd.Series(res["apunim"]),
+            "pvalue_parametric": pd.Series(res["pvalue_parametric"]),
+            "pvalue_nonparametric": pd.Series(res["pvalue_nonparametric"]),
+        }
+    )
+
+    return res_df
+
+
 def results_to_latex(
     res_df: pd.DataFrame, output_path: Path, dataset_name: str
 ) -> None:
@@ -119,7 +158,7 @@ def results_to_latex(
     print(f"Table {table_name} exported to {output_path.resolve()}")
 
 
-def extract_annotations_and_attributes(
+def _extract_annotations_and_attributes(
     df: pd.DataFrame, value_col: str, feature_col: str, comment_key_col: str
 ) -> tuple[list, list]:
     all_annotations = []
@@ -146,24 +185,6 @@ def extract_annotations_and_attributes(
     return all_annotations, all_attributes, all_keys
 
 
-def run_result(
-    df: pd.DataFrame,
-    sdb_column: str,
-    value_col: str,
-    comment_key_col: str,
-) -> pd.DataFrame:
-    res = _run_aposteriori(
-        df,
-        feature_col=sdb_column,
-        value_col=value_col,
-        comment_key_col=comment_key_col,
-    )
-
-    res_df = pd.DataFrame(res).T
-    res_df = res_df.rename(columns={0: "kappa", 1: "pvalue"})
-    return res_df
-
-
 def _run_aposteriori(
     df: pd.DataFrame,
     value_col: str,
@@ -172,21 +193,20 @@ def _run_aposteriori(
     iterations: int = 100,
     alpha: float = 0.1,
 ) -> dict:
-    annotations, attributes, keys = extract_annotations_and_attributes(
+    annotations, attributes, keys = _extract_annotations_and_attributes(
         df=df,
         value_col=value_col,
         feature_col=feature_col,
         comment_key_col=comment_key_col,
     )
 
-    # aposteriori_unimodality now returns dict[FactorType, ApunimResult]
     result_dict = aposteriori.aposteriori_unimodality(
         annotations=annotations,
         factor_group=attributes,
         comment_group=keys,
         iterations=iterations,
         alpha=alpha,
-        seed=42
+        seed=42,
     )
 
     return result_dict
