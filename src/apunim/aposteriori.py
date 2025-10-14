@@ -1,5 +1,4 @@
 from typing import TypeVar, Iterable, Any
-from collections import namedtuple
 from collections.abc import Collection
 import warnings
 
@@ -11,7 +10,6 @@ import numpy.typing
 from . import _list_dict
 
 
-ApunimResult = namedtuple("ApunimResult", ["kappa", "pvalue"])
 FactorType = TypeVar("FactorType")
 
 
@@ -41,12 +39,12 @@ def dfu(x: Collection[float], bins: int, normalized: bool = True) -> float:
     pos_max = np.argmax(hist)
 
     # right search
-    right_diffs = hist[pos_max + 1:] - hist[pos_max:-1]
+    right_diffs = hist[pos_max + 1 :] - hist[pos_max:-1]
     max_rdiff = right_diffs.max(initial=0)
 
     # left search
     if pos_max > 0:
-        left_diffs = hist[0:pos_max] - hist[1: pos_max + 1]
+        left_diffs = hist[0:pos_max] - hist[1 : pos_max + 1]
         max_ldiff = left_diffs[left_diffs > 0].max(initial=0)
     else:
         max_ldiff = 0
@@ -63,8 +61,10 @@ def aposteriori_unimodality(
     num_bins: int | None = None,
     iterations: int = 100,
     alpha: float = 0.05,
+    pvalue_estimation: str = "parametric",
+    two_sided: bool = True,
     seed: int | None = None,
-) -> dict[FactorType, ApunimResult]:
+) -> dict[str, dict[FactorType, float]]:
     """
     Perform the Aposteriori Unimodality Test to identify whether any annotator
     group, defined by a particular Socio-Demographic Beackground (SDB)
@@ -109,18 +109,28 @@ def aposteriori_unimodality(
         The target statistical significance. Used to apply pvalue correction
         for multiple comparisons. Set alpha=-1 to disable pvalue corrections.
     :type alpha: float
+    :param pvalue_estimation:
+        Which pvalue estimation method to use.
+        "parametric", "non parametric", "both" or "none"
+    :type pvalue_estimation: str
+    :param two_sided:
+        Whether the statistical tests run for both less and
+        greater polarization, or just greater.
+    :type two_sided: bool
     :param seed: The random seed used, None for non-deterministic outputs.
     :type seed: int | None
     :returns:
-        A named tuple containing the apunim metric ("kappa")
-        and pvalue ("pvalue") for each factor of the selected SDB dimension.
-        If kappa~=0, the polarization can be explained by chance.
-        If kappa>0, increased polarization can not be explained by chance,
+        A dictionary containing the apunim result ("apunim"),
+        the parametric p-value ("pvalue_parametric")
+        and non-parametric p-value ("non_parametric"),
+        depending on the pvalue_estimation parameter.
+        If apunim~=0, the polarization can be explained by chance.
+        If apunim>0, increased polarization can not be explained by chance,
         but rather must be partially caused by differences between
-        the SDB groups.
-        If kappa<0, the decrease in polarization is partially caused by
-        differences between the SDB groups.
-    :rtype: dict[`FactorType`, ApunimResult]
+        the sociodemographic groups.
+        If apunim<0, the decrease in polarization is partially caused by
+        differences between the sociodemographic groups.
+    :rtype: dict[str, dict[FactorType, float]]
     :raises ValueError:
         If the given lists are not the same length, are empty,
         are comprised of a single group, or a single comment.
@@ -140,7 +150,14 @@ def aposteriori_unimodality(
     )
 
     # data prep
-    _validate_input(annotations, factor_group, comment_group, iterations, bins)
+    _validate_input(
+        annotations,
+        factor_group,
+        comment_group,
+        iterations,
+        bins,
+        pvalue_estimation,
+    )
     annotations = np.array(annotations)
     factor_group = np.array(factor_group)
     comment_group = np.array(comment_group)
@@ -204,37 +221,40 @@ def aposteriori_unimodality(
 
     # compute raw results per factor
     # if there exist comments of that factor left after filtering
-    results = {}
+    apunim_by_factor = {}
+    parametric_by_factor = {}
+    nonparametric_by_factor = {}
     for factor in all_factors:
-        res = _aposteriori_polarization_stat(
+        apunim = _aposteriori_polarization_stat(
             observed_dfus=observed_dfu_dict[factor],
             randomized_dfus=apriori_dfu_dict[factor],
         )
-        results[factor] = res
+        apunim_by_factor[factor] = apunim
 
-    # extract valid p-values for correction
-    factors_with_pvals = [
-        f
-        for f, res in results.items()
-        if res.pvalue is not None and not np.isnan(res.pvalue)
-    ]
-    pvalues = [results[f].pvalue for f in factors_with_pvals]
-
-    if alpha != -1:
-        # apply correction
-        pvalues = _apply_correction_to_results(pvalues, alpha)
-        corrected_results = {}
-        for factor in all_factors:
-            # reassemble results dict
-            corrected_results[factor] = ApunimResult(
-                kappa=results[factor].kappa,
-                pvalue=(
-                    pvalues[factors_with_pvals.index(factor)]
-                    if factor in factors_with_pvals
-                    else np.nan
-                ),
+        if pvalue_estimation == "parametric" or pvalue_estimation == "both":
+            pvalue = _aposteriori_pvalue_parametric(
+                randomized_dfus=apriori_dfu_dict,
+                kappa=apunim,
+                two_sided=two_sided,
             )
-        results = corrected_results
+            parametric_by_factor[factor] = pvalue
+
+        if (
+            pvalue_estimation == "non parametric"
+            or pvalue_estimation == "both"
+        ):
+            pvalue = _aposteriori_pvalue_nonparametric(
+                randomized_dfus=apriori_dfu_dict,
+                kappa=apunim,
+                two_sided=two_sided,
+            )
+            nonparametric_by_factor[factor] = pvalue
+
+    results = {
+        "apunim": apunim_by_factor,
+        "pvalue_parametric": parametric_by_factor,
+        "pvalue_nonparametric": nonparametric_by_factor,
+    }
 
     return results
 
@@ -245,6 +265,7 @@ def _validate_input(
     comment_group: Collection[FactorType],
     iterations: int,
     bins: int,
+    pvalue_estimation: str,
 ) -> None:
     if not (len(annotations) == len(annotator_group) == len(comment_group)):
         raise ValueError(
@@ -272,6 +293,12 @@ def _validate_input(
 
     if bins < 2:
         raise ValueError("Number of bins has to be at least 2.")
+
+    valid = ["parametric", "non parametric", "both", "none"]
+    if pvalue_estimation not in valid:
+        raise ValueError(
+            "pvalue_estimation must be one of the following: ", valid
+        )
 
 
 def _comment_is_valid(
@@ -439,31 +466,13 @@ def _random_partition(
 def _aposteriori_polarization_stat(
     observed_dfus: list[float],
     randomized_dfus: list[list[float]],
-    parametric: bool = False,
-    two_sided: bool = False,
-) -> ApunimResult:
+) -> float:
     """
     Compute AP-unimodality statistic and p-value.
     """
     if len(observed_dfus) == 0 or np.all(np.isnan(observed_dfus)):
-        return ApunimResult(np.nan, np.nan)
+        return np.nan
 
-    kappa = _aposteriori_kappa(observed_dfus, randomized_dfus)
-    if parametric:
-        p_value = _aposteriori_pvalue_parametric(
-            randomized_dfus, kappa, two_sided=two_sided
-        )
-    else:
-        p_value = _aposteriori_pvalue_nonparametric(
-            randomized_dfus, kappa, two_sided=two_sided
-        )
-
-    return ApunimResult(kappa, p_value)
-
-
-def _aposteriori_kappa(
-    observed_dfus: list[float], randomized_dfus: list[list[float]]
-) -> float:
     O_f = np.nanmean(observed_dfus)
 
     # expected mean from randomizations
@@ -482,12 +491,12 @@ def _aposteriori_kappa(
     if E_f == 1:
         return np.nan
 
-    kappa = (O_f - E_f) / (1.0 - E_f)
-    return kappa
+    apunim = (O_f - E_f) / (1.0 - E_f)
+    return apunim
 
 
 def _aposteriori_pvalue_parametric(
-    randomized_dfus: list[list[float]], kappa: float, two_sided: bool = False
+    randomized_dfus: list[list[float]], kappa: float, two_sided: bool
 ) -> float:
     """
     Parametric p-value estimation for κ using a normal approximation.
