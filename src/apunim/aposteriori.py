@@ -146,7 +146,7 @@ def aposteriori_unimodality(
     bins = (
         num_bins
         if num_bins is not None
-        else len(np.unique(np.concatenate(annotations.to_list())))
+        else len(np.unique(annotations))
     )
 
     # data prep
@@ -234,7 +234,7 @@ def aposteriori_unimodality(
 
         if pvalue_estimation == "parametric" or pvalue_estimation == "both":
             pvalue = _aposteriori_pvalue_parametric(
-                randomized_dfus=apriori_dfu_dict,
+                randomized_dfus=apriori_dfu_dict[factor],
                 kappa=apunim,
                 two_sided=two_sided,
             )
@@ -245,7 +245,7 @@ def aposteriori_unimodality(
             or pvalue_estimation == "both"
         ):
             pvalue = _aposteriori_pvalue_nonparametric(
-                randomized_dfus=apriori_dfu_dict,
+                randomized_dfus=apriori_dfu_dict[factor],
                 kappa=apunim,
                 two_sided=two_sided,
             )
