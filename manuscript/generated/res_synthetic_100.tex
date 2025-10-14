@@ -1,51 +1,42 @@
-\begin{longtable}{llrr}
-\caption{Aposteriori Unimodality kappa and pvalue results for the 100 Annotator Synthetic dataset} \label{tab:results_100} \\
+\begin{table}
+\caption{Aposteriori Unimodality kappa and pvalue results for the 100 Annotator Synthetic dataset}
+\label{tab:results_100}
+\begin{tabular}{llrrr}
 \toprule
- &  & kappa & pvalue \\
-SDB Feature &  &  &  \\
+ &  & apunim & pvalue\_parametric & pvalue\_nonparametric \\
+SDB Feature &  &  &  &  \\
 \midrule
-\endfirsthead
-\caption[]{Aposteriori Unimodality kappa and pvalue results for the 100 Annotator Synthetic dataset} \\
-\toprule
- &  & kappa & pvalue \\
-SDB Feature &  &  &  \\
-\midrule
-\endhead
-\midrule
-\multicolumn{4}{r}{Continued on next page} \\
-\midrule
-\endfoot
+\multirow[t]{4}{*}{Age} & (14.927, 33.25] & -0.023414 & 0.948959 & 0.888889 \\
+ & (33.25, 51.5] & -0.003758 & 0.998442 & 0.944444 \\
+ & (51.5, 69.75] & 0.021639 & 0.928552 & 0.833333 \\
+ & (69.75, 88.0] & 0.023718 & 0.921906 & 0.888889 \\
+\cline{1-5}
+\multirow[t]{3}{*}{Education} & high-school & -0.034192 & 0.921101 & 0.888889 \\
+ & none & 0.036416 & 0.888943 & 0.777778 \\
+ & university & -0.017144 & 0.966311 & 0.888889 \\
+\cline{1-5}
+\multirow[t]{3}{*}{Employment} & blue-collar & -0.002428 & 0.994544 & 0.944444 \\
+ & unemployed & -0.025862 & 0.943954 & 0.888889 \\
+ & white-collar & 0.020542 & 0.932225 & 0.833333 \\
+\cline{1-5}
+\multirow[t]{4}{*}{Ethnicity} & asian & -0.035818 & 0.916075 & 0.722222 \\
+ & black & -0.023888 & 0.948020 & 0.888889 \\
+ & other & 0.068891 & 0.803469 & 0.722222 \\
+ & white & -0.060608 & 0.843258 & 0.777778 \\
+\cline{1-5}
+\multirow[t]{3}{*}{Gender} & female & 0.002139 & 0.981454 & 1.000000 \\
+ & male & 0.029810 & 0.909278 & 0.833333 \\
+ & non-binary & -0.107289 & 0.690454 & 0.611111 \\
+\cline{1-5}
+\multirow[t]{3}{*}{Political Affiliation} & apolitical & 0.074138 & 0.778168 & 0.722222 \\
+ & left-wing liberal & -0.032393 & 0.928908 & 0.833333 \\
+ & right-wing conservative & -0.013127 & 0.976349 & 0.888889 \\
+\cline{1-5}
+\multirow[t]{4}{*}{Sexual Orientation} & bisexual & -0.074502 & 0.795229 & 0.666667 \\
+ & homosexual & -0.000324 & 0.989295 & 1.000000 \\
+ & other & 0.100946 & 0.695611 & 0.611111 \\
+ & straight & -0.011836 & 0.983357 & 1.000000 \\
+\cline{1-5}
 \bottomrule
-\endlastfoot
-\multirow[t]{4}{*}{Age} & (14.927, 33.25] & -0.020288 & 0.388889 \\
- & (33.25, 51.5] & -0.002660 & 0.370370 \\
- & (51.5, 69.75] & 0.022487 & 0.370370 \\
- & (69.75, 88.0] & 0.018017 & 0.370370 \\
-\cline{1-4}
-\multirow[t]{3}{*}{Education} & high-school & -0.036330 & 0.388889 \\
- & none & 0.033416 & 0.388889 \\
- & university & -0.013384 & 0.388889 \\
-\cline{1-4}
-\multirow[t]{3}{*}{Employment} & blue-collar & 0.002831 & 0.388889 \\
- & unemployed & -0.026926 & 0.388889 \\
- & white-collar & 0.016706 & 0.388889 \\
-\cline{1-4}
-\multirow[t]{4}{*}{Ethnicity} & asian & -0.037780 & 0.500000 \\
- & black & -0.025178 & 0.500000 \\
- & other & 0.070790 & 0.500000 \\
- & white & -0.040028 & 0.500000 \\
-\cline{1-4}
-\multirow[t]{3}{*}{Gender} & female & -0.001871 & 0.416667 \\
- & male & 0.030700 & 0.416667 \\
- & non-binary & -0.091121 & 0.500000 \\
-\cline{1-4}
-\multirow[t]{3}{*}{Political Affiliation} & apolitical & 0.067363 & 0.416667 \\
- & left-wing liberal & -0.030723 & 0.444444 \\
- & right-wing conservative & -0.011642 & 0.416667 \\
-\cline{1-4}
-\multirow[t]{4}{*}{Sexual Orientation} & bisexual & -0.066358 & 0.500000 \\
- & homosexual & 0.002492 & 0.500000 \\
- & other & 0.101821 & 0.500000 \\
- & straight & -0.012399 & 0.500000 \\
-\cline{1-4}
-\end{longtable}
+\end{tabular}
+\end{table}

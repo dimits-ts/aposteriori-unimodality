@@ -1,78 +1,69 @@
-\begin{longtable}{llrr}
-\caption{Aposteriori Unimodality kappa and pvalue results for the Kumar et al. 2021 dataset} \label{tab:results_kumar} \\
+\begin{table}
+\caption{Aposteriori Unimodality kappa and pvalue results for the Kumar et al. 2021 dataset}
+\label{tab:results_kumar}
+\begin{tabular}{llrrr}
 \toprule
- &  & kappa & pvalue \\
-SDB Feature &  &  &  \\
+ &  & apunim & pvalue\_parametric & pvalue\_nonparametric \\
+SDB Feature &  &  &  &  \\
 \midrule
-\endfirsthead
-\caption[]{Aposteriori Unimodality kappa and pvalue results for the Kumar et al. 2021 dataset} \\
-\toprule
- &  & kappa & pvalue \\
-SDB Feature &  &  &  \\
-\midrule
-\endhead
-\midrule
-\multicolumn{4}{r}{Continued on next page} \\
-\midrule
-\endfoot
+\multirow[t]{7}{*}{Age} & 18 - 24 & -0.030410 & 0.954856 & 0.967112 \\
+ & 25 - 34 & 0.040010 & 0.948614 & 0.963320 \\
+ & 35 - 44 & -0.010025 & 0.987850 & 0.998125 \\
+ & 45 - 54 & 0.018776 & 0.973235 & 0.971674 \\
+ & 55 - 64 & 0.003176 & 0.994370 & 1.000000 \\
+ & 65 or older & 0.017648 & 0.959945 & 1.000000 \\
+ & Prefer not to say & 0.000000 & NaN & 1.000000 \\
+\cline{1-5}
+\multirow[t]{10}{*}{Education} & Associate degree & -0.055727 & 0.923705 & 0.947000 \\
+ & Bachelor's degree & 0.095408 & 0.878875 & 0.908507 \\
+ & College, no degree & -0.108984 & 0.862214 & 0.927355 \\
+ & Doctoral degree & 0.008115 & 0.953037 & 1.000000 \\
+ & High School graduate & -0.040907 & 0.937773 & 0.980510 \\
+ & Master's degree & 0.054708 & 0.935074 & 0.978080 \\
+ & No high school & -0.007941 & 0.978720 & 1.000000 \\
+ & Other & 0.000000 & NaN & 1.000000 \\
+ & Prefer not to say & 0.000000 & NaN & 1.000000 \\
+ & Professional degree & 0.001086 & 0.994127 & 1.000000 \\
+\cline{1-5}
+\multirow[t]{2}{*}{Has Been Targeted} & False & -0.095286 & 0.851124 & 0.840822 \\
+ & True & 0.112036 & 0.838550 & 0.851233 \\
+\cline{1-5}
+\multirow[t]{3}{*}{Is Parent} & No & -0.136264 & 0.793274 & 0.834386 \\
+ & Prefer not to say & -0.004510 & 0.983443 & 1.000000 \\
+ & Yes & 0.093870 & 0.851837 & 0.852657 \\
+\cline{1-5}
+\multirow[t]{3}{*}{Is Transgender} & No & -0.151712 & 0.796024 & 0.776316 \\
+ & Prefer not to say & 0.515608 & 0.356331 & 0.416667 \\
+ & Yes & 0.016393 & 0.973112 & 0.969231 \\
+\cline{1-5}
+\multirow[t]{5}{*}{Political Affiliation} & Conservative & 0.066361 & 0.918828 & 0.974428 \\
+ & Independent & -0.016543 & 0.979319 & 0.992056 \\
+ & Liberal & -0.039058 & 0.951880 & 0.977920 \\
+ & Other & -0.018498 & 0.949256 & 1.000000 \\
+ & Prefer not to say & -0.001853 & 0.996053 & 1.000000 \\
+\cline{1-5}
+\multirow[t]{2}{*}{Seen Toxicity} & False & 0.145958 & 0.789892 & 0.810560 \\
+ & True & -0.117346 & 0.816276 & 0.831252 \\
+\cline{1-5}
+\multirow[t]{6}{*}{Sexual Orientation} & Bisexual & 0.179856 & 0.786152 & 0.789989 \\
+ & Heterosexual & -0.131972 & 0.808635 & 0.824752 \\
+ & Homosexual & -0.044238 & 0.940537 & 0.940860 \\
+ & Other & 0.003322 & 0.979759 & 1.000000 \\
+ & Prefer not to say & -0.028099 & 0.957889 & 1.000000 \\
+ & NaN & 0.077491 & 0.756128 & 1.000000 \\
+\cline{1-5}
+\multirow[t]{5}{*}{Thinks Religion Is Important} & Not important & -0.167580 & 0.790175 & 0.858974 \\
+ & Not too important & -0.026466 & 0.961419 & 0.982239 \\
+ & Prefer not to say & 0.004367 & 0.983731 & 1.000000 \\
+ & Somewhat important & 0.036322 & 0.954503 & 0.975619 \\
+ & Very important & 0.088742 & 0.893641 & 0.964399 \\
+\cline{1-5}
+\multirow[t]{5}{*}{Thinks Toxicity Is Problem} & Frequently a problem & -0.057269 & 0.927206 & 0.983830 \\
+ & Not a problem & 0.039260 & 0.934240 & 0.997835 \\
+ & Occasionally a problem & -0.009915 & 0.987592 & 0.996255 \\
+ & Rarely a problem & 0.044619 & 0.943330 & 0.956728 \\
+ & Very frequently a problem & -0.057531 & 0.914521 & 0.954014 \\
+\cline{1-5}
 \bottomrule
-\endlastfoot
-\multirow[t]{7}{*}{Age} & 18 - 24 & -0.030070 & 0.682607 \\
- & 25 - 34 & 0.041895 & 0.682607 \\
- & 35 - 44 & -0.010272 & 0.682607 \\
- & 45 - 54 & 0.017935 & 0.682607 \\
- & 55 - 64 & 0.006664 & 0.682607 \\
- & 65 or older & 0.020481 & 0.682607 \\
- & Prefer not to say & 0.000000 & 1.000000 \\
-\cline{1-4}
-\multirow[t]{10}{*}{Education} & Associate degree & -0.050788 & 0.747020 \\
- & Bachelor's degree & 0.097889 & 0.747020 \\
- & College, no degree & -0.104898 & 0.747020 \\
- & Doctoral degree & 0.005425 & 0.340136 \\
- & High School graduate & -0.038466 & 0.747020 \\
- & Master's degree & 0.052035 & 0.747020 \\
- & No high school & -0.007326 & 0.340136 \\
- & Other & 0.000000 & 1.000000 \\
- & Prefer not to say & 0.000000 & 1.000000 \\
- & Professional degree & 0.001519 & 0.340136 \\
-\cline{1-4}
-\multirow[t]{2}{*}{Has Been Targeted} & False & -0.092943 & 0.638904 \\
- & True & 0.113569 & 0.638904 \\
-\cline{1-4}
-\multirow[t]{3}{*}{Is Parent} & No & -0.138522 & 0.639755 \\
- & Prefer not to say & -0.004579 & 0.251613 \\
- & Yes & 0.093108 & 0.639755 \\
-\cline{1-4}
-\multirow[t]{3}{*}{Is Transgender} & No & -0.167807 & 0.710526 \\
- & Prefer not to say & 0.500278 & 0.710526 \\
- & Yes & 0.049798 & 0.710526 \\
-\cline{1-4}
-\multirow[t]{5}{*}{Political Affiliation} & Conservative & 0.066088 & 0.599487 \\
- & Independent & -0.015552 & 0.599487 \\
- & Liberal & -0.039109 & 0.599487 \\
- & Other & -0.023016 & 0.493976 \\
- & Prefer not to say & -0.000714 & 0.493976 \\
-\cline{1-4}
-\multirow[t]{2}{*}{Seen Toxicity} & False & 0.146559 & 0.646807 \\
- & True & -0.114449 & 0.646807 \\
-\cline{1-4}
-\multirow[t]{6}{*}{Sexual Orientation} & Bisexual & 0.176346 & 0.671287 \\
- & Heterosexual & -0.141018 & 0.671287 \\
- & Homosexual & -0.052687 & 0.671287 \\
- & Other & 0.004267 & 0.272727 \\
- & Prefer not to say & -0.031530 & 0.671287 \\
- & NaN & 0.068901 & 0.500000 \\
-\cline{1-4}
-\multirow[t]{5}{*}{Thinks Religion Is Important} & Not important & -0.166550 & 0.629191 \\
- & Not too important & -0.026480 & 0.629191 \\
- & Prefer not to say & 0.003540 & 0.604839 \\
- & Somewhat important & 0.034945 & 0.629191 \\
- & Very important & 0.090645 & 0.629191 \\
-\cline{1-4}
-\multirow[t]{5}{*}{Thinks Toxicity Is Problem} & Frequently a problem & -0.058648 & 0.578872 \\
- & Not a problem & 0.039689 & 0.578872 \\
- & Occasionally a problem & -0.007518 & 0.578872 \\
- & Rarely a problem & 0.041351 & 0.578872 \\
- & Very frequently a problem & -0.056129 & 0.578872 \\
-\cline{1-4}
-\end{longtable}
+\end{tabular}
+\end{table}
