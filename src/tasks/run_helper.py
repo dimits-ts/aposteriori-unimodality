@@ -147,7 +147,7 @@ def results_to_latex(
     table_name = f"tab:results_{export_name}"
     res_df.to_latex(
         buf=output_path,
-        longtable=True,
+        longtable=False,
         caption=(
             "Aposteriori Unimodality kappa and pvalue results "
             f"for the {dataset_name} dataset"
