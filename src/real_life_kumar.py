@@ -9,7 +9,7 @@ NUM_COMMENTS = 10000
 
 
 class KumarDataset(preprocessing.Dataset):
-    def __init__(self, dataset_path: Path, num_samples: int | None=None):
+    def __init__(self, dataset_path: Path, num_samples: int | None = None):
         self.df = KumarDataset._base_df(dataset_path, num_samples)
 
     def get_name(self) -> str:
@@ -106,16 +106,14 @@ class KumarDataset(preprocessing.Dataset):
 
 
 def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
-    """
     ds = KumarDataset(dataset_path=dataset_path, num_samples=NUM_COMMENTS)
-
     run_helper.run_experiments_on_dataset(
         ds=ds,
         full_latex_path=latex_output_dir / "res_kumar.tex",
         random_latex_path=latex_output_dir / "random_res_kumar.tex",
         graph_path=graph_output_dir / "kumar.png",
     )
-    """
+
     ds = KumarDataset(dataset_path=dataset_path)
     graphs.polarization_plot(
         ds=ds, output_path=graph_output_dir / "kumar_full.png"
