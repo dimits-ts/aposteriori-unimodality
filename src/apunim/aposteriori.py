@@ -63,6 +63,7 @@ def aposteriori_unimodality(
     bins: int,
     iterations: int = 100,
     alpha: float = 0.05,
+    seed: int | None = None,
 ) -> dict[FactorType, ApunimResult]:
     """
     Perform the Aposteriori Unimodality Test to identify whether any annotator
@@ -105,6 +106,8 @@ def aposteriori_unimodality(
         The target statistical significance. Used to apply pvalue correction
         for multiple comparisons. Set alpha=-1 to disable pvalue corrections.
     :type alpha: float
+    :param seed: The random seed used, None for non-deterministic outputs.
+    :type seed: int | None
     :returns:
         A named tuple containing the apunim metric ("kappa")
         and pvalue ("pvalue") for each factor of the selected SDB dimension.
@@ -126,6 +129,8 @@ def aposteriori_unimodality(
         The test is relatively robust even with a small number of annotations
         per comment. The pvalue estimation is non-parametric.
     """
+    rng = np.random.default_rng(seed=seed)
+
     # data prep
     _validate_input(annotations, factor_group, comment_group, iterations, bins)
     annotations = np.array(annotations)
@@ -185,6 +190,7 @@ def aposteriori_unimodality(
                 group_sizes=lengths_by_factor,
                 bins=bins,
                 iterations=iterations,
+                rng=rng
             )
         )
 
@@ -193,8 +199,8 @@ def aposteriori_unimodality(
     results = {}
     for factor in all_factors:
         res = _aposteriori_polarization_stat(
-            observed_dfu_dict[factor],
-            apriori_dfu_dict[factor],
+            observed_dfus=observed_dfu_dict[factor],
+            randomized_dfus=apriori_dfu_dict[factor],
         )
         results[factor] = res
 
@@ -349,6 +355,7 @@ def _apriori_polarization_stat(
     group_sizes: dict[FactorType, int],
     bins: int,
     iterations: int,
+    rng: np.random.Generator
 ) -> dict[FactorType, list[float]]:
     """
     For a single comment's annotations, generate `iterations` random partitions
@@ -376,7 +383,7 @@ def _apriori_polarization_stat(
     results: dict[FactorType, list[float]] = {f: [] for f in factors}
 
     for _ in range(iterations):
-        partitions = _random_partition(annotations, sizes)
+        partitions = _random_partition(arr=annotations, sizes=sizes, rng=rng)
         # partitions is a list of numpy arrays in the same order as `factors`
         for f, part in zip(factors, partitions):
             if part.size == 0:
@@ -387,7 +394,9 @@ def _apriori_polarization_stat(
 
 
 def _random_partition(
-    arr: numpy.typing.NDArray, sizes: numpy.typing.NDArray[int]
+    arr: numpy.typing.NDArray,
+    sizes: numpy.typing.NDArray[int],
+    rng: np.random.Generator,
 ) -> list[numpy.typing.NDArray]:
     """
     Randomly partition a numpy array into groups of given sizes.
@@ -408,7 +417,7 @@ def _random_partition(
             f"of input array ({len(arr)})."
         )
 
-    shuffled = np.random.default_rng().permutation(arr)
+    shuffled = rng.permutation(arr)
     partitions = []
     start = 0
     for size in sizes:
