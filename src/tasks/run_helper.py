@@ -26,6 +26,15 @@ def run_experiments_on_dataset(
         dataset_name=ds.get_name(),
     )
 
+    res_only_apunim = res.drop(
+        columns=["pvalue_nonparametric", "pvalue_parametric"]
+    )
+    results_to_latex(
+        res_only_apunim,
+        output_path=Path(full_latex_path.stem + "_apunim_only.tex"),
+        dataset_name=f"apunim_only_{ds.get_name()}",
+    )
+
     rand_res = run_result(
         df=ds.get_dataset(),
         sdb_column="random",
