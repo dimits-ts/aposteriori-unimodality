@@ -39,12 +39,12 @@ def dfu(x: Collection[float], bins: int, normalized: bool = True) -> float:
     pos_max = np.argmax(hist)
 
     # right search
-    right_diffs = hist[pos_max + 1 :] - hist[pos_max:-1]
+    right_diffs = hist[pos_max + 1:] - hist[pos_max:-1]
     max_rdiff = right_diffs.max(initial=0)
 
     # left search
     if pos_max > 0:
-        left_diffs = hist[0:pos_max] - hist[1 : pos_max + 1]
+        left_diffs = hist[0:pos_max] - hist[1: pos_max + 1]
         max_ldiff = left_diffs[left_diffs > 0].max(initial=0)
     else:
         max_ldiff = 0
@@ -60,8 +60,8 @@ def aposteriori_unimodality(
     comment_group: Collection[FactorType],
     num_bins: int | None = None,
     iterations: int = 100,
-    alpha: float = 0.05,
-    pvalue_estimation: str = "parametric",
+    alpha: float | None = 0.05,
+    pvalue_estimation: str = "both",
     two_sided: bool = True,
     seed: int | None = None,
 ) -> dict[str, dict[FactorType, float]]:
@@ -107,8 +107,8 @@ def aposteriori_unimodality(
     :type iterations: int
     :param alpha:
         The target statistical significance. Used to apply pvalue correction
-        for multiple comparisons. Set alpha=-1 to disable pvalue corrections.
-    :type alpha: float
+        for multiple comparisons. None to disable pvalue corrections.
+    :type alpha: float | None
     :param pvalue_estimation:
         Which pvalue estimation method to use.
         "parametric", "non parametric", "both" or "none"
@@ -156,6 +156,7 @@ def aposteriori_unimodality(
         comment_group,
         iterations,
         bins,
+        alpha,
         pvalue_estimation,
     )
     annotations = np.array(annotations)
@@ -256,6 +257,20 @@ def aposteriori_unimodality(
         "pvalue_nonparametric": nonparametric_by_factor,
     }
 
+    # --- Apply p-value correction per factor (if enabled) ---
+    if alpha is not None:
+        # parametric correction
+        if parametric_by_factor:
+            factors, pvals = zip(*parametric_by_factor.items())
+            corrected = _apply_correction_to_results(pvals, alpha)
+            parametric_by_factor = dict(zip(factors, corrected))
+
+        # nonparametric correction
+        if nonparametric_by_factor:
+            factors, pvals = zip(*nonparametric_by_factor.items())
+            corrected = _apply_correction_to_results(pvals, alpha)
+            nonparametric_by_factor = dict(zip(factors, corrected))
+
     return results
 
 
@@ -265,6 +280,7 @@ def _validate_input(
     comment_group: Collection[FactorType],
     iterations: int,
     bins: int,
+    alpha: float,
     pvalue_estimation: str,
 ) -> None:
     if not (len(annotations) == len(annotator_group) == len(comment_group)):
@@ -299,6 +315,8 @@ def _validate_input(
         raise ValueError(
             "pvalue_estimation must be one of the following: ", valid
         )
+    if alpha is not None and (alpha < 0 or alpha > 1):
+        return ValueError("Alpha should be between 0 and 1.")
 
 
 def _comment_is_valid(
