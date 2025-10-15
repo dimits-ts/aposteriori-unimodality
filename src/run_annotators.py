@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 
 import transformers
+import pandas as pd
 from tqdm.auto import tqdm
 
 from . import real_life_kumar
@@ -70,6 +71,54 @@ POLITICAL_AFFILIATION_WEIGHTS = [0.25, 0.35, 0.25, 0.15]
 # ---------------------------
 
 
+def generate_persona_list(n: int = 10):
+    """Generate a list of n random Persona objects."""
+    return [_generate_random_persona() for _ in range(n)]
+
+
+def annotate(
+    pipeline, personas: list[Persona], instructions: str, texts: list[str]
+) -> dict[Persona, dict[str, float]]:
+    results = {}
+    for persona in tqdm(personas, desc="Annotators"):
+        prompt = _annotation_prompt(persona=persona, instructions=instructions)
+        annotations = {}
+        for text in tqdm(texts, desc="Comments", leave=False):
+            annotation = _annotate_texts(
+                pipeline=pipeline, prompt=prompt, text=text
+            )
+            annotations[text] = annotation
+
+        results[persona] = annotations
+
+    return results
+
+
+def annotations_to_df(results: dict) -> pd.DataFrame:
+    """
+    Convert the annotation results dictionary into a DataFrame.
+
+    Each row corresponds to one (text, persona) pair.
+    Persona attributes (age, sex, etc.) become separate columns.
+    """
+    rows = []
+
+    for persona, annotations in results.items():
+        persona_dict = persona.to_dict()
+        for text, score in annotations.items():
+            row = {"text": text, "annotation": score, **persona_dict}
+            rows.append(row)
+
+    df = pd.DataFrame(rows)
+    return df
+
+
+def get_texts(kumar_path: Path, num_comments: int) -> list[str]:
+    ds = real_life_kumar.KumarDataset(dataset_path=kumar_path)
+    texts = ds.df["tweet"]
+    return texts.tolist()
+
+
 def _weighted_choice(options, weights):
     """Helper function for weighted random choice."""
     return random.choices(options, weights=weights, k=1)[0]
@@ -96,44 +145,6 @@ def _generate_random_persona() -> Persona:
         education_level=education_level,
         political_affiliation=political_affiliation,
     )
-
-
-def generate_persona_list(n: int = 10):
-    """Generate a list of n random Persona objects."""
-    return [_generate_random_persona() for _ in range(n)]
-
-
-def save_personas_to_json(personas, output_path: Path):
-    """Save a list of personas to a JSON file."""
-    data = [p.to_dict() for p in personas]
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-    print(f"Saved {len(personas)} personas to {output_path}")
-
-
-def get_texts(kumar_path: Path, num_comments: int) -> list[str]:
-    ds = real_life_kumar.KumarDataset(dataset_path=kumar_path)
-    texts = ds.df["tweet"]
-    return texts.tolist()
-
-
-def annotate(
-    pipeline, personas: list[Persona], instructions: str, texts: list[str]
-) -> dict[Persona, dict[str, float]]:
-    results = {}
-    for persona in tqdm(personas, desc="Annotators"):
-        prompt = _annotation_prompt(persona=persona, instructions=instructions)
-        annotations = {}
-        for text in tqdm(texts, desc="Comments", leave=False):
-            annotation = _annotate_texts(
-                pipeline=pipeline, prompt=prompt, text=text
-            )
-            annotations[text] = annotation
-
-        results[str(persona)] = annotations
-
-    return results
 
 
 def _annotation_prompt(persona: Persona, instructions: str) -> str:
@@ -169,8 +180,8 @@ def _annotate_texts(pipeline, prompt: str, text: str) -> float:
         return response
 
     except Exception as e:
-        return -1
         print(f"[ERROR] Failed to annotate text: {text[:50]!r} | {e}")
+        return -1
 
 
 def _parse_response(response: str) -> float:
@@ -210,7 +221,7 @@ if __name__ == "__main__":
         instructions=instructions,
         texts=texts,
     )
-    # Optionally save to file
-    output_file = Path("data/annotation.json")
-    with Path("data/annotation.json").open("w", encoding="UTF-8") as fout:
-        json.dump(results, fout)  # if this breaks i WILL cry.
+
+    results_df = annotations_to_df(results)
+    # if this breaks i WILL cry.
+    results_df.to_csv("data/annotation.csv", index=False)
