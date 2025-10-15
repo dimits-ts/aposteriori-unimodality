@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 
-from src.aposteriori import (
+from src.apunim.aposteriori import (
     _factor_dfu_stat,
     aposteriori_unimodality,
 )
@@ -17,13 +17,13 @@ class TestAposterioriUnimodality(unittest.TestCase):
         factor_group = ["A"] * 5 + ["B"] * 5
         comment_group = ["c1"] * 5 + ["c2"] * 5
         result = aposteriori_unimodality(
-            annotations, factor_group, comment_group, bins=5
+            annotations, factor_group, comment_group, num_bins=5
         )
         self.assertEqual(set(result.keys()), {"A", "B"})
 
     def test_empty_inputs_raise_value_error(self):
         with self.assertRaises(ValueError):
-            aposteriori_unimodality([], [], [], bins=5)
+            aposteriori_unimodality([], [], [], num_bins=5)
 
     def test_mismatched_lengths_raise_value_error(self):
         annotations = [1, 2, 3]
@@ -31,7 +31,7 @@ class TestAposterioriUnimodality(unittest.TestCase):
         comment_group = ["c1", "c1", "c1"]
         with self.assertRaises(ValueError):
             aposteriori_unimodality(
-                annotations, factor_group, comment_group, bins=5
+                annotations, factor_group, comment_group, num_bins=5
             )
 
     def test_single_group_raise_value_error(self):
@@ -40,7 +40,7 @@ class TestAposterioriUnimodality(unittest.TestCase):
         comment_group = ["c1"] * 5
         with self.assertRaises(ValueError):
             aposteriori_unimodality(
-                annotations, factor_group, comment_group, bins=5
+                annotations, factor_group, comment_group, num_bins=5
             )
 
     def test_multiple_comments_are_aggregated(self):
@@ -59,7 +59,7 @@ class TestAposterioriUnimodality(unittest.TestCase):
             "c5",
         ]
         result = aposteriori_unimodality(
-            annotations, factor_group, comment_group, bins=5
+            annotations, factor_group, comment_group, num_bins=5
         )
         self.assertEqual(set(result.keys()), {"A", "B"})
         self.assertTrue(

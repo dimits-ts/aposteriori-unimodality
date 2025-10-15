@@ -1,6 +1,6 @@
 import unittest
 
-from src._list_dict import _ListDict
+from src.apunim._list_dict import _ListDict
 
 
 class TestListDict(unittest.TestCase):

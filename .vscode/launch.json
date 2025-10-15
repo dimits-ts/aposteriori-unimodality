@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug real_life_sap",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "src.real_life_sap",
+            "justMyCode": true,
+            "args": [
+                "--dataset-path=data/sap.csv",
+                "--latex-output-dir=manuscript/generated",
+                "--graph-output-dir=graphs"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        }
+    ]
+}

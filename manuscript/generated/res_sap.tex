@@ -1,35 +1,25 @@
-\begin{longtable}{llrr}
-\caption{Aposteriori Unimodality kappa and pvalue results for the Sap et al 2022 dataset} \label{tab:results_sap} \\
+\begin{table}
+\caption{Aposteriori Unimodality kappa and pvalue results for the Sap et al. 2022 dataset}
+\label{tab:results_sap}
+\begin{tabular}{llrrr}
 \toprule
- &  & kappa & pvalue \\
-SDB Feature &  &  &  \\
+ &  & apunim & pvalue\_parametric & pvalue\_nonparametric \\
+SDB Feature &  &  &  &  \\
 \midrule
-\endfirsthead
-\caption[]{Aposteriori Unimodality kappa and pvalue results for the Sap et al 2022 dataset} \\
-\toprule
- &  & kappa & pvalue \\
-SDB Feature &  &  &  \\
-\midrule
-\endhead
-\midrule
-\multicolumn{4}{r}{Continued on next page} \\
-\midrule
-\endfoot
+\multirow[t]{4}{*}{Age} & (-0.001, 20.0] & 0.000000 & NaN & 1.000000 \\
+ & (20.0, 40.0] & -0.028003 & 0.946350 & 0.914439 \\
+ & (40.0, 60.0] & 0.035342 & 0.934080 & 0.930108 \\
+ & (60.0, 80.0] & 0.078341 & 0.757341 & 1.000000 \\
+\cline{1-5}
+\multirow[t]{4}{*}{Ethnicity} & black & -0.419412 & 0.413176 & 0.457732 \\
+ & hisp & 0.000000 & NaN & 1.000000 \\
+ & other & 0.000000 & NaN & 1.000000 \\
+ & white & 0.149386 & 0.690118 & 0.713402 \\
+\cline{1-5}
+\multirow[t]{3}{*}{Gender} & man & 0.151317 & 0.711524 & 0.700272 \\
+ & nonBinary & 0.000000 & NaN & 1.000000 \\
+ & woman & -0.349321 & 0.413578 & 0.501362 \\
+\cline{1-5}
 \bottomrule
-\endlastfoot
-\multirow[t]{4}{*}{annotatorAge} & (-0.001, 20.0] & 0.000000 & 1.000000 \\
- & (20.0, 40.0] & 0.031279 & 1.000000 \\
- & (40.0, 60.0] & -0.044330 & 1.000000 \\
- & (60.0, 80.0] & -0.081991 & 1.000000 \\
-\cline{1-4}
-\multirow[t]{3}{*}{annotatorGender} & man & 0.142932 & 0.819892 \\
- & nonBinary & 0.000000 & 1.000000 \\
- & woman & 0.043162 & 0.819892 \\
-\cline{1-4}
-\multirow[t]{5}{*}{annotatorRace} & black & 0.519503 & 1.000000 \\
- & hisp & 0.000000 & 1.000000 \\
- & middleEastern & 0.000000 & NaN \\
- & other & 0.000000 & 1.000000 \\
- & white & -0.251805 & 1.000000 \\
-\cline{1-4}
-\end{longtable}
+\end{tabular}
+\end{table}

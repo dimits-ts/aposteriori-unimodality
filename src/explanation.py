@@ -18,6 +18,165 @@ INTUITION_SIZE = 50
 NUM_BINS = 10
 
 
+def _discrete_normal(loc, scale, size):
+    vals = np.random.normal(loc, scale, size)
+    vals = np.clip(
+        np.round(vals), 1, 5
+    )  # round to nearest integer between 1-5
+    return vals
+
+
+def _prepare_distributions(n_annotators, n_annotations, variance):
+    def make_distribution(base_means, special_indices=[]):
+        data = []
+        for i in range(n_annotators):
+            if i in special_indices:
+                mean_shift = 1
+            else:
+                mean_shift = 0
+
+            distributions = [
+                _discrete_normal(
+                    base_mean + mean_shift, variance, n_annotations
+                )
+                for base_mean in base_means
+            ]
+            data.append(
+                np.concatenate(distributions)
+                if len(distributions) > 1
+                else distributions[0]
+            )
+        return data
+
+    unimodal = make_distribution([3])
+    bimodal = make_distribution([3], special_indices=[1, 9])
+    multimodal = make_distribution([1, 3], special_indices=[1, 9])
+    uniform = [
+        np.random.randint(1, 6, n_annotations) for _ in range(n_annotators)
+    ]
+
+    return unimodal, bimodal, multimodal, uniform, [1, 9]
+
+
+def _plot_matrix(
+    ax,
+    data,
+    n_annotators,
+    title,
+    highlight_indices=None,
+    horizontal_jitter=0.25,
+    vertical_jitter=0.15,
+):
+    highlight_indices = highlight_indices or []
+
+    all_x, all_y = [], []
+
+    for i, values in enumerate(data):
+        # Horizontal jitter for annotator separation
+        x_jittered = i + np.random.uniform(
+            -horizontal_jitter, horizontal_jitter, size=len(values)
+        )
+        # Vertical jitter to show overlapping points
+        y_jittered = values + np.random.uniform(
+            -vertical_jitter, vertical_jitter, size=len(values)
+        )
+
+        all_x.extend(x_jittered)
+        all_y.extend(y_jittered)
+
+    all_x = np.array(all_x)
+    all_y = np.array(all_y)
+
+    # Compute KDE for density
+    xy = np.vstack([all_x, all_y])
+    z = scipy.stats.gaussian_kde(xy)(xy)
+
+    # Scatter plot (all annotators the same)
+    sc = ax.scatter(
+        all_x,
+        all_y,
+        c=z,
+        s=40,
+        edgecolor="black",
+        cmap="viridis",
+        alpha=0.7,
+    )
+
+    # Axes formatting
+    ax.set_xlabel("Annotators")
+    ax.set_xlim(-0.5, n_annotators - 0.5)
+    ax.set_ylabel("Hate Speech")
+    ax.set_yticks([1, 2, 3, 4, 5])
+    ax.set_yticklabels(["☺", "🙂", "😐", "😠", "🤬"])
+    ax.set_ylim(0.8, 5.2)
+    ax.set_title(title)
+
+    tick_labels = []
+    for i in range(n_annotators):
+        if i in highlight_indices:
+            tick_labels.append("☪️")  # Trans pride flag emoji
+        else:
+            tick_labels.append("✝️")
+
+    ax.set_xticks(range(n_annotators))
+    ax.set_xticklabels(tick_labels, fontsize=14)
+
+    plt.colorbar(sc, ax=ax, label="Density")
+
+
+def plot_annotation_distributions(
+    graph_dir: Path,
+    n_annotators: int = 10,
+    n_annotations: int = 25,
+    variance: float = 0.3,
+    random_seed: int = 42,
+):
+    np.random.seed(random_seed)
+
+    unimodal, bimodal, multimodal, uniform, highlight_indices = (
+        _prepare_distributions(n_annotators, n_annotations, variance)
+    )
+
+    fig, axs = plt.subplots(2, 2, figsize=(12, 10))
+    plt.subplots_adjust(hspace=0.3, wspace=0.3)
+
+    _plot_matrix(
+        axs[0, 0],
+        unimodal,
+        n_annotators,
+        "Low Disagreement\nLow Polarization",
+        highlight_indices,
+    )
+    _plot_matrix(
+        axs[0, 1],
+        bimodal,
+        n_annotators,
+        "Low Disagreement\nHigh Polarization",
+        highlight_indices,
+    )
+    _plot_matrix(
+        axs[1, 0],
+        uniform,
+        n_annotators,
+        "High Disagreement\nLow Polarization",
+        highlight_indices,
+    )
+    _plot_matrix(
+        axs[1, 1],
+        multimodal,
+        n_annotators,
+        "High Disagreement\nHigh Polarization",
+        highlight_indices,
+    )
+
+    fig.suptitle(
+        "Annotator disagreement (variance) vs polarization (clustering)"
+    )
+
+    graphs.save_plot(graph_dir / "disagreement_vs_polarization.png")
+    plt.close()
+
+
 def dfu_plots(colors: list[str], graph_dir: Path) -> None:
     d1 = _truncated_normal(loc=2, scale=1.3, size=INTUITION_SIZE)
     d2 = _truncated_normal(loc=8, scale=1.3, size=INTUITION_SIZE)
@@ -108,13 +267,13 @@ def discussion_example(graph_dir: Path) -> None:
         misogynist_comment,
         d_woman_comment2,
         d_man_comment2,
-        graph_dir / "ndfu_comment2.png",
+        graph_dir / "ndfu_comment1.png",
     )
     _plot_example_individual(
         misandrist_comment,
         d_woman_comment1,
         d_man_comment1,
-        graph_dir / "ndfu_comment1.png",
+        graph_dir / "ndfu_comment2.png",
     )
     _plot_example_individual(
         discussion_comment,
@@ -182,14 +341,18 @@ def _plot_example_individual(
     plt.close()
 
 
-def main():
+def main(graph_dir: Path):
     sns.set_theme(style="whitegrid")
     plt.rcParams.update({"text.usetex": True, "font.family": "Helvetica"})
     np.random.seed(seed=42)
     colors = sns.color_palette()
 
-    dfu_plots(colors)
-    discussion_example()
+    dfu_plots(colors, graph_dir)
+    discussion_example(graph_dir)
+
+    plt.rcParams["font.family"] = "Symbola"
+    plt.rcParams["text.usetex"] = False
+    plot_annotation_distributions(graph_dir)
 
 
 if __name__ == "__main__":
@@ -197,9 +360,9 @@ if __name__ == "__main__":
         description=("Create demonstrative plots to explain apunim.")
     )
     parser.add_argument(
-        "--graph-dir",
+        "--graph-output-dir",
         required=True,
         help="Directory for the graphs.",
     )
     args = parser.parse_args()
-    main(graph_dir=Path(args.graph_dir))
+    main(graph_dir=Path(args.graph_output_dir))
