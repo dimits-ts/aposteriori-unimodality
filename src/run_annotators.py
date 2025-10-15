@@ -1,7 +1,11 @@
 import dataclasses
 import random
 import json
+import re
 from pathlib import Path
+
+import transformers
+from tqdm.auto import tqdm
 
 
 @dataclasses.dataclass
@@ -27,10 +31,6 @@ class Persona:
     def __str__(self):
         return json.dumps(self.to_dict(), ensure_ascii=False, indent=2)
 
-
-# ---------------------------
-#  Sample Value Lists + Weights
-# ---------------------------
 
 SEX_OPTIONS = ["male", "female", "non-binary"]
 SEX_WEIGHTS = [0.48, 0.50, 0.02]
@@ -68,22 +68,22 @@ POLITICAL_AFFILIATION_WEIGHTS = [0.25, 0.35, 0.25, 0.15]
 # ---------------------------
 
 
-def weighted_choice(options, weights):
+def _weighted_choice(options, weights):
     """Helper function for weighted random choice."""
     return random.choices(options, weights=weights, k=1)[0]
 
 
-def generate_random_persona() -> Persona:
+def _generate_random_persona() -> Persona:
     """Generate a Persona instance with weighted sociodemographic traits."""
     age = random.randint(18, 80)
-    sex = weighted_choice(SEX_OPTIONS, SEX_WEIGHTS)
-    sexual_orientation = weighted_choice(
+    sex = _weighted_choice(SEX_OPTIONS, SEX_WEIGHTS)
+    sexual_orientation = _weighted_choice(
         SEXUAL_ORIENTATION_OPTIONS, SEXUAL_ORIENTATION_WEIGHTS
     )
-    education_level = weighted_choice(
+    education_level = _weighted_choice(
         EDUCATION_LEVEL_OPTIONS, EDUCATION_LEVEL_WEIGHTS
     )
-    political_affiliation = weighted_choice(
+    political_affiliation = _weighted_choice(
         POLITICAL_AFFILIATION_OPTIONS, POLITICAL_AFFILIATION_WEIGHTS
     )
 
@@ -98,7 +98,7 @@ def generate_random_persona() -> Persona:
 
 def generate_persona_list(n: int = 10):
     """Generate a list of n random Persona objects."""
-    return [generate_random_persona() for _ in range(n)]
+    return [_generate_random_persona() for _ in range(n)]
 
 
 def save_personas_to_json(personas, output_path: Path):
@@ -110,6 +110,72 @@ def save_personas_to_json(personas, output_path: Path):
     print(f"Saved {len(personas)} personas to {output_path}")
 
 
+def annotate(
+    pipeline, personas: list[Persona], instructions: str, texts: list[str]
+) -> dict[Persona, dict[str, float]]:
+    results = {}
+    for persona in tqdm(personas, desc="Annotators"):
+        prompt = _annotation_prompt(persona=persona, instructions=instructions)
+        annotations = {}
+        for text in tqdm(texts, desc="Comments"):
+            annotation = _annotate_texts(
+                pipeline=pipeline, prompt=prompt, text=text
+            )
+            annotations[text] = annotation
+
+        results[persona] = annotations
+
+    return results
+
+
+def _annotation_prompt(persona: Persona, instructions: str) -> str:
+    persona_summary = (
+        f"You are a {persona.age}-year-old {persona.sex} "
+        f"with {persona.education_level}, who identifies as "
+        f"{persona.sexual_orientation} "
+        f"and leans {persona.political_affiliation} politically."
+    )
+
+    # Final prompt combines persona and instructions, separated clearly
+    prompt = (
+        f"{persona_summary}\n\n"
+        f"Follow the instructions carefully:\n"
+        f"{instructions}"
+    )
+
+    return prompt
+
+
+def _annotate_texts(pipeline, prompt: str, text: str) -> float:
+
+    # Construct chat input if model supports chat format
+    messages = [
+        {"role": "system", "content": prompt},
+        {"role": "user", "content": text},
+    ]
+
+    try:
+        # Generate response
+        response = pipeline(messages)[0]["generated_text"]
+        response = _parse_response(response)
+        return response
+
+    except Exception as e:
+        return -1
+        print(f"[ERROR] Failed to annotate text: {text[:50]!r} | {e}")
+
+
+def _parse_response(response: str) -> float:
+    # Extract a numeric rating (float between 1 and 5)
+    match = re.search(r"([1-5](?:\.\d+)?)", response)
+    if match:
+        score = float(match.group(1))
+        if 1.0 <= score <= 5.0:
+            return score
+    print(f"Invalid model response: {response}")
+    return -1
+
+
 # ---------------------------
 #  Example Usage
 # ---------------------------
@@ -118,9 +184,11 @@ if __name__ == "__main__":
     random.seed(42)
     personas = generate_persona_list(100)
 
-    # Print them
-    for p in personas:
-        print(p, "\n")
+    pipe = transformers.pipeline(
+        "text-generation",
+        model="unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit",
+        max_new_tokens=10,
+    )
 
     # Optionally save to file
     output_file = Path("data/random_personas.json")

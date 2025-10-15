@@ -1,4 +1,6 @@
-data/
+*.csv
+*.json
+*.zip
 
 ## Core latex/pdflatex auxiliary files:
 *.aux
