@@ -175,7 +175,8 @@ def _annotate_texts(pipeline, prompt: str, text: str) -> float:
 
     try:
         # Generate response
-        response = pipeline(messages)[0]["generated_text"]
+        response = pipeline(messages)
+        response = _get_answer(message=response)
         response = _parse_response(response)
         return response
 
@@ -184,11 +185,15 @@ def _annotate_texts(pipeline, prompt: str, text: str) -> float:
         return -1
 
 
+def _get_answer(message) -> str:
+    return message[0]["generated_text"][-1]["content"]
+
+
 def _parse_response(response: str) -> float:
     # Extract a numeric rating (float between 1 and 5)
     match = re.search(r"([1-5](?:\.\d+)?)", response)
     if match:
-        score = float(match.group(1))
+        score = int(match.group(1))
         if 1.0 <= score <= 5.0:
             return score
     print(f"Invalid model response: {response}")
@@ -210,7 +215,7 @@ if __name__ == "__main__":
     )
 
     # texts = get_texts("data/kumar.json")
-    texts = ["I dislike black people"]
+    texts = ["I dislike black people", "I am a white supremacist"]
 
     with open("data/annotation/prompt.txt", "r") as file:
         instructions = file.read()
