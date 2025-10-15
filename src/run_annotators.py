@@ -10,7 +10,7 @@ from tqdm.auto import tqdm
 from . import real_life_kumar
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Persona:
     """
     A dataclass holding information about the synthetic persona of a LLM actor.
@@ -125,13 +125,13 @@ def annotate(
     for persona in tqdm(personas, desc="Annotators"):
         prompt = _annotation_prompt(persona=persona, instructions=instructions)
         annotations = {}
-        for text in tqdm(texts, desc="Comments"):
+        for text in tqdm(texts, desc="Comments", leave=False):
             annotation = _annotate_texts(
                 pipeline=pipeline, prompt=prompt, text=text
             )
             annotations[text] = annotation
 
-        results[persona] = annotations
+        results[str(persona)] = annotations
 
     return results
 
@@ -198,7 +198,8 @@ if __name__ == "__main__":
         max_new_tokens=10,
     )
 
-    texts = get_texts("data/kumar.json")
+    # texts = get_texts("data/kumar.json")
+    texts = ["I dislike black people"]
 
     with open("data/annotation/prompt.txt", "r") as file:
         instructions = file.read()
@@ -211,4 +212,5 @@ if __name__ == "__main__":
     )
     # Optionally save to file
     output_file = Path("data/annotation.json")
-    json.dump(results, output_file)  # if this breaks i WILL cry.
+    with Path("data/annotation.json").open("w", encoding="UTF-8") as fout:
+        json.dump(results, fout)  # if this breaks i WILL cry.
