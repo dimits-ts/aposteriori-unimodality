@@ -7,6 +7,8 @@ from pathlib import Path
 import transformers
 from tqdm.auto import tqdm
 
+from . import real_life_kumar
+
 
 @dataclasses.dataclass
 class Persona:
@@ -110,6 +112,12 @@ def save_personas_to_json(personas, output_path: Path):
     print(f"Saved {len(personas)} personas to {output_path}")
 
 
+def get_texts(kumar_path: Path, num_comments: int) -> list[str]:
+    ds = real_life_kumar.KumarDataset(dataset_path=kumar_path)
+    texts = ds.df["tweet"]
+    return texts.tolist()
+
+
 def annotate(
     pipeline, personas: list[Persona], instructions: str, texts: list[str]
 ) -> dict[Persona, dict[str, float]]:
@@ -190,6 +198,17 @@ if __name__ == "__main__":
         max_new_tokens=10,
     )
 
+    texts = get_texts("data/kumar.json")
+
+    with open("data/annotation/prompt.txt", "r") as file:
+        instructions = file.read()
+
+    results = annotate(
+        pipeline=pipe,
+        personas=personas,
+        instructions=instructions,
+        texts=texts,
+    )
     # Optionally save to file
-    output_file = Path("data/random_personas.json")
-    save_personas_to_json(personas, output_file)
+    output_file = Path("data/annotation.json")
+    json.dump(results, output_file)  # if this breaks i WILL cry.
