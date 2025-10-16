@@ -92,10 +92,10 @@ def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
     ds = SapDataset(dataset_path=dataset_path)
 
     run_helper.run_experiments_on_dataset(
-        ds=ds,
-        full_latex_path=latex_output_dir / "res_sap.tex",
-        random_latex_path=latex_output_dir / "random_res_sap.tex",
-        graph_path=graph_output_dir / "sap.png"
+        ds,
+        latex_output_dir=latex_output_dir,
+        graph_path=graph_output_dir / "sap.png",
+        table_label="tab:sap"
     )
 
 
