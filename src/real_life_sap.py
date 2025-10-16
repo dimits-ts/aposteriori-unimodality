@@ -64,7 +64,6 @@ class SapDataset(preprocessing.Dataset):
             lambda x: None if ("na" in x) else x
         )
         df = df.dropna()
-        df["random"] = preprocessing.get_rand_col(df, "annotatorAge")
 
         df = df.rename(
             columns={
