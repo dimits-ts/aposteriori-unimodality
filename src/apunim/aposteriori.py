@@ -121,8 +121,8 @@ def aposteriori_unimodality(
     :type seed: int | None
     :returns:
         A dictionary containing the apunim result ("apunim"),
-        the parametric p-value ("pvalue_parametric")
-        and non-parametric p-value ("non_parametric"),
+        the parametric p-value ("p_param")
+        and non-parametric p-value ("p_nonparam"),
         depending on the pvalue_estimation parameter.
         If apunim~=0, the polarization can be explained by chance.
         If apunim>0, increased polarization can not be explained by chance,
@@ -253,8 +253,8 @@ def aposteriori_unimodality(
 
     results = {
         "apunim": apunim_by_factor,
-        "pvalue_parametric": parametric_by_factor,
-        "pvalue_nonparametric": nonparametric_by_factor,
+        "p_param": parametric_by_factor,
+        "p_nonparam": nonparametric_by_factor,
     }
 
     # --- Apply p-value correction per factor (if enabled) ---
