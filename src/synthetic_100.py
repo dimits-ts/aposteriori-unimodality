@@ -79,7 +79,6 @@ class HundredDataset(preprocessing.Dataset):
             ),
             include_groups=False,
         )
-        df["random"] = preprocessing.get_rand_col(df, "annot_sex")
         df = df.reset_index()
 
         df = df.rename(

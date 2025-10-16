@@ -57,7 +57,6 @@ class VMDDataset(preprocessing.Dataset):
         syn_df.age_annot = syn_df.age_annot.apply(
             lambda ls: [int(x) for x in ls]
         ).apply(lambda x: pd.cut(x, bins=4))
-        syn_df["random"] = preprocessing.get_rand_col(syn_df, "sex_annot")
 
         syn_df = syn_df.rename(
             columns={

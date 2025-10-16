@@ -85,7 +85,6 @@ class KumarDataset(preprocessing.Dataset):
             df = df.sample(num_samples, random_state=42)
 
         df = df.reset_index()
-        df["random"] = preprocessing.get_rand_col(df, "education")
 
         df = df.rename(
             columns={
