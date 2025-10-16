@@ -38,7 +38,7 @@ def run_experiments_on_dataset(
         ),
         dataset_name=ds.get_name(),
         table_label=table_label + r"\_apunim_only",
-        columns=["apunim"]
+        columns=["apunim"],
     )
 
     graphs.polarization_plot(ds=ds, output_path=graph_path)
@@ -116,8 +116,7 @@ def run_result(
     # Validate expected structure
     if not (
         isinstance(res, dict)
-        and set(res.keys())
-        == {"apunim", "p_param", "p_nonparam"}
+        and set(res.keys()) == {"apunim", "p_param", "p_nonparam"}
         and all(isinstance(v, dict) for v in res.values())
     ):
         raise ValueError(
@@ -155,13 +154,19 @@ def results_to_latex(
         caption=f"Apunim results for the {dataset_name} dataset",
         label=table_label,
         escape=True,
-        columns=columns
+        columns=columns,
+        position="t",
+        float_format="%.3f",
     )
 
     latex_str = (
-        latex_str.replace(r"\{table}", r"\{table*}")
-        .replace(r"\{begin}{tabular}", r"\{begin}{tabular*}{\textwidth}")
-        .replace(r"\{end}{tabular}", r"\{end}{tabular*}")
+        latex_str.replace(r"\begin{table}", r"\begin{table*}")
+        .replace(
+            r"\begin{tabular}",
+            r"\centering\begin{tabular*}{\textwidth}",
+        )
+        .replace(r"\end{tabular}", r"\end{tabular*}")
+        .replace(r"\end{table}", r"\end{table*}")
     )
 
     # Write to file
