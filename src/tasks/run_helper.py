@@ -31,16 +31,14 @@ def run_experiments_on_dataset(
     )
 
     # apunim-only table
-    res_only_apunim = res.drop(
-        columns=["pvalue_nonparametric", "pvalue_parametric"]
-    )
     results_to_latex(
-        res_only_apunim,
+        res,
         output_path=Path(
             latex_output_dir / f"{dataset_first_name}_apunim_only.tex"
         ),
         dataset_name=ds.get_name(),
         table_label=table_label + r"\_apunim_only",
+        columns=["apunim"]
     )
 
     graphs.polarization_plot(ds=ds, output_path=graph_path)
@@ -119,13 +117,13 @@ def run_result(
     if not (
         isinstance(res, dict)
         and set(res.keys())
-        == {"apunim", "pvalue_parametric", "pvalue_nonparametric"}
+        == {"apunim", "p_param", "p_nonparam"}
         and all(isinstance(v, dict) for v in res.values())
     ):
         raise ValueError(
             "Unexpected result format from _run_aposteriori. "
-            "Expected a dict with keys {'apunim', 'pvalue_parametric', "
-            "'pvalue_nonparametric'}, "
+            "Expected a dict with keys {'apunim', 'p_param', "
+            "'p_nonparam'}, "
             "each mapping to a dict[FactorType, float]."
         )
 
@@ -133,8 +131,8 @@ def run_result(
     res_df = pd.DataFrame(
         {
             "apunim": pd.Series(res["apunim"]),
-            "pvalue_parametric": pd.Series(res["pvalue_parametric"]),
-            "pvalue_nonparametric": pd.Series(res["pvalue_nonparametric"]),
+            "p_param": pd.Series(res["p_param"]),
+            "p_nonparam": pd.Series(res["p_nonparam"]),
         }
     )
 
@@ -146,6 +144,7 @@ def results_to_latex(
     output_path: Path,
     dataset_name: str,
     table_label: str,
+    columns: list[str] | None = None,
 ) -> None:
     # Replace underscores for LaTeX compatibility
     res_df = res_df.replace("_", r"\_")
@@ -156,6 +155,7 @@ def results_to_latex(
         caption=f"Apunim results for the {dataset_name} dataset",
         label=table_label,
         escape=True,
+        columns=columns
     )
 
     latex_str = (
