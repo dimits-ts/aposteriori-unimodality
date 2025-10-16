@@ -10,10 +10,11 @@ from . import preprocessing, graphs
 def run_experiments_on_dataset(
     ds: preprocessing.Dataset,
     table_label: str,
-    full_latex_path: Path,
-    random_latex_path: Path,
+    latex_output_dir: Path,
     graph_path: Path,
 ) -> None:
+    dataset_first_name = ds.get_name().split()[0].lower()
+
     # full table
     res = run_all_results(
         df=ds.get_dataset(),
@@ -24,9 +25,9 @@ def run_experiments_on_dataset(
     print(res)
     results_to_latex(
         res,
-        output_path=full_latex_path,
-        dataset_name=ds.get_name(),
-        table_label=table_label
+        output_path=latex_output_dir / f"{dataset_first_name}.tex",
+        dataset_name=dataset_first_name,
+        table_label=table_label,
     )
 
     # apunim-only table
@@ -35,9 +36,11 @@ def run_experiments_on_dataset(
     )
     results_to_latex(
         res_only_apunim,
-        output_path=Path(full_latex_path.stem + "_apunim_only.tex"),
+        output_path=Path(
+            latex_output_dir / f"{dataset_first_name}_apunim_only.tex"
+        ),
         dataset_name=ds.get_name(),
-        table_label=table_label + r"\_apunim_only"
+        table_label=table_label + r"\_apunim_only",
     )
 
     graphs.polarization_plot(ds=ds, output_path=graph_path)
@@ -139,22 +142,31 @@ def run_result(
 
 
 def results_to_latex(
-    res_df: pd.DataFrame, output_path: Path, dataset_name: str, table_name: str
+    res_df: pd.DataFrame,
+    output_path: Path,
+    dataset_name: str,
+    table_label: str,
 ) -> None:
-    # this should be done automatically but pandas is having a stroke
+    # Replace underscores for LaTeX compatibility
     res_df = res_df.replace("_", r"\_")
 
-    res_df.to_latex(
-        buf=output_path,
+    # Generate LaTeX string (don't write directly)
+    latex_str = res_df.to_latex(
         longtable=False,
-        caption=(
-            "Aposteriori Unimodality kappa and pvalue results "
-            f"for the {dataset_name} dataset"
-        ),
-        label=table_name,
+        caption=f"Apunim results for the {dataset_name} dataset",
+        label=table_label,
         escape=True,
     )
-    print(f"Table {table_name} exported to {output_path.resolve()}")
+
+    latex_str = (
+        latex_str.replace(r"\{table}", r"\{table*}")
+        .replace(r"\{begin}{tabular}", r"\{begin}{tabular*}{\textwidth}")
+        .replace(r"\{end}{tabular}", r"\{end}{tabular*}")
+    )
+
+    # Write to file
+    output_path.write_text(latex_str)
+    print(f"Table {table_label} exported to {output_path.resolve()}")
 
 
 def _extract_annotations_and_attributes(

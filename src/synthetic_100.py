@@ -47,10 +47,10 @@ class HundredDataset(preprocessing.Dataset):
 def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
     ds = HundredDataset(dataset_path=dataset_path)
     run_helper.run_experiments_on_dataset(
-        ds=ds,
-        full_latex_path=latex_output_dir / "100.tex",
-        random_latex_path=latex_output_dir / "random_100.tex",
+        ds,
+        latex_output_dir=latex_output_dir,
         graph_path=graph_output_dir / "100.png",
+        table_label="tab:synthetic_100"
     )
 
 

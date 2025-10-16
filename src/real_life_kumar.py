@@ -107,10 +107,10 @@ class KumarDataset(preprocessing.Dataset):
 def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
     ds = KumarDataset(dataset_path=dataset_path, num_samples=NUM_COMMENTS)
     run_helper.run_experiments_on_dataset(
-        ds=ds,
-        full_latex_path=latex_output_dir / "res_kumar.tex",
-        random_latex_path=latex_output_dir / "random_res_kumar.tex",
+        ds,
+        latex_output_dir=latex_output_dir,
         graph_path=graph_output_dir / "kumar.png",
+        table_label="tab:kumar"
     )
 
     ds = KumarDataset(dataset_path=dataset_path)
