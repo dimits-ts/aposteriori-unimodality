@@ -1,6 +1,7 @@
-from typing import TypeVar, Iterable, Any
-from collections.abc import Collection
+import typing
 import warnings
+import math
+from collections.abc import Collection
 
 import statsmodels.stats.multitest
 import scipy.stats
@@ -10,7 +11,7 @@ import numpy.typing
 from . import _list_dict
 
 
-FactorType = TypeVar("FactorType")
+FactorType = typing.TypeVar("FactorType")
 
 
 # code adapted from John Pavlopoulos
@@ -143,11 +144,7 @@ def aposteriori_unimodality(
         per comment. The pvalue estimation is non-parametric.
     """
     rng = np.random.default_rng(seed=seed)
-    bins = (
-        num_bins
-        if num_bins is not None
-        else len(np.unique(annotations))
-    )
+    bins = num_bins if num_bins is not None else len(np.unique(annotations))
 
     # data prep
     _validate_input(
@@ -621,10 +618,12 @@ def _to_hist(
     return counts
 
 
-def _unique(x: Iterable[Any]) -> Iterable[Any]:
+def _unique(x: typing.Iterable[typing.Any]) -> typing.Iterable[typing.Any]:
     # preserve first-seen order
     return list(dict.fromkeys(x))
 
 
-def _is_not_none(x):
+def _is_not_none(
+    x: typing.Iterable[typing.Any],
+) -> typing.Iterable[typing.Any]:
     return x is not None and not (isinstance(x, float) and math.isnan(x))
