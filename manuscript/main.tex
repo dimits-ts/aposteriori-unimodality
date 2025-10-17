@@ -120,13 +120,21 @@ As demonstrated above, it is necessary to define a metric for the polarization a
   \subsection{Apriori polarization}
   \label{ssec:methodology:apriori}
   
+  \begin{figure}[t]
+  	\centering
+  	\includegraphics[width=0.8\linewidth]{subset_explanation.drawio.png}
+  	\caption{Since we can not compare the statistics of the group-subsets with the annotation superset, we elect to instead compare them with the mean apriori polarization of many sampled subsets.}
+  	\label{fig:subset_explanation}
+  \end{figure}
+  
+  
   In \S~\ref{sec:intro} we mentioned that annotator polarization can be caused either by the annotators \ac{SDB}, or other factors. The latter can be considered ``apriori'' polarization, which is driven by the inherent ``controversy'' of the data point. Previous work \parencite{pavlopoulos-likas-2024} considered the case where this apriori polarization was zero; this is not the case in many datasets, as we demonstrate in this section. 
   
- In \S~\ref{ssec:methodology:intuition} we compared the polarization of the whole set of annotations with the partitions by annotator group. This is \emph{not statistically sound}, since we are comparing statistics of a subset with its superset, violating the fundamental hypothesis of dependent samples. When $A$ is a proper subset of $S$, the data points composing $A$ are necessarily included in $S$. This inclusion induces an intrinsic, non-zero covariance between any statistic calculated on $A$ (e.g., the sampled mean $\bar{X}_A$) and the corresponding statistic calculated on $S$ (e.g., the sampled mean $\bar{X}_S$). We can not ignore this problem due to the extreme overlap exhibited by tiny annotation sets.
+ In \S~\ref{ssec:methodology:intuition} we compared the polarization of the whole set of annotations with the partitions by annotator group. This is \emph{not statistically sound}, since we are comparing statistics of a subset with its superset, violating the fundamental hypothesis of dependent samples. When $A$ is a proper subset of $B$, the data points composing $A$ are necessarily included in $B$, and thus the statistics for both will \emph{always be similar to an extent}. TThis is especially pronounced in our case, due to the extreme overlap exhibited by tiny annotation sets. Additionally, when calculating p-values, the non-independence of samples induces an intrinsic, non-zero covariance between any statistic $s$ calculated on $A$ and on $S$. 
  
- A standard method of side-stepping this issue is to compare the subset with its complement to the superset (comparing $\bar{X}_A$ with $\bar{X}_{S/A}$). This can not be applied to our case. Consider the example in Figure~\ref{fig:ndfu_combined}; if we compared $nDFU_{men}$ with $nDFU_{women}$, the result would be very close to zero, indicating no polarization attribution to gender.
+ A standard method of side-stepping this issue is to compare the subset with its complement to the superset (comparing $s(A)$ with $s(B/A)$). This can not be applied to our case. Consider the example in Figure~\ref{fig:ndfu_combined}; if we compared $nDFU_{men}$ with $nDFU_{women}$, the result would be very close to zero, indicating no polarization attribution to gender.
   
- Given infinite annotations, the assumption of independence would work. Likewise, if we compared $A$ with infinite random subsets of $S$. We can thus estimate the apriori polarization in data point $c$ by bootstrapping. We randomly partition the annotations in $\lvert \Theta \rvert$ groups, with matching group sizes (e.g., if we have $100$ annotations, $80$ of which are made by male annotators and $20$ by female annotators, we will create random partitions of sizes $80$ and $20$). The randomly partitioned annotations are then sampled $t$ times. Formally, the estimated apriori polarization will be given by:
+ Given infinite annotations, the assumption of independence would work and likewise, if we compared $A$ with infinite random subsets of $B$. We can thus estimate the apriori polarization in data point $c$ by bootstrapping (Figure~\ref{fig:subset_explanation}). We randomly partition the annotations in $\lvert \Theta \rvert$ groups, with matching group sizes (e.g., if we have $100$ annotations, $80$ of which are made by male annotators and $20$ by female annotators, we will create random partitions of sizes $80$ and $20$). The randomly partitioned annotations are then sampled $t$ times. Formally, the estimated apriori polarization will be given by:
  
  \begin{equation}
  	\label{eq:pol_expected}
