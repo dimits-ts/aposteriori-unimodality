@@ -114,8 +114,10 @@ def annotations_to_df(results: dict) -> pd.DataFrame:
 
 
 def get_texts(kumar_path: Path, num_comments: int) -> list[str]:
-    ds = real_life_kumar.KumarDataset(dataset_path=kumar_path)
-    texts = ds.df["tweet"]
+    ds = real_life_kumar.KumarDataset(
+        dataset_path=kumar_path, num_samples=num_comments
+    )
+    texts = ds.df["comment"]
     return texts.tolist()
 
 
@@ -201,8 +203,7 @@ if __name__ == "__main__":
         max_new_tokens=10,
     )
 
-    # texts = get_texts("data/kumar.json")
-    texts = ["I dislike black people", "I am a white supremacist"]
+    texts = get_texts("data/kumar.json", num_comments=200)
 
     with open("data/annotation/prompt.txt", "r") as file:
         instructions = file.read()

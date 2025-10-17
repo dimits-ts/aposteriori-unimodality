@@ -20,91 +20,36 @@ class HundredDataset(preprocessing.Dataset):
 
     def get_sdb_columns(self) -> list[str]:
         return [
-            "Age",
-            "Gender",
-            "Sexual Orientation",
-            "Ethnicity",
-            "Employment",
-            "Education",
-            "Political Affiliation",
+            "age",
+            "gender",
+            "sexual_orientation",
+            "education_level",
+            "political_affiliation",
         ]
 
     def get_comment_key_column(self) -> str:
-        return "comment_key"
+        return "text"
 
     def get_annotation_column(self) -> str:
-        return "Toxicity"
+        return "hate_speech"
 
     @staticmethod
     def _base_df(dataset_path: Path):
-        df = pd.read_csv(
-            dataset_path,
-            converters={"annot_personality_characteristics": ast.literal_eval},
-        )
-        df["toxicity"] = df.annotation.apply(lambda x: x[-1]).astype(int)
-        df["annot_politics"] = df.annot_personality_characteristics.apply(
-            lambda x: x[0]
-        )
-        df.annot_age = pd.cut(df.annot_age, bins=4)
-        df.message_id = df.message_id.astype(str)
-        df["comment_key"] = df.conv_id + df.message_id
-
-        df = df.loc[
-            :,
-            [
-                "conv_id",
-                "message_id",
-                "comment_key",
-                "message",
-                "toxicity",
-                "annot_age",
-                "annot_sex",
-                "annot_sexual_orientation",
-                "annot_demographic_group",
-                "annot_current_employment",
-                "annot_education_level",
-                "annot_politics",
-            ],
-        ]
-        df = df.groupby(
-            ["conv_id", "message_id", "comment_key", "message"]
-        ).apply(
-            lambda x: pd.Series(
-                {
-                    col: x[col].tolist()
-                    for col in df.columns
-                    if col
-                    not in ["conv_id", "message_id", "comment_key", "message"]
-                }
-            ),
-            include_groups=False,
-        )
-        df["random"] = preprocessing.get_rand_col(df, "annot_sex")
-        df = df.reset_index()
-
-        df = df.rename(
-            columns={
-                "annot_age": "Age",
-                "annot_sex": "Gender",
-                "annot_sexual_orientation": "Sexual Orientation",
-                "annot_demographic_group": "Ethnicity",
-                "annot_current_employment": "Employment",
-                "annot_education_level": "Education",
-                "annot_politics": "Political Affiliation",
-                "toxicity": "Toxicity",
-            }
-        )
-        return df
+        df = pd.read_csv(dataset_path)
+        df = df.rename(columns={"sex": "gender", "annotation": "hate_speech"})
+        grouped_df = df.groupby("text", as_index=False).agg(list)
+        return grouped_df
 
 
 def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
     ds = HundredDataset(dataset_path=dataset_path)
     run_helper.run_experiments_on_dataset(
-        ds,
-        full_latex_path=latex_output_dir / "res_synthetic_100.tex",
-        random_latex_path=latex_output_dir / "random_res_synthetic_100.tex",
-        graph_path=graph_output_dir / "synthetic_100.png",
+        ds=ds,
+        full_latex_path=latex_output_dir / "100.tex",
+        random_latex_path=latex_output_dir / "random_100.tex",
+        graph_path=graph_output_dir / "100.png",
     )
+    
 
 
 if __name__ == "__main__":
