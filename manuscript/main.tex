@@ -107,20 +107,26 @@ In this section, we provide a formal mathematical formulation for the problem of
 However, this formulation would not work well. Figure~\ref{fig:ndfu_discussion} illustrates a hypothetical discussion with two comments, both of which are toxic, but where male and female annotators disagree on \emph{which} comment is the toxic one. If we aggregate the annotations to a single discussion, the opposing polarization effects might balance each other out, leading to a false negative. This example demonstrates that polarization has a \textit{direction}, which is not captured by the $nDFU$ metric which is symmetric. Thus, care must be taken to not combine polarization effects of opposite directions. 
  
  
- \subsection{The pol-statistic}
+ \subsection{Observed polarization}
  \label{ssec:methodology:polstat}
   
-As demonstrated above, it is necessary to define a metric for the polarization attribution of each individual data point. We thus introduce the \textit{``pol-statistic''}, which quantifies the change in \ac{nDFU} when annotations are grouped by $\theta \in \Theta$.
+As demonstrated above, it is necessary to define a metric for the polarization attribution of each individual data point when grouped by $\theta$. We thus introduce the \textit{``pol-statistic''}, which quantifies the change in \ac{nDFU} when annotations are grouped by $\theta \in \Theta$. The observed polarization of a data-point on the group of annotations $\theta$ can be directly computed as: 
+\begin{equation}
+	pol(c, \theta) = nDFU(P(A(c), \theta)
+\end{equation}
+\noindent where $P(A(c), \theta_i) = \{a(c; \theta) \in A(c) | \theta=\theta_i\}$ is the partition of $A$ for a data-point $c$, for which its annotators belong to the \ac{SDB} group $\theta_i$.
 
-In order to define this statistic, we need to measure (1) the polarization of a data-point when grouped by $\theta$, and (2) the ``apriori'' polarization \S~\ref{sec:intro} present in the annotations, which is driven by either the inherent controversy of the data-point. Note that we can not directly compare the $\theta$-subset of annotations with the full set of annotations, since any statistical comparison between them violates the assumption of independent samples. %Removing the subset from the full set of annotations on the other hand, may introduce selection bias, especially when considering interactions between subgroups and confounding variables. % TODO: does this even make sense?
-
-The observed polarization of a data-point on the group of annotations $\theta$ can be directly computed as: 
- \begin{equation}
- 	pol(c, \theta) = nDFU(P(A(c), \theta)
- \end{equation}
- \noindent where $P(A(c), \theta_i) = \{a(c; \theta) \in A(c) | \theta=\theta_i\}$ is the partition of $A$ for a data-point $c$, for which its annotators belong to the \ac{SDB} group $\theta_i$.
   
- We can estimate the apriori polarization in data point $c$ by bootstrapping. We randomly partition the annotations in $\lvert \Theta \rvert$ groups, with matching group sizes (e.g., if we have $100$ annotations, $80$ of which are made by male annotators and $20$ by female annotators, we will create random partitions of sizes $80$ and $20$). The randomly partitioned annotations are then sampled $t$ times. Formally, the expected inherent polarization will be given by:
+  \subsection{Apriori polarization}
+  \label{ssec:methodology:apriori}
+  
+  In \S~\ref{sec:intro} we mentioned that annotator polarization can be caused either by the annotators \ac{SDB}, or other factors. The latter can be considered ``apriori'' polarization, which is driven by the inherent ``controversy'' of the data point. Previous work \parencite{pavlopoulos-likas-2024} considered the case where this apriori polarization was zero; this is not the case in many datasets, as we demonstrate in this section. 
+  
+ In \S~\ref{ssec:methodology:intuition} we compared the polarization of the whole set of annotations with the partitions by annotator group. This is \emph{not statistically sound}, since we are comparing statistics of a subset with its superset, violating the fundamental hypothesis of dependent samples. When $A$ is a proper subset of $S$, the data points composing $A$ are necessarily included in $S$. This inclusion induces an intrinsic, non-zero covariance between any statistic calculated on $A$ (e.g., the sampled mean $\bar{X}_A$) and the corresponding statistic calculated on $S$ (e.g., the sampled mean $\bar{X}_S$). We can not ignore this problem due to the extreme overlap exhibited by tiny annotation sets.
+ 
+ A standard method of side-stepping this issue is to compare the subset with its complement to the superset (comparing $\bar{X}_A$ with $\bar{X}_{S/A}$). This can not be applied to our case. Consider the example in Figure~\ref{fig:ndfu_combined}; if we compared $nDFU_{men}$ with $nDFU_{women}$, the result would be very close to zero, indicating no polarization attribution to gender.
+  
+ Given infinite annotations, the assumption of independence would work. Likewise, if we compared $A$ with infinite random subsets of $S$. We can thus estimate the apriori polarization in data point $c$ by bootstrapping. We randomly partition the annotations in $\lvert \Theta \rvert$ groups, with matching group sizes (e.g., if we have $100$ annotations, $80$ of which are made by male annotators and $20$ by female annotators, we will create random partitions of sizes $80$ and $20$). The randomly partitioned annotations are then sampled $t$ times. Formally, the estimated apriori polarization will be given by:
  
  \begin{equation}
  	\label{eq:pol_expected}
@@ -128,8 +134,7 @@ The observed polarization of a data-point on the group of annotations $\theta$ c
  \end{equation}
  \noindent where $\tilde{P}_i$ is the random partition operator with matching group sizes.
 
-
-\subsection{Aposteriori Unimodality}
+\subsection{Aposteriori polarization}
 \label{ssec:methodology:aposteriori}
 
 \begin{figure}[t]
