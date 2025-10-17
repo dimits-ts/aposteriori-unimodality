@@ -22,7 +22,6 @@ def run_experiments_on_dataset(
         sdb_columns=ds.get_sdb_columns(),
         value_col=ds.get_annotation_column(),
         comment_key_col=ds.get_comment_key_column(),
-        two_column=True
     )
     print(res)
     results_to_latex(
@@ -30,6 +29,7 @@ def run_experiments_on_dataset(
         output_path=latex_output_dir / f"{dataset_first_name}.tex",
         dataset_name=dataset_first_name,
         table_label=table_label,
+        two_column=True,
     )
 
     # apunim-only table
@@ -39,9 +39,9 @@ def run_experiments_on_dataset(
             latex_output_dir / f"{dataset_first_name}_apunim_only.tex"
         ),
         dataset_name=ds.get_name(),
-        table_label=table_label + r"\_apunim_only",
+        table_label=table_label + r"_apunim_only",
         columns=["apunim"],
-        two_column=False
+        two_column=False,
     )
 
     graphs.polarization_plot(ds=ds, output_path=graph_path)
@@ -168,12 +168,11 @@ def results_to_latex(
         latex_str = latex_str.replace(r"\begin{table}", r"\begin{table*}")
         # Ensure end is also table*
         latex_str = latex_str.replace(r"\end{table}", r"\end{table*}")
-
-        # 2) Replace dynamic \begin{tabular}{<cols>} with tabular*{...}{@{\extracolsep{\fill}}<cols>}
-        #    Use a permissive capture group that grabs anything until the next closing brace.
+        # fill in columns to page width
         latex_str = re.sub(
             r"\\begin\{tabular\}\{([^}]+)\}",
-            r"\\centering\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}\1}",
+            r"\\centering\\begin{tabular*}{\\textwidth}"
+            r"{@{\\extracolsep{\\fill}}\1}",
             latex_str,
         )
 
