@@ -55,8 +55,8 @@ class VMDDataset(preprocessing.Dataset):
         )
 
         syn_df.age_annot = syn_df.age_annot.apply(
-            lambda ls: [int(x) for x in ls]
-        ).apply(lambda x: pd.cut(x, bins=4))
+            lambda ls: preprocessing.process_age_list(ls)
+        )
 
         syn_df = syn_df.rename(
             columns={

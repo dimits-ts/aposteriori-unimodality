@@ -51,10 +51,9 @@ class SapDataset(preprocessing.Dataset):
             if pd.notna(age)
         ]
         all_ages = list(map(int, all_ages))
-        bin_edges = [0, 20, 40, 60, 80]
 
         df["annotatorAge"] = df["annotatorAge"].apply(
-            lambda x: SapDataset._process_age_list(x, bin_edges)
+            lambda x: preprocessing.process_age_list(x)
         )
         df.annotatorRace = df.annotatorRace.apply(
             lambda x: None if ("na" in x) else x
@@ -75,18 +74,6 @@ class SapDataset(preprocessing.Dataset):
         )
         return df
 
-    @staticmethod
-    def _process_age_list(x, bins):
-        if not isinstance(x, (list, tuple)):
-            return None
-        if any(pd.isna(age) for age in x):
-            return None
-        try:
-            int_ages = [int(age) for age in x]
-            return pd.cut(int_ages, bins=bins, include_lowest=True)
-        except Exception:
-            return None
-
 
 def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
     ds = SapDataset(dataset_path=dataset_path)
@@ -95,7 +82,7 @@ def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
         ds,
         latex_output_dir=latex_output_dir,
         graph_path=graph_output_dir / "sap.png",
-        table_label="tab:sap"
+        table_label="tab:sap",
     )
 
 
@@ -124,5 +111,5 @@ if __name__ == "__main__":
     main(
         dataset_path=Path(args.dataset_path),
         latex_output_dir=Path(args.latex_output_dir),
-        graph_output_dir=Path(args.graph_output_dir)
+        graph_output_dir=Path(args.graph_output_dir),
     )
