@@ -38,6 +38,9 @@ class HundredDataset(preprocessing.Dataset):
         df = pd.read_csv(dataset_path)
         df = df.rename(columns={"sex": "gender", "annotation": "hate_speech"})
         grouped_df = df.groupby("text", as_index=False).agg(list)
+        grouped_df.age = grouped_df.age.apply(
+            lambda ls: [int(x) for x in ls]
+        ).apply(lambda x: pd.cut(x, bins=4))
         return grouped_df
 
 
@@ -49,7 +52,6 @@ def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
         random_latex_path=latex_output_dir / "random_100.tex",
         graph_path=graph_output_dir / "100.png",
     )
-    
 
 
 if __name__ == "__main__":
