@@ -148,20 +148,7 @@ def _generate_random_persona() -> Persona:
 
 
 def _annotation_prompt(persona: Persona, instructions: str) -> str:
-    persona_summary = (
-        f"You are a {persona.age}-year-old {persona.sex} "
-        f"with {persona.education_level}, who identifies as "
-        f"{persona.sexual_orientation} "
-        f"and leans {persona.political_affiliation} politically."
-    )
-
-    # Final prompt combines persona and instructions, separated clearly
-    prompt = (
-        f"{persona_summary}\n\n"
-        f"Follow the instructions carefully:\n"
-        f"{instructions}"
-    )
-
+    prompt = instructions.format(**persona.to_dict())
     return prompt
 
 
