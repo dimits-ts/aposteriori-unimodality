@@ -101,7 +101,6 @@ class KumarDataset(preprocessing.Dataset):
                 "toxic_score": "Toxicity",
             }
         )
-        df.Age = df.Age.apply(lambda ls: preprocessing.process_age_list(ls))
         return df
 
 

@@ -2,6 +2,17 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python Debugger: Module",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "src.synthetic_100",
+            "args": [
+                "--dataset-path=data/annotation.csv",
+                "--latex-output-dir=manuscript/generated",
+                "--graph-output-dir=graphs"
+            ],
+        },
+        {
             "name": "Debug real_life_sap",
             "type": "debugpy",
             "request": "launch",

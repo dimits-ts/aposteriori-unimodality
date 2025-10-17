@@ -1,6 +1,5 @@
 import argparse
 from pathlib import Path
-import ast
 
 import pandas as pd
 
@@ -38,7 +37,9 @@ class HundredDataset(preprocessing.Dataset):
         df = pd.read_csv(dataset_path)
         df = df.rename(columns={"sex": "gender", "annotation": "hate_speech"})
         grouped_df = df.groupby("text", as_index=False).agg(list)
-        grouped_df.age = preprocessing.process_age_list(grouped_df.age)
+        grouped_df.age = grouped_df.age.apply(
+            lambda ls: preprocessing.process_age_list(ls)
+        )
         return grouped_df
 
 
