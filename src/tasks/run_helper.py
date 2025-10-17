@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -21,6 +22,7 @@ def run_experiments_on_dataset(
         sdb_columns=ds.get_sdb_columns(),
         value_col=ds.get_annotation_column(),
         comment_key_col=ds.get_comment_key_column(),
+        two_column=True
     )
     print(res)
     results_to_latex(
@@ -39,6 +41,7 @@ def run_experiments_on_dataset(
         dataset_name=ds.get_name(),
         table_label=table_label + r"\_apunim_only",
         columns=["apunim"],
+        two_column=False
     )
 
     graphs.polarization_plot(ds=ds, output_path=graph_path)
@@ -144,6 +147,7 @@ def results_to_latex(
     dataset_name: str,
     table_label: str,
     columns: list[str] | None = None,
+    two_column: bool = False,
 ) -> None:
     # Replace underscores for LaTeX compatibility
     res_df = res_df.replace("_", r"\_")
@@ -156,18 +160,25 @@ def results_to_latex(
         escape=True,
         columns=columns,
         position="t",
-        float_format="%.3f",
+        float_format="%.4f",
     )
 
-    latex_str = (
-        latex_str.replace(r"\begin{table}", r"\begin{table*}")
-        .replace(
-            r"\begin{tabular}",
-            r"\centering\begin{tabular*}{\textwidth}",
+    if two_column:
+        # 1) Turn table -> table* and add centering on begin
+        latex_str = latex_str.replace(r"\begin{table}", r"\begin{table*}")
+        # Ensure end is also table*
+        latex_str = latex_str.replace(r"\end{table}", r"\end{table*}")
+
+        # 2) Replace dynamic \begin{tabular}{<cols>} with tabular*{...}{@{\extracolsep{\fill}}<cols>}
+        #    Use a permissive capture group that grabs anything until the next closing brace.
+        latex_str = re.sub(
+            r"\\begin\{tabular\}\{([^}]+)\}",
+            r"\\centering\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}\1}",
+            latex_str,
         )
-        .replace(r"\end{tabular}", r"\end{tabular*}")
-        .replace(r"\end{table}", r"\end{table*}")
-    )
+
+        # 3) Replace \end{tabular} -> \end{tabular*}
+        latex_str = latex_str.replace(r"\end{tabular}", r"\end{tabular*}")
 
     # Write to file
     output_path.write_text(latex_str)
