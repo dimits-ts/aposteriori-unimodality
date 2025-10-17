@@ -328,7 +328,6 @@ def _comment_is_valid(
     A comment is valid if:
       1. It shows polarization (DFU > 0)
       2. It has at least two distinct annotator groups
-      3. At least two of those groups have >= 2 annotations each
     """
 
     # --- Check for polarization ---
@@ -338,29 +337,9 @@ def _comment_is_valid(
         atol=0.01,
     )
 
-    # --- Clean annotator groups ---
-    # Convert to list and remove None/NaN values safely
-    groups = []
-    for g in comment_annotator_groups:
-        if g is None:
-            continue
-        if isinstance(g, float) and np.isnan(g):
-            continue
-        groups.append(g)
-
-    if len(groups) < 2:
-        return False  # not enough valid annotators
-
-    # --- Count occurrences per group ---
-    group_counts = {}
-    for g in groups:
-        group_counts[g] = group_counts.get(g, 0) + 1
-
-    # --- Apply lenient validity rule ---
-    num_groups = len(group_counts)
-    groups_with_two_or_more = sum(c >= 2 for c in group_counts.values())
-
-    sufficient_groups = num_groups >= 2 and groups_with_two_or_more >= 2
+    # --- annotator groups ---
+    groups = [x for x in comment_annotator_groups if _is_not_none(x)]
+    sufficient_groups = len(_unique(groups)) >= 2
 
     return has_polarization and sufficient_groups
 
@@ -645,3 +624,7 @@ def _to_hist(
 def _unique(x: Iterable[Any]) -> Iterable[Any]:
     # preserve first-seen order
     return list(dict.fromkeys(x))
+
+
+def _is_not_none(x):
+    return x is not None and not (isinstance(x, float) and math.isnan(x))
