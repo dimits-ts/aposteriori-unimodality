@@ -5,7 +5,7 @@ import pandas as pd
 
 from .tasks import preprocessing, run_helper, graphs
 
-NUM_COMMENTS = 10000
+NUM_COMMENTS = 2000
 
 
 class KumarDataset(preprocessing.Dataset):
@@ -101,6 +101,7 @@ class KumarDataset(preprocessing.Dataset):
                 "toxic_score": "Toxicity",
             }
         )
+        df.Age = df.Age.apply(lambda ls: preprocessing.process_age_list(ls))
         return df
 
 
@@ -110,7 +111,7 @@ def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
         ds,
         latex_output_dir=latex_output_dir,
         graph_path=graph_output_dir / "kumar.png",
-        table_label="tab:kumar"
+        table_label="tab:kumar",
     )
 
     ds = KumarDataset(dataset_path=dataset_path)

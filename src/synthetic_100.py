@@ -45,7 +45,7 @@ class HundredDataset(preprocessing.Dataset):
         df["annot_politics"] = df.annot_personality_characteristics.apply(
             lambda x: x[0]
         )
-        df.annot_age = pd.cut(df.annot_age, bins=4)
+        df.annot_age = preprocessing.process_age_list(df.annot_age)
         df.message_id = df.message_id.astype(str)
         df["comment_key"] = df.conv_id + df.message_id
 
