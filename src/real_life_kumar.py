@@ -5,7 +5,7 @@ import pandas as pd
 
 from .tasks import preprocessing, run_helper, graphs
 
-NUM_COMMENTS = 2000
+NUM_COMMENTS = 100
 
 
 class KumarDataset(preprocessing.Dataset):

@@ -148,10 +148,27 @@ def results_to_latex(
     table_label: str,
     columns: list[str] | None = None,
     two_column: bool = False,
-    small_fontsize: bool = False
+    small_fontsize: bool = False,
 ) -> None:
+    """
+    Export results to a LaTeX table formatted to fit a single column cleanly.
+
+    Args:
+        res_df: Results DataFrame.
+        output_path: Path to write the LaTeX file.
+        dataset_name: Name of the dataset (for caption).
+        table_label: LaTeX label for referencing.
+        columns: Optional subset of columns to include.
+        two_column: Whether to use table* environment for two-column layout.
+        small_fontsize: Use \\small instead of normal text.
+        p_param: Optional parameter; if None, all table entries are replaced
+        with dashes.
+    """
     # Replace underscores for LaTeX compatibility
     res_df = res_df.replace("_", r"\_")
+    # if p_param is None, then make all rows a dash
+    mask = res_df["p_param"].isna()
+    res_df.loc[mask, :] = "---"
 
     # Generate LaTeX string (don't write directly)
     latex_str = res_df.to_latex(
@@ -169,6 +186,13 @@ def results_to_latex(
             r"\begin{table}",
             r"\begin{table}\n\small",
         )
+
+    # Replace tabular alignment with fixed column widths
+    latex_str = re.sub(
+        r"\\begin\{tabular\}\{[lcr]+\}",
+        r"\\begin{tabular}{p{0.28\\columnwidth}p{0.45\\columnwidth}r}",
+        latex_str,
+    )
 
     if two_column:
         # Turn table -> table* and add centering on begin
