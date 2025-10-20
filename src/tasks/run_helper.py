@@ -187,13 +187,6 @@ def results_to_latex(
             r"\begin{table}\n\small",
         )
 
-    # Replace tabular alignment with fixed column widths
-    latex_str = re.sub(
-        r"\\begin\{tabular\}\{[lcr]+\}",
-        r"\\begin{tabular}{p{0.28\\columnwidth}p{0.45\\columnwidth}r}",
-        latex_str,
-    )
-
     if two_column:
         # Turn table -> table* and add centering on begin
         latex_str = latex_str.replace(r"\begin{table}", r"\begin{table*}")
