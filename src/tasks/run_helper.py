@@ -148,6 +148,7 @@ def results_to_latex(
     table_label: str,
     columns: list[str] | None = None,
     two_column: bool = False,
+    small_fontsize: bool = False
 ) -> None:
     # Replace underscores for LaTeX compatibility
     res_df = res_df.replace("_", r"\_")
@@ -163,8 +164,14 @@ def results_to_latex(
         float_format="%.4f",
     )
 
+    if small_fontsize:
+        latex_str = latex_str.replace(
+            r"\begin{table}",
+            r"\begin{table}\n\small",
+        )
+
     if two_column:
-        # 1) Turn table -> table* and add centering on begin
+        # Turn table -> table* and add centering on begin
         latex_str = latex_str.replace(r"\begin{table}", r"\begin{table*}")
         # Ensure end is also table*
         latex_str = latex_str.replace(r"\end{table}", r"\end{table*}")
