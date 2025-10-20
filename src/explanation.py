@@ -16,94 +16,123 @@ LESSER_LABEL_SIZE = 14
 DIFF_COMMENTS_SIZE = 200
 INTUITION_SIZE = 50
 NUM_BINS = 10
+LABEL_FONTSIZE = 16
+SUBTITLE_FONTSIZE = 18
+TITLE_FONTSIZE = 20
 
 
 def _discrete_normal(loc, scale, size):
     vals = np.random.normal(loc, scale, size)
-    vals = np.clip(np.round(vals), 1, 5)  # round to nearest integer between 1-5
+    vals = np.clip(
+        np.round(vals), 1, 5
+    )  # round to nearest integer between 1-5
     return vals
 
-def _prepare_distributions(n_annotators, n_annotations, variance):
-    n_group1 = int(n_annotators * 0.8)  # Christians
-    n_group2 = n_annotators - n_group1   # Muslims
 
-    def make_distribution(base_means, group_sizes):
+def _prepare_distributions(n_annotators, variance):
+    # Define special indices for mean shifts (use the first 20% as "Muslims")
+    n_special = int(0.2 * n_annotators)
+    special_indices = list(range(n_special))  # first 20% will get mean_shift=1
+
+    def make_distribution(base_means, special_indices=[], variance=variance):
         data = []
-        for i, size in enumerate(group_sizes):
+        for i in range(n_annotators):
+            mean_shift = 1 if i in special_indices else 0
             distributions = [
-                _discrete_normal(base_mean, variance, n_annotations)
+                _discrete_normal(base_mean + mean_shift, variance, 1)
                 for base_mean in base_means
             ]
-            combined = np.concatenate(distributions) if len(distributions) > 1 else distributions[0]
-            data.extend([combined] * size)
+            combined = (
+                np.mean(distributions)
+                if len(distributions) > 1
+                else distributions[0][0]
+            )
+            data.append(combined)
         return data
 
-    group_sizes = [n_group1, n_group2]
+    unimodal = make_distribution([3], variance=variance)
+    bimodal = make_distribution(
+        [3], special_indices=special_indices, variance=variance
+    )
+    multimodal = make_distribution(
+        [1, 3], special_indices=special_indices, variance=variance * 3
+    )
+    uniform = list(np.random.randint(1, 6, n_annotators))
 
-    unimodal = make_distribution([3], group_sizes)
-    bimodal = make_distribution([3], group_sizes)  # same mean, but we could shift one group if needed
-    multimodal = make_distribution([1, 3], group_sizes)
-    uniform = [np.random.randint(1, 6, n_annotations) for _ in range(n_annotators)]
-
-    # Group labels for plotting (0=Christian, 1=Muslim)
-    group_labels = [0]*n_group1 + [1]*n_group2
-
+    group_labels = [
+        1 if i in special_indices else 0 for i in range(n_annotators)
+    ]  # 0=Christian, 1=Muslim
     return unimodal, bimodal, multimodal, uniform, group_labels
 
-def _plot_matrix(ax, data, group_labels, title, horizontal_jitter=0.25, vertical_jitter=0.15):
-    all_x, all_y, all_colors = [], [], []
 
-    for i, values in enumerate(data):
-        # horizontal jitter to separate annotators slightly
-        x_jittered = i + np.random.uniform(-horizontal_jitter, horizontal_jitter, size=len(values))
-        y_jittered = values + np.random.uniform(-vertical_jitter, vertical_jitter, size=len(values))
+def _plot_matrix(
+    ax, data, group_labels, title, horizontal_jitter=0.25, vertical_jitter=0.15
+):
+    color_map = {0: "blue", 1: "green"}
+    label_map = {0: "Christian", 1: "Muslim"}
 
-        all_x.extend(x_jittered)
-        all_y.extend(y_jittered)
-        all_colors.extend([group_labels[i]] * len(values))
+    # Scatter points for each group separately to add legend
+    for group in [0, 1]:
+        idx = [i for i, g in enumerate(group_labels) if g == group]
+        x_jittered = np.array(idx) + np.random.uniform(
+            -horizontal_jitter, horizontal_jitter, size=len(idx)
+        )
+        y_jittered = np.array([data[i] for i in idx]) + np.random.uniform(
+            -vertical_jitter, vertical_jitter, size=len(idx)
+        )
+        ax.scatter(
+            x_jittered,
+            y_jittered,
+            c=color_map[group],
+            edgecolor="black",
+            s=60,
+            label=label_map[group],
+            alpha=0.7,
+        )
 
-    all_x = np.array(all_x)
-    all_y = np.array(all_y)
-    all_colors = np.array(all_colors)
-
-    # KDE for density
-    xy = np.vstack([all_x, all_y])
-    z = scipy.stats.gaussian_kde(xy)(xy)
-
-    # Scatter plot
-    sc = ax.scatter(all_x, all_y, c=all_colors, s=40, edgecolor="black", cmap="coolwarm", alpha=0.7)
-    plt.colorbar(sc, ax=ax, label="Group (0=Christian, 1=Muslim)")
-
-    ax.set_xlabel("Annotators")
-    ax.set_xlim(-0.5, len(data)-0.5)
-    ax.set_ylabel("Hate Speech")
+    ax.set_xlabel("Annotators", fontsize=LABEL_FONTSIZE)
+    ax.set_xlim(-0.5, len(data) - 0.5)
+    ax.set_xticks([])
+    ax.set_ylabel("Hate Speech", fontsize=LABEL_FONTSIZE)
     ax.set_yticks([1, 2, 3, 4, 5])
     ax.set_yticklabels(["☺", "🙂", "😐", "😠", "🤬"])
     ax.set_ylim(0.8, 5.2)
-    ax.set_title(title)
+    ax.set_title(title, fontsize=SUBTITLE_FONTSIZE)
+    ax.legend(title="Annotator Group", loc="upper right")
 
-    # x-axis group labels
-    tick_labels = ["✝️" if label == 0 else "☪️" for label in group_labels]
-    ax.set_xticks(range(len(data)))
-    ax.set_xticklabels(tick_labels, fontsize=8, rotation=90)
 
-def plot_annotation_distributions(graph_dir: Path, n_annotators=100, n_annotations=25, variance=0.3, random_seed=42):
+def plot_annotation_distributions(
+    graph_dir: Path, n_annotators=100, variance=0.3, random_seed=42
+):
     np.random.seed(random_seed)
 
-    unimodal, bimodal, multimodal, uniform, group_labels = _prepare_distributions(
-        n_annotators, n_annotations, variance
+    unimodal, bimodal, multimodal, uniform, group_labels = (
+        _prepare_distributions(n_annotators, variance)
     )
 
     fig, axs = plt.subplots(2, 2, figsize=(18, 12))
     plt.subplots_adjust(hspace=0.3, wspace=0.3)
 
-    _plot_matrix(axs[0, 0], unimodal, group_labels, "Low Disagreement\nLow Polarization")
-    _plot_matrix(axs[0, 1], bimodal, group_labels, "Low Disagreement\nHigh Polarization")
-    _plot_matrix(axs[1, 0], uniform, group_labels, "High Disagreement\nLow Polarization")
-    _plot_matrix(axs[1, 1], multimodal, group_labels, "High Disagreement\nHigh Polarization")
+    _plot_matrix(
+        axs[0, 0], unimodal, group_labels, "Low Disagreement\nLow Polarization"
+    )
+    _plot_matrix(
+        axs[0, 1], bimodal, group_labels, "Low Disagreement\nHigh Polarization"
+    )
+    _plot_matrix(
+        axs[1, 0], uniform, group_labels, "High Disagreement\nLow Polarization"
+    )
+    _plot_matrix(
+        axs[1, 1],
+        multimodal,
+        group_labels,
+        "High Disagreement\nHigh Polarization",
+    )
 
-    fig.suptitle("Annotator disagreement (variance) vs polarization (clustering)")
-    plt.savefig(graph_dir / "disagreement_vs_polarization_100annotators.png")
+    fig.suptitle(
+        "Annotator disagreement vs polarization", fontsize=TITLE_FONTSIZE
+    )
+    plt.savefig(graph_dir / "disagreement_vs_polarization.png")
     plt.close()
 
 
