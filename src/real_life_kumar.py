@@ -111,6 +111,8 @@ def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
         latex_output_dir=latex_output_dir,
         graph_path=graph_output_dir / "kumar.png",
         table_label="tab:kumar",
+        position="h!",
+        small_fontsize=True
     )
 
     ds = KumarDataset(dataset_path=dataset_path)
