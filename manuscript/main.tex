@@ -210,12 +210,15 @@ The \textcite{sap-etal-2022-annotators} dataset includes racism annotations for 
 \section{Results}
 \label{sec:results}
 
-Assuming a confidence level of $\alpha=0.1$ we test whether any of the provided \ac{SDB} dimensions can partially explain polarization in the toxicity/racism annotations. The results for the \textcite{kumar-et-al-2021} and \textcite{sap-etal-2022-annotators} datasets can be found in Tables~\ref{tab:sap_apunim_only} and \ref{tab:kumar_apunim_only} respectively.
+The results for the \textcite{kumar-et-al-2021} and \textcite{sap-etal-2022-annotators} datasets can be found in Tables~\ref{tab:sap_apunim_only} and \ref{tab:kumar_apunim_only} respectively. 
+
+The only shared demographic dimension between the two datasets is \emph{Age}, which consistently shows low apunim scores. The \parencite{sap-etal-2022-annotators} dataset shows large polarization attribution to \emph{Ethnicity} and \emph{Gender}, relative to \emph{Age}. This is an expected result given our intuition \S\ref{sec:intro}.
+
+Results for the \parencite{kumar-et-al-2021} dataset are less conclusive, with no apunim values exceeding $0.1$ in any direction. In relative terms, the annotator being \emph{Parent}, \emph{Transgender} and \emph{Religious} seems to be the most important dimensions when it comes to polarization attribution. There is also a notable deviation between \emph{Heterosexual} and \emph{LGBT} annotators, which is not present between different groups of \emph{LGBT} annotators. We also observe a clear rising polarization attribution the more \emph{Religious} the annotators become.
 
 \input{./generated/sap_apunim_only.tex}
-{\scriptsize
-	\input{./generated/kumar_apunim_only.tex}
-}\
+\input{./generated/kumar_apunim_only.tex}
+
 
 
 \section{Conclusion}
