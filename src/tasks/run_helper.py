@@ -164,10 +164,17 @@ def results_to_latex(
         p_param: Optional parameter; if None, all table entries are replaced
         with dashes.
     """
+    float_format = "%.2f"
+
     # Replace underscores for LaTeX compatibility
     res_df = res_df.replace("_", r"\_")
-    # if p_param is None, then make all rows a dash
-    mask = res_df["p_param"].isna()
+    # Format all numerics to float_format as strings
+    res_df = res_df.applymap(
+        lambda x: float_format[0] % x if isinstance(x, (int, float)) else x
+    )
+    # If p_param is None, then make all rows a dash
+    res_df = res_df.astype(str)
+    mask = res_df.p_param.isna()
     res_df.loc[mask, :] = "---"
 
     # Generate LaTeX string (don't write directly)
@@ -178,7 +185,6 @@ def results_to_latex(
         escape=True,
         columns=columns,
         position="t",
-        float_format="%.4f",
     )
 
     if small_fontsize:
