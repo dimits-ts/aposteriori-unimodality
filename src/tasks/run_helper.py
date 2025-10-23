@@ -175,7 +175,7 @@ def results_to_latex(
     res_df = res_df.replace("_", r"\_")
     # Format all numerics to float_format as strings
     res_df = res_df.applymap(
-        lambda x: float_format[0] % x if isinstance(x, (int, float)) else x
+        lambda x: float_format % x if isinstance(x, (int, float)) else x
     )
     # If p_param is None, then make all rows a dash
     res_df = res_df.astype(str)

@@ -106,6 +106,9 @@ class KumarDataset(preprocessing.Dataset):
 
 def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
     ds = KumarDataset(dataset_path=dataset_path, num_samples=NUM_COMMENTS)
+    graphs.polarization_plot(
+        ds=ds, output_path=graph_output_dir / "kumar_sample.png"
+    )
     run_helper.run_experiments_on_dataset(
         ds,
         latex_output_dir=latex_output_dir,
