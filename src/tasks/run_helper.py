@@ -13,6 +13,8 @@ def run_experiments_on_dataset(
     table_label: str,
     latex_output_dir: Path,
     graph_path: Path,
+    small_fontsize: bool = False,
+    position: str = "t",
 ) -> None:
     dataset_first_name = ds.get_name().split()[0].lower()
 
@@ -42,6 +44,8 @@ def run_experiments_on_dataset(
         table_label=table_label + r"_apunim_only",
         columns=["apunim"],
         two_column=False,
+        position=position,
+        small_fontsize=small_fontsize
     )
 
     graphs.polarization_plot(ds=ds, output_path=graph_path)
@@ -149,6 +153,7 @@ def results_to_latex(
     columns: list[str] | None = None,
     two_column: bool = False,
     small_fontsize: bool = False,
+    position: str = "t",
 ) -> None:
     """
     Export results to a LaTeX table formatted to fit a single column cleanly.
@@ -184,13 +189,13 @@ def results_to_latex(
         label=table_label,
         escape=True,
         columns=columns,
-        position="t",
+        position=position,
     )
 
     if small_fontsize:
         latex_str = latex_str.replace(
             r"\begin{table}",
-            r"\begin{table}\n\small",
+            r"\begin{table}\n\scriptsize",
         )
 
     if two_column:

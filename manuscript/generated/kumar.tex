@@ -1,69 +1,66 @@
 \begin{table*}[t]
 \caption{Apunim results for the kumar dataset}
 \label{tab:kumar}
-\centering\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}llrrr}
+\centering\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lllll}
 \toprule
  &  & apunim & p\_param & p\_nonparam \\
 SDB Feature &  &  &  &  \\
 \midrule
-\multirow[t]{8}{*}{Age} & 18 - 24 & -0.0120 & 0.9728 & 1.0000 \\
- & 25 - 34 & 0.0267 & 0.9632 & 0.9556 \\
- & 35 - 44 & -0.0252 & 0.9605 & 0.9811 \\
- & 45 - 54 & 0.0065 & 0.9843 & 1.0000 \\
- & 55 - 64 & -0.0098 & 0.9701 & 1.0000 \\
- & 65 or older & -0.0040 & 0.9874 & 1.0000 \\
- & Prefer not to say & 0.0000 & NaN & 1.0000 \\
- & Under 18 & 0.0000 & NaN & 1.0000 \\
+\multirow[t]{7}{*}{Age} & 18 - 24 & -0.0437 & 0.8916 & 1.0000 \\
+ & 25 - 34 & 0.0589 & 0.9199 & 0.9750 \\
+ & 35 - 44 & -0.0397 & 0.9507 & 0.9677 \\
+ & 45 - 54 & 0.0117 & 0.9602 & 1.0000 \\
+ & 55 - 64 & 0.0179 & 0.9424 & 1.0000 \\
+ & 65 or older & --- & --- & --- \\
+ & Prefer not to say & --- & --- & --- \\
 \cline{1-5}
-\multirow[t]{10}{*}{Education} & Associate degree & -0.0046 & 0.9894 & 1.0000 \\
- & Bachelor's degree & 0.0229 & 0.9681 & 0.9474 \\
- & College, no degree & -0.0424 & 0.9263 & 0.9956 \\
- & Doctoral degree & 0.0053 & 0.9486 & 1.0000 \\
- & High School graduate & -0.0148 & 0.9617 & 1.0000 \\
- & Master's degree & 0.0162 & 0.9678 & 1.0000 \\
- & No high school & -0.0147 & 0.8842 & 1.0000 \\
- & Other & 0.0000 & NaN & 1.0000 \\
- & Prefer not to say & 0.0000 & NaN & 1.0000 \\
- & Professional degree & -0.0056 & 0.9657 & 1.0000 \\
+\multirow[t]{9}{*}{Education} & Associate degree & -0.0257 & 0.9306 & 1.0000 \\
+ & Bachelor's degree & -0.0611 & 0.9237 & 0.9024 \\
+ & College, no degree & -0.0763 & 0.8670 & 0.9455 \\
+ & Doctoral degree & --- & --- & --- \\
+ & High School graduate & -0.0627 & 0.8811 & 1.0000 \\
+ & Master's degree & 0.0944 & 0.8265 & 1.0000 \\
+ & No high school & -0.2766 & 0.7920 & 1.0000 \\
+ & Other & --- & --- & --- \\
+ & Professional degree & --- & --- & --- \\
 \cline{1-5}
-\multirow[t]{2}{*}{Has Been Targeted} & False & -0.0422 & 0.9304 & 0.9891 \\
- & True & 0.0047 & 0.9929 & 0.9891 \\
+\multirow[t]{2}{*}{Has Been Targeted} & False & -0.0153 & 0.9824 & 1.0000 \\
+ & True & -0.0261 & 0.9701 & 0.9583 \\
 \cline{1-5}
-\multirow[t]{3}{*}{Is Parent} & No & -0.0813 & 0.8883 & 0.9113 \\
- & Prefer not to say & 0.0133 & 0.9466 & 1.0000 \\
- & Yes & 0.0403 & 0.9431 & 0.9918 \\
+\multirow[t]{3}{*}{Is Parent} & No & -0.1724 & 0.7727 & 0.8293 \\
+ & Prefer not to say & --- & --- & --- \\
+ & Yes & 0.1527 & 0.7951 & 0.9024 \\
 \cline{1-5}
-\multirow[t]{3}{*}{Is Transgender} & No & -0.0732 & 0.8504 & 0.9892 \\
- & Prefer not to say & 0.0084 & 0.9402 & 1.0000 \\
- & Yes & -0.0113 & 0.9561 & 1.0000 \\
+\multirow[t]{3}{*}{Is Transgender} & No & -0.1105 & 0.8654 & 0.8824 \\
+ & Prefer not to say & --- & --- & --- \\
+ & Yes & -0.0695 & 0.8842 & 1.0000 \\
 \cline{1-5}
-\multirow[t]{5}{*}{Political Affiliation} & Conservative & 0.0476 & 0.9280 & 0.9720 \\
- & Independent & -0.0142 & 0.9785 & 0.9904 \\
- & Liberal & -0.0328 & 0.9557 & 0.9387 \\
- & Other & -0.0218 & 0.9016 & 1.0000 \\
- & Prefer not to say & 0.0025 & 0.9873 & 1.0000 \\
+\multirow[t]{5}{*}{Political Affiliation} & Conservative & 0.0316 & 0.9471 & 0.9859 \\
+ & Independent & -0.0026 & 0.9968 & 1.0000 \\
+ & Liberal & 0.0197 & 0.9681 & 0.9398 \\
+ & Other & -0.0989 & 0.9565 & 1.0000 \\
+ & Prefer not to say & 0.0044 & 0.9744 & 1.0000 \\
 \cline{1-5}
-\multirow[t]{2}{*}{Seen Toxicity} & False & 0.0451 & 0.9300 & 0.9674 \\
- & True & -0.0898 & 0.8442 & 0.9531 \\
+\multirow[t]{2}{*}{Seen Toxicity} & False & -0.0275 & 0.9679 & 1.0000 \\
+ & True & -0.0574 & 0.9103 & 0.9701 \\
 \cline{1-5}
-\multirow[t]{6}{*}{Sexual Orientation} & Bisexual & 0.0067 & 0.9844 & 1.0000 \\
- & Heterosexual & -0.0522 & 0.9067 & 0.9850 \\
- & Homosexual & -0.0098 & 0.9635 & 1.0000 \\
- & Other & 0.0016 & 0.9863 & 1.0000 \\
- & Prefer not to say & -0.0062 & 0.9697 & 1.0000 \\
- & NaN & 0.0210 & 0.8603 & 1.0000 \\
+\multirow[t]{5}{*}{Sexual Orientation} & Bisexual & 0.0337 & 0.9177 & 1.0000 \\
+ & Heterosexual & -0.1301 & 0.7809 & 0.7818 \\
+ & Homosexual & 0.0280 & 0.8207 & 1.0000 \\
+ & Other & --- & --- & --- \\
+ & Prefer not to say & 0.0123 & 0.9417 & 1.0000 \\
 \cline{1-5}
-\multirow[t]{5}{*}{Thinks Religion Is Important} & Not important & -0.0647 & 0.9035 & 0.9474 \\
- & Not too important & -0.0153 & 0.9634 & 1.0000 \\
- & Prefer not to say & -0.0018 & 0.9827 & 1.0000 \\
- & Somewhat important & 0.0094 & 0.9846 & 0.9929 \\
- & Very important & 0.0442 & 0.9375 & 0.9647 \\
+\multirow[t]{5}{*}{Thinks Religion Is Important} & Not important & -0.1930 & 0.7213 & 0.8060 \\
+ & Not too important & -0.0406 & 0.9261 & 1.0000 \\
+ & Prefer not to say & --- & --- & --- \\
+ & Somewhat important & 0.0033 & 0.9890 & 1.0000 \\
+ & Very important & 0.0545 & 0.9127 & 0.9726 \\
 \cline{1-5}
-\multirow[t]{5}{*}{Thinks Toxicity Is Problem} & Frequently a problem & -0.0156 & 0.9768 & 0.9895 \\
- & Not a problem & 0.0009 & 0.9970 & 1.0000 \\
- & Occasionally a problem & -0.0180 & 0.9742 & 0.9838 \\
- & Rarely a problem & 0.0097 & 0.9819 & 1.0000 \\
- & Very frequently a problem & -0.0199 & 0.9582 & 1.0000 \\
+\multirow[t]{5}{*}{Thinks Toxicity Is Problem} & Frequently a problem & -0.1537 & 0.7922 & 0.8831 \\
+ & Not a problem & -0.0384 & 0.8425 & 1.0000 \\
+ & Occasionally a problem & 0.0876 & 0.8531 & 0.8974 \\
+ & Rarely a problem & -0.0152 & 0.9775 & 1.0000 \\
+ & Very frequently a problem & 0.0162 & 0.9537 & 1.0000 \\
 \cline{1-5}
 \bottomrule
 \end{tabular*}
