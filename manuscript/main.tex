@@ -126,7 +126,7 @@ However, this formulation would not work well. Figure~\ref{fig:ndfu_discussion} 
 \end{equation}
 \noindent where $P(A(c), \theta_i) = \{a(c; \theta) \in A(c) | \theta=\theta_i\}$ is the partition of $A$ for a data-point $c$, for which its annotators belong to the \ac{SDB} group $\theta_i$.
 
-\paragraph{How many annotators?} While our test works best with many annotations per datapoint, the cost required for multiple human annotators is often prohibitive \parencite{rossi_2024}. Figure~\ref{fig::std_error} demonstrates the effect of the number of annotators on the reliability of the polarization estimation. We can see that the metric becomes consistent with about 15 annotators per comment, after which we start to get diminishing results. This experiment was conducted on a subset of the \textcite{sap-etal-2022-annotators} dataset, with LLM annotators having different \acp{SDB}. The full experimental procedure can be found in Appendix \ref{app:llm_annot}.
+\paragraph{How many annotators?} While our test works best with many annotations per datapoint, the cost required for multiple human annotators is often prohibitive \parencite{rossi_2024}. Figure~\ref{fig::std_error} demonstrates that our metric becomes consistent with about 15 annotators per comment. This experiment was conducted on a subset of the \textcite{sap-etal-2022-annotators} dataset, with LLM annotators having different \acp{SDB}. Since we use LLM annotators on one dataset, we can not claim that this finding generalizes to human annotation; it serves only as a preliminary indication. The full experimental procedure can be found in Appendix \ref{app:llm_annot}.
 
   
   \subsection{Apriori polarization}
