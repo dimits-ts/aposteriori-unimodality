@@ -91,13 +91,13 @@ class KumarDataset(preprocessing.Dataset):
                 "personally_seen_toxic_content": "Seen Toxicity",
                 "personally_been_target": "Has Been Targeted",
                 "identify_as_transgender": "Is Transgender",
-                "toxic_comments_problem": "Thinks Toxicity Is Problem",
+                "toxic_comments_problem": "Toxicity Is Problem",
                 "education": "Education",
                 "age_range": "Age",
                 "lgbtq_status": "Sexual Orientation",
                 "political_affilation": "Political Affiliation",
                 "is_parent": "Is Parent",
-                "religion_important": "Thinks Religion Is Important",
+                "religion_important": "Religion Is Important",
                 "toxic_score": "Toxicity",
             }
         )
