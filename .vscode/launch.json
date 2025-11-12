@@ -2,6 +2,18 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python Debugger: Dices",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "src.dices",
+            "args": [
+                "--dataset-path-small=data/dices/350/diverse_safety_adversarial_dialog_350.csv",
+                "--dataset-path-large=data/dices/990/diverse_safety_adversarial_dialog_990.csv",
+                "--graph-output-dir=graphs",
+                "--latex-output-dir=manuscript/generated"
+            ]
+        },
+        {
             "name": "Python Debugger: Module",
             "type": "debugpy",
             "request": "launch",
