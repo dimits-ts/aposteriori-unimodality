@@ -1,6 +1,7 @@
 import typing
 import warnings
 import math
+from collections import namedtuple
 from collections.abc import Collection
 
 import statsmodels.stats.multitest
@@ -12,6 +13,7 @@ from . import _list_dict
 
 
 FactorType = typing.TypeVar("FactorType")
+ApunimResult = namedtuple("ApunimResult", ["apunim", "pvalue"])
 
 
 # code adapted from John Pavlopoulos
@@ -40,12 +42,12 @@ def dfu(x: Collection[float], bins: int, normalized: bool = True) -> float:
     pos_max = np.argmax(hist)
 
     # right search
-    right_diffs = hist[pos_max + 1 :] - hist[pos_max:-1]
+    right_diffs = hist[pos_max + 1:] - hist[pos_max:-1]
     max_rdiff = right_diffs.max(initial=0)
 
     # left search
     if pos_max > 0:
-        left_diffs = hist[0:pos_max] - hist[1 : pos_max + 1]
+        left_diffs = hist[0:pos_max] - hist[1: pos_max + 1]
         max_ldiff = left_diffs[left_diffs > 0].max(initial=0)
     else:
         max_ldiff = 0
@@ -65,7 +67,7 @@ def aposteriori_unimodality(
     pvalue_estimation: str = "both",
     two_sided: bool = True,
     seed: int | None = None,
-) -> dict[str, dict[FactorType, float]]:
+) -> dict[FactorType, ApunimResult]:
     """
     Perform the Aposteriori Unimodality Test to identify whether any annotator
     group, defined by a particular Socio-Demographic Beackground (SDB)
@@ -219,54 +221,31 @@ def aposteriori_unimodality(
 
     # compute raw results per factor
     # if there exist comments of that factor left after filtering
-    apunim_by_factor = {}
-    parametric_by_factor = {}
-    nonparametric_by_factor = {}
+    results = {}
     for factor in all_factors:
         apunim = _aposteriori_polarization_stat(
             observed_dfus=observed_dfu_dict[factor],
             randomized_dfus=apriori_dfu_dict[factor],
         )
-        apunim_by_factor[factor] = apunim
 
-        if pvalue_estimation == "parametric" or pvalue_estimation == "both":
-            pvalue = _aposteriori_pvalue_parametric(
-                randomized_dfus=apriori_dfu_dict[factor],
-                kappa=apunim,
-                two_sided=two_sided,
-            )
-            parametric_by_factor[factor] = pvalue
-
-        if (
-            pvalue_estimation == "non parametric"
-            or pvalue_estimation == "both"
-        ):
-            pvalue = _aposteriori_pvalue_nonparametric(
-                randomized_dfus=apriori_dfu_dict[factor],
-                kappa=apunim,
-                two_sided=two_sided,
-            )
-            nonparametric_by_factor[factor] = pvalue
-
-    results = {
-        "apunim": apunim_by_factor,
-        "p_param": parametric_by_factor,
-        "p_nonparam": nonparametric_by_factor,
-    }
+        pvalue = _aposteriori_pvalue_parametric(
+            randomized_dfus=apriori_dfu_dict[factor],
+            kappa=apunim,
+            two_sided=two_sided,
+        )
+        results[factor] = ApunimResult(apunim=apunim, pvalue=pvalue)
 
     # --- Apply p-value correction per factor (if enabled) ---
     if alpha is not None:
-        # parametric correction
-        if parametric_by_factor:
-            factors, pvals = zip(*parametric_by_factor.items())
-            corrected = _apply_correction_to_results(pvals, alpha)
-            parametric_by_factor = dict(zip(factors, corrected))
-
-        # nonparametric correction
-        if nonparametric_by_factor:
-            factors, pvals = zip(*nonparametric_by_factor.items())
-            corrected = _apply_correction_to_results(pvals, alpha)
-            nonparametric_by_factor = dict(zip(factors, corrected))
+        factors, results_list = zip(*results.items())
+        pvals = [r.pvalue for r in results_list]
+        corrected_pvals = _apply_correction_to_results(pvals, alpha)
+        results = {
+            factor: ApunimResult(r.apunim, corrected_pval)
+            for factor, r, corrected_pval in zip(
+                factors, results_list, corrected_pvals
+            )
+        }
 
     return results
 
@@ -525,34 +504,6 @@ def _aposteriori_pvalue_parametric(
     ).pvalue
 
     return float(p_value)
-
-
-def _aposteriori_pvalue_nonparametric(
-    randomized_dfus: list[list[float]], kappa: float, two_sided: bool
-) -> float:
-    if np.isnan(kappa):
-        return np.nan  # null distribution
-
-    kappa_null = []
-    for i, r in enumerate(randomized_dfus):
-        if len(r) == 0 or np.all(np.isnan(r)):
-            continue
-        O_r = np.nanmean(r)
-        other_means = [
-            _safe_nanmean(rr) for j, rr in enumerate(randomized_dfus) if j != i
-        ]
-        other_means = [m for m in other_means if not np.isnan(m)]
-        if len(other_means) == 0:
-            continue
-        E_r = np.mean(other_means)
-        kappa_null.append((O_r - E_r) / (1.0 - E_r))
-
-    kappa_null = np.array(kappa_null)
-    if two_sided:
-        p_value = np.mean(np.abs(kappa_null) >= abs(kappa))
-    else:
-        p_value = np.mean(kappa_null >= kappa)
-    return p_value
 
 
 def _safe_nanmean(x):

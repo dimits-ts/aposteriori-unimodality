@@ -80,15 +80,17 @@ def run_all_results(
     """
     results = []
     for sdb_column in tqdm(sdb_columns, desc="Evaluating SDB dimensions"):
-        res_df = run_result(
+        res = _run_aposteriori(
             df,
-            sdb_column=sdb_column,
+            feature_col=sdb_column,
             value_col=value_col,
             comment_key_col=comment_key_col,
         )
-        # Ensure index is named (factor values)
+        res_df = pd.DataFrame.from_dict(
+            {k: v._asdict() for k, v in res.items()},
+            orient="index",
+        )
         res_df.index.name = sdb_column
-        # Add a column to store which sdb_column this came from
         res_df["SDB Feature"] = sdb_column
         results.append(res_df)
 
@@ -101,44 +103,6 @@ def run_all_results(
     combined_df.sort_index(inplace=True)
 
     return combined_df
-
-
-def run_result(
-    df: pd.DataFrame,
-    sdb_column: str,
-    value_col: str,
-    comment_key_col: str,
-) -> pd.DataFrame:
-    res = _run_aposteriori(
-        df,
-        feature_col=sdb_column,
-        value_col=value_col,
-        comment_key_col=comment_key_col,
-    )
-
-    # Validate expected structure
-    if not (
-        isinstance(res, dict)
-        and set(res.keys()) == {"apunim", "p_param", "p_nonparam"}
-        and all(isinstance(v, dict) for v in res.values())
-    ):
-        raise ValueError(
-            "Unexpected result format from _run_aposteriori. "
-            "Expected a dict with keys {'apunim', 'p_param', "
-            "'p_nonparam'}, "
-            "each mapping to a dict[FactorType, float]."
-        )
-
-    # Convert to DataFrame
-    res_df = pd.DataFrame(
-        {
-            "apunim": pd.Series(res["apunim"]),
-            "p_param": pd.Series(res["p_param"]),
-            "p_nonparam": pd.Series(res["p_nonparam"]),
-        }
-    )
-
-    return res_df
 
 
 def results_to_latex(
@@ -167,7 +131,7 @@ def results_to_latex(
     # Replace underscores for LaTeX compatibility
     res_df = res_df.replace("_", r"\_")
     # if p_param is None, then make all rows a dash
-    mask = res_df["p_param"].isna()
+    mask = res_df["pvalue"].isna()
     res_df.loc[mask, :] = "---"
 
     # Generate LaTeX string (don't write directly)
@@ -242,7 +206,7 @@ def _run_aposteriori(
     comment_key_col: str,
     iterations: int = 100,
     alpha: float = 0.1,
-) -> dict:
+) -> dict[str, aposteriori.ApunimResult]:
     annotations, attributes, keys = _extract_annotations_and_attributes(
         df=df,
         value_col=value_col,
@@ -250,7 +214,7 @@ def _run_aposteriori(
         comment_key_col=comment_key_col,
     )
 
-    result_dict = aposteriori.aposteriori_unimodality(
+    results = aposteriori.aposteriori_unimodality(
         annotations=annotations,
         factor_group=attributes,
         comment_group=keys,
@@ -259,4 +223,4 @@ def _run_aposteriori(
         seed=42,
     )
 
-    return result_dict
+    return results
