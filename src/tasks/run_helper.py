@@ -32,18 +32,6 @@ def run_experiments_on_dataset(
         two_column=True,
     )
 
-    # apunim-only table
-    results_to_latex(
-        res,
-        output_path=Path(
-            latex_output_dir / f"{dataset_first_name}_apunim_only.tex"
-        ),
-        dataset_name=ds.get_name(),
-        table_label=table_label + r"_apunim_only",
-        columns=["apunim"],
-        two_column=False,
-    )
-
     graphs.polarization_plot(ds=ds, output_path=graph_path)
     print(f"Finished {ds.get_name()} dataset.")
 
@@ -115,61 +103,61 @@ def results_to_latex(
     small_fontsize: bool = False,
 ) -> None:
     """
-    Export results to a LaTeX table formatted to fit a single column cleanly.
-
-    Args:
-        res_df: Results DataFrame.
-        output_path: Path to write the LaTeX file.
-        dataset_name: Name of the dataset (for caption).
-        table_label: LaTeX label for referencing.
-        columns: Optional subset of columns to include.
-        two_column: Whether to use table* environment for two-column layout.
-        small_fontsize: Use \\small instead of normal text.
-        p_param: Optional parameter; if None, all table entries are replaced
-        with dashes.
+    Export results to a single LaTeX table where apunim values include
+    significance stars (as superscripts), and the pvalue column is removed.
     """
-    # Replace underscores for LaTeX compatibility
-    res_df = res_df.replace("_", r"\_")
-    # if p_param is None, then make all rows a dash
-    mask = res_df["pvalue"].isna()
-    res_df.loc[mask, :] = "---"
+    res_df = res_df.replace("_", r"\_", regex=True)
 
-    # Generate LaTeX string (don't write directly)
+    if "pvalue" in res_df.columns and "apunim" in res_df.columns:
+        res_df["apunim"] = res_df.apply(
+            lambda r: (
+                f"{r['apunim']:.4f}{significance_superscript(r['pvalue'])}"
+                if not pd.isna(r["apunim"])
+                else "---"
+            ),
+            axis=1,
+        )
+        res_df = res_df.drop(columns=["pvalue"])
+
+    if columns is None:
+        columns = list(res_df.columns)
+
     latex_str = res_df.to_latex(
         longtable=False,
-        caption=f"Apunim results for the {dataset_name} dataset",
+        caption=(
+            f"Aposteriori unimodality results for the {dataset_name} "
+            "dataset."
+        ),
         label=table_label,
-        escape=True,
+        escape=False,  # allow LaTeX math ($^{*}$)
         columns=columns,
         position="t",
+        index=True,
         float_format="%.4f",
     )
 
+    # Small font
     if small_fontsize:
         latex_str = latex_str.replace(
             r"\begin{table}",
             r"\begin{table}\n\small",
         )
 
+    # Two-column layout support
     if two_column:
-        # Turn table -> table* and add centering on begin
         latex_str = latex_str.replace(r"\begin{table}", r"\begin{table*}")
-        # Ensure end is also table*
         latex_str = latex_str.replace(r"\end{table}", r"\end{table*}")
-        # fill in columns to page width
         latex_str = re.sub(
             r"\\begin\{tabular\}\{([^}]+)\}",
             r"\\centering\\begin{tabular*}{\\textwidth}"
             r"{@{\\extracolsep{\\fill}}\1}",
             latex_str,
         )
-
-        # 3) Replace \end{tabular} -> \end{tabular*}
         latex_str = latex_str.replace(r"\end{tabular}", r"\end{tabular*}")
 
     # Write to file
     output_path.write_text(latex_str)
-    print(f"Table {table_label} exported to {output_path.resolve()}")
+    print(f"Table exported to {output_path.resolve()}")
 
 
 def _extract_annotations_and_attributes(
@@ -224,3 +212,16 @@ def _run_aposteriori(
     )
 
     return results
+
+
+def significance_superscript(p):
+    if pd.isna(p):
+        return ""
+    elif p < 0.001:
+        return r"$^{***}$"
+    elif p < 0.01:
+        return r"$^{**}$"
+    elif p < 0.05:
+        return r"$^{*}$"
+    else:
+        return ""
