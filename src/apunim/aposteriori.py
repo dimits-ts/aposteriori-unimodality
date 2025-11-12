@@ -40,12 +40,12 @@ def dfu(x: Collection[float], bins: int, normalized: bool = True) -> float:
     pos_max = np.argmax(hist)
 
     # right search
-    right_diffs = hist[pos_max + 1:] - hist[pos_max:-1]
+    right_diffs = hist[pos_max + 1 :] - hist[pos_max:-1]
     max_rdiff = right_diffs.max(initial=0)
 
     # left search
     if pos_max > 0:
-        left_diffs = hist[0:pos_max] - hist[1: pos_max + 1]
+        left_diffs = hist[0:pos_max] - hist[1 : pos_max + 1]
         max_ldiff = left_diffs[left_diffs > 0].max(initial=0)
     else:
         max_ldiff = 0
@@ -517,20 +517,14 @@ def _aposteriori_pvalue_parametric(
     if len(kappa_null) < 2:
         return np.nan  # insufficient data
 
-    # estimate mean and standard error
-    mu = np.mean(kappa_null)
-    sigma = np.std(kappa_null, ddof=1)
+    # use a one-sample t-test comparing kappa_null to the observed kappa
+    # H0: mean(kappa_null) == kappa
+    # We compute test statistic for the difference from kappa
+    p_value = scipy.stats.ttest_1samp(
+        kappa_null, kappa, alternative="two-sided" if two_sided else "larger"
+    ).pvalue
 
-    # z-score for observed κ
-    z = (kappa - mu) / sigma
-
-    # compute parametric p-value
-    if two_sided:
-        p_value = 2 * (1 - scipy.stats.norm.cdf(abs(z)))
-    else:
-        p_value = 1 - scipy.stats.norm.cdf(z)
-
-    return p_value
+    return float(p_value)
 
 
 def _aposteriori_pvalue_nonparametric(
@@ -561,14 +555,9 @@ def _aposteriori_pvalue_nonparametric(
     return p_value
 
 
-def _safe_nanmean(arr):
-    arr = np.asarray(arr)
-    if arr.size == 0:
-        return np.nan
-    arr = arr[np.isfinite(arr)]  # drop NaNs
-    if arr.size == 0:
-        return np.nan
-    return np.mean(arr)
+def _safe_nanmean(x):
+    """Helper to compute nanmean safely."""
+    return np.nanmean(x) if len(x) > 0 and not np.all(np.isnan(x)) else np.nan
 
 
 def _apply_correction_to_results(
