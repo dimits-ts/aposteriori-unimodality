@@ -3,7 +3,6 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{acronym}
-\usepackage{longtable}
 \usepackage{booktabs}
 \usepackage{multirow}
 \usepackage{tabularx}
@@ -203,10 +202,32 @@ Since $nDFU \rightarrow [0,1] \Rightarrow apunim \rightarrow [-1,1]$. If $apunim
 	\label{fig:dataset-polarization}
 \end{figure*}
 
-We use the datasets provided by \textcite{kumar-et-al-2021} and \textcite{sap-etal-2022-annotators}. The datasets feature various online comments, each annotated by a number of human annotators (5 and 4-6 annotators per comment respectively). There is a reasonable amount of polarization in most annotations for both dataset, as demonstrated by Figure~\ref{fig:dataset-polarization}.
+We use the datasets provided by \textcite{kumar-et-al-2021} and \textcite{sap-etal-2022-annotators}. They both feature various online comments, each annotated by a number of human annotators (5 and 4-6 annotators per comment respectively). The \textcite{kumar-et-al-2021} dataset stands out for featuring more than 100,000 comments, while also including 10 different dimensions for \acp{SDB} and annotator experiences. %TODO: Annotator experiences are now in the game, remove them from apriori assumption.
 
+We also use the DICES-350 and DICES-990 datasets \parencite{dices}, which are concerned with LLM safety. They feature less annotated comments, but more than an order of magnitude more annotators per comment, making them an invaluable resource for our study.
 
-The \textcite{sap-etal-2022-annotators} dataset includes racism annotations for $626$ Twitter/X comments, and standard \ac{SDB} information (age, race, education, gender). The \textcite{kumar-et-al-2021} dataset measures toxicity on various online comments, and the provided \acp{SDB} include mostly annotator experiences (e.g., whether they have been personally targeted online) as well as standard \ac{SDB} information such as sexual orientation, age and education. Since the dataset is extensive ($106035$ comments), we only select a sample of $2000$, due to computational constraints. Further analysis of the datasets can be found in Appendix TODO.
+Brief dataset characteristics are given in Table~\ref{tab:datasets}. There is a reasonable amount of polarization in most annotations for all datasets as demonstrated by Figure~\ref{fig:dataset-polarization}. %For in-depth information, the reader may refer to Appendix TODO.
+
+\begin{table}[t]
+	\caption{Brief overview of the datasets used in this study. We are interested in the number of comments (\#Comm.), annotators per comment (\#Ann.) and number of \ac{SDB} dimensions (\#Dims.).}
+	\label{tab:datasets}
+	\centering
+	\begin{tabular}{|c|c|c|c|}
+		\toprule
+		Name & \# Comm. & \# Ann. &  \# Dims\\
+		\midrule
+		\hline
+		\textcite{kumar-et-al-2021} &  106,035 & 5-6 & 10 \\
+		\hline
+		\textcite{sap-etal-2022-annotators} & 626 & 5-6 & 4  \\
+		\hline
+		DICES-350 \cite{dices} & 72,103 & 60-70 & 2  \\
+		\hline
+		DICES-990 \cite{dices} & 43,050 & 123 & 2 \\
+		\hline
+	\end{tabular}
+\end{table}
+
 
 
 \section{Results}
