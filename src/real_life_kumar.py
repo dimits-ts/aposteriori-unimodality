@@ -23,13 +23,13 @@ class KumarDataset(preprocessing.Dataset):
             "Seen Toxicity",
             "Has Been Targeted",
             "Is Transgender",
-            "Thinks Toxicity Is Problem",
+            "Toxicity Problem",
             "Education",
             "Age",
             "Sexual Orientation",
             "Political Affiliation",
             "Is Parent",
-            "Thinks Religion Is Important",
+            "Religion Important",
         ]
 
     def get_comment_key_column(self) -> str:
@@ -42,6 +42,7 @@ class KumarDataset(preprocessing.Dataset):
     def _base_df(dataset_path: Path, num_samples: int | None) -> pd.DataFrame:
         df = pd.read_json(dataset_path, lines=True)
         df = df.explode(column="ratings")
+        df = df.dropna()
 
         ratings_df = pd.json_normalize(df.ratings)
         df = pd.concat([df.reset_index(), ratings_df.reset_index()], axis=1)
@@ -60,6 +61,43 @@ class KumarDataset(preprocessing.Dataset):
                 "Some college but no degree": "College, no degree",
             }
         )
+        # define ranking from most to least qualified
+        ranking = [
+            "Doctoral degree",
+            "Master's degree",
+            "Professional degree",
+            "Bachelor's degree",
+            "Associate degree",
+            "College, no degree",
+            "High School graduate",
+            "No high school",
+        ]
+
+        # create a mapping with ordinal prefix: 1), 2), 3)...
+        ordinal_map = {
+            name: f"{i+1}) {name}" for i, name in enumerate(ranking)
+        }
+
+        # apply the new labels
+        df["education"] = df["education"].replace(ordinal_map)
+
+        df = df.replace(
+            {
+                "Very important": "4) Very",
+                "Somewhat important": "3) Somewhat",
+                "Not too important": "2) Not very",
+                "Not important": "1) No",
+            }
+        )
+        df = df.replace(
+            {
+                "Very frequently a problem": "5) Very Frequently",
+                "Frequently a problem": "4) Frequently",
+                "Occasionally a problem": "3) Occasionally",
+                "Rarely a problem": "2) Rarely",
+                "Not a problem": "1) Never",
+            }
+        )
 
         df = df.loc[
             :,
@@ -73,7 +111,7 @@ class KumarDataset(preprocessing.Dataset):
                 "education",
                 "age_range",
                 "lgbtq_status",
-                "political_affilation",
+                "political_affilation",  # sic
                 "is_parent",
                 "religion_important",
             ],
@@ -91,13 +129,13 @@ class KumarDataset(preprocessing.Dataset):
                 "personally_seen_toxic_content": "Seen Toxicity",
                 "personally_been_target": "Has Been Targeted",
                 "identify_as_transgender": "Is Transgender",
-                "toxic_comments_problem": "Thinks Toxicity Is Problem",
+                "toxic_comments_problem": "Toxicity Problem",
                 "education": "Education",
                 "age_range": "Age",
                 "lgbtq_status": "Sexual Orientation",
                 "political_affilation": "Political Affiliation",
                 "is_parent": "Is Parent",
-                "religion_important": "Thinks Religion Is Important",
+                "religion_important": "Religion Important",
                 "toxic_score": "Toxicity",
             }
         )

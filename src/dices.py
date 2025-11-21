@@ -105,12 +105,12 @@ if __name__ == "__main__":
         )
     )
     parser.add_argument(
-        "--dataset-path-small",
+        "--dataset-small-path",
         required=True,
         help="Path to the DICES-350 CSV file.",
     )
     parser.add_argument(
-        "--dataset-path-large",
+        "--dataset-large-path",
         required=True,
         help="Path to the DICES-990 CSV file.",
     )
@@ -126,8 +126,8 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     main(
-        dataset_path_small=Path(args.dataset_path_small),
-        dataset_path_large=Path(args.dataset_path_large),
+        dataset_path_small=Path(args.dataset_small_path),
+        dataset_path_large=Path(args.dataset_large_path),
         latex_output_dir=Path(args.latex_output_dir),
         graph_output_dir=Path(args.graph_output_dir),
     )

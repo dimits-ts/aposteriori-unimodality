@@ -19,11 +19,11 @@ class HundredDataset(preprocessing.Dataset):
 
     def get_sdb_columns(self) -> list[str]:
         return [
-            "age",
-            "gender",
-            "sexual_orientation",
-            "education_level",
-            "political_affiliation",
+            "Age",
+            "Gender",
+            "Sexual Orientation",
+            "Education",
+            "Politics",
         ]
 
     def get_comment_key_column(self) -> str:
@@ -33,14 +33,23 @@ class HundredDataset(preprocessing.Dataset):
         return "hate_speech"
 
     @staticmethod
-    def _base_df(dataset_path: Path):
+    def _base_df(dataset_path: Path) -> pd.DataFrame:
         df = pd.read_csv(dataset_path)
-        df = df.rename(columns={"sex": "gender", "annotation": "hate_speech"})
+        df = df.rename(
+            columns={
+                "age": "Age",
+                "sex": "Gender",
+                "annotation": "hate_speech",
+                "education_level": "Education",
+                "political_affiliation": "Politics",
+                "sexual_orientation": "Sexual Orientation",
+            }
+        )
         grouped_df = df.groupby("text", as_index=False).agg(list)
-        grouped_df.age = grouped_df.age.apply(
+        grouped_df.Age = grouped_df.Age.apply(
             lambda ls: preprocessing.process_age_list(ls)
         )
-        return grouped_df
+        return pd.DataFrame(grouped_df)
 
 
 def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):

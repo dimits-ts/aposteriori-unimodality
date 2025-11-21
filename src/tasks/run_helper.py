@@ -130,7 +130,7 @@ def results_to_latex(
         label=table_label,
         escape=False,  # allow LaTeX math ($^{*}$)
         columns=columns,
-        position="t",
+        position="ht",
         index=True,
         float_format="%.4f",
     )
@@ -192,7 +192,7 @@ def _run_aposteriori(
     feature_col: str,
     comment_key_col: str,
     iterations: int = 100,
-    alpha: float = 0.1,
+    alpha: float = 0.05,
 ) -> dict[str, aposteriori.ApunimResult]:
     annotations, attributes, keys = _extract_annotations_and_attributes(
         df=df,

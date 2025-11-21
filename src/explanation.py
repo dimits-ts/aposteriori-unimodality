@@ -3,6 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
+from numpy.typing import NDArray
 import seaborn as sns
 import scipy.stats
 
@@ -136,7 +137,7 @@ def plot_annotation_distributions(
     plt.close()
 
 
-def dfu_plots(colors: list[str], graph_dir: Path) -> None:
+def dfu_plots(colors, graph_dir: Path) -> None:
     d1 = _truncated_normal(loc=2, scale=1.3, size=INTUITION_SIZE)
     d2 = _truncated_normal(loc=8, scale=1.3, size=INTUITION_SIZE)
     d_all = np.hstack([d1, d2])
@@ -268,8 +269,8 @@ def _dfu_plot(data: np.ndarray, graph_path: Path, color: str, label) -> None:
 
 def _plot_example_individual(
     title: str,
-    women_annot: list[float],
-    men_annot: list[float],
+    women_annot: NDArray[np.float64],
+    men_annot: NDArray[np.float64],
     graph_path: Path,
 ):
     ndfu_man = aposteriori.dfu(men_annot, bins=NUM_BINS, normalized=True)
