@@ -32,16 +32,16 @@
 \section{Introduction}
 \label{sec:intro}
 
-Annotations are essential for a wide range of tasks, especially in fields such as content moderation, toxicity detection and hate speech detection. These tasks are especially essential for training systems that protect vulnerable and minority groups in online spaces, where they are often targeted \parencite{un_hate_speech_targets, ucdavis_hate_speech}. However, annotations for such tasks are subjective, and are usually based on majority-group annotators. This may limit the usefulness of the data, or even lead to biased and misconfigured systems.
+Annotations are essential for a wide range of tasks, especially in fields such as content moderation, toxicity detection and hate speech detection. These tasks are especially essential for training systems that protect vulnerable and minority groups in online spaces, where they are often targeted \parencite{un_hate_speech_targets, ucdavis_hate_speech}. However, annotations for such tasks are subjective and usually based on majority-group annotators. This may at best limit the usefulness of the data, or at worst lead to biased and misconfigured systems.
 
-The core of the problem is simple; if a comment targets marginalized groups, there can be cases where most annotators overlook it, while the few marginalized annotators vehemently disagree in vain. An example of such cases would be racist comments that are presented with coded language (usually referred to as ``dog-whistles'' \parencite{quaranto2022dog}), which are not picked up by most annotators, but only by ones belonging in the targeted minority. Inversely, majority-group annotators may bias their own annotations against the minority-group annotators; CITATION for instance shows that toxicity models disproportionally marked African American speech as ``toxic''. This issue exists even in representative samples.  %TODO: Add figure here
+The core of the problem is simple; if a comment targets marginalized groups, there can be cases where most annotators overlook it, while the few marginalized annotators vehemently disagree in vain. An example of such cases would be racist comments that are presented with coded language (usually referred to as ``dog-whistles'' \parencite{quaranto2022dog}), which are not picked up by most annotators, but only by ones belonging in the targeted minority. Inversely, majority-group annotators may bias their own annotations against the minority-group annotators. \textcite{sap-etal-2019-risk} for instance show that toxicity models disproportionally marked African American speech as ``toxic''.
 
-\emph{Inter-annotator agreement}  is often used to detect such cases \parencite{petra_2022_handling}. Metrics based on agreement  mostly measure annotation variance, which may not be an optimal problem formulation for detecting such cases. \emph{Polarization} is a better instrument in this regard, since it formulates annotation analysis as a cluster identification problem \parencite{Pavlopoulos2023, pavlopoulos-likas-2024}---specifically whether two or more annotation clusters are present. Figure~\ref{fig:disagreement_vs_polarization} displays how the two methods handle four common cases of annotation distributions for a hypothetical toxicity annotation task.
+\emph{Inter-annotator agreement}  is often used to detect such cases \parencite{petra_2022_handling}. Metrics based on agreement  mostly measure annotation variance, which may not be an optimal problem formulation for detecting such cases. \emph{Polarization} is a better instrument in this regard, since it formulates annotation analysis as a cluster identification problem \parencite{Pavlopoulos2023, pavlopoulos-likas-2024}---specifically whether two or more annotation clusters are present (Figure~\ref{fig:disagreement_vs_polarization}).
 
-\begin{figure}
+\begin{figure}[ht]
 	\centering
-	\includegraphics[width=\linewidth]{disagreement_vs_polarization.png}
-	\caption{A comment annotated by 100 annotators. Disagreement is similar to variance; thus it overlooks cases where annotators may be ``split down the middle''. Polarization on the other hand, is able to identify multiple clusters, even if they are close together.}
+	\includegraphics[width=\columnwidth]{disagreement_vs_polarization.png}
+	\caption{Disagreement is similar to variance; thus it overlooks cases where annotators may be ``split down the middle''. Polarization on the other hand, is able to identify multiple clusters even if they are close together.}
 	\label{fig:disagreement_vs_polarization}
 \end{figure}
 
@@ -61,9 +61,6 @@ We instead propose the \emph{``Aposteriori Unimodality (Apunim) Metric''}, which
 
 \section{Methodology}
 \label{sec:methodology}
-
-In this section, we provide a formal mathematical formulation for the problem of attributing polarization to specific annotator characteristics (\S\ref{ssec:methodology:problem}), and offer an intuitive rationale for how established polarization metrics can be leveraged (\S\ref{ssec:methodology:intuition}). We then explain how we can measure polarization for each group  (\S\ref{ssec:methodology:polstat}) and how much of that polarization is caused by external variables  (\S\ref{ssec:methodology:apriori}). Finally, we introduce our metric, which computes attribution on the entire dataset for each sociodemographic group (\S\ref{ssec:methodology:aposteriori}).
-
 
 \subsection{Problem Formulation}
 \label{ssec:methodology:problem}
@@ -226,6 +223,7 @@ Brief dataset characteristics are given in Table~\ref{tab:datasets}. There is a 
 
 Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{SDB} dimensions can partially explain polarization in the toxicity/racism annotations. The results for the \textcite{kumar-et-al-2021} and \textcite{sap-etal-2022-annotators} datasets can be found in Tables~\ref{tab:sap} and \ref{tab:kumar} respectively.
 
+
 \input{./generated/sap.tex}
 {\scriptsize
 	\input{./generated/kumar.tex}
@@ -249,6 +247,7 @@ Since there are no other established tests that attribute polarization to sociod
 
 While our works aims to help protect marginalized and disadvantaged groups by attributing polarization to certain subgroups, it can be taken advantage of by malicious actors. Given a dataset with fine-grained \ac{SDB} information, these actors can use our test to target specific vulnerable groups. We thus urge researchers to keep datasets including such information protected, and provided to others only under explicit permission.
 
+% force floats to appear 
 \clearpage
 \printbibliography
 
