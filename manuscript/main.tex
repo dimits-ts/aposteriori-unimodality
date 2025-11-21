@@ -265,7 +265,6 @@ While our works aims to help protect marginalized and disadvantaged groups by at
 \section {Acronyms}
 
 \begin{acronym}[WWW]
-    \acro{VMD}{Virtual Moderation Dataset}
     \acro{LLM}{Large Language Model}
     \acro{SDB}{SocioDemographic Background}
     \acro{nDFU}{normalized Distance From Unimodality}
@@ -297,7 +296,8 @@ Note the absence of any statistically significant results for both parametric an
 \input{./generated/kumar.tex}
 
 
-\section{Synthetic Datasets}
+\section{LLM Annotation}
+\label{app:llm_annot}
 
 \begin{figure*}[t]
 	\includegraphics[width=\columnwidth]{synthetic_100.png}
@@ -306,18 +306,12 @@ Note the absence of any statistically significant results for both parametric an
 	\label{fig:dataset-polarization-synthetic}
 \end{figure*}
 
-We use two synthetic datasets; one is the \ac{VMD} presented in \textcite{tsirmpas2025scalableevaluationonlinefacilitation}. This dataset features $140$ discussions, each having $14$ comments (and usually up to $14$ facilitator comments), each comment annotated by 10 \ac{LLM} annotators, each supplied with a different \ac{SDB}. The second dataset, is an extension of \ac{VMD}, where we select four random unmoderated discussions, and employ 100 distinct \ac{LLM} annotators.
-
 An issue with synthetic datasets is the lack of overall polarization (see Figure~\ref{fig:dataset-polarization-synthetic}). This can be offset by the ability of synthetic datasets to be scaled to a much greater extent than human datasets. This is because LLMs do not have cost and availability constraints of humans.
 
-The results for the 100-annotator dataset can be found in Table~\ref{tab:100}. We can not obtain results for the \ac{VMD} dataset, since no comment exhibited apriori polarization while also being represented by more than two annotators of different groups. The lack of overall polarization, as well as the quantitatively smaller apunim values, suggest that \ac{SDB} prompting can not be used to simulate annotations for human groups. This is consistent with relevant literature on the topic \parencite{anthis_2025,hewitt2024predicting,rossi_2024,jansen_2023,bisbee_2023,neumann_2025}.
+The results for the 100-annotator dataset can be found in Table~\ref{tab:100}. The lack of overall polarization, as well as the quantitatively smaller apunim values, suggest that \ac{SDB} prompting can not be used to simulate annotations for human groups. This is consistent with relevant literature on the topic \parencite{anthis_2025,hewitt2024predicting,rossi_2024,jansen_2023,bisbee_2023,neumann_2025}.
 
-%\input{./generated/100.tex}
+\input{./generated/100.tex}
 
 
-\section{LLM Annotation}
-\label{app:llm_annot}
-
-TODO
 
 \end{document}
