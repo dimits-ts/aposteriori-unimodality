@@ -59,8 +59,8 @@ def dfu(x: Collection[float], bins: int, normalized: bool = True) -> float:
 
 def aposteriori_unimodality(
     annotations: Collection[float],
-    factor_group: Collection[FactorType],
-    comment_group: Collection[FactorType],
+    factor_group: Collection[FactorType],  # type: ignore
+    comment_group: Collection[FactorType],  # type: ignore
     num_bins: int | None = None,
     iterations: int = 100,
     alpha: float | None = 0.05,
@@ -159,8 +159,8 @@ def aposteriori_unimodality(
         pvalue_estimation,
     )
     annotations = np.array(annotations)
-    factor_group_arr: NDArray[Any] = np.array(factor_group)
-    comment_group_arr: NDArray[Any] = np.array(comment_group)
+    factor_group: NDArray[Any] = np.array(factor_group)
+    comment_group: NDArray[Any] = np.array(comment_group)
 
     all_factors = _unique(factor_group)
 
@@ -169,9 +169,9 @@ def aposteriori_unimodality(
     for curr_comment_id in _unique(comment_group):
         is_in_curr_comment = comment_group == curr_comment_id
         all_comment_annotations = annotations[is_in_curr_comment]
-        comment_annotator_groups = factor_group_arr[is_in_curr_comment]
+        comment_annotator_groups = factor_group[is_in_curr_comment]
 
-        if _comment_is_valid(
+        if len(all_comment_annotations) > 0 and _comment_is_valid(
             comment_annotations=all_comment_annotations,
             comment_annotator_groups=comment_annotator_groups,
             bins=bins,
@@ -181,10 +181,10 @@ def aposteriori_unimodality(
     if not valid_comments:
         raise ValueError("No polarized comments found.")
 
-    valid_mask = np.isin(comment_group_arr, valid_comments)
+    valid_mask = np.isin(comment_group, valid_comments)
     annotations = annotations[valid_mask]
-    factor_group_arr = factor_group_arr[valid_mask]
-    comment_group_arr = comment_group_arr[valid_mask]
+    factor_group = factor_group[valid_mask]
+    comment_group = comment_group[valid_mask]
     # update all_factors in case some factors no longer have comments
     all_factors: Collection[FactorType] = _unique(factor_group)
 
@@ -194,7 +194,7 @@ def aposteriori_unimodality(
     for curr_comment_id in valid_comments:
         is_in_curr_comment = comment_group == curr_comment_id
         all_comment_annotations = annotations[is_in_curr_comment]
-        comment_annotator_groups = factor_group_arr[is_in_curr_comment]
+        comment_annotator_groups = factor_group[is_in_curr_comment]
 
         lengths_by_factor = {
             factor: int(np.count_nonzero(comment_annotator_groups == factor))
@@ -233,6 +233,7 @@ def aposteriori_unimodality(
             kappa=apunim,
             two_sided=two_sided,
         )
+
         results[factor] = ApunimResult(apunim=apunim, pvalue=pvalue)
 
     # --- Apply p-value correction per factor (if enabled) ---
@@ -453,6 +454,12 @@ def _aposteriori_polarization_stat(
     means = [_safe_nanmean(r) for r in randomized_dfus]
     means = [m for m in means if not np.isnan(m)]
     if len(means) == 0:
+        warnings.warn(
+            "Apunim statistic is NaN because all randomized DFU estimates "
+            "were NaN. This typically means that randomized groups were empty "
+            "or had no variation in annotations.",
+            RuntimeWarning,
+        )
         return np.nan
 
     E_f = np.mean(means)
@@ -462,6 +469,11 @@ def _aposteriori_polarization_stat(
             "The aposteriori test may be unreliable."
         )
     if E_f == 1:
+        warnings.warn(
+            "Apunim statistic is NaN because the expected DFU (E_f) is 1, "
+            "meaning all random partitions were already maximally polarized.",
+            RuntimeWarning,
+        )
         return np.nan
 
     apunim = (O_f - E_f) / (1.0 - E_f)
@@ -475,6 +487,12 @@ def _aposteriori_pvalue_parametric(
     Parametric p-value estimation for κ using a normal approximation.
     """
     if np.isnan(kappa):
+        warnings.warn(
+            "p-value could not be computed because the apunim statistic "
+            "is NaN. This usually happens when a factor has no valid "
+            "annotations.",
+            RuntimeWarning,
+        )
         return np.nan
 
     # compute null distribution of kappa as before
@@ -494,7 +512,14 @@ def _aposteriori_pvalue_parametric(
 
     kappa_null = np.array(kappa_null)
     if len(kappa_null) < 2:
-        return np.nan  # insufficient data
+        warnings.warn(
+            "p-value is NaN because the null distribution for kappa "
+            "could not be estimated (fewer than two valid randomized "
+            "DFU values). This often occurs when comments contain too few "
+            "annotations per group.",
+            RuntimeWarning,
+        )
+        return np.nan
 
     # use a one-sample t-test comparing kappa_null to the observed kappa
     # H0: mean(kappa_null) == kappa

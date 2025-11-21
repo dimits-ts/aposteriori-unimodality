@@ -50,6 +50,7 @@ class DicesDataset(preprocessing.Dataset):
                 "Asian/Asian subcontinent": "Asian",
                 "Black/African American": "African American",
                 "LatinX, Latino, Hispanic or Spanish Origin": "Latino",
+                "Self-describe (below)": "Other"
             }
         )
         # add numbers for proper ordering during export
@@ -85,7 +86,7 @@ def main(
         ds,
         latex_output_dir=latex_output_dir,
         graph_path=graph_output_dir / "dices-350.png",
-        table_label="tab:kumar",
+        table_label="tab:dices-350",
     )
 
     ds = DicesDataset(dataset_path=dataset_path_large, variant="990")
@@ -93,7 +94,7 @@ def main(
         ds,
         latex_output_dir=latex_output_dir,
         graph_path=graph_output_dir / "dices-990.png",
-        table_label="tab:kumar",
+        table_label="tab:dices-990",
     )
 
 
