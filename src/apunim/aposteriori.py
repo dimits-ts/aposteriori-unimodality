@@ -148,7 +148,6 @@ def aposteriori_unimodality(
     rng = np.random.default_rng(seed=seed)
     bins = num_bins if num_bins is not None else len(_unique(annotations))
 
-    # data prep
     _validate_input(
         annotations,
         factor_group,
@@ -158,60 +157,109 @@ def aposteriori_unimodality(
         alpha,
         pvalue_estimation,
     )
+
     annotations = np.array(annotations)
     factor_group: NDArray[Any] = np.array(factor_group)
     comment_group: NDArray[Any] = np.array(comment_group)
-
     all_factors = _unique(factor_group)
 
-    # --- FIRST LOOP: Identify valid comments ---
-    valid_comments = []
-    for curr_comment_id in _unique(comment_group):
-        is_in_curr_comment = comment_group == curr_comment_id
-        all_comment_annotations = annotations[is_in_curr_comment]
-        comment_annotator_groups = factor_group[is_in_curr_comment]
-
-        if len(all_comment_annotations) > 0 and _comment_is_valid(
-            comment_annotations=all_comment_annotations,
-            comment_annotator_groups=comment_annotator_groups,
-            bins=bins,
-        ):
-            valid_comments.append(curr_comment_id)
-
+    # Identify comments with actual polarization
+    valid_comments = _get_valid_comments(
+        annotations=annotations,
+        comment_group=comment_group,
+        factor_group=factor_group,
+        bins=bins,
+    )
     if not valid_comments:
         raise ValueError("No polarized comments found.")
 
+    (
+        annotations,
+        factor_group,
+        comment_group,
+        all_factors,
+    ) = _filter_to_valid_comments(
+        annotations,
+        factor_group,
+        comment_group,
+        valid_comments,
+    )
+
+    observed_dfu_dict, apriori_dfu_dict = _compute_dfu_distributions(
+        valid_comments,
+        annotations,
+        factor_group,
+        comment_group,
+        all_factors,
+        bins,
+        iterations,
+        rng,
+    )
+
+    results = _compute_factor_results(
+        observed_dfu_dict,
+        apriori_dfu_dict,
+        all_factors,
+        two_sided,
+    )
+
+    # Apply p-value correction if needed
+    if alpha is not None:
+        results = _correct_pvalues(results, alpha)
+
+    return results
+
+
+def _filter_to_valid_comments(
+    annotations,
+    factor_group,
+    comment_group,
+    valid_comments,
+):
     valid_mask = np.isin(comment_group, valid_comments)
     annotations = annotations[valid_mask]
     factor_group = factor_group[valid_mask]
     comment_group = comment_group[valid_mask]
-    # update all_factors in case some factors no longer have comments
-    all_factors: Collection[FactorType] = _unique(factor_group)
 
-    # gather stats per comment
+    # update factors after filtering
+    all_factors = _unique(factor_group)
+
+    return annotations, factor_group, comment_group, all_factors
+
+
+def _compute_dfu_distributions(
+    valid_comments,
+    annotations,
+    factor_group,
+    comment_group,
+    all_factors,
+    bins,
+    iterations,
+    rng,
+):
     observed_dfu_dict = _list_dict._ListDict()
     apriori_dfu_dict = _list_dict._ListDict()
-    for curr_comment_id in valid_comments:
-        is_in_curr_comment = comment_group == curr_comment_id
-        all_comment_annotations = annotations[is_in_curr_comment]
-        comment_annotator_groups = factor_group[is_in_curr_comment]
 
+    for curr_comment in valid_comments:
+        mask = comment_group == curr_comment
+        comment_ann = annotations[mask]
+        comment_groups = factor_group[mask]
+
+        # counts per factor
         lengths_by_factor = {
-            factor: int(np.count_nonzero(comment_annotator_groups == factor))
+            factor: int(np.count_nonzero(comment_groups == factor))
             for factor in all_factors
         }
 
+        # observed DFUs
         observed_dfu_dict.add_dict(
-            _factor_dfu_stat(
-                all_comment_annotations,
-                comment_annotator_groups,
-                bins=bins,
-            )
+            _factor_dfu_stat(comment_ann, comment_groups, bins=bins)
         )
 
+        # randomized apriori DFUs
         apriori_dfu_dict.add_dict(
             _apriori_polarization_stat(
-                annotations=all_comment_annotations,
+                annotations=comment_ann,
                 group_sizes=lengths_by_factor,
                 bins=bins,
                 iterations=iterations,
@@ -219,9 +267,17 @@ def aposteriori_unimodality(
             )
         )
 
-    # compute raw results per factor
-    # if there exist comments of that factor left after filtering
+    return observed_dfu_dict, apriori_dfu_dict
+
+
+def _compute_factor_results(
+    observed_dfu_dict,
+    apriori_dfu_dict,
+    all_factors,
+    two_sided,
+):
     results = {}
+
     for factor in all_factors:
         apunim = _aposteriori_polarization_stat(
             observed_dfus=observed_dfu_dict[factor],
@@ -236,19 +292,42 @@ def aposteriori_unimodality(
 
         results[factor] = ApunimResult(apunim=apunim, pvalue=pvalue)
 
-    # --- Apply p-value correction per factor (if enabled) ---
-    if alpha is not None:
-        factors, results_list = zip(*results.items())
-        pvals = [r.pvalue for r in results_list]
-        corrected_pvals = _apply_correction_to_results(pvals, alpha)
-        results = {
-            factor: ApunimResult(r.apunim, corrected_pval)
-            for factor, r, corrected_pval in zip(
-                factors, results_list, corrected_pvals
-            )
-        }
-
     return results
+
+
+def _correct_pvalues(results, alpha):
+    factors, result_objs = zip(*results.items())
+    pvals = [r.pvalue for r in result_objs]
+
+    corrected = _apply_correction_to_results(pvals, alpha)
+
+    return {
+        f: ApunimResult(r.apunim, cp)
+        for f, r, cp in zip(factors, result_objs, corrected)
+    }
+
+
+def _get_valid_comments(
+    annotations: NDArray[np.float64],
+    comment_group: NDArray[np.int64],
+    factor_group: NDArray[Any],
+    bins: int,
+) -> list[int]:
+    # --- FIRST LOOP: Identify valid comments ---
+    valid_comments = []
+    for curr_comment_id in _unique(comment_group):
+        is_in_curr_comment = comment_group == curr_comment_id
+        all_comment_annotations = annotations[is_in_curr_comment]
+        comment_annotator_groups = factor_group[is_in_curr_comment]
+
+        if len(all_comment_annotations) > 0 and _comment_is_valid(
+            comment_annotations=all_comment_annotations,
+            comment_annotator_groups=comment_annotator_groups,
+            bins=bins,
+        ):
+            valid_comments.append(curr_comment_id)
+
+    return valid_comments
 
 
 def _validate_input(
@@ -542,25 +621,54 @@ def _apply_correction_to_results(
     """
     Apply multiple hypothesis correction to a list of p-values.
     Returns corrected p-values in the same order.
-    """
-    if len(pvalues) == 0:
-        return np.array([])
 
-    if np.any((np.array(pvalues) < 0) | (np.array(pvalues) > 1)):
+    NaN p-values are excluded from correction (because FDR procedures
+    cannot operate on undefined hypotheses). They are restored to NaN
+    in their original positions after correction.
+    """
+    pvals = np.array(pvalues, dtype=float)
+
+    if np.any((pvals[~np.isnan(pvals)] < 0) | (pvals[~np.isnan(pvals)] > 1)):
         raise ValueError("Invalid pvalues given for correction.")
 
-    return _apply_correction(pvalues, alpha)
+    return _apply_correction(pvals, alpha)
 
 
-def _apply_correction(pvalues: Collection[float], alpha: float) -> NDArray:
-    corrected_stats = statsmodels.stats.multitest.multipletests(
-        np.array(pvalues),
+def _apply_correction(pvalues: NDArray, alpha: float) -> NDArray:
+    """
+    FDR correction that handles NaNs safely.
+
+    Steps:
+    1. Identify valid (non-NaN) p-values.
+    2. Apply FDR-BH only to valid p-values.
+    3. Restore NaN positions to the output.
+    """
+    pvals = np.array(pvalues, dtype=float)
+    valid_mask = ~np.isnan(pvals)
+    valid_pvals = pvals[valid_mask]
+
+    # If no valid values exist, return array of NaN
+    if len(valid_pvals) == 0:
+        warnings.warn(
+            "All p-values are NaN; skipping multiple-testing correction.",
+            RuntimeWarning,
+        )
+        return pvals  # all NaN array
+
+    # Perform FDR correction on valid p-values
+    corrected_valid = statsmodels.stats.multitest.multipletests(
+        valid_pvals,
         alpha=alpha,
         method="fdr_bh",
         is_sorted=False,
         returnsorted=False,
-    )
-    return corrected_stats[1]
+    )[1]
+
+    # Create output array and restore NaNs
+    corrected = np.full_like(pvals, np.nan)
+    corrected[valid_mask] = corrected_valid
+
+    return corrected
 
 
 def _to_hist(scores: Collection[float], bins: int) -> NDArray:
