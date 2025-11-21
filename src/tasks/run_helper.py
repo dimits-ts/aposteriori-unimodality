@@ -111,7 +111,7 @@ def results_to_latex(
         res_df["apunim"] = res_df.apply(
             lambda r: (
                 f"{r['apunim']:.4f}{significance_superscript(r['pvalue'])}"
-                if not pd.isna(r["apunim"])
+                if not pd.isna(r["pvalue"])
                 else "---"
             ),
             axis=1,

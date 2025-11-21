@@ -203,7 +203,7 @@ if __name__ == "__main__":
         max_new_tokens=10,
     )
 
-    texts = get_texts("data/kumar.json", num_comments=200)
+    texts = get_texts(Path("data/kumar.json"), num_comments=200)
 
     with open("data/annotation/prompt.txt", "r") as file:
         instructions = file.read()
