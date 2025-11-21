@@ -10,31 +10,6 @@ from tqdm.auto import tqdm
 
 from . import real_life_kumar
 
-
-@dataclasses.dataclass(frozen=True)
-class Persona:
-    """
-    A dataclass holding information about the synthetic persona of a LLM actor.
-    Includes sociodemographic traits and personality traits.
-    """
-
-    age: int = -1
-    sex: str = ""
-    sexual_orientation: str = ""
-    education_level: str = ""
-    political_affiliation: str = ""
-
-    def to_dict(self):
-        return dataclasses.asdict(self)
-
-    def to_json_file(self, output_path: str) -> None:
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(self.to_dict(), f, indent=2, ensure_ascii=False)
-
-    def __str__(self):
-        return json.dumps(self.to_dict(), ensure_ascii=False, indent=2)
-
-
 SEX_OPTIONS = ["male", "female", "non-binary"]
 SEX_WEIGHTS = [0.48, 0.50, 0.02]
 
@@ -64,6 +39,30 @@ POLITICAL_AFFILIATION_OPTIONS = [
     "apolitical",
 ]
 POLITICAL_AFFILIATION_WEIGHTS = [0.25, 0.35, 0.25, 0.15]
+
+
+@dataclasses.dataclass(frozen=True)
+class Persona:
+    """
+    A dataclass holding information about the synthetic persona of a LLM actor.
+    Includes sociodemographic traits and personality traits.
+    """
+
+    age: int = -1
+    sex: str = ""
+    sexual_orientation: str = ""
+    education_level: str = ""
+    political_affiliation: str = ""
+
+    def to_dict(self):
+        return dataclasses.asdict(self)
+
+    def to_json_file(self, output_path: str) -> None:
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(self.to_dict(), f, indent=2, ensure_ascii=False)
+
+    def __str__(self):
+        return json.dumps(self.to_dict(), ensure_ascii=False, indent=2)
 
 
 # ---------------------------
