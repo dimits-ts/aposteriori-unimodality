@@ -18,7 +18,6 @@ def sample_se_vs_sample_size_unimodality(
     df: pd.DataFrame,
     annotation_col: str,
     group_col: str,
-    comment_col: str,
     bins: int = 5,
     min_size: int = 2,
     max_size: int = 100,
@@ -126,8 +125,7 @@ def get_dataset_variance(dataset: preprocessing.Dataset) -> pd.DataFrame:
     res_df = sample_se_vs_sample_size_unimodality(
         df=dataset.get_dataset().reset_index(),
         annotation_col=dataset.get_annotation_column(),
-        group_col="gender",
-        comment_col=dataset.get_comment_key_column(),
+        group_col="Gender",
         bins=5,
         min_size=3,
         max_size=100,
@@ -150,7 +148,7 @@ def main(
         dataset_path=dices_small_path, variant="dices-350"
     )
     dices990 = dices.DicesDataset(
-        dataset_path=dices_small_path, variant="dices-990"
+        dataset_path=dices_large_path, variant="dices-990"
     )
 
     variance_df_ls = []
@@ -160,8 +158,13 @@ def main(
         variance_df_ls.append(res_df)
     variance_df = pd.concat(variance_df_ls, ignore_index=True)
 
-    variance_df(
-        res_df, graph_path=graph_dir / "ndfu_std_error_sample_size.png"
+    plot_variance_curve(
+        variance_df.loc[variance_df.dataset.isin("dices-350", "dices-990")],
+        graph_path=graph_dir / "ndfu_std_error_sample_size.png",
+    )
+    plot_variance_curve(
+        variance_df,
+        graph_path=graph_dir / "ndfu_std_error_sample_size_llm.png",
     )
 
 
