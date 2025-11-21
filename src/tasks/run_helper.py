@@ -29,7 +29,6 @@ def run_experiments_on_dataset(
         output_path=latex_output_dir / f"{dataset_first_name}.tex",
         dataset_name=dataset_first_name,
         table_label=table_label,
-        two_column=True,
     )
 
     graphs.polarization_plot(ds=ds, output_path=graph_path)

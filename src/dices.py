@@ -44,6 +44,23 @@ class DicesDataset(preprocessing.Dataset):
         df.Q_overall = df.Q_overall.map(
             {"No": -1, "Unsure": "0", "Yes": 1}
         ).astype(int)
+
+        df = df.replace(
+            {
+                "Asian/Asian subcontinent": "Asian",
+                "Black/African American": "African American",
+                "LatinX, Latino, Hispanic or Spanish Origin": "Latino",
+            }
+        )
+        # add numbers for proper ordering during export
+        df = df.replace(
+            {
+                "gen x+": "1) Gen. X+",
+                "millenial": "2) Millenial",
+                "gen z": "3) Gen. Z",
+            }
+        )
+
         df = df.groupby("item_id").agg(list).reset_index()
         df = df.rename(
             columns={
