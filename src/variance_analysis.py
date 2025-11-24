@@ -1,15 +1,18 @@
+# Revised script with syntactically-correct caching and dynamic sample sizes.
+
 import typing
 import argparse
 from pathlib import Path
 
 import pandas as pd
 import numpy as np
+import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression
 from tqdm.auto import tqdm
 
 from .tasks import graphs
-from . import synthetic_100
+from .tasks import preprocessing
+from . import synthetic_100, dices
 from .apunim import aposteriori
 
 
@@ -17,48 +20,68 @@ def sample_se_vs_sample_size_unimodality(
     df: pd.DataFrame,
     annotation_col: str,
     group_col: str,
-    comment_col: str,
     bins: int = 5,
     min_size: int = 2,
-    max_size: int = 100,
-    step: int = 10,
+    max_size: typing.Optional[int] = None,
+    step: int = 1,
     iters: int = 30,
+    min_comment_annotators: int = 3,
 ) -> pd.DataFrame:
-    """
-    Sample decreasing subsets of annotations and compute the standard error
+    """Sample decreasing subsets of annotations and compute the standard error
     of Aposteriori Unimodality statistics at each sample size.
 
-    :param df: DataFrame with annotations, factor groups, and comment ids.
-    :param annotation_col: Column name for list of annotations.
-    :param group_col: Column name for list of factor groups (e.g., annot_sex).
-    :param comment_col: Column name for list of comment ids.
-    :param bins: Number of bins for DFU.
-    :param min_size: Minimum sample size to consider.
-    :param max_size: Maximum sample size to consider.
-    :param step: Step size to decrease sample size.
-    :param iters: Repetitions per sample size for averaging.
-    :return: DataFrame with columns [sample_size, standard_error]
+    This version:
+    - If max_size is None, uses the maximum number of annotators found across
+      comments in `df[annotation_col]`.
+    - Skips comments that have fewer than `min_comment_annotators`.
     """
-    results: list[dict[str, typing.Any]] = []
-    for size in tqdm(range(min_size, max_size + 1, step), desc="#Annotators"):
-        iter_ses = []
 
-        for _ in tqdm(range(iters), desc="#Comments", leave=False):
-            sample_stats = []
+    # determine max_size dynamically if not provided
+    if max_size is None:
+        # ensure we handle empty lists gracefully
+        max_size = 0
+        for a in df[annotation_col]:
+            try:
+                max_size = max(max_size, len(a))
+            except Exception:
+                # if entries are not list-like, attempt to coerce
+                max_size = max(max_size, int(a))
+        max_size = int(max_size)
+
+    results: list[dict[str, typing.Any]] = []
+
+    for size in tqdm(range(min_size, max_size + 1, step), desc="#Annotators"):
+        iter_ses: list[float] = []
+
+        for _ in tqdm(range(iters), desc="#Iterations", leave=False):
+            sample_stats: list[float] = []
 
             # loop over comments
             for _, row in df.iterrows():
-                annotations = np.array(row[annotation_col])
-                groups = np.array(row[group_col])
+                anns = row[annotation_col]
+                grps = row[group_col]
 
-                # skip if not enough annotators
-                if len(annotations) < size:
+                # skip comments with too few annotators
+                if anns is None:
+                    continue
+                try:
+                    n_ann = len(anns)
+                except Exception:
+                    # if annotations are stored differently, skip
                     continue
 
+                if n_ann < min_comment_annotators:
+                    continue
+
+                # skip if not enough annotators for this sample size
+                if n_ann < size:
+                    continue
+
+                annotations = np.array(anns)
+                groups = np.array(grps)
+
                 # subsample
-                idx = np.random.choice(
-                    len(annotations), size=size, replace=False
-                )
+                idx = np.random.choice(n_ann, size=size, replace=False)
                 sub_ann = annotations[idx]
                 sub_grp = groups[idx]
 
@@ -69,67 +92,143 @@ def sample_se_vs_sample_size_unimodality(
 
                 # collect values (drop NaNs)
                 sample_stats.extend(
-                    [v for v in stats_dict.values() if not np.isnan(v)]
+                    [float(v) for v in stats_dict.values() if not np.isnan(v)]
                 )
 
             # compute SE for this iteration
             if len(sample_stats) > 1:
-                se = np.std(sample_stats, ddof=1) / np.sqrt(len(sample_stats))
+                se = float(
+                    np.std(sample_stats, ddof=1) / np.sqrt(len(sample_stats))
+                )
                 iter_ses.append(se)
 
         # average SE across iterations
         if len(iter_ses) > 0:
             results.append(
-                {"sample_size": size, "standard_error": np.mean(iter_ses)}
+                {
+                    "sample_size": size,
+                    "standard_error": float(np.mean(iter_ses)),
+                }
             )
 
     return pd.DataFrame(results)
 
 
 def plot_variance_curve(results_df: pd.DataFrame, graph_path: Path) -> None:
-    results_df = results_df.sort_values("sample_size")
+    # Ensure proper ordering
+    if "dataset" in results_df.columns:
+        results_df = results_df.sort_values(["dataset", "sample_size"])
+    else:
+        results_df = results_df.sort_values(["sample_size"])
 
-    x = results_df["sample_size"].values.reshape(-1, 1)
-    y = results_df["standard_error"].values
+    plt.figure(figsize=(10, 6))
 
-    model = LinearRegression()
-    model.fit(x, y)
-    y_pred = model.predict(x)
+    # Lineplot for each dataset (if present)
+    if "dataset" in results_df.columns:
+        sns.lineplot(
+            data=results_df,
+            x="sample_size",
+            y="standard_error",
+            hue="dataset",
+            marker="o",
+        )
+    else:
+        sns.lineplot(
+            data=results_df, x="sample_size", y="standard_error", marker="o"
+        )
 
-    plt.figure(figsize=(8, 5))
-    plt.plot(
-        x,
-        y_pred,
-        label=f"Linear Fit: y={model.coef_[0]:.4f}x + {model.intercept_:.4f}",
-        color="tab:orange",
-    )
-    plt.plot(x, y, color="tab:blue", marker="o")
-    plt.xlabel("#Annotators")
-    plt.ylabel("Std error of Polarization Statistic")
-    plt.title("Sample size affects pol-statistic estimation")
+    if "dataset" in results_df.columns:
+        for ds_name, subdf in results_df.groupby("dataset"):
+            if len(subdf) >= 2:
+                sns.regplot(
+                    data=subdf,
+                    x="sample_size",
+                    y="standard_error",
+                    scatter=False,
+                    label=f"{ds_name} trend",
+                    ci=None,
+                )
+
+    plt.xlabel("# Annotators")
+    plt.ylabel("Std Error of Polarization Statistic")
+    plt.title("Sample Size Effects on Polarization Statistic Estimation")
     plt.grid(True)
-    plt.legend()
     plt.tight_layout()
 
     graphs.save_plot(graph_path)
     plt.close()
 
 
-def main(dataset_path: Path, graph_dir: Path):
-    ds = synthetic_100.HundredDataset(dataset_path=dataset_path)
+def get_dataset_variance(
+    dataset: preprocessing.Dataset,
+    cache_dir: Path,
+    min_comment_annotators: int,
+) -> pd.DataFrame:
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    cache_file = cache_dir / f"{dataset.get_name()}_variance.csv"
+
+    if cache_file.exists():
+        print(
+            f"Loading cached variance results for {dataset.get_name()}"
+            f"from {cache_file}"
+        )
+        return pd.read_csv(cache_file)
+
+    print(f"Computing variance results for {dataset.get_name()}...")
     res_df = sample_se_vs_sample_size_unimodality(
-        df=ds.get_dataset().reset_index(),
-        annotation_col=ds.get_annotation_column(),
-        group_col="gender",
-        comment_col=ds.get_comment_key_column(),
+        df=dataset.get_dataset().reset_index(),
+        annotation_col=dataset.get_annotation_column(),
+        group_col="Gender",
         bins=5,
         min_size=3,
-        max_size=100,
+        max_size=None,  # let the function determine the proper max
         step=1,
         iters=1000,
+        min_comment_annotators=min_comment_annotators,
     )
+
+    res_df.to_csv(cache_file, index=False)
+    return res_df
+
+
+def main(
+    hundred_dataset_path: Path,
+    dices_small_path: Path,
+    dices_large_path: Path,
+    graph_dir: Path,
+    cache_dir: Path,
+    min_comment_annotators: int = 3,
+):
+    ds_hundred = synthetic_100.HundredDataset(
+        dataset_path=hundred_dataset_path
+    )
+    dices350 = dices.DicesDataset(
+        dataset_path=dices_small_path, variant="dices-350"
+    )
+    dices990 = dices.DicesDataset(
+        dataset_path=dices_large_path, variant="dices-990"
+    )
+
+    variance_df_ls = []
+
+    for dataset in [ds_hundred, dices350, dices990]:
+        res_df = get_dataset_variance(
+            dataset, cache_dir, min_comment_annotators=min_comment_annotators
+        )
+        res_df["dataset"] = dataset.get_name()
+        variance_df_ls.append(res_df)
+
+    variance_df = pd.concat(variance_df_ls, ignore_index=True)
+
+    # plot only the two dices variants
     plot_variance_curve(
-        res_df, graph_path=graph_dir / "ndfu_std_error_sample_size.png"
+        variance_df.loc[variance_df.dataset.isin(["dices-350", "dices-990"])],
+        graph_path=graph_dir / "ndfu_std_error_sample_size.png",
+    )
+
+    plot_variance_curve(
+        variance_df,
+        graph_path=graph_dir / "ndfu_std_error_sample_size_llm.png",
     )
 
 
@@ -138,17 +237,42 @@ if __name__ == "__main__":
         description=("Create plots analyzing effect of #annotators.")
     )
     parser.add_argument(
-        "--dataset-path",
+        "--hundred-dataset-path",
         required=True,
         help="Path to the 100 annotator CSV file.",
     )
     parser.add_argument(
-        "--graph-output-dir",
+        "--dices-small-path",
         required=True,
-        help="Directory for the graphs.",
+        help="Path to the DICES 350 annotator CSV file.",
     )
+    parser.add_argument(
+        "--dices-large-path",
+        required=True,
+        help="Path to the DICES 990 annotator CSV file.",
+    )
+    parser.add_argument(
+        "--graph-output-dir", required=True, help="Directory for the graphs."
+    )
+    parser.add_argument(
+        "--cache-dir",
+        required=True,
+        help="Directory for cached variance computations.",
+    )
+    parser.add_argument(
+        "--min-comment-annotators",
+        type=int,
+        default=3,
+        help="Minimum annotators per comment to include in sampling.",
+    )
+
     args = parser.parse_args()
+
     main(
-        dataset_path=Path(args.dataset_path),
+        hundred_dataset_path=Path(args.hundred_dataset_path),
+        dices_small_path=Path(args.dices_small_path),
+        dices_large_path=Path(args.dices_large_path),
         graph_dir=Path(args.graph_output_dir),
+        cache_dir=Path(args.cache_dir),
+        min_comment_annotators=args.min_comment_annotators,
     )

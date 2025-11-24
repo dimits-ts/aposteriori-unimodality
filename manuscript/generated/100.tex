@@ -1,38 +1,38 @@
-\begin{table*}[t]
-\caption{Apunim results for the 100 dataset}
+\begin{table}[h]
+\caption{Aposteriori unimodality results for the 100 dataset.}
 \label{tab:synthetic_100}
-\centering\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lllll}
+\begin{tabular}{lll}
 \toprule
- &  & apunim & p\_param & p\_nonparam \\
-SDB Feature &  &  &  &  \\
+ &  & apunim \\
+SDB Feature &  &  \\
 \midrule
-\multirow[t]{4}{*}{age} & 0-20 & 0.0447 & 0.8422 & 0.8256 \\
- & 20-40 & -0.0310 & 0.9492 & 0.9590 \\
- & 40-60 & -0.0829 & 0.8636 & 0.8667 \\
- & 60-80 & 0.0415 & 0.9300 & 0.9385 \\
-\cline{1-5}
-\multirow[t]{7}{*}{education\_level} & bachelor's degree & -0.0649 & 0.8474 & 0.8564 \\
- & doctoral degree & -0.0107 & 0.9614 & 0.9744 \\
- & master's degree & -0.0155 & 0.9609 & 0.9538 \\
- & no formal education & -0.0596 & 0.8557 & 0.8769 \\
- & primary education & 0.0275 & 0.9392 & 0.9487 \\
- & secondary education & 0.0197 & 0.9676 & 0.9846 \\
- & vocational training & 0.0007 & 0.9970 & 1.0000 \\
-\cline{1-5}
-\multirow[t]{3}{*}{gender} & female & 0.0095 & 0.9833 & 1.0000 \\
- & male & -0.0144 & 0.9807 & 0.9795 \\
- & non-binary & 0.0298 & 0.8955 & 0.9231 \\
-\cline{1-5}
-\multirow[t]{4}{*}{political\_affiliation} & apolitical & -0.0381 & 0.9238 & 0.9128 \\
- & centrist & -0.0100 & 0.9851 & 0.9795 \\
- & left-wing & -0.0205 & 0.9670 & 0.9641 \\
- & right-wing & 0.0044 & 0.9899 & 0.9897 \\
-\cline{1-5}
-\multirow[t]{4}{*}{sexual\_orientation} & asexual & 0.0031 & 0.9876 & 0.9949 \\
- & bisexual & -0.0338 & 0.9017 & 0.9077 \\
- & heterosexual & -0.0037 & 0.9973 & 0.9846 \\
- & homosexual & 0.0319 & 0.9047 & 0.9231 \\
-\cline{1-5}
+\multirow[t]{4}{*}{Age} & 0-20 & 0.0447$^{*}$ \\
+ & 20-40 & -0.0310 \\
+ & 40-60 & -0.0829$^{*}$ \\
+ & 60-80 & 0.0415 \\
+\cline{1-3}
+\multirow[t]{7}{*}{Education} & bachelor's degree & -0.0649$^{*}$ \\
+ & doctoral degree & -0.0107 \\
+ & master's degree & -0.0155 \\
+ & no formal education & -0.0596$^{*}$ \\
+ & primary education & 0.0275 \\
+ & secondary education & 0.0197 \\
+ & vocational training & 0.0007 \\
+\cline{1-3}
+\multirow[t]{3}{*}{Gender} & female & 0.0095 \\
+ & male & -0.0144 \\
+ & non-binary & 0.0298 \\
+\cline{1-3}
+\multirow[t]{4}{*}{Politics} & apolitical & -0.0381 \\
+ & centrist & -0.0100 \\
+ & left-wing & -0.0205 \\
+ & right-wing & 0.0044 \\
+\cline{1-3}
+\multirow[t]{4}{*}{Sexual Orientation} & asexual & 0.0031 \\
+ & bisexual & -0.0338 \\
+ & heterosexual & -0.0037 \\
+ & homosexual & 0.0319 \\
+\cline{1-3}
 \bottomrule
-\end{tabular*}
-\end{table*}
+\end{tabular}
+\end{table}

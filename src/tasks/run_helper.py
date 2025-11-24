@@ -31,21 +31,6 @@ def run_experiments_on_dataset(
         output_path=latex_output_dir / f"{dataset_first_name}.tex",
         dataset_name=dataset_first_name,
         table_label=table_label,
-        two_column=True,
-    )
-
-    # apunim-only table
-    results_to_latex(
-        res,
-        output_path=Path(
-            latex_output_dir / f"{dataset_first_name}_apunim_only.tex"
-        ),
-        dataset_name=ds.get_name(),
-        table_label=table_label + r"_apunim_only",
-        columns=["apunim"],
-        two_column=False,
-        position=position,
-        small_fontsize=small_fontsize
     )
 
     graphs.polarization_plot(ds=ds, output_path=graph_path)
@@ -84,15 +69,17 @@ def run_all_results(
     """
     results = []
     for sdb_column in tqdm(sdb_columns, desc="Evaluating SDB dimensions"):
-        res_df = run_result(
+        res = _run_aposteriori(
             df,
-            sdb_column=sdb_column,
+            feature_col=sdb_column,
             value_col=value_col,
             comment_key_col=comment_key_col,
         )
-        # Ensure index is named (factor values)
+        res_df = pd.DataFrame.from_dict(
+            {k: v._asdict() for k, v in res.items()},
+            orient="index",
+        )
         res_df.index.name = sdb_column
-        # Add a column to store which sdb_column this came from
         res_df["SDB Feature"] = sdb_column
         results.append(res_df)
 
@@ -107,44 +94,6 @@ def run_all_results(
     return combined_df
 
 
-def run_result(
-    df: pd.DataFrame,
-    sdb_column: str,
-    value_col: str,
-    comment_key_col: str,
-) -> pd.DataFrame:
-    res = _run_aposteriori(
-        df,
-        feature_col=sdb_column,
-        value_col=value_col,
-        comment_key_col=comment_key_col,
-    )
-
-    # Validate expected structure
-    if not (
-        isinstance(res, dict)
-        and set(res.keys()) == {"apunim", "p_param", "p_nonparam"}
-        and all(isinstance(v, dict) for v in res.values())
-    ):
-        raise ValueError(
-            "Unexpected result format from _run_aposteriori. "
-            "Expected a dict with keys {'apunim', 'p_param', "
-            "'p_nonparam'}, "
-            "each mapping to a dict[FactorType, float]."
-        )
-
-    # Convert to DataFrame
-    res_df = pd.DataFrame(
-        {
-            "apunim": pd.Series(res["apunim"]),
-            "p_param": pd.Series(res["p_param"]),
-            "p_nonparam": pd.Series(res["p_nonparam"]),
-        }
-    )
-
-    return res_df
-
-
 def results_to_latex(
     res_df: pd.DataFrame,
     output_path: Path,
@@ -156,67 +105,61 @@ def results_to_latex(
     position: str = "t",
 ) -> None:
     """
-    Export results to a LaTeX table formatted to fit a single column cleanly.
-
-    Args:
-        res_df: Results DataFrame.
-        output_path: Path to write the LaTeX file.
-        dataset_name: Name of the dataset (for caption).
-        table_label: LaTeX label for referencing.
-        columns: Optional subset of columns to include.
-        two_column: Whether to use table* environment for two-column layout.
-        small_fontsize: Use \\small instead of normal text.
-        p_param: Optional parameter; if None, all table entries are replaced
-        with dashes.
+    Export results to a single LaTeX table where apunim values include
+    significance stars (as superscripts), and the pvalue column is removed.
     """
-    float_format = "%.2f"
+    res_df = res_df.replace("_", r"\_", regex=True)
 
-    # Replace underscores for LaTeX compatibility
-    res_df = res_df.replace("_", r"\_")
-    # Format all numerics to float_format as strings
-    res_df = res_df.applymap(
-        lambda x: float_format % x if isinstance(x, (int, float)) else x
-    )
-    # If p_param is None, then make all rows a dash
-    res_df = res_df.astype(str)
-    mask = res_df.p_param.isna()
-    res_df.loc[mask, :] = "---"
+    if "pvalue" in res_df.columns and "apunim" in res_df.columns:
+        res_df["apunim"] = res_df.apply(
+            lambda r: (
+                f"{r['apunim']:.4f}{significance_superscript(r['pvalue'])}"
+                if not pd.isna(r["pvalue"])
+                else "---"
+            ),
+            axis=1,
+        )
+        res_df = res_df.drop(columns=["pvalue"])
 
-    # Generate LaTeX string (don't write directly)
+    if columns is None:
+        columns = list(res_df.columns)
+
     latex_str = res_df.to_latex(
         longtable=False,
-        caption=f"Apunim results for the {dataset_name} dataset",
+        caption=(
+            f"Aposteriori unimodality results for the {dataset_name} "
+            "dataset."
+        ),
         label=table_label,
-        escape=True,
+        escape=False,  # allow LaTeX math ($^{*}$)
         columns=columns,
-        position=position,
+        position="h",
+        index=True,
+        float_format="%.4f",
     )
 
+    # Small font
     if small_fontsize:
         latex_str = latex_str.replace(
             r"\begin{table}",
             r"\begin{table}\n\scriptsize",
         )
 
+    # Two-column layout support
     if two_column:
-        # Turn table -> table* and add centering on begin
         latex_str = latex_str.replace(r"\begin{table}", r"\begin{table*}")
-        # Ensure end is also table*
         latex_str = latex_str.replace(r"\end{table}", r"\end{table*}")
-        # fill in columns to page width
         latex_str = re.sub(
             r"\\begin\{tabular\}\{([^}]+)\}",
             r"\\centering\\begin{tabular*}{\\textwidth}"
             r"{@{\\extracolsep{\\fill}}\1}",
             latex_str,
         )
-
-        # 3) Replace \end{tabular} -> \end{tabular*}
         latex_str = latex_str.replace(r"\end{tabular}", r"\end{tabular*}")
 
     # Write to file
     output_path.write_text(latex_str)
-    print(f"Table {table_label} exported to {output_path.resolve()}")
+    print(f"Table exported to {output_path.resolve()}")
 
 
 def _extract_annotations_and_attributes(
@@ -252,8 +195,8 @@ def _run_aposteriori(
     feature_col: str,
     comment_key_col: str,
     iterations: int = 100,
-    alpha: float = 0.1,
-) -> dict:
+    alpha: float = 0.05,
+) -> dict[str, aposteriori.ApunimResult]:
     annotations, attributes, keys = _extract_annotations_and_attributes(
         df=df,
         value_col=value_col,
@@ -261,7 +204,7 @@ def _run_aposteriori(
         comment_key_col=comment_key_col,
     )
 
-    result_dict = aposteriori.aposteriori_unimodality(
+    results = aposteriori.aposteriori_unimodality(
         annotations=annotations,
         factor_group=attributes,
         comment_group=keys,
@@ -270,4 +213,17 @@ def _run_aposteriori(
         seed=42,
     )
 
-    return result_dict
+    return results
+
+
+def significance_superscript(p):
+    if pd.isna(p):
+        return ""
+    elif p < 0.001:
+        return r"$^{***}$"
+    elif p < 0.01:
+        return r"$^{**}$"
+    elif p < 0.05:
+        return r"$^{*}$"
+    else:
+        return ""

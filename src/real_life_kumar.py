@@ -20,16 +20,19 @@ class KumarDataset(preprocessing.Dataset):
 
     def get_sdb_columns(self) -> list[str]:
         return [
-            "Seen Toxicity",
-            "Has Been Targeted",
-            "Is Transgender",
-            "Thinks Toxicity Is Problem",
-            "Education",
+            "Gender",
+            "Ethnicity",
             "Age",
+            "Education",
             "Sexual Orientation",
+            "Is Transgender",
             "Political Affiliation",
             "Is Parent",
-            "Thinks Religion Is Important",
+            "Technology Impact",
+            "Toxicity Problem",
+            "Religion Important",
+            "Seen Toxicity",
+            "Has Been Targeted",
         ]
 
     def get_comment_key_column(self) -> str:
@@ -42,6 +45,7 @@ class KumarDataset(preprocessing.Dataset):
     def _base_df(dataset_path: Path, num_samples: int | None) -> pd.DataFrame:
         df = pd.read_json(dataset_path, lines=True)
         df = df.explode(column="ratings")
+        df = df.dropna()
 
         ratings_df = pd.json_normalize(df.ratings)
         df = pd.concat([df.reset_index(), ratings_df.reset_index()], axis=1)
@@ -60,12 +64,61 @@ class KumarDataset(preprocessing.Dataset):
                 "Some college but no degree": "College, no degree",
             }
         )
+        # define ranking from most to least qualified
+        ranking = [
+            "Doctoral degree",
+            "Master's degree",
+            "Professional degree",
+            "Bachelor's degree",
+            "Associate degree",
+            "College, no degree",
+            "High School graduate",
+            "No high school",
+        ]
+
+        # create a mapping with ordinal prefix: 1), 2), 3)...
+        ordinal_map = {
+            name: f"{i+1}) {name}" for i, name in enumerate(ranking)
+        }
+
+        # apply the new labels
+        df["education"] = df["education"].replace(ordinal_map)
+
+        df = df.replace(
+            {
+                "Very important": "4) Very",
+                "Somewhat important": "3) Somewhat",
+                "Not too important": "2) Not very",
+                "Not important": "1) No",
+            }
+        )
+        df = df.replace(
+            {
+                "Very frequently a problem": "5) Very Frequently",
+                "Frequently a problem": "4) Frequently",
+                "Occasionally a problem": "3) Occasionally",
+                "Rarely a problem": "2) Rarely",
+                "Not a problem": "1) Never",
+            }
+        )
+        df = df.replace(
+            {
+                "Very positive": "5) Very positive",
+                "Somewhat positive": "4) Somewhat positive",
+                # wtf?
+                "Neutral \u00e2\u0080\u0093 neither positive nor negative": "3) Neutral",
+                "Somewhat negative": "2) Somewhat negative",
+                "Very negative": "1) Very negative",
+            }
+        )
 
         df = df.loc[
             :,
             [
                 "comment",
                 "toxic_score",
+                "gender",
+                "race",
                 "personally_seen_toxic_content",
                 "personally_been_target",
                 "identify_as_transgender",
@@ -73,11 +126,13 @@ class KumarDataset(preprocessing.Dataset):
                 "education",
                 "age_range",
                 "lgbtq_status",
-                "political_affilation",
+                "political_affilation",  # sic
                 "is_parent",
                 "religion_important",
+                "technology_impact",
             ],
         ]
+        df.race = df.race.apply(KumarDataset._simplify_ethnicity)
         df = df.groupby("comment").agg(list)
 
         if num_samples is not None:
@@ -91,38 +146,42 @@ class KumarDataset(preprocessing.Dataset):
                 "personally_seen_toxic_content": "Seen Toxicity",
                 "personally_been_target": "Has Been Targeted",
                 "identify_as_transgender": "Is Transgender",
-                "toxic_comments_problem": "Toxicity Is Problem",
+                "toxic_comments_problem": "Toxicity Problem",
                 "education": "Education",
                 "age_range": "Age",
                 "lgbtq_status": "Sexual Orientation",
                 "political_affilation": "Political Affiliation",
                 "is_parent": "Is Parent",
-                "religion_important": "Religion Is Important",
+                "religion_important": "Religion Important",
                 "toxic_score": "Toxicity",
+                "gender": "Gender",
+                "race": "Ethnicity",
+                "technology_impact": "Technology Impact",
             }
         )
         return df
 
+    @staticmethod
+    def _simplify_ethnicity(x):
+        if isinstance(x, list):
+            # If your field is a list (after aggregation)
+            x = x[0]
 
-def group_education(ds: KumarDataset) -> KumarDataset:
-    education_groups = {
-        "Associate degree": "Higher Education",
-        "Bachelor's degree": "Higher Education",
-        "Master's degree": "Higher Education",
-        "Doctoral degree": "Higher Education",
-        "Professional degree": "Higher Education",
-        "High School graduate": "Lower Education",
-        "No high school": "Lower Education",
-        "College, no degree": "Lower Education",
-        "Other": "Lower Education",
-        "Prefer not to say": "Lower Education",
-    }
+        if pd.isna(x):
+            return "Unknown"
 
-    # Update each element in the list
-    ds.df["Education"] = ds.df["Education"].apply(
-        lambda lst: [education_groups.get(e, "Unknown") for e in lst]
-    )
-    return ds
+        if "," in x:
+            return "Multiracial"
+
+        mapping = {
+            "Asian": "Asian",
+            "Black or African American": "Black",
+            "Hispanic": "Hispanic",
+            "White": "White",
+            "Other": "Other",
+            "Prefer not to say": "Unknown",
+        }
+        return mapping.get(x, "Other")
 
 
 def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):

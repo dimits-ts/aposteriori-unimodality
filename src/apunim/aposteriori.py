@@ -1,17 +1,19 @@
-import typing
 import warnings
 import math
+from collections import namedtuple
 from collections.abc import Collection
+from typing import Any, TypeVar
 
 import statsmodels.stats.multitest
 import scipy.stats
 import numpy as np
-import numpy.typing
+from numpy.typing import NDArray
 
 from . import _list_dict
 
 
-FactorType = typing.TypeVar("FactorType")
+FactorType = TypeVar("FactorType")
+ApunimResult = namedtuple("ApunimResult", ["apunim", "pvalue"])
 
 
 # code adapted from John Pavlopoulos
@@ -57,15 +59,15 @@ def dfu(x: Collection[float], bins: int, normalized: bool = True) -> float:
 
 def aposteriori_unimodality(
     annotations: Collection[float],
-    factor_group: Collection[FactorType],
-    comment_group: Collection[FactorType],
+    factor_group: Collection[FactorType],  # type: ignore
+    comment_group: Collection[FactorType],  # type: ignore
     num_bins: int | None = None,
     iterations: int = 100,
     alpha: float | None = 0.05,
     pvalue_estimation: str = "both",
     two_sided: bool = True,
     seed: int | None = None,
-) -> dict[str, dict[FactorType, float]]:
+) -> dict[FactorType, ApunimResult]:
     """
     Perform the Aposteriori Unimodality Test to identify whether any annotator
     group, defined by a particular Socio-Demographic Beackground (SDB)
@@ -144,9 +146,8 @@ def aposteriori_unimodality(
         per comment. The pvalue estimation is non-parametric.
     """
     rng = np.random.default_rng(seed=seed)
-    bins = num_bins if num_bins is not None else len(np.unique(annotations))
+    bins = num_bins if num_bins is not None else len(_unique(annotations))
 
-    # data prep
     _validate_input(
         annotations,
         factor_group,
@@ -156,60 +157,109 @@ def aposteriori_unimodality(
         alpha,
         pvalue_estimation,
     )
-    annotations = np.array(annotations)
-    factor_group = np.array(factor_group)
-    comment_group = np.array(comment_group)
 
+    annotations = np.array(annotations)
+    factor_group: NDArray[Any] = np.array(factor_group)
+    comment_group: NDArray[Any] = np.array(comment_group)
     all_factors = _unique(factor_group)
 
-    # --- FIRST LOOP: Identify valid comments ---
-    valid_comments = []
-    for curr_comment_id in _unique(comment_group):
-        is_in_curr_comment = comment_group == curr_comment_id
-        all_comment_annotations = annotations[is_in_curr_comment]
-        comment_annotator_groups = factor_group[is_in_curr_comment]
-
-        if _comment_is_valid(
-            comment_annotations=all_comment_annotations,
-            comment_annotator_groups=comment_annotator_groups,
-            bins=bins,
-        ):
-            valid_comments.append(curr_comment_id)
-
+    # Identify comments with actual polarization
+    valid_comments = _get_valid_comments(
+        annotations=annotations,
+        comment_group=comment_group,
+        factor_group=factor_group,
+        bins=bins,
+    )
     if not valid_comments:
         raise ValueError("No polarized comments found.")
 
+    (
+        annotations,
+        factor_group,
+        comment_group,
+        all_factors,
+    ) = _filter_to_valid_comments(
+        annotations,
+        factor_group,
+        comment_group,
+        valid_comments,
+    )
+
+    observed_dfu_dict, apriori_dfu_dict = _compute_dfu_distributions(
+        valid_comments,
+        annotations,
+        factor_group,
+        comment_group,
+        all_factors,
+        bins,
+        iterations,
+        rng,
+    )
+
+    results = _compute_factor_results(
+        observed_dfu_dict,
+        apriori_dfu_dict,
+        all_factors,
+        two_sided,
+    )
+
+    # Apply p-value correction if needed
+    if alpha is not None:
+        results = _correct_pvalues(results, alpha)
+
+    return results
+
+
+def _filter_to_valid_comments(
+    annotations,
+    factor_group,
+    comment_group,
+    valid_comments,
+):
     valid_mask = np.isin(comment_group, valid_comments)
     annotations = annotations[valid_mask]
     factor_group = factor_group[valid_mask]
     comment_group = comment_group[valid_mask]
-    # update all_factors in case some factors no longer have comments
+
+    # update factors after filtering
     all_factors = _unique(factor_group)
 
-    # gather stats per comment
+    return annotations, factor_group, comment_group, all_factors
+
+
+def _compute_dfu_distributions(
+    valid_comments,
+    annotations,
+    factor_group,
+    comment_group,
+    all_factors,
+    bins,
+    iterations,
+    rng,
+):
     observed_dfu_dict = _list_dict._ListDict()
     apriori_dfu_dict = _list_dict._ListDict()
-    for curr_comment_id in valid_comments:
-        is_in_curr_comment = comment_group == curr_comment_id
-        all_comment_annotations = annotations[is_in_curr_comment]
-        comment_annotator_groups = factor_group[is_in_curr_comment]
 
+    for curr_comment in valid_comments:
+        mask = comment_group == curr_comment
+        comment_ann = annotations[mask]
+        comment_groups = factor_group[mask]
+
+        # counts per factor
         lengths_by_factor = {
-            factor: np.count_nonzero(comment_annotator_groups == factor)
+            factor: int(np.count_nonzero(comment_groups == factor))
             for factor in all_factors
         }
 
+        # observed DFUs
         observed_dfu_dict.add_dict(
-            _factor_dfu_stat(
-                all_comment_annotations,
-                comment_annotator_groups,
-                bins=bins,
-            )
+            _factor_dfu_stat(comment_ann, comment_groups, bins=bins)
         )
 
+        # randomized apriori DFUs
         apriori_dfu_dict.add_dict(
             _apriori_polarization_stat(
-                annotations=all_comment_annotations,
+                annotations=comment_ann,
                 group_sizes=lengths_by_factor,
                 bins=bins,
                 iterations=iterations,
@@ -217,67 +267,76 @@ def aposteriori_unimodality(
             )
         )
 
-    # compute raw results per factor
-    # if there exist comments of that factor left after filtering
-    apunim_by_factor = {}
-    parametric_by_factor = {}
-    nonparametric_by_factor = {}
+    return observed_dfu_dict, apriori_dfu_dict
+
+
+def _compute_factor_results(
+    observed_dfu_dict,
+    apriori_dfu_dict,
+    all_factors,
+    two_sided,
+):
+    results = {}
+
     for factor in all_factors:
         apunim = _aposteriori_polarization_stat(
             observed_dfus=observed_dfu_dict[factor],
             randomized_dfus=apriori_dfu_dict[factor],
         )
-        apunim_by_factor[factor] = apunim
 
-        if pvalue_estimation == "parametric" or pvalue_estimation == "both":
-            pvalue = _aposteriori_pvalue_parametric(
-                randomized_dfus=apriori_dfu_dict[factor],
-                kappa=apunim,
-                two_sided=two_sided,
-            )
-            parametric_by_factor[factor] = pvalue
+        pvalue = _aposteriori_pvalue_parametric(
+            randomized_dfus=apriori_dfu_dict[factor],
+            kappa=apunim,
+            two_sided=two_sided,
+        )
 
-        if (
-            pvalue_estimation == "non parametric"
-            or pvalue_estimation == "both"
-        ):
-            pvalue = _aposteriori_pvalue_nonparametric(
-                randomized_dfus=apriori_dfu_dict[factor],
-                kappa=apunim,
-                two_sided=two_sided,
-            )
-            nonparametric_by_factor[factor] = pvalue
-
-    results = {
-        "apunim": apunim_by_factor,
-        "p_param": parametric_by_factor,
-        "p_nonparam": nonparametric_by_factor,
-    }
-
-    # --- Apply p-value correction per factor (if enabled) ---
-    if alpha is not None:
-        # parametric correction
-        if parametric_by_factor:
-            factors, pvals = zip(*parametric_by_factor.items())
-            corrected = _apply_correction_to_results(pvals, alpha)
-            parametric_by_factor = dict(zip(factors, corrected))
-
-        # nonparametric correction
-        if nonparametric_by_factor:
-            factors, pvals = zip(*nonparametric_by_factor.items())
-            corrected = _apply_correction_to_results(pvals, alpha)
-            nonparametric_by_factor = dict(zip(factors, corrected))
+        results[factor] = ApunimResult(apunim=apunim, pvalue=pvalue)
 
     return results
 
 
+def _correct_pvalues(results, alpha):
+    factors, result_objs = zip(*results.items())
+    pvals = [r.pvalue for r in result_objs]
+
+    corrected = _apply_correction_to_results(pvals, alpha)
+
+    return {
+        f: ApunimResult(r.apunim, cp)
+        for f, r, cp in zip(factors, result_objs, corrected)
+    }
+
+
+def _get_valid_comments(
+    annotations: NDArray[np.float64],
+    comment_group: NDArray[np.int64],
+    factor_group: NDArray[Any],
+    bins: int,
+) -> list[int]:
+    # --- FIRST LOOP: Identify valid comments ---
+    valid_comments = []
+    for curr_comment_id in _unique(comment_group):
+        is_in_curr_comment = comment_group == curr_comment_id
+        all_comment_annotations = annotations[is_in_curr_comment]
+        comment_annotator_groups = factor_group[is_in_curr_comment]
+
+        if len(all_comment_annotations) > 0 and _comment_is_valid(
+            comment_annotations=all_comment_annotations,
+            comment_annotator_groups=comment_annotator_groups,
+            bins=bins,
+        ):
+            valid_comments.append(curr_comment_id)
+
+    return valid_comments
+
+
 def _validate_input(
-    annotations: Collection[int],
+    annotations: Collection[float],
     annotator_group: Collection[FactorType],
     comment_group: Collection[FactorType],
     iterations: int,
     bins: int,
-    alpha: float,
+    alpha: float | None,
     pvalue_estimation: str,
 ) -> None:
     if not (len(annotations) == len(annotator_group) == len(comment_group)):
@@ -313,7 +372,7 @@ def _validate_input(
             "pvalue_estimation must be one of the following: ", valid
         )
     if alpha is not None and (alpha < 0 or alpha > 1):
-        return ValueError("Alpha should be between 0 and 1.")
+        raise ValueError("Alpha should be between 0 and 1.")
 
 
 def _comment_is_valid(
@@ -342,20 +401,20 @@ def _comment_is_valid(
 
 
 def _factor_dfu_stat(
-    all_comment_annotations: numpy.typing.NDArray[float],
-    annotator_group: numpy.typing.NDArray[FactorType],
+    all_comment_annotations: NDArray[np.float64],
+    annotator_group: NDArray[Any],
     bins: int,
-) -> dict[FactorType, float]:
+) -> dict[object, float]:
     """
     Generate the polarization stat (dfu diff stat) for each factor of the
     selected feature, for one comment.
 
     :param all_comment_annotations: An array containing all annotations
         for the current comment
-    :type all_comment_annotations: numpy.typing.NDArray[float]
+    :type all_comment_annotations:  NDArray[float]
     :param annotator_group: An array where each value is a distinct level of
         the currently considered factor
-    :type annotator_group: numpy.typing.NDArray[`FactorType`]
+    :type annotator_group:  NDArray[`FactorType`]
     :param bins: number of annotation levels
     :type bins: int
     :return: The polarization stats for each level of the currently considered
@@ -380,12 +439,12 @@ def _factor_dfu_stat(
 
 
 def _apriori_polarization_stat(
-    annotations: numpy.typing.NDArray[float],
-    group_sizes: dict[FactorType, int],
+    annotations: NDArray[np.float64],
+    group_sizes: dict[Any, int],
     bins: int,
     iterations: int,
     rng: np.random.Generator,
-) -> dict[FactorType, list[float]]:
+) -> dict[object, list[float]]:
     """
     For a single comment's annotations, generate `iterations` random partitions
     that respect the given group_sizes, compute the normalized DFU for each
@@ -409,7 +468,7 @@ def _apriori_polarization_stat(
         )
 
     # prepare result lists
-    results: dict[FactorType, list[float]] = {f: [] for f in factors}
+    results: dict[object, list[float]] = {f: [] for f in factors}
 
     for _ in range(iterations):
         partitions = _random_partition(arr=annotations, sizes=sizes, rng=rng)
@@ -423,10 +482,10 @@ def _apriori_polarization_stat(
 
 
 def _random_partition(
-    arr: numpy.typing.NDArray,
-    sizes: numpy.typing.NDArray[int],
+    arr: NDArray,
+    sizes: NDArray[np.int64],
     rng: np.random.Generator,
-) -> list[numpy.typing.NDArray]:
+) -> list[NDArray]:
     """
     Randomly partition a numpy array into groups of given sizes.
 
@@ -474,6 +533,12 @@ def _aposteriori_polarization_stat(
     means = [_safe_nanmean(r) for r in randomized_dfus]
     means = [m for m in means if not np.isnan(m)]
     if len(means) == 0:
+        warnings.warn(
+            "Apunim statistic is NaN because all randomized DFU estimates "
+            "were NaN. This typically means that randomized groups were empty "
+            "or had no variation in annotations.",
+            RuntimeWarning,
+        )
         return np.nan
 
     E_f = np.mean(means)
@@ -483,10 +548,15 @@ def _aposteriori_polarization_stat(
             "The aposteriori test may be unreliable."
         )
     if E_f == 1:
+        warnings.warn(
+            "Apunim statistic is NaN because the expected DFU (E_f) is 1, "
+            "meaning all random partitions were already maximally polarized.",
+            RuntimeWarning,
+        )
         return np.nan
 
     apunim = (O_f - E_f) / (1.0 - E_f)
-    return apunim
+    return float(apunim)
 
 
 def _aposteriori_pvalue_parametric(
@@ -496,6 +566,12 @@ def _aposteriori_pvalue_parametric(
     Parametric p-value estimation for κ using a normal approximation.
     """
     if np.isnan(kappa):
+        warnings.warn(
+            "p-value could not be computed because the apunim statistic "
+            "is NaN. This usually happens when a factor has no valid "
+            "annotations.",
+            RuntimeWarning,
+        )
         return np.nan
 
     # compute null distribution of kappa as before
@@ -515,94 +591,87 @@ def _aposteriori_pvalue_parametric(
 
     kappa_null = np.array(kappa_null)
     if len(kappa_null) < 2:
-        return np.nan  # insufficient data
-
-    # estimate mean and standard error
-    mu = np.mean(kappa_null)
-    sigma = np.std(kappa_null, ddof=1)
-
-    # z-score for observed κ
-    z = (kappa - mu) / sigma
-
-    # compute parametric p-value
-    if two_sided:
-        p_value = 2 * (1 - scipy.stats.norm.cdf(abs(z)))
-    else:
-        p_value = 1 - scipy.stats.norm.cdf(z)
-
-    return p_value
-
-
-def _aposteriori_pvalue_nonparametric(
-    randomized_dfus: list[list[float]], kappa: float, two_sided: bool
-) -> float:
-    if np.isnan(kappa):
-        return np.nan  # null distribution
-
-    kappa_null = []
-    for i, r in enumerate(randomized_dfus):
-        if len(r) == 0 or np.all(np.isnan(r)):
-            continue
-        O_r = np.nanmean(r)
-        other_means = [
-            _safe_nanmean(rr) for j, rr in enumerate(randomized_dfus) if j != i
-        ]
-        other_means = [m for m in other_means if not np.isnan(m)]
-        if len(other_means) == 0:
-            continue
-        E_r = np.mean(other_means)
-        kappa_null.append((O_r - E_r) / (1.0 - E_r))
-
-    kappa_null = np.array(kappa_null)
-    if two_sided:
-        p_value = np.mean(np.abs(kappa_null) >= abs(kappa))
-    else:
-        p_value = np.mean(kappa_null >= kappa)
-    return p_value
-
-
-def _safe_nanmean(arr):
-    arr = np.asarray(arr)
-    if arr.size == 0:
+        warnings.warn(
+            "p-value is NaN because the null distribution for kappa "
+            "could not be estimated (fewer than two valid randomized "
+            "DFU values). This often occurs when comments contain too few "
+            "annotations per group.",
+            RuntimeWarning,
+        )
         return np.nan
-    arr = arr[np.isfinite(arr)]  # drop NaNs
-    if arr.size == 0:
-        return np.nan
-    return np.mean(arr)
+
+    # use a one-sample t-test comparing kappa_null to the observed kappa
+    # H0: mean(kappa_null) == kappa
+    # We compute test statistic for the difference from kappa
+    p_value = scipy.stats.ttest_1samp(
+        kappa_null, kappa, alternative="two-sided" if two_sided else "larger"
+    ).pvalue  # type: ignore
+
+    return float(p_value)
+
+
+def _safe_nanmean(x):
+    """Helper to compute nanmean safely."""
+    return np.nanmean(x) if len(x) > 0 and not np.all(np.isnan(x)) else np.nan
 
 
 def _apply_correction_to_results(
     pvalues: Collection[float], alpha: float = 0.05
-) -> numpy.typing.NDArray:
+) -> NDArray:
     """
     Apply multiple hypothesis correction to a list of p-values.
     Returns corrected p-values in the same order.
-    """
-    if len(pvalues) == 0:
-        return np.array([])
 
-    if np.any((np.array(pvalues) < 0) | (np.array(pvalues) > 1)):
+    NaN p-values are excluded from correction (because FDR procedures
+    cannot operate on undefined hypotheses). They are restored to NaN
+    in their original positions after correction.
+    """
+    pvals = np.array(pvalues, dtype=float)
+
+    if np.any((pvals[~np.isnan(pvals)] < 0) | (pvals[~np.isnan(pvals)] > 1)):
         raise ValueError("Invalid pvalues given for correction.")
 
-    return _apply_correction(pvalues, alpha)
+    return _apply_correction(pvals, alpha)
 
 
-def _apply_correction(
-    pvalues: Collection[float], alpha: float
-) -> numpy.typing.NDArray:
-    corrected_stats = statsmodels.stats.multitest.multipletests(
-        np.array(pvalues),
+def _apply_correction(pvalues: NDArray, alpha: float) -> NDArray:
+    """
+    FDR correction that handles NaNs safely.
+
+    Steps:
+    1. Identify valid (non-NaN) p-values.
+    2. Apply FDR-BH only to valid p-values.
+    3. Restore NaN positions to the output.
+    """
+    pvals = np.array(pvalues, dtype=float)
+    valid_mask = ~np.isnan(pvals)
+    valid_pvals = pvals[valid_mask]
+
+    # If no valid values exist, return array of NaN
+    if len(valid_pvals) == 0:
+        warnings.warn(
+            "All p-values are NaN; skipping multiple-testing correction.",
+            RuntimeWarning,
+        )
+        return pvals  # all NaN array
+
+    # Perform FDR correction on valid p-values
+    corrected_valid = statsmodels.stats.multitest.multipletests(
+        valid_pvals,
         alpha=alpha,
         method="fdr_bh",
         is_sorted=False,
         returnsorted=False,
-    )
-    return corrected_stats[1]
+    )[1]
+
+    # Create output array and restore NaNs
+    corrected = np.full_like(pvals, np.nan)
+    corrected[valid_mask] = corrected_valid
+
+    return corrected
 
 
-def _to_hist(
-    scores: numpy.typing.NDArray[float], bins: int
-) -> numpy.typing.NDArray:
+def _to_hist(scores: Collection[float], bins: int) -> NDArray:
     """
     Creates a normalised histogram. Used for DFU calculation.
     :param: scores: the ratings (not necessarily discrete)
@@ -614,16 +683,14 @@ def _to_hist(
     if len(scores_array) == 0:
         raise ValueError("Annotation list can not be empty.")
 
-    counts, bins = np.histogram(a=scores_array, bins=bins, density=True)
+    counts, _ = np.histogram(a=scores_array, bins=bins, density=True)
     return counts
 
 
-def _unique(x: typing.Iterable[typing.Any]) -> typing.Iterable[typing.Any]:
+def _unique(x: Collection[Any]) -> list[Any]:
     # preserve first-seen order
     return list(dict.fromkeys(x))
 
 
-def _is_not_none(
-    x: typing.Iterable[typing.Any],
-) -> typing.Iterable[typing.Any]:
+def _is_not_none(x: Any) -> bool:
     return x is not None and not (isinstance(x, float) and math.isnan(x))

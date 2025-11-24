@@ -1,129 +1,72 @@
-\begin{table*}[t]
-\caption{Apunim results for the kumar dataset}
+\begin{table}[h]
+\caption{Aposteriori unimodality results for the kumar dataset.}
 \label{tab:kumar}
-\centering\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lllll}
+\scriptsize
+\begin{tabular}{lll}
 \toprule
- &  & apunim & p\_param & p\_nonparam \\
-SDB Feature &  &  &  &  \\
+ &  & apunim \\
+SDB Feature &  &  \\
 \midrule
-<<<<<<< HEAD
-\multirow[t]{7}{*}{Age} & 18 - 24 & -0.0437 & 0.8916 & 1.0000 \\
- & 25 - 34 & 0.0589 & 0.9199 & 0.9750 \\
- & 35 - 44 & -0.0397 & 0.9507 & 0.9677 \\
- & 45 - 54 & 0.0117 & 0.9602 & 1.0000 \\
- & 55 - 64 & 0.0179 & 0.9424 & 1.0000 \\
- & 65 or older & --- & --- & --- \\
- & Prefer not to say & --- & --- & --- \\
-\cline{1-5}
-\multirow[t]{9}{*}{Education} & Associate degree & -0.0257 & 0.9306 & 1.0000 \\
- & Bachelor's degree & -0.0611 & 0.9237 & 0.9024 \\
- & College, no degree & -0.0763 & 0.8670 & 0.9455 \\
- & Doctoral degree & --- & --- & --- \\
- & High School graduate & -0.0627 & 0.8811 & 1.0000 \\
- & Master's degree & 0.0944 & 0.8265 & 1.0000 \\
- & No high school & -0.2766 & 0.7920 & 1.0000 \\
- & Other & --- & --- & --- \\
- & Professional degree & --- & --- & --- \\
-\cline{1-5}
-\multirow[t]{2}{*}{Has Been Targeted} & False & -0.0153 & 0.9824 & 1.0000 \\
- & True & -0.0261 & 0.9701 & 0.9583 \\
-\cline{1-5}
-\multirow[t]{3}{*}{Is Parent} & No & -0.1724 & 0.7727 & 0.8293 \\
- & Prefer not to say & --- & --- & --- \\
- & Yes & 0.1527 & 0.7951 & 0.9024 \\
-\cline{1-5}
-\multirow[t]{3}{*}{Is Transgender} & No & -0.1105 & 0.8654 & 0.8824 \\
- & Prefer not to say & --- & --- & --- \\
- & Yes & -0.0695 & 0.8842 & 1.0000 \\
-\cline{1-5}
-\multirow[t]{5}{*}{Political Affiliation} & Conservative & 0.0316 & 0.9471 & 0.9859 \\
- & Independent & -0.0026 & 0.9968 & 1.0000 \\
- & Liberal & 0.0197 & 0.9681 & 0.9398 \\
- & Other & -0.0989 & 0.9565 & 1.0000 \\
- & Prefer not to say & 0.0044 & 0.9744 & 1.0000 \\
-\cline{1-5}
-\multirow[t]{2}{*}{Seen Toxicity} & False & -0.0275 & 0.9679 & 1.0000 \\
- & True & -0.0574 & 0.9103 & 0.9701 \\
-\cline{1-5}
-\multirow[t]{5}{*}{Sexual Orientation} & Bisexual & 0.0337 & 0.9177 & 1.0000 \\
- & Heterosexual & -0.1301 & 0.7809 & 0.7818 \\
- & Homosexual & 0.0280 & 0.8207 & 1.0000 \\
- & Other & --- & --- & --- \\
- & Prefer not to say & 0.0123 & 0.9417 & 1.0000 \\
-\cline{1-5}
-\multirow[t]{5}{*}{Thinks Religion Is Important} & Not important & -0.1930 & 0.7213 & 0.8060 \\
- & Not too important & -0.0406 & 0.9261 & 1.0000 \\
- & Prefer not to say & --- & --- & --- \\
- & Somewhat important & 0.0033 & 0.9890 & 1.0000 \\
- & Very important & 0.0545 & 0.9127 & 0.9726 \\
-\cline{1-5}
-\multirow[t]{5}{*}{Thinks Toxicity Is Problem} & Frequently a problem & -0.1537 & 0.7922 & 0.8831 \\
- & Not a problem & -0.0384 & 0.8425 & 1.0000 \\
- & Occasionally a problem & 0.0876 & 0.8531 & 0.8974 \\
- & Rarely a problem & -0.0152 & 0.9775 & 1.0000 \\
- & Very frequently a problem & 0.0162 & 0.9537 & 1.0000 \\
-=======
-\multirow[t]{8}{*}{Age} & 18 - 24 & -0.0081 & 0.9808 & 1.0000 \\
- & 25 - 34 & 0.0220 & 0.9696 & 0.9645 \\
- & 35 - 44 & -0.0176 & 0.9719 & 0.9868 \\
- & 45 - 54 & 0.0079 & 0.9819 & 1.0000 \\
- & 55 - 64 & -0.0077 & 0.9765 & 1.0000 \\
- & 65 or older & -0.0022 & 0.9917 & 1.0000 \\
- & Prefer not to say & --- & --- & --- \\
- & Under 18 & --- & --- & --- \\
-\cline{1-5}
-\multirow[t]{11}{*}{Education} & Associate degree & -0.0066 & 0.9847 & 1.0000 \\
- & Bachelor's degree & 0.0365 & 0.9495 & 0.9334 \\
- & College, no degree & -0.0299 & 0.9471 & 0.9960 \\
- & Doctoral degree & 0.0047 & 0.9536 & 1.0000 \\
- & High School graduate & -0.0146 & 0.9606 & 1.0000 \\
- & Master's degree & 0.0196 & 0.9622 & 1.0000 \\
- & No high school & -0.0059 & 0.9251 & 1.0000 \\
- & Other & --- & --- & --- \\
- & Prefer not to say & --- & --- & --- \\
- & Professional degree & -0.0001 & 0.9994 & 1.0000 \\
- & NaN & --- & --- & --- \\
-\cline{1-5}
-\multirow[t]{2}{*}{Has Been Targeted} & False & -0.0521 & 0.9128 & 0.9751 \\
- & True & 0.0222 & 0.9679 & 0.9851 \\
-\cline{1-5}
-\multirow[t]{3}{*}{Is Parent} & No & -0.0677 & 0.9050 & 0.9161 \\
- & Prefer not to say & 0.0051 & 0.9698 & 1.0000 \\
- & Yes & 0.0513 & 0.9256 & 0.9906 \\
-\cline{1-5}
-\multirow[t]{3}{*}{Is Transgender} & No & -0.0703 & 0.8548 & 0.9945 \\
- & Prefer not to say & 0.0036 & 0.9776 & 1.0000 \\
- & Yes & -0.0027 & 0.9897 & 1.0000 \\
-\cline{1-5}
-\multirow[t]{5}{*}{Political Affiliation} & Conservative & 0.0287 & 0.9552 & 0.9831 \\
- & Independent & -0.0159 & 0.9755 & 0.9887 \\
- & Liberal & -0.0258 & 0.9645 & 0.9489 \\
- & Other & -0.0085 & 0.9650 & 1.0000 \\
- & Prefer not to say & 0.0040 & 0.9821 & 1.0000 \\
-\cline{1-5}
-\multirow[t]{2}{*}{Seen Toxicity} & False & 0.0386 & 0.9382 & 0.9795 \\
- & True & -0.0751 & 0.8667 & 0.9657 \\
-\cline{1-5}
-\multirow[t]{6}{*}{Sexual Orientation} & Bisexual & 0.0101 & 0.9777 & 0.9995 \\
- & Heterosexual & -0.0513 & 0.9072 & 0.9883 \\
- & Homosexual & -0.0048 & 0.9802 & 1.0000 \\
- & Other & 0.0006 & 0.9917 & 1.0000 \\
- & Prefer not to say & -0.0053 & 0.9771 & 1.0000 \\
- & NaN & 0.0093 & 0.9065 & 1.0000 \\
-\cline{1-5}
-\multirow[t]{5}{*}{Thinks Religion Is Important} & Not important & -0.0615 & 0.9042 & 0.9446 \\
- & Not too important & -0.0126 & 0.9706 & 1.0000 \\
- & Prefer not to say & 0.0005 & 0.9960 & 1.0000 \\
- & Somewhat important & 0.0095 & 0.9846 & 0.9945 \\
- & Very important & 0.0595 & 0.9151 & 0.9563 \\
-\cline{1-5}
-\multirow[t]{5}{*}{Thinks Toxicity Is Problem} & Frequently a problem & -0.0300 & 0.9535 & 0.9730 \\
- & Not a problem & 0.0029 & 0.9912 & 1.0000 \\
- & Occasionally a problem & -0.0033 & 0.9953 & 1.0000 \\
- & Rarely a problem & 0.0142 & 0.9735 & 1.0000 \\
- & Very frequently a problem & -0.0204 & 0.9562 & 1.0000 \\
->>>>>>> e6c67be03c8212044f015e4dc70553fe3bd2f43f
-\cline{1-5}
+\multirow[t]{8}{*}{Age} & 18 - 24 & -0.0081 \\
+ & 25 - 34 & 0.0220 \\
+ & 35 - 44 & -0.0176 \\
+ & 45 - 54 & 0.0079 \\
+ & 55 - 64 & -0.0077 \\
+ & 65 or older & -0.0022 \\
+ & Prefer not to say & --- \\
+ & Under 18 & --- \\
+\cline{1-3}
+\multirow[t]{11}{*}{Education} & 1) Doctoral degree & 0.0047 \\
+ & 2) Master's degree & 0.0196 \\
+ & 3) Professional degree & -0.0001 \\
+ & 4) Bachelor's degree & 0.0365$^{***}$ \\
+ & 5) Associate degree & -0.0066 \\
+ & 6) College, no degree & -0.0299$^{**}$ \\
+ & 7) High School graduate & -0.0146 \\
+ & 8) No high school & -0.0059 \\
+ & Other & --- \\
+ & Prefer not to say & --- \\
+ & NaN & --- \\
+\cline{1-3}
+\multirow[t]{2}{*}{Has Been Targeted} & False & -0.0521$^{***}$ \\
+ & True & 0.0222$^{*}$ \\
+\cline{1-3}
+\multirow[t]{3}{*}{Is Parent} & No & -0.0677$^{***}$ \\
+ & Prefer not to say & 0.0051 \\
+ & Yes & 0.0513$^{***}$ \\
+\cline{1-3}
+\multirow[t]{3}{*}{Is Transgender} & No & -0.0703$^{***}$ \\
+ & Prefer not to say & 0.0036 \\
+ & Yes & -0.0027 \\
+\cline{1-3}
+\multirow[t]{5}{*}{Political Affiliation} & Conservative & 0.0287$^{**}$ \\
+ & Independent & -0.0159 \\
+ & Liberal & -0.0258$^{*}$ \\
+ & Other & -0.0085 \\
+ & Prefer not to say & 0.0040 \\
+\cline{1-3}
+\multirow[t]{5}{*}{Religion Important} & 1) No & -0.0615$^{***}$ \\
+ & 2) Not very & -0.0126 \\
+ & 3) Somewhat & 0.0095 \\
+ & 4) Very & 0.0595$^{***}$ \\
+ & Prefer not to say & 0.0005 \\
+\cline{1-3}
+\multirow[t]{2}{*}{Seen Toxicity} & False & 0.0386$^{***}$ \\
+ & True & -0.0751$^{***}$ \\
+\cline{1-3}
+\multirow[t]{6}{*}{Sexual Orientation} & Bisexual & 0.0101 \\
+ & Heterosexual & -0.0513$^{***}$ \\
+ & Homosexual & -0.0048 \\
+ & Other & 0.0006 \\
+ & Prefer not to say & -0.0053 \\
+ & NaN & 0.0093 \\
+\cline{1-3}
+\multirow[t]{5}{*}{Toxicity Problem} & 1) Never & 0.0029 \\
+ & 2) Rarely & 0.0142 \\
+ & 3) Occasionally & -0.0033 \\
+ & 4) Frequently & -0.0300$^{**}$ \\
+ & 5) Very Frequently & -0.0204$^{*}$ \\
+\cline{1-3}
 \bottomrule
-\end{tabular*}
-\end{table*}
+\end{tabular}
+\end{table}
