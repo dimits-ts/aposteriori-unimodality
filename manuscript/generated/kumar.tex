@@ -1,7 +1,6 @@
 \begin{table}[h]
 \caption{Aposteriori unimodality results for the kumar dataset.}
 \label{tab:kumar}
-\scriptsize
 \begin{tabular}{lll}
 \toprule
  &  & apunim \\
@@ -27,6 +26,19 @@ SDB Feature &  &  \\
  & Other & --- \\
  & Prefer not to say & --- \\
  & NaN & --- \\
+\cline{1-3}
+\multirow[t]{7}{*}{Ethnicity} & Asian & -0.0041 \\
+ & Black & 0.0271$^{**}$ \\
+ & Hispanic & -0.0038 \\
+ & Multiracial & -0.0039 \\
+ & Other & 0.0002 \\
+ & Unknown & -0.0054 \\
+ & White & -0.0332$^{***}$ \\
+\cline{1-3}
+\multirow[t]{4}{*}{Gender} & Female & -0.0302$^{**}$ \\
+ & Male & 0.0316$^{**}$ \\
+ & Nonbinary & 0.0002 \\
+ & Unknown & -0.0005 \\
 \cline{1-3}
 \multirow[t]{2}{*}{Has Been Targeted} & False & -0.0521$^{***}$ \\
  & True & 0.0222$^{*}$ \\
@@ -60,6 +72,12 @@ SDB Feature &  &  \\
  & Other & 0.0006 \\
  & Prefer not to say & -0.0053 \\
  & NaN & 0.0093 \\
+\cline{1-3}
+\multirow[t]{5}{*}{Technology Impact} & 1) Very negative & --- \\
+ & 2) Somewhat negative & -0.0058 \\
+ & 3) Neutral & 0.0037 \\
+ & 4) Somewhat positive & -0.0103 \\
+ & 5) Very positive & 0.0203 \\
 \cline{1-3}
 \multirow[t]{5}{*}{Toxicity Problem} & 1) Never & 0.0029 \\
  & 2) Rarely & 0.0142 \\
