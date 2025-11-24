@@ -185,14 +185,41 @@ class KumarDataset(preprocessing.Dataset):
 
 
 def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
+    print("Generating actual polarization plot...")
     ds = KumarDataset(dataset_path=dataset_path, num_samples=NUM_COMMENTS)
+    graphs.polarization_plot(
+        ds=ds, output_path=graph_output_dir / "kumar_sample.png"
+    )
+
+    
+    print("Running experiment...")
     run_helper.run_experiments_on_dataset(
         ds,
         latex_output_dir=latex_output_dir,
         graph_path=graph_output_dir / "kumar.png",
         table_label="tab:kumar",
+        position="h!",
+        small_fontsize=True,
     )
 
+
+    print("Running education experiment...")
+    ds.df = ds.df[["Education"]]
+    ds = group_education(ds)
+    res_df = run_helper.run_result(
+        df=ds.df,
+        sdb_column="Education",
+        value_col=ds.get_annotation_column(),
+        comment_key_col=ds.get_comment_key_column(),
+    )
+    run_helper.results_to_latex(
+        res_df=res_df,
+        output_path=latex_output_dir / "kumar_education.tex",
+        dataset_name=ds.get_name(),
+        table_label="tab:kumar_education",
+    )
+
+    print("Generating full polarization plot...")
     ds = KumarDataset(dataset_path=dataset_path)
     graphs.polarization_plot(
         ds=ds, output_path=graph_output_dir / "kumar_full.png"

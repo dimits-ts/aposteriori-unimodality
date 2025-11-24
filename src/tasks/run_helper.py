@@ -13,6 +13,8 @@ def run_experiments_on_dataset(
     table_label: str,
     latex_output_dir: Path,
     graph_path: Path,
+    small_fontsize: bool = False,
+    position: str = "t",
 ) -> None:
     dataset_first_name = ds.get_name().split()[0].lower()
 
@@ -100,6 +102,7 @@ def results_to_latex(
     columns: list[str] | None = None,
     two_column: bool = False,
     small_fontsize: bool = False,
+    position: str = "t",
 ) -> None:
     """
     Export results to a single LaTeX table where apunim values include
@@ -139,7 +142,7 @@ def results_to_latex(
     if small_fontsize:
         latex_str = latex_str.replace(
             r"\begin{table}",
-            r"\begin{table}\n\small",
+            r"\begin{table}\n\scriptsize",
         )
 
     # Two-column layout support
