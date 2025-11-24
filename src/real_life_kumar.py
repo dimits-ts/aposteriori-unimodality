@@ -20,16 +20,19 @@ class KumarDataset(preprocessing.Dataset):
 
     def get_sdb_columns(self) -> list[str]:
         return [
-            "Seen Toxicity",
-            "Has Been Targeted",
-            "Is Transgender",
-            "Toxicity Problem",
-            "Education",
+            "Gender",
+            "Ethnicity",
             "Age",
+            "Education",
             "Sexual Orientation",
+            "Is Transgender",
             "Political Affiliation",
             "Is Parent",
+            "Technology Impact",
+            "Toxicity Problem",
             "Religion Important",
+            "Seen Toxicity",
+            "Has Been Targeted",
         ]
 
     def get_comment_key_column(self) -> str:
@@ -98,12 +101,24 @@ class KumarDataset(preprocessing.Dataset):
                 "Not a problem": "1) Never",
             }
         )
+        df = df.replace(
+            {
+                "Very positive": "5) Very positive",
+                "Somewhat positive": "4) Somewhat positive",
+                # wtf?
+                "Neutral \u00e2\u0080\u0093 neither positive nor negative": "3) Neutral",
+                "Somewhat negative": "2) Somewhat negative",
+                "Very negative": "1) Very negative",
+            }
+        )
 
         df = df.loc[
             :,
             [
                 "comment",
                 "toxic_score",
+                "gender",
+                "race",
                 "personally_seen_toxic_content",
                 "personally_been_target",
                 "identify_as_transgender",
@@ -114,8 +129,10 @@ class KumarDataset(preprocessing.Dataset):
                 "political_affilation",  # sic
                 "is_parent",
                 "religion_important",
+                "technology_impact",
             ],
         ]
+        df.race = df.race.apply(KumarDataset._simplify_ethnicity)
         df = df.groupby("comment").agg(list)
 
         if num_samples is not None:
@@ -137,9 +154,34 @@ class KumarDataset(preprocessing.Dataset):
                 "is_parent": "Is Parent",
                 "religion_important": "Religion Important",
                 "toxic_score": "Toxicity",
+                "gender": "Gender",
+                "race": "Ethnicity",
+                "technology_impact": "Technology Impact",
             }
         )
         return df
+
+    @staticmethod
+    def _simplify_ethnicity(x):
+        if isinstance(x, list):
+            # If your field is a list (after aggregation)
+            x = x[0]
+
+        if pd.isna(x):
+            return "Unknown"
+
+        if "," in x:
+            return "Multiracial"
+
+        mapping = {
+            "Asian": "Asian",
+            "Black or African American": "Black",
+            "Hispanic": "Hispanic",
+            "White": "White",
+            "Other": "Other",
+            "Prefer not to say": "Unknown",
+        }
+        return mapping.get(x, "Other")
 
 
 def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
