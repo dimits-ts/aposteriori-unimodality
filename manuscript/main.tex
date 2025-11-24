@@ -221,17 +221,29 @@ Brief dataset characteristics are given in Table~\ref{tab:datasets}. There is a 
 \section{Results}
 \label{sec:results}
 
-Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{SDB} dimensions can partially explain polarization in the toxicity/racism annotations. The results for the \textcite{kumar-et-al-2021} and \textcite{sap-etal-2022-annotators} datasets can be found in Tables~\ref{tab:sap} and \ref{tab:kumar} respectively.
-
-
-\input{./generated/sap.tex}
-{\scriptsize
-	\input{./generated/kumar.tex}
-}
-
 \input{./generated/dices-350.tex}
 \input{./generated/dices-990.tex}
+\input{./generated/sap.tex}
+\input{./generated/kumar.tex}
 
+
+Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{SDB} dimensions can partially explain polarization in the toxicity/racism annotations. The results for the \textcite{kumar-et-al-2021} and \textcite{sap-etal-2022-annotators} datasets can be found in Tables~\ref{tab:sap} and \ref{tab:kumar} respectively, while Tables~\ref{tab:dices-350} and \ref{tab:dices-990} display the results for the DICES-350 and DICES-990 datasets respectively.
+
+\paragraph{We observe statistically significant polarization effects caused by annotator \emph{Ethnicity} on all datasets} In the DICES dataset, non-white annotators seem to contribute to polarization much more than the majority white annotators. This effect is reversed for the \textcite{sap-etal-2019-risk} dataset. %TODO: Why
+
+\paragraph{Annotator \emph{age} does not  cause polarization for toxicity/hate detection, but does for safety}
+None of the age groups in the \textcite{sap-etal-2019-risk} and \textcite{kumar-et-al-2021} datasets produce statistically significant results for polarization attribution, suggesting that it is not an important factor. However, both DICES datasets produced statistically and quantitatively significant results. This may be caused by the large number of annotators in these datasets, which enable our method to better distinguish this effect from noise in the annotations. This is unlikely however, given our next finding.
+
+\paragraph{Polarization attribution follows ordinal ranking} While most \ac{SDB} attributes are categorical, some are ordinal (e.g., Age, Education, LIKERT-scale opinions). There is a persistent pattern among (statistically significant ordinal attributions), where polarization changes monotonically with their ranking. Examples include:
+
+\begin{itemize}
+	\item Polarization increasing/decreasing with annotator age in both DICES datasets (but not in the \textcite{sap-etal-2019-risk} and \textcite{kumar-et-al-2021} datasets, where there is no statistical significance).
+	\item Thoughts on religion and toxicity in the \textcite{kumar-et-al-2021} dataset (although much more noisily, since some attribute factors do not display statistical significance).
+\end{itemize}
+
+A notable exception is \emph{Education} in the \textcite{kumar-et-al-2021} dataset. This could be attributed to the curse of dimensionality, since we investigate a great number of groups, but there are few annotators for each individual group. %TODO: try this with fewer ordinals 
+
+The fact that this behavior is not replicated when investigating annotator age in the \textcite{sap-etal-2019-risk} and \textcite{kumar-et-al-2021} datasets lends further support to the argument that age does indeed not play a major role in annotator polarization for these datasets.
 
 \section{Conclusion}
 
