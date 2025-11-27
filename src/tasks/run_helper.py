@@ -133,7 +133,7 @@ def results_to_latex(
         label=table_label,
         escape=False,  # allow LaTeX math ($^{*}$)
         columns=columns,
-        position="h",
+        position="ht",
         index=True,
         float_format="%.4f",
     )

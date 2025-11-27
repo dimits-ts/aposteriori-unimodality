@@ -17,6 +17,7 @@ LABEL_FONTSIZE = 18
 LESSER_LABEL_SIZE = 18
 SUBTITLE_FONTSIZE = 24
 
+
 def _discrete_normal(loc, scale, size):
     vals = np.random.normal(loc, scale, size)
     vals = np.clip(
