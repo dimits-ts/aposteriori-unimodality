@@ -15,6 +15,12 @@ from .tasks import preprocessing
 from . import synthetic_100, dices
 from .apunim import aposteriori
 
+MARKERS = {
+    "DICES-350": "o",
+    "DICES-990": "s",
+    "100 Annotator Synthetic": "^",
+}
+
 
 def sample_se_vs_sample_size_unimodality(
     df: pd.DataFrame,
@@ -114,7 +120,7 @@ def sample_se_vs_sample_size_unimodality(
     return pd.DataFrame(results)
 
 
-def plot_variance_curve(results_df: pd.DataFrame, graph_path: Path) -> None:
+def plot_variance_curve(results_df, graph_path: Path):
     # Ensure proper ordering
     if "dataset" in results_df.columns:
         results_df = results_df.sort_values(["dataset", "sample_size"])
@@ -123,31 +129,33 @@ def plot_variance_curve(results_df: pd.DataFrame, graph_path: Path) -> None:
 
     plt.figure(figsize=(10, 6))
 
-    # Lineplot for each dataset (if present)
     if "dataset" in results_df.columns:
-        sns.lineplot(
-            data=results_df,
-            x="sample_size",
-            y="standard_error",
-            hue="dataset",
-            marker="o",
-        )
+        # plot each dataset separately to control markers and colors
+        for ds_name, subdf in results_df.groupby("dataset"):
+            marker = MARKERS[ds_name]
+            # lineplot for dataset
+            ax = sns.lineplot(
+                data=subdf,
+                x="sample_size",
+                y="standard_error",
+                marker=marker,
+                label=ds_name,
+            )
+
+            # regression trend line (same color but no scatter)
+            sns.regplot(
+                data=subdf,
+                x="sample_size",
+                y="standard_error",
+                scatter=False,
+                ci=None,
+                color=ax.lines[-1].get_color(),  # match line color
+                label=None,
+            )
     else:
         sns.lineplot(
             data=results_df, x="sample_size", y="standard_error", marker="o"
         )
-
-    if "dataset" in results_df.columns:
-        for ds_name, subdf in results_df.groupby("dataset"):
-            if len(subdf) >= 2:
-                sns.regplot(
-                    data=subdf,
-                    x="sample_size",
-                    y="standard_error",
-                    scatter=False,
-                    label=f"{ds_name} trend",
-                    ci=None,
-                )
 
     plt.xlabel("# Annotators")
     plt.ylabel("Std Error of Polarization Statistic")
@@ -203,10 +211,10 @@ def main(
         dataset_path=hundred_dataset_path
     )
     dices350 = dices.DicesDataset(
-        dataset_path=dices_small_path, variant="dices-350"
+        dataset_path=dices_small_path, variant="350"
     )
     dices990 = dices.DicesDataset(
-        dataset_path=dices_large_path, variant="dices-990"
+        dataset_path=dices_large_path, variant="990"
     )
 
     variance_df_ls = []
@@ -222,7 +230,7 @@ def main(
 
     # plot only the two dices variants
     plot_variance_curve(
-        variance_df.loc[variance_df.dataset.isin(["dices-350", "dices-990"])],
+        variance_df[variance_df.dataset != "100 Annotator Synthetic"],
         graph_path=graph_dir / "ndfu_std_error_sample_size.png",
     )
 

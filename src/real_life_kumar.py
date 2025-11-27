@@ -5,7 +5,7 @@ import pandas as pd
 
 from .tasks import preprocessing, run_helper, graphs
 
-NUM_COMMENTS = 5000
+NUM_COMMENTS = 20_000
 
 
 class KumarDataset(preprocessing.Dataset):
@@ -191,7 +191,6 @@ def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
         ds=ds, output_path=graph_output_dir / "kumar_sample.png"
     )
 
-    
     print("Running experiment...")
     run_helper.run_experiments_on_dataset(
         ds,
@@ -201,7 +200,6 @@ def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
         position="h!",
         small_fontsize=True,
     )
-
 
     print("Running education experiment...")
     ds.df = ds.df[["Education"]]
