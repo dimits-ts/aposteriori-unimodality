@@ -2,6 +2,8 @@ import argparse
 from pathlib import Path
 
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 from .tasks import preprocessing
 from .tasks import run_helper
@@ -50,7 +52,7 @@ class DicesDataset(preprocessing.Dataset):
                 "Asian/Asian subcontinent": "Asian",
                 "Black/African American": "African American",
                 "LatinX, Latino, Hispanic or Spanish Origin": "Latino",
-                "Self-describe (below)": "Other"
+                "Self-describe (below)": "Other",
             }
         )
         # add numbers for proper ordering during export
@@ -75,23 +77,74 @@ class DicesDataset(preprocessing.Dataset):
         return df
 
 
+def plot_annotation_histograms(
+    dataset_path_small: Path, dataset_path_large: Path, output_path: Path
+):
+    """
+    Create a plot with two seaborn histograms showing the distribution
+    of the number of annotators per comment for DICES-350 and DICES-990.
+    """
+
+    # Load datasets
+    df_small = pd.read_csv(dataset_path_small)
+    df_large = pd.read_csv(dataset_path_large)
+
+    # Compute annotator counts per item_id
+    counts_small = df_small.groupby("item_id").size().reset_index(name="count")
+    counts_large = df_large.groupby("item_id").size().reset_index(name="count")
+
+    counts_small["dataset"] = "DICES-350"
+    counts_large["dataset"] = "DICES-990"
+
+    # Combine for seaborn
+    combined = pd.concat([counts_small, counts_large], ignore_index=True)
+
+    # Plot
+    plt.figure(figsize=(8, 5))
+    sns.histplot(
+        data=combined,
+        x="count",
+        hue="dataset",
+        element="step",
+        stat="count",
+        common_bins=True,
+        alpha=0.5,
+        bins=120
+    )
+
+    plt.xlabel("Number of annotators per comment")
+    plt.ylabel("Count of comments")
+    plt.title("Annotator Count Distribution")
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
+
+
 def main(
     dataset_path_small: Path,
     dataset_path_large: Path,
     latex_output_dir: Path,
     graph_output_dir: Path,
 ):
-    ds = DicesDataset(dataset_path=dataset_path_small, variant="350")
+    ds_350 = DicesDataset(dataset_path=dataset_path_small, variant="350")
+    ds_990 = DicesDataset(dataset_path=dataset_path_large, variant="990")
+
+    plot_annotation_histograms(
+        dataset_path_small=dataset_path_small,
+        dataset_path_large=dataset_path_large,
+        output_path=graph_output_dir / "annotator_histograms.png",
+    )
+
+    return
     run_helper.run_experiments_on_dataset(
-        ds,
+        ds_350,
         latex_output_dir=latex_output_dir,
         graph_path=graph_output_dir / "dices-350.png",
         table_label="tab:dices-350",
     )
 
-    ds = DicesDataset(dataset_path=dataset_path_large, variant="990")
     run_helper.run_experiments_on_dataset(
-        ds,
+        ds_990,
         latex_output_dir=latex_output_dir,
         graph_path=graph_output_dir / "dices-990.png",
         table_label="tab:dices-990",
