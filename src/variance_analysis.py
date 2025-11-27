@@ -21,6 +21,12 @@ MARKERS = {
     "100 Annotator Synthetic": "^",
 }
 
+COLORS = {
+    "DICES-350": "#1f77b4",  # blue
+    "DICES-990": "#ff7f0e",  # orange
+    "100 Annotator Synthetic": "#2ca02c",  # green
+}
+
 
 def sample_se_vs_sample_size_unimodality(
     df: pd.DataFrame,
@@ -133,6 +139,8 @@ def plot_variance_curve(results_df, graph_path: Path):
         # plot each dataset separately to control markers and colors
         for ds_name, subdf in results_df.groupby("dataset"):
             marker = MARKERS[ds_name]
+            color = COLORS[ds_name]
+
             # lineplot for dataset
             ax = sns.lineplot(
                 data=subdf,
@@ -140,6 +148,7 @@ def plot_variance_curve(results_df, graph_path: Path):
                 y="standard_error",
                 marker=marker,
                 label=ds_name,
+                color=color
             )
 
             # regression trend line (same color but no scatter)
@@ -210,12 +219,8 @@ def main(
     ds_hundred = synthetic_100.HundredDataset(
         dataset_path=hundred_dataset_path
     )
-    dices350 = dices.DicesDataset(
-        dataset_path=dices_small_path, variant="350"
-    )
-    dices990 = dices.DicesDataset(
-        dataset_path=dices_large_path, variant="990"
-    )
+    dices350 = dices.DicesDataset(dataset_path=dices_small_path, variant="350")
+    dices990 = dices.DicesDataset(dataset_path=dices_large_path, variant="990")
 
     variance_df_ls = []
 
