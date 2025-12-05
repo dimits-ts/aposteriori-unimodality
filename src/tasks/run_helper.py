@@ -25,7 +25,9 @@ def run_all_results(ds: preprocessing.Dataset) -> pd.DataFrame:
         and the columns are `kappa` and `pvalue`.
     """
     results = []
-    for sdb_column in tqdm(ds.get_sdb_columns(), desc="Evaluating SDB dimensions"):
+    for sdb_column in tqdm(
+        ds.get_sdb_columns(), desc="Evaluating SDB dimensions"
+    ):
         res = _run_aposteriori(
             ds.get_dataset(),
             feature_col=sdb_column,
@@ -58,13 +60,17 @@ def results_to_latex(
     table_label: str,
     columns: list[str] | None = None,
     two_column: bool = False,
-    small_fontsize: bool = False,
+    small_fontsize: bool = True,
 ) -> None:
     """
     Export results to a single LaTeX table where apunim values include
     significance stars (as superscripts), and the pvalue column is removed.
     """
-    res_df = res_df.replace("_", r"\_", regex=True)
+    res_df = (
+        res_df.replace("_", r"\_", regex=True)
+        .rename(columns={"Unnamed: 1": "Value"})
+        .set_index(["SDB Feature", "Value"])
+    )
 
     if "pvalue" in res_df.columns and "apunim" in res_df.columns:
         res_df["apunim"] = res_df.apply(
@@ -97,8 +103,8 @@ def results_to_latex(
     # Small font
     if small_fontsize:
         latex_str = latex_str.replace(
-            r"\begin{table}",
-            r"\begin{table}\n\scriptsize",
+            r"\begin{table}[ht]",
+            r"\begin{table}[ht]\scriptsize",
         )
 
     # Two-column layout support
