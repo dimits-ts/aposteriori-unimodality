@@ -83,12 +83,7 @@ def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
         ds=ds, output_path=graph_output_dir / "sap.png"
     )
 
-    res = run_helper.run_all_results(
-        df=ds.get_dataset(),
-        sdb_columns=ds.get_sdb_columns(),
-        value_col=ds.get_annotation_column(),
-        comment_key_col=ds.get_comment_key_column(),
-    )
+    res = run_helper.run_all_results(ds)
     res.to_csv(output_dir / "sap.csv")
 
 

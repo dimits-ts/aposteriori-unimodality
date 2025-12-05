@@ -110,7 +110,7 @@ def plot_annotation_histograms(
         stat="count",
         common_bins=True,
         alpha=0.5,
-        bins=120
+        bins=120,
     )
 
     plt.xlabel("Number of annotators per comment")
@@ -131,24 +131,14 @@ def main(
     graphs.polarization_plot(
         ds=ds_350, output_path=graph_output_dir / "dices-350.png"
     )
-    res = run_helper.run_all_results(
-        df=ds_350.get_dataset(),
-        sdb_columns=ds_350.get_sdb_columns(),
-        value_col=ds_350.get_annotation_column(),
-        comment_key_col=ds_350.get_comment_key_column(),
-    )
+    res = run_helper.run_all_results(ds=ds_350)
     res.to_csv(output_dir / "dices-350.csv")
 
     ds_990 = DicesDataset(dataset_path=dataset_path_large, variant="990")
     graphs.polarization_plot(
         ds=ds_350, output_path=graph_output_dir / "dices-990.png"
     )
-    res = run_helper.run_all_results(
-        df=ds_990.get_dataset(),
-        sdb_columns=ds_990.get_sdb_columns(),
-        value_col=ds_990.get_annotation_column(),
-        comment_key_col=ds_990.get_comment_key_column(),
-    )
+    res = run_helper.run_all_results(ds=ds_990)
     res.to_csv(output_dir / "dices-990.csv")
 
     plot_annotation_histograms(

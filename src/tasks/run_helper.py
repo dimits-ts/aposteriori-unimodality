@@ -5,29 +5,17 @@ import pandas as pd
 from tqdm.auto import tqdm
 import apunim
 
+from . import preprocessing
 
-def run_all_results(
-    df: pd.DataFrame,
-    sdb_columns: list[str],
-    value_col: str,
-    comment_key_col: str,
-) -> pd.DataFrame:
+
+def run_all_results(ds: preprocessing.Dataset) -> pd.DataFrame:
     """
     Runs tasks.run_helper.results for each sdb_column and combines the results
     into a single MultiIndex DataFrame.
 
     Parameters
     ----------
-    df : pd.DataFrame
-        Input DataFrame.
-    sdb_columns : list
-        List of sdb_column names to analyze.
-    discussion_id_col : str
-        Column name representing the discussion ID.
-    value_col : str
-        Column name with the value (e.g., toxic_score).
-    comment_key_col : str
-        Column name with the comment key.
+    ds: The dataset
 
     Returns
     -------
@@ -37,12 +25,12 @@ def run_all_results(
         and the columns are `kappa` and `pvalue`.
     """
     results = []
-    for sdb_column in tqdm(sdb_columns, desc="Evaluating SDB dimensions"):
+    for sdb_column in tqdm(ds.get_sdb_columns(), desc="Evaluating SDB dimensions"):
         res = _run_aposteriori(
-            df,
+            ds.get_dataset(),
             feature_col=sdb_column,
-            value_col=value_col,
-            comment_key_col=comment_key_col,
+            value_col=ds.get_annotation_column(),
+            comment_key_col=ds.get_comment_key_column(),
         )
         res_df = pd.DataFrame.from_dict(
             {k: v._asdict() for k, v in res.items()},
