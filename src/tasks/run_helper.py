@@ -3,8 +3,8 @@ import re
 
 import pandas as pd
 from tqdm.auto import tqdm
+import apunim
 
-from ..apunim import aposteriori
 from . import preprocessing, graphs
 
 
@@ -196,7 +196,7 @@ def _run_aposteriori(
     comment_key_col: str,
     iterations: int = 100,
     alpha: float = 0.05,
-) -> dict[str, aposteriori.ApunimResult]:
+) -> dict[str, apunim.ApunimResult]:
     annotations, attributes, keys = _extract_annotations_and_attributes(
         df=df,
         value_col=value_col,
@@ -204,7 +204,7 @@ def _run_aposteriori(
         comment_key_col=comment_key_col,
     )
 
-    results = aposteriori.aposteriori_unimodality(
+    results = apunim.aposteriori_unimodality(
         annotations=annotations,
         factor_group=attributes,
         comment_group=keys,
