@@ -5,37 +5,6 @@ import pandas as pd
 from tqdm.auto import tqdm
 import apunim
 
-from . import preprocessing, graphs
-
-
-def run_experiments_on_dataset(
-    ds: preprocessing.Dataset,
-    table_label: str,
-    latex_output_dir: Path,
-    graph_path: Path,
-    small_fontsize: bool = False,
-    position: str = "t",
-) -> None:
-    dataset_first_name = ds.get_name().split()[0].lower()
-
-    # full table
-    res = run_all_results(
-        df=ds.get_dataset(),
-        sdb_columns=ds.get_sdb_columns(),
-        value_col=ds.get_annotation_column(),
-        comment_key_col=ds.get_comment_key_column(),
-    )
-    print(res)
-    results_to_latex(
-        res,
-        output_path=latex_output_dir / f"{dataset_first_name}.tex",
-        dataset_name=dataset_first_name,
-        table_label=table_label,
-    )
-
-    graphs.polarization_plot(ds=ds, output_path=graph_path)
-    print(f"Finished {ds.get_name()} dataset.")
-
 
 def run_all_results(
     df: pd.DataFrame,

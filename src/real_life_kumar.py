@@ -184,38 +184,20 @@ class KumarDataset(preprocessing.Dataset):
         return mapping.get(x, "Other")
 
 
-def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
-    print("Generating actual polarization plot...")
+def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
+    print("Generating sample polarization plot...")
     ds = KumarDataset(dataset_path=dataset_path, num_samples=NUM_COMMENTS)
     graphs.polarization_plot(
         ds=ds, output_path=graph_output_dir / "kumar_sample.png"
     )
-
     print("Running experiment...")
-    run_helper.run_experiments_on_dataset(
-        ds,
-        latex_output_dir=latex_output_dir,
-        graph_path=graph_output_dir / "kumar.png",
-        table_label="tab:kumar",
-        position="h!",
-        small_fontsize=True,
-    )
-
-    print("Running education experiment...")
-    ds.df = ds.df[["Education"]]
-    ds = group_education(ds)
-    res_df = run_helper.run_result(
-        df=ds.df,
-        sdb_column="Education",
+    res = run_helper.run_all_results(
+        df=ds.get_dataset(),
+        sdb_columns=ds.get_sdb_columns(),
         value_col=ds.get_annotation_column(),
         comment_key_col=ds.get_comment_key_column(),
     )
-    run_helper.results_to_latex(
-        res_df=res_df,
-        output_path=latex_output_dir / "kumar_education.tex",
-        dataset_name=ds.get_name(),
-        table_label="tab:kumar_education",
-    )
+    res.to_csv(output_dir / "kumar.csv")
 
     print("Generating full polarization plot...")
     ds = KumarDataset(dataset_path=dataset_path)
@@ -236,9 +218,9 @@ if __name__ == "__main__":
         help="Path to the full dataset CSV file.",
     )
     parser.add_argument(
-        "--latex-output-dir",
+        "--output-dir",
         required=True,
-        help="Directory for the latex result files.",
+        help="Directory for the CSV result files.",
     )
     parser.add_argument(
         "--graph-output-dir",
@@ -248,6 +230,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     main(
         dataset_path=Path(args.dataset_path),
-        latex_output_dir=Path(args.latex_output_dir),
+        output_dir=Path(args.output_dir),
         graph_output_dir=Path(args.graph_output_dir),
     )

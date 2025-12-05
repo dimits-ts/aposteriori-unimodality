@@ -5,6 +5,7 @@ import pandas as pd
 
 from .tasks import preprocessing
 from .tasks import run_helper
+from .tasks import graphs
 
 
 class SapDataset(preprocessing.Dataset):
@@ -75,15 +76,20 @@ class SapDataset(preprocessing.Dataset):
         return df
 
 
-def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
+def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
     ds = SapDataset(dataset_path=dataset_path)
 
-    run_helper.run_experiments_on_dataset(
-        ds,
-        latex_output_dir=latex_output_dir,
-        graph_path=graph_output_dir / "sap.png",
-        table_label="tab:sap",
+    graphs.polarization_plot(
+        ds=ds, output_path=graph_output_dir / "sap.png"
     )
+
+    res = run_helper.run_all_results(
+        df=ds.get_dataset(),
+        sdb_columns=ds.get_sdb_columns(),
+        value_col=ds.get_annotation_column(),
+        comment_key_col=ds.get_comment_key_column(),
+    )
+    res.to_csv(output_dir / "sap.csv")
 
 
 if __name__ == "__main__":
@@ -98,9 +104,9 @@ if __name__ == "__main__":
         help="Path to the full dataset CSV file.",
     )
     parser.add_argument(
-        "--latex-output-dir",
+        "--output-dir",
         required=True,
-        help="Directory for the latex result files.",
+        help="Directory for the CSV result files.",
     )
     parser.add_argument(
         "--graph-output-dir",
@@ -110,6 +116,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     main(
         dataset_path=Path(args.dataset_path),
-        latex_output_dir=Path(args.latex_output_dir),
+        output_dir=Path(args.output_dir),
         graph_output_dir=Path(args.graph_output_dir),
     )
