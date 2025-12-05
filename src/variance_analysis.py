@@ -9,11 +9,12 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from tqdm.auto import tqdm
+import apunim
 
 from .tasks import graphs
 from .tasks import preprocessing
-from . import synthetic_100, dices
-from .apunim import aposteriori
+from . import synthetic, dices
+
 
 MARKERS = {
     "DICES-350": "o",
@@ -98,7 +99,7 @@ def sample_se_vs_sample_size_unimodality(
                 sub_grp = groups[idx]
 
                 # compute factor DFU stats
-                stats_dict = aposteriori._factor_dfu_stat(
+                stats_dict = apunim._factor_dfu_stat(
                     sub_ann, sub_grp, bins=bins
                 )
 
@@ -216,7 +217,7 @@ def main(
     cache_dir: Path,
     min_comment_annotators: int = 3,
 ):
-    ds_hundred = synthetic_100.HundredDataset(
+    ds_hundred = synthetic.HundredDataset(
         dataset_path=hundred_dataset_path
     )
     dices350 = dices.DicesDataset(dataset_path=dices_small_path, variant="350")

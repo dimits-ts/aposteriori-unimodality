@@ -59,7 +59,6 @@ def results_to_latex(
     columns: list[str] | None = None,
     two_column: bool = False,
     small_fontsize: bool = False,
-    position: str = "t",
 ) -> None:
     """
     Export results to a single LaTeX table where apunim values include
