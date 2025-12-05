@@ -3,12 +3,13 @@ from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
-from numpy.typing import NDArray
 import seaborn as sns
 import scipy.stats
+import apunim
+from numpy.typing import NDArray
 
 from .tasks import graphs
-from .apunim import aposteriori
+
 
 INTUITION_SIZE = 50
 DIFF_COMMENTS_SIZE = 200
@@ -180,7 +181,7 @@ def _combined_dfu_plot(
     # Add all nDFU annotations
     math_text = ""
     for data, label in zip(datasets, labels):
-        ndfu_value = aposteriori.dfu(data, bins=NUM_BINS, normalized=True)
+        ndfu_value = apunim.dfu(data, bins=NUM_BINS, normalized=True)
         math_text += f"$\\mathbf{{nDFU_{{{label}}}}}={ndfu_value:.3f}$\n"
 
     plt.legend(loc="center")
@@ -241,7 +242,7 @@ def _truncated_normal(loc, scale, lower=0, upper=10, size=100):
 
 
 def _dfu_plot(data: np.ndarray, graph_path: Path, color: str, label) -> None:
-    ndfu_value = aposteriori.dfu(data, bins=NUM_BINS, normalized=True)
+    ndfu_value = apunim.dfu(data, bins=NUM_BINS, normalized=True)
     plt.figure(figsize=(8, 5))
     sns.histplot(
         data,
@@ -265,9 +266,9 @@ def _plot_example_individual(
     men_annot: NDArray[np.float64],
     graph_path: Path,
 ):
-    ndfu_man = aposteriori.dfu(men_annot, bins=NUM_BINS, normalized=True)
-    ndfu_woman = aposteriori.dfu(women_annot, bins=NUM_BINS, normalized=True)
-    ndfu_all = aposteriori.dfu(
+    ndfu_man = apunim.dfu(men_annot, bins=NUM_BINS, normalized=True)
+    ndfu_woman = apunim.dfu(women_annot, bins=NUM_BINS, normalized=True)
+    ndfu_all = apunim.dfu(
         np.hstack([ndfu_man, ndfu_woman]), bins=NUM_BINS, normalized=True
     )
 
