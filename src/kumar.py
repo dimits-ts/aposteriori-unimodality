@@ -67,8 +67,8 @@ class KumarDataset(preprocessing.Dataset):
         # define ranking from most to least qualified
         ranking = [
             "Doctoral degree",
-            "Master's degree",
             "Professional degree",
+            "Master's degree",
             "Bachelor's degree",
             "Associate degree",
             "College, no degree",

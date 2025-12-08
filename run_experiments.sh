@@ -9,4 +9,6 @@ parallel --jobs 4 --delay 0.1 \
     'python -m src.kumar --dataset-path=data/kumar.json --output-dir=output --graph-output-dir=graphs' \
     'python -m src.synthetic --dataset-path=data/annotation.csv --output-dir=output --graph-output-dir=graphs' 
 
-python -m src.export_results --results-dir=output --latex-output-dir=manuscript/generated/ --graph-output-dir=graphs
+python -m src.export_results \
+    --results-dir=output --latex-output-dir=manuscript/generated/ \
+    --graph-output-dir=graphs
