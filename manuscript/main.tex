@@ -54,6 +54,13 @@ The core of the problem is simple; if a comment targets marginalized groups, the
 
 \begin{figure}[ht]
 	\centering
+	\includegraphics[width=\columnwidth]{apunim_example.drawio.png}
+	\caption{The Apunim framework attributes annotator polarization to certain characteristics.}
+	\label{fig:apunim_example}
+\end{figure}
+
+\begin{figure}[ht]
+	\centering
 	\includegraphics[width=\columnwidth]{disagreement_vs_polarization.png}
 	\caption{Disagreement is similar to variance; thus it overlooks cases where annotators may be ``split down the middle''. Polarization on the other hand, is able to identify multiple clusters even if they are close together.}
 	\label{fig:disagreement_vs_polarization}
@@ -141,7 +148,6 @@ Given infinite annotations, the assumption of independence would hold. Likewise,
 \end{equation}
 \noindent where $\tilde{P}_i$ is the random partition operator with matching group sizes.
  
-
 \begin{figure}[t]
 	\includegraphics[width=\linewidth]{overview.png}
 	\caption{An overview of the Aposteriori Unimodality Test. We gather statistical information from the annotations (different \acp{SDB} are denoted by different colors) via the \ac{nDFU} measure, which is aggregated on the data-point-level by the pol-statistic. The Aposteriori Unimodality Test is applied on the discussion level, operating on the pol-statistics of the individual data-points.}
@@ -230,9 +236,11 @@ Brief dataset characteristics are given in Table~\ref{tab:datasets}. There is a 
 \end{table}
 
 
-
 \section{Results}
 \label{sec:results}
+
+\subsection{Which factors contribute to polarization?}
+\label{ssec:results:factors}
 
 \input{./generated/dices-350.tex}
 \input{./generated/dices-990.tex}
@@ -258,6 +266,20 @@ A notable exception is \emph{Education} in the \textcite{kumar-et-al-2021} datas
 
 The fact that this behavior is not replicated when investigating annotator age in the \textcite{sap-etal-2019-risk} and \textcite{kumar-et-al-2021} datasets lends further support to the argument that age does indeed not play a major role in annotator polarization for these datasets.
 
+
+\subsection{Investigating ordinal attributes}
+\label{ssec:results:ordinal}
+
+\begin{figure}[ht]
+	\includegraphics[width=\linewidth]{apunim_ordinal.png}
+	\caption{The behavior of ordinal variables in all datasets. The x-axis represents the order of each factor (marked as \texttt{1), 2), ...} in Tables~\ref{tab::dices-350},\ref{tab::dices-990},\ref{tab::kumar},\ref{tab::sap}). The x-axis is normalized to the smallest common denominator between the number of ordinal values.}
+	\label{fig::ordinal}
+\end{figure}
+
+Most ordinal attributes (with statistically significant apunim values) tend to cluster around a few dominant values; for example, \emph{Age} and \emph{Education} in the \textcite{kumar-et-al-2021} dataset. This pattern is expected because the Apunim algorithm is designed to identify clusters of annotations, causing nearby or similar values to be absorbed into the main effects driven by a few significant modes.
+
+However, some ordinal attributes (\emph{Age} in both DICES-350 and DICES-990, \emph{Religion Importance} in \textcite{kumar-et-al-2021}) follow a strict, monotonic trend. This implies that, in some cases, the \textbf{amount of polarization increases the further apart an opinion is from neutrality}. For example, non-religious annotators are less likely to have polarizing opinions about what constitutes a toxic comment than the average annotator, while very religious annotators generate very polarizing judgments.
+
 \section{Conclusion}
 
 We introduced the ``Aposteriori Unimodality Test'', a statistical test that detects whether certain sociodemographic groups partly cause polarization in annotations. Our test is resistant to low samples of annotations, bypasses common statistical issues such as sample dependence, and avoids newly-discovered issues such as the presence of inherent polarization and polarization direction. We apply our test two human-generated and two LLM-generated datasets and find interesting patterns on the former, and verify current literature on LLM \ac{SDB} prompting on the latter.
@@ -270,7 +292,7 @@ Since there are no other established tests that attribute polarization to sociod
 
 \section{Ethical Considerations}
 
-While our works aims to help protect marginalized and disadvantaged groups by attributing polarization to certain subgroups, it can be taken advantage of by malicious actors. Given a dataset with fine-grained \ac{SDB} information, these actors can use our test to target specific vulnerable groups. We thus urge researchers to keep datasets including such information protected, and provided to others only under explicit permission.
+While our work aims to help protect marginalized and disadvantaged groups by attributing polarization to certain subgroups, it can be taken advantage of by malicious actors. Given a dataset with fine-grained \ac{SDB} information, these actors can use our test to target specific vulnerable groups. We thus urge researchers to keep datasets including such information protected, and provided to others only under explicit permission.
 
 % force floats to appear 
 \clearpage

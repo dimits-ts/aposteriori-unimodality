@@ -3,62 +3,19 @@ import re
 
 import pandas as pd
 from tqdm.auto import tqdm
+import apunim
 
-from ..apunim import aposteriori
-from . import preprocessing, graphs
-
-
-def run_experiments_on_dataset(
-    ds: preprocessing.Dataset,
-    table_label: str,
-    latex_output_dir: Path,
-    graph_path: Path,
-    small_fontsize: bool = False,
-    position: str = "t",
-) -> None:
-    dataset_first_name = ds.get_name().split()[0].lower()
-
-    # full table
-    res = run_all_results(
-        df=ds.get_dataset(),
-        sdb_columns=ds.get_sdb_columns(),
-        value_col=ds.get_annotation_column(),
-        comment_key_col=ds.get_comment_key_column(),
-    )
-    print(res)
-    results_to_latex(
-        res,
-        output_path=latex_output_dir / f"{dataset_first_name}.tex",
-        dataset_name=dataset_first_name,
-        table_label=table_label,
-    )
-
-    graphs.polarization_plot(ds=ds, output_path=graph_path)
-    print(f"Finished {ds.get_name()} dataset.")
+from . import preprocessing
 
 
-def run_all_results(
-    df: pd.DataFrame,
-    sdb_columns: list[str],
-    value_col: str,
-    comment_key_col: str,
-) -> pd.DataFrame:
+def run_all_results(ds: preprocessing.Dataset) -> pd.DataFrame:
     """
     Runs tasks.run_helper.results for each sdb_column and combines the results
     into a single MultiIndex DataFrame.
 
     Parameters
     ----------
-    df : pd.DataFrame
-        Input DataFrame.
-    sdb_columns : list
-        List of sdb_column names to analyze.
-    discussion_id_col : str
-        Column name representing the discussion ID.
-    value_col : str
-        Column name with the value (e.g., toxic_score).
-    comment_key_col : str
-        Column name with the comment key.
+    ds: The dataset
 
     Returns
     -------
@@ -68,12 +25,14 @@ def run_all_results(
         and the columns are `kappa` and `pvalue`.
     """
     results = []
-    for sdb_column in tqdm(sdb_columns, desc="Evaluating SDB dimensions"):
+    for sdb_column in tqdm(
+        ds.get_sdb_columns(), desc="Evaluating SDB dimensions"
+    ):
         res = _run_aposteriori(
-            df,
+            ds.get_dataset(),
             feature_col=sdb_column,
-            value_col=value_col,
-            comment_key_col=comment_key_col,
+            value_col=ds.get_annotation_column(),
+            comment_key_col=ds.get_comment_key_column(),
         )
         res_df = pd.DataFrame.from_dict(
             {k: v._asdict() for k, v in res.items()},
@@ -101,14 +60,17 @@ def results_to_latex(
     table_label: str,
     columns: list[str] | None = None,
     two_column: bool = False,
-    small_fontsize: bool = False,
-    position: str = "t",
+    small_fontsize: bool = True,
 ) -> None:
     """
     Export results to a single LaTeX table where apunim values include
     significance stars (as superscripts), and the pvalue column is removed.
     """
-    res_df = res_df.replace("_", r"\_", regex=True)
+    res_df = (
+        res_df.replace("_", r"\_", regex=True)
+        .rename(columns={"Unnamed: 1": "Value"})
+        .set_index(["SDB Feature", "Value"])
+    )
 
     if "pvalue" in res_df.columns and "apunim" in res_df.columns:
         res_df["apunim"] = res_df.apply(
@@ -141,8 +103,8 @@ def results_to_latex(
     # Small font
     if small_fontsize:
         latex_str = latex_str.replace(
-            r"\begin{table}",
-            r"\begin{table}\n\scriptsize",
+            r"\begin{table}[ht]",
+            r"\begin{table}[ht]\scriptsize",
         )
 
     # Two-column layout support
@@ -196,7 +158,7 @@ def _run_aposteriori(
     comment_key_col: str,
     iterations: int = 100,
     alpha: float = 0.05,
-) -> dict[str, aposteriori.ApunimResult]:
+) -> dict[str, apunim.ApunimResult]:
     annotations, attributes, keys = _extract_annotations_and_attributes(
         df=df,
         value_col=value_col,
@@ -204,7 +166,7 @@ def _run_aposteriori(
         comment_key_col=comment_key_col,
     )
 
-    results = aposteriori.aposteriori_unimodality(
+    results = apunim.aposteriori_unimodality(
         annotations=annotations,
         factor_group=attributes,
         comment_group=keys,

@@ -5,6 +5,7 @@ import pandas as pd
 
 from .tasks import preprocessing
 from .tasks import run_helper
+from .tasks import graphs
 
 
 class HundredDataset(preprocessing.Dataset):
@@ -35,6 +36,18 @@ class HundredDataset(preprocessing.Dataset):
     @staticmethod
     def _base_df(dataset_path: Path) -> pd.DataFrame:
         df = pd.read_csv(dataset_path)
+
+        age_ranking = [
+            "0-20",
+            "20-40",
+            "40-60",
+            "60-80",
+        ]
+        age_ordinal_map = {
+            name: f"{i+1}) {name}" for i, name in enumerate(age_ranking)
+        }
+        df.age = df.age.replace(age_ordinal_map)
+
         df = df.rename(
             columns={
                 "age": "Age",
@@ -52,14 +65,24 @@ class HundredDataset(preprocessing.Dataset):
         return pd.DataFrame(grouped_df)
 
 
-def main(dataset_path: Path, latex_output_dir: Path, graph_output_dir: Path):
+def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
     ds = HundredDataset(dataset_path=dataset_path)
-    run_helper.run_experiments_on_dataset(
-        ds,
-        latex_output_dir=latex_output_dir,
-        graph_path=graph_output_dir / "100.png",
-        table_label="tab:synthetic_100",
+    graphs.polarization_plot(
+        ds=ds, output_path=graph_output_dir / "hundred.png"
     )
+
+    res = run_helper.run_all_results(ds)
+    age_ranking = [
+        "0-20",
+        "20-40",
+        "40-60",
+        "60-80",
+    ]
+    age_ordinal_map = {
+        name: f"{i+1}) {name}" for i, name in enumerate(age_ranking)
+    }
+    res = res.rename(index=age_ordinal_map, level=1)
+    res.to_csv(output_dir / "hundred.csv")
 
 
 if __name__ == "__main__":
@@ -74,9 +97,9 @@ if __name__ == "__main__":
         help="Path to the full dataset CSV file.",
     )
     parser.add_argument(
-        "--latex-output-dir",
+        "--output-dir",
         required=True,
-        help="Directory for the latex result files.",
+        help="Directory for the CSV result files.",
     )
     parser.add_argument(
         "--graph-output-dir",
@@ -86,6 +109,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     main(
         dataset_path=Path(args.dataset_path),
-        latex_output_dir=Path(args.latex_output_dir),
+        output_dir=Path(args.output_dir),
         graph_output_dir=Path(args.graph_output_dir),
     )

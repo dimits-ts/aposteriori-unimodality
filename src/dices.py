@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 
 from .tasks import preprocessing
 from .tasks import run_helper
+from .tasks import graphs
 
 
 class DicesDataset(preprocessing.Dataset):
@@ -109,7 +110,7 @@ def plot_annotation_histograms(
         stat="count",
         common_bins=True,
         alpha=0.5,
-        bins=120
+        bins=120,
     )
 
     plt.xlabel("Number of annotators per comment")
@@ -123,31 +124,27 @@ def plot_annotation_histograms(
 def main(
     dataset_path_small: Path,
     dataset_path_large: Path,
-    latex_output_dir: Path,
+    output_dir: Path,
     graph_output_dir: Path,
 ):
     ds_350 = DicesDataset(dataset_path=dataset_path_small, variant="350")
+    graphs.polarization_plot(
+        ds=ds_350, output_path=graph_output_dir / "dices-350.png"
+    )
+    res = run_helper.run_all_results(ds=ds_350)
+    res.to_csv(output_dir / "dices-350.csv")
+
     ds_990 = DicesDataset(dataset_path=dataset_path_large, variant="990")
+    graphs.polarization_plot(
+        ds=ds_350, output_path=graph_output_dir / "dices-990.png"
+    )
+    res = run_helper.run_all_results(ds=ds_990)
+    res.to_csv(output_dir / "dices-990.csv")
 
     plot_annotation_histograms(
         dataset_path_small=dataset_path_small,
         dataset_path_large=dataset_path_large,
         output_path=graph_output_dir / "annotator_histograms.png",
-    )
-
-    return
-    run_helper.run_experiments_on_dataset(
-        ds_350,
-        latex_output_dir=latex_output_dir,
-        graph_path=graph_output_dir / "dices-350.png",
-        table_label="tab:dices-350",
-    )
-
-    run_helper.run_experiments_on_dataset(
-        ds_990,
-        latex_output_dir=latex_output_dir,
-        graph_path=graph_output_dir / "dices-990.png",
-        table_label="tab:dices-990",
     )
 
 
@@ -168,9 +165,9 @@ if __name__ == "__main__":
         help="Path to the DICES-990 CSV file.",
     )
     parser.add_argument(
-        "--latex-output-dir",
+        "--output-dir",
         required=True,
-        help="Directory for the latex result files.",
+        help="Directory for the CSV result files.",
     )
     parser.add_argument(
         "--graph-output-dir",
@@ -181,6 +178,6 @@ if __name__ == "__main__":
     main(
         dataset_path_small=Path(args.dataset_small_path),
         dataset_path_large=Path(args.dataset_large_path),
-        latex_output_dir=Path(args.latex_output_dir),
+        output_dir=Path(args.output_dir),
         graph_output_dir=Path(args.graph_output_dir),
     )
