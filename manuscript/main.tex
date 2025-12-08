@@ -148,7 +148,6 @@ Given infinite annotations, the assumption of independence would hold. Likewise,
 \end{equation}
 \noindent where $\tilde{P}_i$ is the random partition operator with matching group sizes.
  
-
 \begin{figure}[t]
 	\includegraphics[width=\linewidth]{overview.png}
 	\caption{An overview of the Aposteriori Unimodality Test. We gather statistical information from the annotations (different \acp{SDB} are denoted by different colors) via the \ac{nDFU} measure, which is aggregated on the data-point-level by the pol-statistic. The Aposteriori Unimodality Test is applied on the discussion level, operating on the pol-statistics of the individual data-points.}
@@ -237,9 +236,11 @@ Brief dataset characteristics are given in Table~\ref{tab:datasets}. There is a 
 \end{table}
 
 
-
 \section{Results}
 \label{sec:results}
+
+\subsection{Which factors contribute to polarization?}
+\label{ssec:results:factors}
 
 \input{./generated/dices-350.tex}
 \input{./generated/dices-990.tex}
@@ -264,6 +265,20 @@ None of the age groups in the \textcite{sap-etal-2019-risk} and \textcite{kumar-
 A notable exception is \emph{Education} in the \textcite{kumar-et-al-2021} dataset. This could be attributed to the curse of dimensionality, since we investigate a great number of groups, but there are few annotators for each individual group. %TODO: try this with fewer ordinals 
 
 The fact that this behavior is not replicated when investigating annotator age in the \textcite{sap-etal-2019-risk} and \textcite{kumar-et-al-2021} datasets lends further support to the argument that age does indeed not play a major role in annotator polarization for these datasets.
+
+
+\subsection{Investigating ordinal attributes}
+\label{ssec:results:ordinal}
+
+\begin{figure}[ht]
+	\includegraphics[width=\linewidth]{apunim_ordinal.png}
+	\caption{The behavior of ordinal variables in all datasets. The x-axis represents the order of each factor (marked as \texttt{1), 2), ...} in Tables~\ref{tab::dices-350},\ref{tab::dices-990},\ref{tab::kumar},\ref{tab::sap}).}
+	\label{fig::ordinal}
+\end{figure}
+
+Most ordinal attributes tend to cluster around a few dominant values; for example, \emph{Age} and \emph{Education} in the \textcite{kumar-et-al-2021} dataset. This pattern is expected because the Apunim algorithm is designed to identify clusters of annotations, causing nearby or similar values to be absorbed into the main effects driven by a few significant modes.
+
+However, some ordinal attributes (\emph{Age} in both DICES-350 and DICES-990, \emph{Religion Importance} in \textcite{kumar-et-al-2021}) follow a strict, monotonic trend. This implies that, in some cases, the \textbf{amount of polarization increases the further apart an opinion is from neutrality}. For example, non-religious annotators are more unlikely to have polarizing opinions about what constitutes a toxic comment than the average annotator, while very religious annotators will generate very polarizing judgments.
 
 \section{Conclusion}
 

@@ -112,6 +112,19 @@ class KumarDataset(preprocessing.Dataset):
             }
         )
 
+        age_ranking = [
+            "18-24",
+            "25-34",
+            "35-44",
+            "45-54",
+            "55-64",
+            "65+",
+        ]
+        age_ordinal_map = {
+            name: f"{i+1}) {name}" for i, name in enumerate(age_ranking)
+        }
+        df.age_range = df.age_range.replace(age_ordinal_map)
+
         df = df.loc[
             :,
             [

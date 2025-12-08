@@ -36,6 +36,18 @@ class HundredDataset(preprocessing.Dataset):
     @staticmethod
     def _base_df(dataset_path: Path) -> pd.DataFrame:
         df = pd.read_csv(dataset_path)
+
+        age_ranking = [
+            "0-20",
+            "20-40",
+            "40-60",
+            "60-80",
+        ]
+        age_ordinal_map = {
+            name: f"{i+1}) {name}" for i, name in enumerate(age_ranking)
+        }
+        df.age = df.age.replace(age_ordinal_map)
+
         df = df.rename(
             columns={
                 "age": "Age",
@@ -60,6 +72,16 @@ def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
     )
 
     res = run_helper.run_all_results(ds)
+    age_ranking = [
+        "0-20",
+        "20-40",
+        "40-60",
+        "60-80",
+    ]
+    age_ordinal_map = {
+        name: f"{i+1}) {name}" for i, name in enumerate(age_ranking)
+    }
+    res = res.rename(index=age_ordinal_map, level=1)
     res.to_csv(output_dir / "hundred.csv")
 
 
