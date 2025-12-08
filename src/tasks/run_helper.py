@@ -1,79 +1,21 @@
 from pathlib import Path
+import re
 
 import pandas as pd
 from tqdm.auto import tqdm
+import apunim
 
-from ..apunim import aposteriori
-from . import preprocessing, graphs
-
-
-def run_experiments_on_dataset(
-    ds: preprocessing.Dataset,
-    full_latex_path: Path,
-    random_latex_path: Path,
-    graph_path: Path,
-) -> None:
-    res = run_all_results(
-        df=ds.get_dataset(),
-        sdb_columns=ds.get_sdb_columns(),
-        value_col=ds.get_annotation_column(),
-        comment_key_col=ds.get_comment_key_column(),
-    )
-    print(res)
-    results_to_latex(
-        res,
-        output_path=full_latex_path,
-        dataset_name=ds.get_name(),
-    )
-
-    res_only_apunim = res.drop(
-        columns=["pvalue_nonparametric", "pvalue_parametric"]
-    )
-    results_to_latex(
-        res_only_apunim,
-        output_path=Path(full_latex_path.stem + "_apunim_only.tex"),
-        dataset_name=f"apunim_only_{ds.get_name()}",
-    )
-
-    rand_res = run_result(
-        df=ds.get_dataset(),
-        sdb_column="random",
-        value_col=ds.get_annotation_column(),
-        comment_key_col=ds.get_comment_key_column(),
-    )
-    print(rand_res)
-    results_to_latex(
-        rand_res,
-        output_path=random_latex_path,
-        dataset_name=f"random_{ds.get_name()}",
-    )
-
-    graphs.polarization_plot(ds=ds, output_path=graph_path)
-    print(f"Finished {ds.get_name()} dataset.")
+from . import preprocessing
 
 
-def run_all_results(
-    df: pd.DataFrame,
-    sdb_columns: list[str],
-    value_col: str,
-    comment_key_col: str,
-) -> pd.DataFrame:
+def run_all_results(ds: preprocessing.Dataset) -> pd.DataFrame:
     """
     Runs tasks.run_helper.results for each sdb_column and combines the results
     into a single MultiIndex DataFrame.
 
     Parameters
     ----------
-    df : pd.DataFrame
-        Input DataFrame.
-    sdb_columns : list
-        List of sdb_column names to analyze.
-    discussion_id_col : str
-        Column name representing the discussion ID.
-    value_col : str
-        Column name with the value (e.g., toxic_score).
-    comment_key_col : str
-        Column name with the comment key.
+    ds: The dataset
 
     Returns
     -------
@@ -83,16 +25,20 @@ def run_all_results(
         and the columns are `kappa` and `pvalue`.
     """
     results = []
-    for sdb_column in tqdm(sdb_columns, desc="Evaluating SDB dimensions"):
-        res_df = run_result(
-            df,
-            sdb_column=sdb_column,
-            value_col=value_col,
-            comment_key_col=comment_key_col,
+    for sdb_column in tqdm(
+        ds.get_sdb_columns(), desc="Evaluating SDB dimensions"
+    ):
+        res = _run_aposteriori(
+            ds.get_dataset(),
+            feature_col=sdb_column,
+            value_col=ds.get_annotation_column(),
+            comment_key_col=ds.get_comment_key_column(),
         )
-        # Ensure index is named (factor values)
+        res_df = pd.DataFrame.from_dict(
+            {k: v._asdict() for k, v in res.items()},
+            orient="index",
+        )
         res_df.index.name = sdb_column
-        # Add a column to store which sdb_column this came from
         res_df["SDB Feature"] = sdb_column
         results.append(res_df)
 
@@ -107,64 +53,75 @@ def run_all_results(
     return combined_df
 
 
-def run_result(
-    df: pd.DataFrame,
-    sdb_column: str,
-    value_col: str,
-    comment_key_col: str,
-) -> pd.DataFrame:
-    res = _run_aposteriori(
-        df,
-        feature_col=sdb_column,
-        value_col=value_col,
-        comment_key_col=comment_key_col,
-    )
-
-    # Validate expected structure
-    if not (
-        isinstance(res, dict)
-        and set(res.keys())
-        == {"apunim", "pvalue_parametric", "pvalue_nonparametric"}
-        and all(isinstance(v, dict) for v in res.values())
-    ):
-        raise ValueError(
-            "Unexpected result format from _run_aposteriori. "
-            "Expected a dict with keys {'apunim', 'pvalue_parametric', "
-            "'pvalue_nonparametric'}, "
-            "each mapping to a dict[FactorType, float]."
-        )
-
-    # Convert to DataFrame
-    res_df = pd.DataFrame(
-        {
-            "apunim": pd.Series(res["apunim"]),
-            "pvalue_parametric": pd.Series(res["pvalue_parametric"]),
-            "pvalue_nonparametric": pd.Series(res["pvalue_nonparametric"]),
-        }
-    )
-
-    return res_df
-
-
 def results_to_latex(
-    res_df: pd.DataFrame, output_path: Path, dataset_name: str
+    res_df: pd.DataFrame,
+    output_path: Path,
+    dataset_name: str,
+    table_label: str,
+    columns: list[str] | None = None,
+    two_column: bool = False,
+    small_fontsize: bool = True,
 ) -> None:
-    # this should be done automatically but pandas is having a stroke
-    res_df = res_df.replace("_", r"\_")
+    """
+    Export results to a single LaTeX table where apunim values include
+    significance stars (as superscripts), and the pvalue column is removed.
+    """
+    res_df = (
+        res_df.replace("_", r"\_", regex=True)
+        .rename(columns={"Unnamed: 1": "Value"})
+        .set_index(["SDB Feature", "Value"])
+    )
 
-    export_name = dataset_name.split()[0].lower()
-    table_name = f"tab:results_{export_name}"
-    res_df.to_latex(
-        buf=output_path,
+    if "pvalue" in res_df.columns and "apunim" in res_df.columns:
+        res_df["apunim"] = res_df.apply(
+            lambda r: (
+                f"{r['apunim']:.4f}{significance_superscript(r['pvalue'])}"
+                if not pd.isna(r["pvalue"])
+                else "---"
+            ),
+            axis=1,
+        )
+        res_df = res_df.drop(columns=["pvalue"])
+
+    if columns is None:
+        columns = list(res_df.columns)
+
+    latex_str = res_df.to_latex(
         longtable=False,
         caption=(
-            "Aposteriori Unimodality kappa and pvalue results "
-            f"for the {dataset_name} dataset"
+            f"Aposteriori unimodality results for the {dataset_name} "
+            "dataset."
         ),
-        label=table_name,
-        escape=True,
+        label=table_label,
+        escape=False,  # allow LaTeX math ($^{*}$)
+        columns=columns,
+        position="ht",
+        index=True,
+        float_format="%.4f",
     )
-    print(f"Table {table_name} exported to {output_path.resolve()}")
+
+    # Small font
+    if small_fontsize:
+        latex_str = latex_str.replace(
+            r"\begin{table}[ht]",
+            r"\begin{table}[ht]\scriptsize",
+        )
+
+    # Two-column layout support
+    if two_column:
+        latex_str = latex_str.replace(r"\begin{table}", r"\begin{table*}")
+        latex_str = latex_str.replace(r"\end{table}", r"\end{table*}")
+        latex_str = re.sub(
+            r"\\begin\{tabular\}\{([^}]+)\}",
+            r"\\centering\\begin{tabular*}{\\textwidth}"
+            r"{@{\\extracolsep{\\fill}}\1}",
+            latex_str,
+        )
+        latex_str = latex_str.replace(r"\end{tabular}", r"\end{tabular*}")
+
+    # Write to file
+    output_path.write_text(latex_str)
+    print(f"Table exported to {output_path.resolve()}")
 
 
 def _extract_annotations_and_attributes(
@@ -200,8 +157,8 @@ def _run_aposteriori(
     feature_col: str,
     comment_key_col: str,
     iterations: int = 100,
-    alpha: float = 0.1,
-) -> dict:
+    alpha: float = 0.05,
+) -> dict[str, apunim.ApunimResult]:
     annotations, attributes, keys = _extract_annotations_and_attributes(
         df=df,
         value_col=value_col,
@@ -209,7 +166,7 @@ def _run_aposteriori(
         comment_key_col=comment_key_col,
     )
 
-    result_dict = aposteriori.aposteriori_unimodality(
+    results = apunim.aposteriori_unimodality(
         annotations=annotations,
         factor_group=attributes,
         comment_group=keys,
@@ -218,4 +175,17 @@ def _run_aposteriori(
         seed=42,
     )
 
-    return result_dict
+    return results
+
+
+def significance_superscript(p):
+    if pd.isna(p):
+        return ""
+    elif p < 0.001:
+        return r"$^{***}$"
+    elif p < 0.01:
+        return r"$^{**}$"
+    elif p < 0.05:
+        return r"$^{*}$"
+    else:
+        return ""

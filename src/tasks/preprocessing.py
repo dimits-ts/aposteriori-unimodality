@@ -43,3 +43,18 @@ def get_rand_col(
             else []
         )
     )
+
+
+def process_age_list(
+    x: list[int], bins: list[int] = [0, 20, 40, 60, 80]
+) -> list[int] | None:
+    if not isinstance(x, (list, tuple)):
+        return None
+    if any(pd.isna(age) for age in x):
+        return None
+    int_ages = [int(age) for age in x]
+
+    # "0–20", "20–40", etc.
+    labels = [f"{bins[i]}-{bins[i+1]}" for i in range(len(bins) - 1)]
+    binned = pd.cut(int_ages, bins=bins, labels=labels, include_lowest=True)
+    return list(binned)

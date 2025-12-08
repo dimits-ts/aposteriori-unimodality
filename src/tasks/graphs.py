@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import numpy as np
+import apunim
 
 from . import preprocessing, graphs
-from ..apunim import aposteriori
 
 
 def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
@@ -28,7 +28,7 @@ def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
             ):
                 continue
 
-            ndfu_value = aposteriori.dfu(
+            ndfu_value = apunim.dfu(
                 annotations, bins=bins, normalized=True
             )
             records.append({"SDB Feature": sdb_col, "nDFU": ndfu_value})
@@ -61,12 +61,6 @@ def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
 
     # Force legend redraw (ensures it appears even if some bins are empty)
     handles, labels = ax.get_legend_handles_labels()
-    if not handles:  # if seaborn didn't generate any
-        handles = [
-            plt.Rectangle((0, 0), 1, 1, color=c)
-            for c in sns.color_palette("tab10", n_colors=len(sdb_columns))
-        ]
-        labels = sdb_columns
     ax.legend(
         handles,
         labels,

@@ -129,7 +129,7 @@
   institution={Stanford University, New York University}
 }
 
-@article{rossi_2024, title={The Problems of LLM-generated Data in Social Science Research}, volume={18}, url={https://sociologica.unibo.it/article/view/19576}, DOI={10.6092/issn.1971-8853/19576}, abstractNote={&amp;lt;p style=&amp;quot;font-weight: 400;&amp;quot;&amp;gt;Beyond being used as fast and cheap annotators for otherwise complex classification tasks, LLMs have seen a growing adoption for generating synthetic data for social science and design research. Researchers have used LLM-generated data for data augmentation and prototyping, as well as for direct analysis where LLMs acted as proxies for real human subjects. LLM-based synthetic data build on fundamentally different epistemological assumptions than previous synthetically generated data and are justified by a different set of considerations. In this essay, we explore the various ways in which LLMs have been used to generate research data and consider the underlying epistemological (and accompanying methodological) assumptions. We challenge some of the assumptions made about LLM-generated data, and we highlight the main challenges that social sciences and humanities need to address if they want to adopt LLMs as synthetic data generators.&amp;lt;/p&amp;gt;}, number={2}, journal={Sociologica}, author={Rossi, Luca and Harrison, Katherine and Shklovski, Irina}, year={2024}, month={Jan.}, pages={145–168} }
+@article{rossi_2024, title={The Problems of LLM-generated Data in Social Science Research}, volume={18}, url={https://sociologica.unibo.it/article/view/19576}, DOI={10.6092/issn.1971-8853/19576}, abstractNote={&amp;lt;p style=&amp;quot;font-weight: 400;&amp;quot;&amp;gt;Beyond being used as fast and cheap annotators for otherwise complex classification tasks, LLMs have seen a growing adoption for generating synthetic data for social science and design research. Researchers have used LLM-generated data for data augmentation and prototyping, as well as for direct analysis where LLMs acted as proxies for real human subjects. LLM-based synthetic data build on fundamentally different epistemological assumptions than previous synthetically generated data and are justified by a different set of considerations. In this essay, we explore the various ways in which LLMs have been used to generate research data and consider the underlying epistemological (and accompanying methodological) assumptions. We challenge some of the assumptions made about LLM-generated data, and we highlight the main challenges that social sciences and humanities need to address if they want to adopt LLMs as synthetic data generators.&amp;lt;/p&amp;gt;}, number={2}, journal={Sociologica}, author={Rossi, Luca and Harrison, Katherine and Shklovski, Irina}, year={2024}, month={1}, pages={145–168} }
 
 @article{jansen_2023,
 title = {Employing large language models in survey research},
@@ -299,4 +299,47 @@ abstract = {This article discusses the promising potential of employing large la
 	doi = "10.18653/v1/2023.emnlp-main.212",
 	pages = "3496--3507",
 	abstract = "Research in the field of NLP has recently focused on the variability that people show in selecting labels when performing an annotation task. Exploiting disagreements in annotations has been shown to offer advantages for accurate modelling and fair evaluation. In this paper, we propose a strongly perspectivist model for supervised classification of natural language utterances. Our approach combines the predictions of several perspective-aware models using key information of their individual confidence to capture the subjectivity encoded in the annotation of linguistic phenomena. We validate our method through experiments on two case studies, irony and hate speech detection, in in-domain and cross-domain settings. The results show that confidence-based ensembling of perspective-aware models seems beneficial for classification performance in all scenarios. In addition, we demonstrate the effectiveness of our method with automatically extracted perspectives from annotations when the annotators' metadata are not available."
+}
+
+@inproceedings{dices,
+	author = {Aroyo, Lora and Taylor, Alex and D\'{\i}az, Mark and Homan, Christopher and Parrish, Alicia and Serapio-Garc\'{\i}a, Gregory and Prabhakaran, Vinodkumar and Wang, Ding},
+	booktitle = {Advances in Neural Information Processing Systems},
+	editor = {A. Oh and T. Naumann and A. Globerson and K. Saenko and M. Hardt and S. Levine},
+	pages = {53330--53342},
+	publisher = {Curran Associates, Inc.},
+	title = {DICES Dataset: Diversity in Conversational AI Evaluation for Safety},
+	url = {https://proceedings.neurips.cc/paper_files/paper/2023/file/a74b697bce4cac6c91896372abaa8863-Paper-Datasets_and_Benchmarks.pdf},
+	volume = {36},
+	year = {2023}
+}
+
+@article{student1908probable,
+	title={The probable error of a mean},
+	author={Student},
+	journal={Biometrika},
+	pages={1--25},
+	year={1908},
+	publisher={JSTOR}
+}
+
+
+@inproceedings{sap-etal-2019-risk,
+	title = "The Risk of Racial Bias in Hate Speech Detection",
+	author = "Sap, Maarten  and
+	Card, Dallas  and
+	Gabriel, Saadia  and
+	Choi, Yejin  and
+	Smith, Noah A.",
+	editor = "Korhonen, Anna  and
+	Traum, David  and
+	M{\`a}rquez, Llu{\'i}s",
+	booktitle = "Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics",
+	month = jul,
+	year = "2019",
+	address = "Florence, Italy",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/P19-1163/",
+	doi = "10.18653/v1/P19-1163",
+	pages = "1668--1678",
+	abstract = "We investigate how annotators' insensitivity to differences in dialect can lead to racial bias in automatic hate speech detection models, potentially amplifying harm against minority populations. We first uncover unexpected correlations between surface markers of African American English (AAE) and ratings of toxicity in several widely-used hate speech datasets. Then, we show that models trained on these corpora acquire and propagate these biases, such that AAE tweets and tweets by self-identified African Americans are up to two times more likely to be labelled as offensive compared to others. Finally, we propose *dialect* and *race priming* as ways to reduce the racial bias in annotation, showing that when annotators are made explicitly aware of an AAE tweet{'}s dialect they are significantly less likely to label the tweet as offensive."
 }
