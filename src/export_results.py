@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 
 import pandas as pd
+import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -25,7 +26,8 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
     """
     For each CSV in results_dir, extract rows whose feature value starts with
     an ordinal like '1)', '2)', ... and has non-null pvalue.
-    Then plot ordinal vs apunim for each feature.
+    Then plot ordinal vs apunim for each feature, stretching all ordinal
+    series to occupy the same x-axis length.
     """
     records = []
 
@@ -48,7 +50,7 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
 
         # filter ordinal + pvalue
         d = df[df[ordinal_col].astype(str).str.match(r"^\d+\)")].copy()
-        d: pd.Series = d[d.pvalue.notna()]
+        d = d[d.pvalue.notna()]
         if d.empty:
             continue
 
@@ -76,23 +78,38 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
 
     data = pd.DataFrame(records)
 
+    # --- Stretch each feature's ordinal to full x-axis ---
+    max_points = (
+        data.groupby("feature")["ordinal"].max().max()
+    )  # maximum ordinal count
+    stretched_records = []
+    for feature, df_feat in data.groupby("feature"):
+        df_feat = df_feat.sort_values("ordinal").reset_index(drop=True)
+        n_rows = len(df_feat)
+        stretched_x = np.linspace(1, max_points, n_rows)
+        df_feat["stretched_ordinal"] = stretched_x
+        stretched_records.append(df_feat)
+
+    data_stretched = pd.concat(stretched_records, ignore_index=True)
+
     # --- Plot with Seaborn ---
     plt.figure(figsize=(10, 6))
     sns.lineplot(
-        data=data,
-        x="ordinal",
+        data=data_stretched,
+        x="stretched_ordinal",
         y="apunim",
         hue="feature",
         style="feature",
         markers=True,
-        dashes=False,
+        dashes=True,
+        markersize=10,
         legend=True,
         errorbar=None,
     )
 
-    plt.title("Ordinal APUNIM — All Datasets")
-    plt.xlabel("Ordinal")
-    plt.ylabel("APUNIM")
+    plt.title("Ordinal trends in all datasets")
+    plt.xlabel("Order (normalized)")
+    plt.ylabel("Apunim value")
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     graphs.save_plot(graph_output_dir / "apunim_ordinal.png")
