@@ -5,7 +5,7 @@ import pandas as pd
 
 from .tasks import preprocessing, run_helper, graphs
 
-NUM_COMMENTS = 20_000
+NUM_COMMENTS = 100
 
 
 class KumarDataset(preprocessing.Dataset):
@@ -197,15 +197,78 @@ class KumarDataset(preprocessing.Dataset):
         return mapping.get(x, "Other")
 
 
+def ordinal_to_yn_neutral(lst):
+    new_lst = []
+    for x in lst:
+        # extract the numeric prefix
+        try:
+            num = int(x.split(")")[0])
+        except:
+            print(x)
+            num = 3  # fallback
+        if num == 3:
+            new_lst.append("Neutral")
+        elif num > 3:
+            new_lst.append("Yes")
+        else:
+            new_lst.append("No")
+    return new_lst
+
+
+def map_age_list(age_map, lst):
+    return [age_map.get(x, "Neutral") for x in lst]
+
+
 def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
     print("Generating sample polarization plot...")
     ds = KumarDataset(dataset_path=dataset_path, num_samples=NUM_COMMENTS)
-    graphs.polarization_plot(
-        ds=ds, output_path=graph_output_dir / "kumar_sample.png"
-    )
+    # graphs.polarization_plot(
+    #    ds=ds, output_path=graph_output_dir / "kumar_sample.png"
+    # )
     print("Running experiment...")
+    # res = run_helper.run_all_results(ds)
+    # res.to_csv(output_dir / "kumar.csv")
+
+    print("Running ablation experiments...")
+    age_map = {
+        "1) 18-24": "3) Gen. Z",
+        "2) 25-34": "3) Gen. Z",
+        "3) 35-44": "2) Millennial",
+        "4) 45-54": "2) Millennial",
+        "5) 55-64": "1) Gen. X+",
+        "6) 65+": "1) Gen. X+",
+    }
+
+    ordinal_columns = [
+        "Education",
+        "Toxicity Problem",
+        "Technology Impact",
+        "Religion Important",
+        "Seen Toxicity",
+        "Has Been Targeted",
+    ]
+    ablation_df = ds.df.copy()
+    ablation_df = ablation_df.drop(
+        [
+            "Political Affiliation",
+            "Gender",
+            "Ethnicity",
+            "Sexual Orientation",
+            "Is Transgender",
+        ],
+        axis=1,
+    )
+    print(ablation_df)
+
+    ablation_df["Age"] = ablation_df["Age"].apply(
+        lambda ls: map_age_list(age_map, ls)
+    )
+    for col in ordinal_columns:
+        ablation_df[col] = ablation_df[col].apply(ordinal_to_yn_neutral)
+
+    ds.df = ablation_df
     res = run_helper.run_all_results(ds)
-    res.to_csv(output_dir / "kumar.csv")
+    res.to_csv(output_dir / "kumar_ablation.csv")
 
     print("Generating full polarization plot...")
     ds = KumarDataset(dataset_path=dataset_path)
