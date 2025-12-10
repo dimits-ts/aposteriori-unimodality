@@ -177,7 +177,7 @@ By obtaining the pol-statistics for all data-points in $S_d$ for \ac{SDB} $\thet
 	apunim(d, \theta) = \frac{pol_{obs.}(d, \theta) - pol_{apriori}(d)}{1 - pol_{apriori}(d)}
 \end{equation}
 
-Since $nDFU \rightarrow [0,1] \Rightarrow apunim \rightarrow [-1,1]$. If $apunim(d, \theta) \approx 0$, the exhibited polarization among annotators of group $\theta$ does not surpass what would be expected by chance. If $apunim(d, \theta) > 0$, then the group partially explains a rise in polarization, and inversely for the case $apunim(d, \theta) < 0$. The scope of the statistic and its relationship with the previously presented statistics are demonstrated in Figure~\ref{fig::overview}. 
+Since $nDFU \rightarrow [0,1] \Rightarrow apunim \rightarrow [-1,1]$. If $apunim(d, \theta) \approx 0$, the exhibited polarization among annotators of group $\theta$ does not surpass what would be expected by chance. If $apunim(d, \theta) > 0$, then the group partially explains a rise in polarization, and inversely for the case $apunim(d, \theta) < 0$. The scope of the statistic and its relationship with the previously presented statistics are demonstrated in Figure~\ref{fig::overview} \footnote{There is a theoretical statistical issue for subtracting statistics derived from a subset and its superset, which are discussed in Appendix~\ref{app:theoretical}.}.
 
 \subsection{p-value estimation} 
 
@@ -190,10 +190,10 @@ By obtaining the pol-statistics for all data-points in a dataset $d$ we can appl
 \noindent versus the (multiple) alternative hypotheses: 
 \begin{equation}
 	\label{eq:alt_h}
-	H_{\theta_i}: \textit{apunim}(d, \theta_i) >  0
+	H_i: \textit{apunim}(d, \theta_i) >  0
 \end{equation}
 
-Our test assumes that (1) there exist enough data-points to reliably run the means-test, and (2) enough annotations in each data-point and \ac{SDB} group to estimate the \textit{pol-statistics}. We discuss the former assumption in Appendix \ref{app:ann_size}. The latter can be safely assumed for most datasets, because they feature enough data-points to reliably assume normal residuals ($n \gg 30$---see \S\ref{sec:datasets}), which is why we use the Student-T test \parencite{student1908probable} .
+Our test assumes that (1) there exist enough data-points to reliably run the means-test, and (2) enough annotations in each data-point and \ac{SDB} group to estimate the \textit{pol-statistics}. We discuss the former assumption in Appendix~\ref{app:ann_size}. The latter can be safely assumed for most datasets, because they feature enough data-points to reliably assume normal residuals ($n \gg 30$---see \S\ref{sec:datasets}), which is why we use the Student-T test \parencite{student1908probable} .
 
 Since we are simultaneously considering $\lvert \Theta \rvert$ hypotheses, we apply a multiple comparison correction to the resulting p-values. We choose the Holms method \parencite{holms}. The test is parameterized by the \ac{FWER}, which is used to tune the strength of the correction; we can increase this value to make our test more conservative towards multiple hypotheses \parencite{ChenFengYi2017}). In general, it is safe to set \ac{FWER} equal to the significance level of our test (e.g., $\textit{FWER} = 0.95$ if we are looking for $p < 0.05$).
 
@@ -213,7 +213,7 @@ Since we are simultaneously considering $\lvert \Theta \rvert$ hypotheses, we ap
 We use the datasets provided by \textcite{kumar-et-al-2021} and \textcite{sap-etal-2022-annotators}. They both feature various online comments, each annotated by a number of human annotators (5 and 4-6 annotators per comment respectively). The \textcite{kumar-et-al-2021} dataset stands out for featuring more than 100,000 comments, while also including 10 different dimensions for \acp{SDB} and annotator experiences. %TODO: Annotator experiences are now in the game, remove them from apriori assumption.
 We also use the DICES-350 and DICES-990 datasets \parencite{dices}, which are concerned with LLM response safety.\footnote{We specifically use the \texttt{Q\_overall} annotations, which combine annotations for text that is considered harmful, (racially) biased and misinformation.} They feature less annotated comments, but more than an order of magnitude more annotators per comment, making them an invaluable resource for our study. While the datasets technically target different annotation criteria (racism, toxicity and LLM safety respectively), these criteria are closely related to each other.
 
-Brief dataset characteristics are given in Table~\ref{tab:datasets}. There is a reasonable amount of polarization in most annotations for all datasets as demonstrated by Figure~\ref{fig:dataset-polarization}. %For in-depth information, the reader may refer to Appendix TODO.
+Brief dataset characteristics are given in Table~\ref{tab:datasets}. There is a reasonable amount of polarization in most annotations for all datasets as demonstrated by Figure~\ref{fig:dataset-polarization}. For in-depth information and discussion around our decisions for discretization, refer to Appendix~\ref{app:continuous}. %For in-depth information, the reader may refer to Appendix TODO.
 
 \begin{table}[t]
 	\caption{Brief overview of the datasets used in this study. We are interested in the number of comments (\#Comm.), annotators per comment (\#Ann.) and number of \ac{SDB} dimensions (\#Dims.).}
@@ -261,24 +261,42 @@ None of the age groups in the \textcite{sap-etal-2019-risk} and \textcite{kumar-
 
 Analysis on annotated data frequently ignores the different kinds of measurements in studies using sociodemographic and LIKERT-style attributes. Researchers often treat all dimensions as \emph{nominal/categorical} even though some are inherently ordinal (e.g., LIKERT, education), and some continuous/ratio variables (e.g., age). By treating these variables as categorical, not only do we lose valuable information, but we may magnify statistical errors \parencite{Streiner2002}.
 
-Some researchers attempt to find an ``optimal point'' which can be used to binarize continuous variables \parencite{Sokratis}, but this approach is misguided. By using any artificial cut-off point, the resulting analysis is immediately invalidated by any change in the underlying data. Furthermore, these approaches tend to produce ouroboroid\footnote{``Snake eating its own tail''.} results; a statistical measure is used to binarize the data during preprocessing, which is then fed to a methodology utilizing the same measure to get results. This is methodologically unsound, since it biases the model by transforming the data in a way that model best recognizes to infer a specific outcome. In this work, we argue that retaining the order of ordinal attributes can reveal interesting trends that would be otherwised missed with categorical inference.
+Some researchers attempt to find an ``optimal point'' which can be used to binarize continuous variables \parencite{Sokratis}, but this approach is misguided. By using any artificial cut-off point, the resulting analysis is immediately invalidated by any change in the underlying data. Furthermore, some of these approaches tend to produce ouroboroid\footnote{``Snake eating its own tail''.} results; a statistical measure is used to binarize the data during preprocessing, which is then fed to a methodology utilizing the same measure to get results. This is methodologically unsound, since it biases the model by transforming the data in a way that model best recognizes to infer a specific outcome. In this work, we argue that \emph{retaining the order of ordinal attributes can reveal interesting trends} that would be otherwised missed with categorical inference.
 
-\begin{figure}[ht]
+\begin{figure}[t]
 	\includegraphics[width=\linewidth]{apunim_ordinal.png}
 	\caption{The behavior of ordinal variables in all datasets. The x-axis represents the order of each factor (marked as \texttt{1), 2), ...} in Tables~\ref{tab:dices-350},\ref{tab:dices-990},\ref{tab:kumar},\ref{tab:sap}). The x-axis is normalized to the smallest common denominator between the number of ordinal values.}
 	\label{fig::ordinal}
 \end{figure}
 
 
-\paragraph{Trends in ordinal data}
-Most ordinal attributes with statistically significant apunim values tend to \textbf{cluster around a few dominant modes}; e.g., \emph{Age} and \emph{Education} in the \textcite{kumar-et-al-2021} dataset. This pattern is expected, since the Apunim algorithm is designed to identify clusters of annotations. Nearby ordinal factors are likely to have similar effects, which are absorbed during analysis into the main effects driven by a few significant modes.This may also represent a ``leak'' of information between ordinal groupings, as admonished by \textcite{Streiner2002}.
+Figure~\ref{fig::ordinal} displays the trends for polarization attribution between various ordinal variables. Most ordinal attributes with statistically significant apunim values tend to \textbf{cluster around a few dominant modes}; e.g., \emph{Age} and \emph{Education} in the \textcite{kumar-et-al-2021} dataset. This pattern is expected, since the Apunim algorithm is designed to identify clusters of annotations. Nearby ordinal factors are likely to have similar effects, which are absorbed during analysis into the main effects driven by a few significant modes.This may also represent a ``leak'' of information between ordinal groupings, as admonished by \textcite{Streiner2002}.
 
-However, some ordinal attributes (\emph{Age} in both DICES-350 and DICES-990\footnote{Interestinlgy, the trend for the same variable is inverted for the two datasets. We attribute this fact to divine foolery.}, \emph{Religion Importance} in \textcite{kumar-et-al-2021}) follow a strict, monotonic trend. This implies that, in some cases, the \textbf{amount of polarization increases the further apart an opinion is from neutrality}. For example, non-religious annotators are less likely to have polarizing opinions about what constitutes a toxic comment than the average annotator, while very religious annotators generate very polarizing judgments.
+However, some ordinal attributes (\emph{Age} in both DICES-350 and DICES-990\footnote{Interestingly, the trend for the same variable is inverted for the two datasets. We attribute this fact to divine foolery.}, \emph{Religion Importance} in \textcite{kumar-et-al-2021}) follow a strict, monotonic trend. This implies that, in some cases, the \textbf{amount of polarization increases the further apart an opinion is from neutrality}. For example, non-religious annotators are less likely to have polarizing opinions about what constitutes a toxic comment than the average annotator, while very religious annotators generate very polarizing judgments.
 
-\paragraph{Does aggregation influence the results?}
-Continuous attributes (such as age) can be discretized during analysis; this practice should generally be avoided \parencite{Streiner2002, Andrade2017}, although it is necessary when the data has extremely skewed distributions \parencite{Streiner2002}, the underlying data are already in discretized form, or when the tools used for analysis require some form of categorization. Our methodology is built upon \ac{ndfu}, and thus requires histograms to be well-defined. Additionally, the data for Age is already discretized for the DICES and \textcite{kumar-et-al-2021} datasets; for the sake of comparison, we discretize the \textcite{sap-etal-2022-annotators} dataset with the same method as the DICES dataset, instead of using generalized binning techniques based on statistics \parencite{Sturges01031926, scott_1979, Freedman1981}.
 
-In order to make sure our results are not biased, we repeat the experiments with all ordinal variables from the \textcite{kumar-et-al-2021} dataset discretized to three factors. We observe that...
+\section{How many annotators?}
+\label{app:ann_size}
+
+While our test works best with many annotations per datapoint, the cost required for multiple human annotators is often prohibitive \parencite{rossi_2024}. It is thus very important both DICES datasets, as well as the \textcite{sap-etal-2022-annotators} dataset annotated by 100 distinct LLM annotators. 
+
+The LLM annotation procedure is described in Appendix~\ref{app:llm_annot}. While a more appropriate comparison would entail synthetic annotations in the DICES datasets themselves, we elect to use a standard task for LLM-as-a-judge (hate speech detection) instead of the relatively challenging and under-explored area of general LLM safety.
+
+
+\subsection{Methodology}
+
+For each comment in all datasets, we randomly sample a subset of annotators and compute the apunim value. We repeat the procedure 30 times, and average all observations. This was a necessary step to reduce the variance inherent in random sampling. We also truncate the results for the DICES-350 dataset, since very few comments were annotated by the respective annotator counts.
+
+
+\subsection{Results}
+
+\begin{figure}[t]
+	\includegraphics[width=\linewidth]{ndfu_std_error_sample_size_llm.png}
+	\caption{Standard error of the \textit{pol-statistic} when sampled with replacement for various number of annotators.}
+	\label{fig::std_error}
+\end{figure}
+
+Figure~\ref{fig::std_error} demonstrates the effect of the number of annotators on the reliability of the polarization estimation. We can see that the metric becomes consistent with about 20 annotators per comment, after which we start to get diminishing results. This experiment was conducted on a subset of the \textcite{sap-etal-2022-annotators} dataset, with LLM annotators having different \acp{SDB}. 
 
 
 \section{Conclusion}
@@ -311,36 +329,21 @@ While our work aims to help protect marginalized and disadvantaged groups by att
 \end{acronym}
 
 
-\section{How many annotators?}
-\label{app:ann_size}
-
-While our test works best with many annotations per datapoint, the cost required for multiple human annotators is often prohibitive \parencite{rossi_2024}. It is thus very important both DICES datasets, as well as the \textcite{sap-etal-2022-annotators} dataset annotated by 100 distinct LLM annotators. 
-
-The LLM annotation procedure is described in Appendix~\ref{app:llm_annot}. While a more appropriate comparison would entail synthetic annotations in the DICES datasets themselves, we elect to use a standard task for LLM-as-a-judge (hate speech detection) instead of the relatively challenging and under-explored area of general LLM safety.
-
-
-\subsection{Methodology}
-
-For each comment in all datasets, we randomly sample a subset of annotators and compute the apunim value. We repeat the procedure 30 times, and average all observations. This was a necessary step to reduce the variance inherent in random sampling. We also truncate the results for the DICES-350 dataset, since very few comments were annotated by the respective annotator counts.
-
-
-\subsection{Results}
-
- \begin{figure}[ht]
-	\includegraphics[width=\linewidth]{ndfu_std_error_sample_size_llm.png}
-	\caption{Standard error of the \textit{pol-statistic} when sampled with replacement for various number of annotators.}
-	\label{fig::std_error}
-\end{figure}
-
-Figure~\ref{fig::std_error} demonstrates the effect of the number of annotators on the reliability of the polarization estimation. We can see that the metric becomes consistent with about 20 annotators per comment, after which we start to get diminishing results. This experiment was conducted on a subset of the \textcite{sap-etal-2022-annotators} dataset, with LLM annotators having different \acp{SDB}. 
-
-
 
 \section{Theoretical limitations}
+\label{app:theoretical}
 
 In \S\ref{ssec:methodology:intuition} we compared the polarization of the whole set of annotations with the partitions by annotator group. This approach uses the same samples for both subset and superset, violating the fundamental hypothesis of independent samples. This also means the statistics for both will \emph{always be similar to an extent}. This is especially pronounced in our case, due to the extreme overlap exhibited by tiny annotation sets. Additionally, when calculating p-values, the non-independence of samples induces an intrinsic, non-zero covariance between any statistic $s$ calculated on $A$ and on $S$. 
 
 A standard method of side-stepping this issue is to compare the subset with its complement to the superset. This can not be applied to our case. Consider the example in Figure~\ref{fig:ndfu_combined}; if we compared $nDFU_{men}$ with $nDFU_{women}$, the result would be very close to zero, indicating no polarization attribution to gender.
+
+
+\section{How do we handle continuous variables?}
+\label{app:continuous}
+
+Continuous attributes (such as age) can be discretized during analysis; this practice should generally be avoided \parencite{Streiner2002, Andrade2017}, although it is necessary when the data has extremely skewed distributions \parencite{Streiner2002}, the underlying data are already in discretized form, or when the tools used for analysis require some form of categorization. Our methodology is built upon \ac{ndfu}, and thus requires histograms to be well-defined. Additionally, the data for Age is already discretized for the DICES and \textcite{kumar-et-al-2021} datasets; for the sake of comparison, we discretize the \textcite{sap-etal-2022-annotators} dataset with the same method as the DICES dataset, instead of using generalized binning techniques based on statistics \parencite{Sturges01031926, scott_1979, Freedman1981}.
+
+In order to make sure our results are not biased, we conduct ablation experiments with all ordinal variables from the \textcite{kumar-et-al-2021} dataset discretized to three factors. We observe that...
 
 
 \section{LLM Annotation}
