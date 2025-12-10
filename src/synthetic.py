@@ -36,17 +36,7 @@ class HundredDataset(preprocessing.Dataset):
     @staticmethod
     def _base_df(dataset_path: Path) -> pd.DataFrame:
         df = pd.read_csv(dataset_path)
-
-        age_ranking = [
-            "0-20",
-            "20-40",
-            "40-60",
-            "60-80",
-        ]
-        age_ordinal_map = {
-            name: f"{i+1}) {name}" for i, name in enumerate(age_ranking)
-        }
-        df.age = df.age.replace(age_ordinal_map)
+        df.age = df.age.apply(HundredDataset._map_generation)
 
         df = df.rename(
             columns={
@@ -59,10 +49,19 @@ class HundredDataset(preprocessing.Dataset):
             }
         )
         grouped_df = df.groupby("text", as_index=False).agg(list)
-        grouped_df.Age = grouped_df.Age.apply(
-            lambda ls: preprocessing.process_age_list(ls)
-        )
+
         return pd.DataFrame(grouped_df)
+
+    # dry violation ;)))))))))))))))))))))))
+    @staticmethod
+    def _map_generation(age):
+        # reference year: 2025
+        if age < 29:  # Gen Z
+            return "3) Gen. Z"
+        elif age < 45:  # Millennial
+            return "2) Millennial"
+        else:  # Gen X / Boomers
+            return "1) Gen. X+"
 
 
 def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
@@ -70,18 +69,7 @@ def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
     graphs.polarization_plot(
         ds=ds, output_path=graph_output_dir / "hundred.png"
     )
-
     res = run_helper.run_all_results(ds)
-    age_ranking = [
-        "0-20",
-        "20-40",
-        "40-60",
-        "60-80",
-    ]
-    age_ordinal_map = {
-        name: f"{i+1}) {name}" for i, name in enumerate(age_ranking)
-    }
-    res = res.rename(index=age_ordinal_map, level=1)
     res.to_csv(output_dir / "hundred.csv")
 
 
