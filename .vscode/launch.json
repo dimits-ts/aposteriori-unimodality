@@ -1,6 +1,18 @@
 {
     "version": "0.2.0",
     "configurations": [
+        
+        {
+            "name": "Python Debugger: Kumar",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "src.kumar",
+            "args": [
+                "--dataset-path=data/kumar.json",
+                "--output-dir=output",
+                "--graph-output-dir=graphs"
+            ],
+        },
         {
             "name": "Python Debugger: Dices",
             "type": "debugpy",
@@ -9,18 +21,18 @@
             "args": [
                 "--dataset-path-small=data/dices/350/diverse_safety_adversarial_dialog_350.csv",
                 "--dataset-path-large=data/dices/990/diverse_safety_adversarial_dialog_990.csv",
-                "--graph-output-dir=graphs",
-                "--latex-output-dir=manuscript/generated"
+                "--output-dir=output",
+                "--graph-output-dir=graphs"
             ]
         },
         {
-            "name": "Python Debugger: Module",
+            "name": "Python Debugger: Synthetic",
             "type": "debugpy",
             "request": "launch",
-            "module": "src.synthetic_100",
+            "module": "src.synthetic",
             "args": [
                 "--dataset-path=data/annotation.csv",
-                "--latex-output-dir=manuscript/generated",
+                "--output-dir=output",
                 "--graph-output-dir=graphs"
             ],
         },
@@ -32,7 +44,7 @@
             "justMyCode": true,
             "args": [
                 "--dataset-path=data/sap.csv",
-                "--latex-output-dir=manuscript/generated",
+                "--output-dir=output",
                 "--graph-output-dir=graphs"
             ],
             "cwd": "${workspaceFolder}",
