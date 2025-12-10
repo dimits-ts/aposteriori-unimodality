@@ -103,7 +103,7 @@ We instead propose the \emph{``Aposteriori Unimodality (Apunim) Metric''}, which
 	\end{split}
 \end{equation}
 
-\paragraph{Polarization} Each set of annotations features a certain degree of \emph{polarization}. Unpolarized annotations are usually unimodal; the annotators disagree on the details (which would be shown roughly as a bell curve around the median annotation), not fundamentally (which would likely be shown as a multimodal distribution). \textcite{pavlopoulos-likas-2024} create a polarization metric, the ``\ac{nDFU}'', which measures whether an annotation set shows no polarization (unimodal distribution---$nDFU \approx 0$), up to complete polarization (multimodal distribution---$nDFU \approx 1$). Thus, we need a metric that measures how much the \ac{nDFU} of a polarizing data point can be partially explained by $\theta$.
+\paragraph{Polarization} Each set of annotations features a certain degree of \emph{polarization}. Unpolarized annotations are usually unimodal; the annotators disagree on the details (which would be shown roughly as a bell curve around the median annotation), not fundamentally (which would likely be shown as a multimodal distribution). \textcite{pavlopoulos-likas-2024} create a polarization metric, the ``\ac{ndfu}'', which measures whether an annotation set shows no polarization (unimodal distribution---$nDFU \approx 0$), up to complete polarization (multimodal distribution---$nDFU \approx 1$). Thus, we need a metric that measures how much the \ac{ndfu} of a polarizing data point can be partially explained by $\theta$.
 
 \begin{figure*}[t]
 	\centering
@@ -150,7 +150,7 @@ Given infinite annotations, the assumption of independence would hold. Likewise,
  
 \begin{figure}[t]
 	\includegraphics[width=\linewidth]{overview.png}
-	\caption{An overview of the Aposteriori Unimodality Test. We gather statistical information from the annotations (different \acp{SDB} are denoted by different colors) via the \ac{nDFU} measure, which is aggregated on the data-point-level by the pol-statistic. The Aposteriori Unimodality Test is applied on the discussion level, operating on the pol-statistics of the individual data-points.}
+	\caption{An overview of the Aposteriori Unimodality Test. We gather statistical information from the annotations (different \acp{SDB} are denoted by different colors) via the \ac{ndfu} measure, which is aggregated on the data-point-level by the pol-statistic. The Aposteriori Unimodality Test is applied on the discussion level, operating on the pol-statistics of the individual data-points.}
 	\label{fig::overview}
 \end{figure}
 
@@ -255,20 +255,13 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 \paragraph{Annotator \emph{age} does not  cause polarization for toxicity/hate detection, but does for safety}
 None of the age groups in the \textcite{sap-etal-2019-risk} and \textcite{kumar-et-al-2021} datasets produce statistically significant results for polarization attribution, suggesting that it is not an important factor. However, both DICES datasets produced statistically and quantitatively significant results. This may be caused by the large number of annotators in these datasets, which enable our method to better distinguish this effect from noise in the annotations. This is unlikely however, given our next finding.
 
-\paragraph{Polarization attribution follows ordinal ranking} While most \ac{SDB} attributes are categorical, some are ordinal (e.g., Age, Education, LIKERT-scale opinions). We discover a pattern among (statistically significant) ordinal attributes, where polarization changes monotonically with their ranking. Examples include:
 
-\begin{itemize}
-	\item Polarization increasing/decreasing with annotator age in both DICES datasets (but not in the \textcite{sap-etal-2019-risk} and \textcite{kumar-et-al-2021} datasets, where there is no statistical significance).
-	\item Thoughts on religion and toxicity in the \textcite{kumar-et-al-2021} dataset (although much more noisily, since some attribute factors do not display statistical significance).
-\end{itemize}
-
-A notable exception is \emph{Education} in the \textcite{kumar-et-al-2021} dataset. This could be attributed to the curse of dimensionality, since we investigate a great number of groups, but there are few annotators for each individual group. %TODO: try this with fewer ordinals 
-
-The fact that this behavior is not replicated when investigating annotator age in the \textcite{sap-etal-2019-risk} and \textcite{kumar-et-al-2021} datasets lends further support to the argument that age does indeed not play a major role in annotator polarization for these datasets.
-
-
-\subsection{Investigating ordinal attributes}
+\subsection{Do ordinal attributes matter?}
 \label{ssec:results:ordinal}
+
+Analysis on annotated data frequently ignores the different kinds of measurements in studies using sociodemographic and LIKERT-style attributes. Researchers often treat all dimensions as \emph{nominal/categorical} even though some are inherently ordinal (e.g., LIKERT, education), and some continuous/ratio variables (e.g., age). By treating these variables as categorical, not only do we lose valuable information, but we may magnify statistical errors \parencite{Streiner2002}.
+
+Some researchers attempt to find an ``optimal point'' which can be used to binarize continuous variables \parencite{Sokratis}, but this approach is misguided. By using any artificial cut-off point, the resulting analysis is immediately invalidated by any change in the underlying data. Furthermore, these approaches tend to produce ouroboroid\footnote{``Snake eating its own tail''.} results; a statistical measure is used to binarize the data during preprocessing, which is then fed to a methodology utilizing the same measure to get results. This is methodologically unsound, since it biases the model by transforming the data in a way that model best recognizes to infer a specific outcome. In this work, we argue that retaining the order of ordinal attributes can reveal interesting trends that would be otherwised missed with categorical inference.
 
 \begin{figure}[ht]
 	\includegraphics[width=\linewidth]{apunim_ordinal.png}
@@ -276,9 +269,17 @@ The fact that this behavior is not replicated when investigating annotator age i
 	\label{fig::ordinal}
 \end{figure}
 
-Most ordinal attributes (with statistically significant apunim values) tend to cluster around a few dominant values; for example, \emph{Age} and \emph{Education} in the \textcite{kumar-et-al-2021} dataset. This pattern is expected because the Apunim algorithm is designed to identify clusters of annotations, causing nearby or similar values to be absorbed into the main effects driven by a few significant modes.
 
-However, some ordinal attributes (\emph{Age} in both DICES-350 and DICES-990, \emph{Religion Importance} in \textcite{kumar-et-al-2021}) follow a strict, monotonic trend. This implies that, in some cases, the \textbf{amount of polarization increases the further apart an opinion is from neutrality}. For example, non-religious annotators are less likely to have polarizing opinions about what constitutes a toxic comment than the average annotator, while very religious annotators generate very polarizing judgments.
+\paragraph{Trends in ordinal data}
+Most ordinal attributes with statistically significant apunim values tend to \textbf{cluster around a few dominant modes}; e.g., \emph{Age} and \emph{Education} in the \textcite{kumar-et-al-2021} dataset. This pattern is expected, since the Apunim algorithm is designed to identify clusters of annotations. Nearby ordinal factors are likely to have similar effects, which are absorbed during analysis into the main effects driven by a few significant modes.This may also represent a ``leak'' of information between ordinal groupings, as admonished by \textcite{Streiner2002}.
+
+However, some ordinal attributes (\emph{Age} in both DICES-350 and DICES-990\footnote{Interestinlgy, the trend for the same variable is inverted for the two datasets. We attribute this fact to divine foolery.}, \emph{Religion Importance} in \textcite{kumar-et-al-2021}) follow a strict, monotonic trend. This implies that, in some cases, the \textbf{amount of polarization increases the further apart an opinion is from neutrality}. For example, non-religious annotators are less likely to have polarizing opinions about what constitutes a toxic comment than the average annotator, while very religious annotators generate very polarizing judgments.
+
+\paragraph{Does aggregation influence the results?}
+Continuous attributes (such as age) can be discretized during analysis; this practice should generally be avoided \parencite{Streiner2002, Andrade2017}, although it is necessary when the data has extremely skewed distributions \parencite{Streiner2002}, the underlying data are already in discretized form, or when the tools used for analysis require some form of categorization. Our methodology is built upon \ac{ndfu}, and thus requires histograms to be well-defined. Additionally, the data for Age is already discretized for the DICES and \textcite{kumar-et-al-2021} datasets; for the sake of comparison, we discretize the \textcite{sap-etal-2022-annotators} dataset with the same method as the DICES dataset, instead of using generalized binning techniques based on statistics \parencite{Sturges01031926, scott_1979, Freedman1981}.
+
+In order to make sure our results are not biased, we repeat the experiments with all ordinal variables from the \textcite{kumar-et-al-2021} dataset discretized to three factors. We observe that...
+
 
 \section{Conclusion}
 
@@ -305,7 +306,7 @@ While our work aims to help protect marginalized and disadvantaged groups by att
 \begin{acronym}[WWW]
     \acro{LLM}{Large Language Model}
     \acro{SDB}{SocioDemographic Background}
-    \acro{nDFU}{normalized Distance From Unimodality}
+    \acro{ndfu}[nDFU]{normalized Distance From Unimodality}
 	\acro{FWER}{Family-Wise Error Rate}
 \end{acronym}
 
