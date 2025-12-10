@@ -14,6 +14,7 @@ def csv_to_latex(results_dir: Path, latex_output_dir: Path) -> None:
     for result_file in results_dir.rglob("*.csv"):
         dataset_name = result_file.stem
         df = pd.read_csv(result_file)
+        df = df.loc[df.pvalue.notna()]
         run_helper.results_to_latex(
             res_df=df,
             output_path=latex_output_dir / f"{dataset_name}.tex",
