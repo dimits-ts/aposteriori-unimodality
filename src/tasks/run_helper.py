@@ -25,9 +25,10 @@ def run_all_results(ds: preprocessing.Dataset) -> pd.DataFrame:
         and the columns are `kappa` and `pvalue`.
     """
     results = []
-    for sdb_column in tqdm(
-        ds.get_sdb_columns(), desc="Evaluating SDB dimensions"
-    ):
+    columns = set(ds.get_sdb_columns()).intersection(
+        set(ds.get_dataset().columns)
+    )
+    for sdb_column in tqdm(columns, desc="Evaluating SDB dimensions"):
         res = _run_aposteriori(
             ds.get_dataset(),
             feature_col=sdb_column,

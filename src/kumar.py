@@ -113,12 +113,12 @@ class KumarDataset(preprocessing.Dataset):
         )
 
         age_ranking = [
-            "18-24",
-            "25-34",
-            "35-44",
-            "45-54",
-            "55-64",
-            "65+",
+            "18 - 24",
+            "25 - 34",
+            "35 - 44",
+            "45 - 54",
+            "55 - 64",
+            "65 or older",
         ]
         age_ordinal_map = {
             name: f"{i+1}) {name}" for i, name in enumerate(age_ranking)
@@ -197,21 +197,79 @@ class KumarDataset(preprocessing.Dataset):
         return mapping.get(x, "Other")
 
 
+def ordinal_to_yn_neutral(lst):
+    new_lst = []
+    for x in lst:
+        # extract the numeric prefix
+        try:
+            num = int(x.split(")")[0])
+        except:
+            num = 3  # fallback
+        if num == 3:
+            new_lst.append("Neutral")
+        elif num > 3:
+            new_lst.append("Yes")
+        else:
+            new_lst.append("No")
+    return new_lst
+
+
+def map_age_list(age_map, lst):
+    return [age_map[x] for x in lst]
+
+
 def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
     print("Generating sample polarization plot...")
     ds = KumarDataset(dataset_path=dataset_path, num_samples=NUM_COMMENTS)
-    graphs.polarization_plot(
-        ds=ds, output_path=graph_output_dir / "kumar_sample.png"
-    )
+    # graphs.polarization_plot(
+    #    ds=ds, output_path=graph_output_dir / "kumar_sample.png"
+    # )
     print("Running experiment...")
-    res = run_helper.run_all_results(ds)
-    res.to_csv(output_dir / "kumar.csv")
+    # res = run_helper.run_all_results(ds)
+    # res.to_csv(output_dir / "kumar.csv")
 
-    print("Generating full polarization plot...")
-    ds = KumarDataset(dataset_path=dataset_path)
-    graphs.polarization_plot(
-        ds=ds, output_path=graph_output_dir / "kumar_full.png"
+    print("Running ablation experiments...")
+
+    age_map = {
+        "Under 18": "3) Gen. Z",
+        "1) 18 - 24": "3) Gen. Z",
+        "2) 25 - 34": "3) Gen. Z",
+        "3) 35 - 44": "2) Millennial",
+        "4) 45 - 54": "2) Millennial",
+        "5) 55 - 64": "1) Gen. X+",
+        "6) 65 or older": "1) Gen. X+",
+        "Prefer not to say": "Prefer not to say",
+    }
+
+    # compress ordinals
+    # This categorizes NA answers with Neutral. They are very few so it's fine
+    TRANSFORMS = {
+        "Age": lambda lst: map_age_list(age_map, lst),
+        "Education": ordinal_to_yn_neutral,
+        "Toxicity Problem": ordinal_to_yn_neutral,
+        "Technology Impact": ordinal_to_yn_neutral,
+        "Religion Important": ordinal_to_yn_neutral,
+    }
+
+    # drop categorical variables, keep only ordinals
+    DROP_COLUMNS = [
+        "Political Affiliation",
+        "Gender",
+        "Ethnicity",
+        "Sexual Orientation",
+        "Is Transgender",
+        "Is Parent",
+        "Has Been Targeted",
+        "Seen Toxicity",
+    ]
+
+    ablation_df = ds.df.drop(columns=DROP_COLUMNS).assign(
+        **{col: ds.df[col].apply(func) for col, func in TRANSFORMS.items()}
     )
+
+    ds.df = ablation_df
+    res = run_helper.run_all_results(ds)
+    res.to_csv(output_dir / "kumar_ablation.csv")
 
 
 if __name__ == "__main__":

@@ -14,20 +14,22 @@ def csv_to_latex(results_dir: Path, latex_output_dir: Path) -> None:
     for result_file in results_dir.rglob("*.csv"):
         dataset_name = result_file.stem
         df = pd.read_csv(result_file)
+        df = df.loc[df.pvalue.notna()]
         run_helper.results_to_latex(
             res_df=df,
             output_path=latex_output_dir / f"{dataset_name}.tex",
             dataset_name=dataset_name,
-            table_label=f"tab::{dataset_name}",
+            table_label=f"tab:{dataset_name}",
         )
 
 
 def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
     """
-    For each CSV in results_dir, extract rows whose feature value starts with
-    an ordinal like '1)', '2)', ... and has non-null pvalue.
-    Then plot ordinal vs apunim for each feature, stretching all ordinal
-    series to occupy the same x-axis length.
+    For each CSV in results_dir:
+    - Identify ordinal-valued rows grouped by the 'SDB Feature' column.
+    - Keep only groups where at least one ordinal factor has pvalue <= 0.5.
+    - Extract ordinals and build a stretched x-axis per feature.
+    - Plot ordinal vs apunim across all datasets.
     """
     records = []
 
@@ -36,7 +38,11 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
         df = pd.read_csv(file)
         dataset = file.stem
 
-        # find ordinal column
+        # Must have SDB Feature column
+        if "SDB Feature" not in df.columns:
+            continue
+
+        # Detect the ordinal column (values like "1)", "2)", ...)
         ordinal_col = next(
             (
                 c
@@ -48,29 +54,37 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
         if ordinal_col is None:
             continue
 
-        # filter ordinal + pvalue
-        d = df[df[ordinal_col].astype(str).str.match(r"^\d+\)")].copy()
-        d = d[d.pvalue.notna()]
-        if d.empty:
-            continue
+        # Work groupwise over SDB Feature
+        for feature_name, df_group in df.groupby("SDB Feature"):
 
-        # extract ordinal number
-        d["ordinal"] = (
-            d[ordinal_col].astype(str).str.extract(r"^(\d+)").astype(int)
-        )
+            # Keep only ordinal rows
+            g = df_group[
+                df_group[ordinal_col].astype(str).str.match(r"^\d+\)")
+            ].copy()
+            g = g[g.pvalue.notna()]
 
-        feature_col = df.columns[0]
+            if g.empty:
+                continue
 
-        # append rows to global table
-        for _, row in d.iterrows():
-            records.append(
-                {
-                    "dataset": dataset,
-                    "feature": f"{dataset}-{row[feature_col]}",
-                    "ordinal": row["ordinal"],
-                    "apunim": row["apunim"],
-                }
+            # Exclude features where *all* pvalues > 0.5
+            if (g.pvalue > 0.05).all():
+                continue
+
+            # Extract ordinal number
+            g["ordinal"] = (
+                g[ordinal_col].astype(str).str.extract(r"^(\d+)").astype(int)
             )
+
+            # Add all valid rows
+            for _, row in g.iterrows():
+                records.append(
+                    {
+                        "dataset": dataset,
+                        "feature": f"{dataset}-{feature_name}",
+                        "ordinal": row["ordinal"],
+                        "apunim": row["apunim"],
+                    }
+                )
 
     if not records:
         print("No usable ordinal data found.")
@@ -78,21 +92,22 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
 
     data = pd.DataFrame(records)
 
-    # --- Stretch each feature's ordinal to full x-axis ---
-    max_points = (
-        data.groupby("feature")["ordinal"].max().max()
-    )  # maximum ordinal count
+    # --- Stretch each feature's ordinal series ---
+    max_points = data.groupby("feature")["ordinal"].max().max()
     stretched_records = []
+
     for feature, df_feat in data.groupby("feature"):
         df_feat = df_feat.sort_values("ordinal").reset_index(drop=True)
         n_rows = len(df_feat)
+
+        # normalize ordinal sequence to 1...max_points
         stretched_x = np.linspace(1, max_points, n_rows)
         df_feat["stretched_ordinal"] = stretched_x
         stretched_records.append(df_feat)
 
     data_stretched = pd.concat(stretched_records, ignore_index=True)
 
-    # --- Plot with Seaborn ---
+    # --- Plot ---
     plt.figure(figsize=(10, 6))
     sns.lineplot(
         data=data_stretched,
@@ -107,7 +122,9 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
         errorbar=None,
     )
 
-    plt.title("Ordinal trends in all datasets")
+    plt.title(
+        "Ordinal trends (only features with p ≤ 0.5 in at least one factor)"
+    )
     plt.xlabel("Order (normalized)")
     plt.ylabel("Apunim value")
     plt.grid(True, alpha=0.3)
