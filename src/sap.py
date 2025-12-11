@@ -44,18 +44,7 @@ class SapDataset(preprocessing.Dataset):
                 "annotatorGender",
             ],
         ]
-        all_ages = [
-            age
-            for sublist in df["annotatorAge"]
-            if isinstance(sublist, (list, tuple))
-            for age in sublist
-            if pd.notna(age)
-        ]
-        all_ages = list(map(int, all_ages))
-
-        df["annotatorAge"] = df["annotatorAge"].apply(
-            lambda x: preprocessing.process_age_list(x)
-        )
+        df.annotatorAge = df.annotatorAge.apply(SapDataset._map_generation)
         df.annotatorRace = df.annotatorRace.apply(
             lambda x: None if ("na" in x) else x
         )
@@ -74,6 +63,27 @@ class SapDataset(preprocessing.Dataset):
             }
         )
         return df
+
+    @staticmethod
+    def _map_generation(age_list):
+        if age_list is None or not isinstance(age_list, (list, tuple)):
+            return None
+
+        gens = []
+        for a in age_list:
+            if pd.isna(a):
+                continue
+            age = int(a)
+
+            # reference year: 2022
+            if age < 26:
+                gens.append("3) Gen. Z")
+            elif age < 41:
+                gens.append("2) Millennial")
+            else:
+                gens.append("1) Gen. X+")
+
+        return gens if len(gens) > 0 else None
 
 
 def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
