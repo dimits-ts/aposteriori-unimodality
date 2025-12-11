@@ -98,13 +98,14 @@ def results_to_latex(
         position="ht",
         index=True,
         float_format="%.4f",
+        multirow=False
     )
 
     # Small font
     if small_fontsize:
         latex_str = latex_str.replace(
             r"\begin{table}[ht]",
-            r"\begin{table}[ht]\scriptsize",
+            r"\begin{table}[ht]\centering",
         )
 
     # Two-column layout support

@@ -18,7 +18,7 @@ def csv_to_latex(results_dir: Path, latex_output_dir: Path) -> None:
             res_df=df,
             output_path=latex_output_dir / f"{dataset_name}.tex",
             dataset_name=dataset_name,
-            table_label=f"tab::{dataset_name}",
+            table_label=f"tab:{dataset_name}",
         )
 
 
