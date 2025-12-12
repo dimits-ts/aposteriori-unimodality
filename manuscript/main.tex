@@ -223,7 +223,7 @@ We instead propose the \emph{Apunim (``Aposteriori Unimodality'') metric}, which
 
 \paragraph{Comment polarization} Intuitively, $\theta$ partially explains the polarization of a data point $c$ when the annotations grouped by $\theta$ are more polarized compared to the full set of annotations. Figure~\ref{fig:ndfu_combined} exhibits a hypothetical example where a misogynistic comment is annotated for toxicity by male and female annotators\footnote{The use of only two predominant genders is made only for the purposes of demonstration.}. The annotations are generally polarized ($nDFU_{all}=0.625$). The annotations by female annotators exhibit low polarization between themselves ($nDFU_{women}=0.1$), since most agree the data-point is toxic. The set of male annotations, also shows low polarization ($nDFU_{men}=0.3725$), but for the opposite reason---most men agree that it is \emph{not} toxic. This suggests that the overall polarization is driven by disagreements between male and female annotators.
 
-\paragraph{Dataset polarization} Given this observation, we would be tempted to aggregate all annotations in the dataset and compare the polarization of each $\theta$ with the full set of annotations $A(c)$. In fact this is very tempting since aggregating annotations solves the very real and important problem of annotation scarcity; each data point may be annotated by only 5 annotators, leading to a best-case 3-2 split between groups. Since nDFU is at its core a histogram estimation, 3 annotations may not be enough to acquire a reliable histogram (this is discussed in depth in \S\ref{ssec}.
+\paragraph{Dataset polarization} Given this observation, we would be tempted to aggregate all annotations in the dataset and compare the polarization of each $\theta$ with the full set of annotations $A(c)$. In fact this is very tempting since aggregating annotations solves the very real and important problem of annotation scarcity; each data point may be annotated by only 5 annotators, leading to a best-case 3-2 split between groups. Since nDFU is at its core a histogram estimation, 3 annotations may not be enough to acquire a reliable histogram (this is discussed in depth in \S\ref{sec:ann_size}.
 
 However, this formulation would not work well. Figure~\ref{fig:ndfu_discussion} illustrates a hypothetical discussion with two comments, both of which are toxic, but where male and female annotators disagree on \emph{which} comment is the toxic one. If we aggregate the annotations to a single discussion, the opposing polarization effects might balance each other out, leading to a false negative. This example demonstrates that polarization has a \textit{direction}, which is not captured by the (symmetric) $nDFU$ metric.
  
@@ -249,7 +249,7 @@ Given infinite annotations, the assumption of independence would hold. Likewise,
  
 \begin{figure}[t]
 	\includegraphics[width=\linewidth]{overview.png}
-	\caption{An overview of the Aposteriori Unimodality Test. We gather statistical information from the annotations (different \acp{SDB} are denoted by different colors) via the \ac{nDFU} measure, which is aggregated on the data-point-level by the pol-statistic. The Aposteriori Unimodality Test is applied on the discussion level, operating on the pol-statistics of the individual data-points.}
+	\caption{An overview of the Aposteriori Unimodality Test. We gather statistical information from the annotations (different \acp{SDB} are denoted by different colors) via the \ac{ndfu} measure, which is aggregated on the data-point-level by the pol-statistic. The Aposteriori Unimodality Test is applied on the discussion level, operating on the pol-statistics of the individual data-points.}
 	\label{fig:overview}
 \end{figure}
 
@@ -274,7 +274,7 @@ By obtaining the pol-statistics for all data-points in $S_d$ for \ac{SDB} $\thet
 	apunim(d, \theta) = \frac{pol_{obs.}(d, \theta) - pol_{apriori}(d)}{1 - pol_{apriori}(d)}
 \end{equation}
 
-Since $nDFU \rightarrow [0,1] \Rightarrow apunim \rightarrow [-1,1]$. If $apunim(d, \theta) \approx 0$, the exhibited polarization among annotators of group $\theta$ does not surpass what would be expected by chance. If $apunim(d, \theta) > 0$, then the group partially explains a rise in polarization, and inversely for the case $apunim(d, \theta) < 0$. The scope of the statistic and its relationship with the previously presented statistics are demonstrated in Figure~\ref{fig::overview} \footnote{There is a theoretical statistical issue for subtracting statistics derived from a subset and its superset, which are discussed in Appendix~\ref{app:theoretical}.}.
+Since $nDFU \rightarrow [0,1] \Rightarrow apunim \rightarrow [-1,1]$. If $apunim(d, \theta) \approx 0$, the exhibited polarization among annotators of group $\theta$ does not surpass what would be expected by chance. If $apunim(d, \theta) > 0$, then the group partially explains a rise in polarization, and inversely for the case $apunim(d, \theta) < 0$. The scope of the statistic and its relationship with the previously presented statistics are demonstrated in Figure~\ref{fig:overview} \footnote{There is a theoretical statistical issue for subtracting statistics derived from a subset and its superset, which are discussed in Appendix~\ref{app:theoretical}.}.
 
 \subsection{p-value estimation} 
 
@@ -290,7 +290,7 @@ By obtaining the pol-statistics for all data-points in a dataset $d$ we can appl
 	H_i: \textit{apunim}(d, \theta_i) >  0
 \end{equation}
 
-Our test assumes that (1) there exist enough data-points to reliably run the means-test, and (2) enough annotations in each data-point and \ac{SDB} group to estimate the \textit{pol-statistics}. We discuss the former assumption in Appendix \ref{app:ann_size}. The latter can be safely assumed for most datasets, because they feature enough data-points to reliably assume normal residuals ($n \gg 30$---see \S\ref{sec:datasets}), which is why we use the Student-T test \cite{student1908probable} .
+Our test assumes that (1) there exist enough data-points to reliably run the means-test, and (2) enough annotations in each data-point and \ac{SDB} group to estimate the \textit{pol-statistics}. We discuss the former assumption in Appendix \ref{sec:ann_size}. The latter can be safely assumed for most datasets, because they feature enough data-points to reliably assume normal residuals ($n \gg 30$---see \S\ref{sec:datasets}), which is why we use the Student-T test \cite{student1908probable} .
 
 Since we are simultaneously considering $\lvert \Theta \rvert$ hypotheses, we apply a multiple comparison correction to the resulting p-values. We choose the Holms method \cite{holms}. The test is parameterized by the \ac{FWER}, which is used to tune the strength of the correction; we can increase this value to make our test more conservative towards multiple hypotheses \cite{ChenFengYi2017}). In general, it is safe to set \ac{FWER} equal to the significance level of our test (e.g., $\textit{FWER} = 0.95$ if we are looking for $p < 0.05$).
 
@@ -383,9 +383,9 @@ However, some ordinal attributes (\emph{Age} in both DICES-350 and DICES-990, \e
 
 
 \section{LLM Annotation}
-\label{app:llm_annot}
+\label{sec:llm_annot}
 
-\begin{figure}[t]
+\begin{figure}[ht]
 	\centering
 	\includegraphics[width=0.7\columnwidth]{synthetic_100.png}
 	\caption{Histogram of dataset polarization for the \cite{sap-etal-2019-risk} annotated by 100 LLM annotators dataset considered in this paper per SDB feature.}
@@ -404,38 +404,15 @@ The results for the 100-annotator dataset can be found in Table~\ref{tab:hundred
 \section{How many annotators?}
 \label{sec:ann_size}
 
-\begin{figure}[t]
+While our test works best with many annotations per datapoint, the cost required for multiple human annotators is often prohibitive \cite{rossi_2024}. It is thus very important both DICES datasets, as well as the Sap dataset annotated by 100 distinct LLM annotators. While a more appropriate comparison would entail synthetic annotations in the DICES datasets themselves, we elect to use a standard task for LLM-as-a-judge (hate speech detection) instead of the relatively challenging and under-explored area of general LLM safety.
+
+\begin{figure}[ht]
 	\includegraphics[width=\columnwidth]{ndfu_std_error_sample_size_llm.png}
-	\caption{Standard error of the \textit{pol-statistic} when sampled with replacement for various number of annotators.}
-	\label{fig::std_error}
-\end{figure}
-
-
-Figure~\ref{fig:ordinal} displays the trends for polarization attribution between various ordinal variables. Most ordinal attributes with statistically significant apunim values tend to \textbf{cluster around a few dominant modes}; e.g., \emph{Age} and \emph{Education} in the Kumar dataset. This pattern is expected, since the Apunim algorithm is designed to identify clusters of annotations. Nearby ordinal factors are likely to have similar effects, which are absorbed during analysis into the main effects driven by a few significant modes.This may also represent a ``leak'' of information between ordinal groupings, as admonished by \cite{Streiner2002}.
-
-However, some ordinal attributes (\emph{Age} in both DICES-350 and DICES-990\footnote{Interestingly, the trend for the same variable is inverted for the two datasets. We attribute this fact to divine foolery.}, \emph{Religion Importance} in Kumar) follow a strict, monotonic trend. This implies that, in some cases, the \textbf{amount of polarization increases the further apart an opinion is from neutrality}. For example, non-religious annotators are less likely to have polarizing opinions about what constitutes a toxic comment than the average annotator, while very religious annotators generate very polarizing judgments.
-
-
-\section{How many annotators?}
-\label{app:ann_size}
-
-While our test works best with many annotations per datapoint, the cost required for multiple human annotators is often prohibitive \cite{rossi_2024}. It is thus very important both DICES datasets, as well as the \cite{sap-etal-2022-annotators} dataset annotated by 100 distinct LLM annotators. 
-
-The LLM annotation procedure is described in Appendix~\ref{app:llm_annot}. While a more appropriate comparison would entail synthetic annotations in the DICES datasets themselves, we elect to use a standard task for LLM-as-a-judge (hate speech detection) instead of the relatively challenging and under-explored area of general LLM safety.
-
-
-\subsection{Methodology}
-
-For each comment in all datasets, we randomly sample a subset of annotators and compute the apunim value. We repeat the procedure 30 times, and average all observations. This was a necessary step to reduce the variance inherent in random sampling. We also truncate the results for the DICES-350 dataset, since very few comments were annotated by the respective annotator counts.
-
-
-\subsection{Results}
-
-\begin{figure}[t]
-	\includegraphics[width=\linewidth]{ndfu_std_error_sample_size_llm.png}
 	\caption{Standard error of the \textit{pol-statistic} when sampled with replacement for various number of annotators.}
 	\label{fig:std_error}
 \end{figure}
+
+For each comment in all datasets, we randomly sample a subset of annotators and compute the apunim value. We repeat the procedure 30 times, and average all observations. This was a necessary step to reduce the variance inherent in random sampling. We also truncate the results for the DICES-350 dataset, since very few comments were annotated by the respective annotator counts.
 
 Figure~\ref{fig:std_error} demonstrates the effect of the number of annotators on the reliability of the polarization estimation. We can see that the metric becomes consistent with about 20 annotators per comment, after which we start to get diminishing results. This experiment was conducted on a subset of the Sap dataset, with LLM annotators having different \acp{SDB}. 
 
@@ -475,9 +452,22 @@ While our work aims to help protect marginalized and disadvantaged groups by att
 	In \S\ref{ssec:methodology:intuition} we compared the polarization of the whole set of annotations with the partitions by annotator group. This approach uses the same samples for both subset and superset, violating the fundamental hypothesis of independent samples. This also means the statistics for both will \emph{always be similar to an extent}. This is especially pronounced in our case, due to the extreme overlap exhibited by tiny annotation sets. Additionally, when calculating p-values, the non-independence of samples induces an intrinsic, non-zero covariance between any statistic $s$ calculated on $A$ and on $S$. 
 	
 	A standard method of side-stepping this issue is to compare the subset with its complement to the superset. This can not be applied to our case. Consider the example in Figure~\ref{fig:ndfu_combined}; if we compared $nDFU_{men}$ with $nDFU_{women}$, the result would be very close to zero, indicating no polarization attribution to gender.
-
 	
-	\subsection{Prompts used}
+	
+	\section{How do we handle continuous variables?}
+	\label{app:continuous}
+	
+	Continuous attributes (such as age) can be discretized during analysis; this practice should generally be avoided \cite{Streiner2002, Andrade2017}, although it is necessary when the data has extremely skewed distributions \cite{Streiner2002}, the underlying data are already in discretized form, or when the tools used for analysis require some form of categorization. Our methodology is built upon \ac{ndfu}, and thus requires histograms to be well-defined. Additionally, the data for Age is already discretized for the DICES and Kumar datasets; for the sake of comparison, we discretize the Sap dataset with the same method as the DICES dataset, instead of using generalized binning techniques based on statistics \cite{Sturges01031926, scott_1979, Freedman1981}.
+	
+	In order to make sure our results are not biased, we conduct ablation experiments with all ordinal variables from the Kumar dataset discretized to three factors. We observe that...
+	
+	\input{./generated/kumar_ablation.tex}
+	
+	
+	\section{Prompts used}
+	\label{app:prompts}
+	
+	The prompt used for the synthetic annotation presented in \S\ref{sec:llm_annot}, \S\ref{sec:ann_size} can be found below:
 	
 	\begin{Verbatim}
 		You are an expert annotator, specializing in 
