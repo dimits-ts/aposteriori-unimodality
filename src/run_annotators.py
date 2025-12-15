@@ -8,10 +8,9 @@ import transformers
 import pandas as pd
 from tqdm.auto import tqdm
 
-from . import real_life_kumar
+from . import kumar
 
 SEX_OPTIONS = ["male", "female", "non-binary"]
-SEX_WEIGHTS = [0.48, 0.50, 0.02]
 
 SEXUAL_ORIENTATION_OPTIONS = [
     "heterosexual",
@@ -19,7 +18,6 @@ SEXUAL_ORIENTATION_OPTIONS = [
     "bisexual",
     "asexual",
 ]
-SEXUAL_ORIENTATION_WEIGHTS = [0.85, 0.07, 0.06, 0.02]
 
 EDUCATION_LEVEL_OPTIONS = [
     "no formal education",
@@ -30,7 +28,6 @@ EDUCATION_LEVEL_OPTIONS = [
     "master's degree",
     "doctoral degree",
 ]
-EDUCATION_LEVEL_WEIGHTS = [0.02, 0.10, 0.40, 0.15, 0.20, 0.10, 0.03]
 
 POLITICAL_AFFILIATION_OPTIONS = [
     "left-wing",
@@ -38,7 +35,6 @@ POLITICAL_AFFILIATION_OPTIONS = [
     "right-wing",
     "apolitical",
 ]
-POLITICAL_AFFILIATION_WEIGHTS = [0.25, 0.35, 0.25, 0.15]
 
 
 @dataclasses.dataclass(frozen=True)
@@ -113,31 +109,25 @@ def annotations_to_df(results: dict) -> pd.DataFrame:
 
 
 def get_texts(kumar_path: Path, num_comments: int) -> list[str]:
-    ds = real_life_kumar.KumarDataset(
+    ds = kumar.KumarDataset(
         dataset_path=kumar_path, num_samples=num_comments
     )
     texts = ds.df["comment"]
     return texts.tolist()
 
 
-def _weighted_choice(options, weights):
+def _choice(options):
     """Helper function for weighted random choice."""
-    return random.choices(options, weights=weights, k=1)[0]
+    return random.choices(options, k=1)[0]
 
 
 def _generate_random_persona() -> Persona:
     """Generate a Persona instance with weighted sociodemographic traits."""
     age = random.randint(18, 80)
-    sex = _weighted_choice(SEX_OPTIONS, SEX_WEIGHTS)
-    sexual_orientation = _weighted_choice(
-        SEXUAL_ORIENTATION_OPTIONS, SEXUAL_ORIENTATION_WEIGHTS
-    )
-    education_level = _weighted_choice(
-        EDUCATION_LEVEL_OPTIONS, EDUCATION_LEVEL_WEIGHTS
-    )
-    political_affiliation = _weighted_choice(
-        POLITICAL_AFFILIATION_OPTIONS, POLITICAL_AFFILIATION_WEIGHTS
-    )
+    sex = _choice(SEX_OPTIONS)
+    sexual_orientation = _choice(SEXUAL_ORIENTATION_OPTIONS)
+    education_level = _choice(EDUCATION_LEVEL_OPTIONS)
+    political_affiliation = _choice(POLITICAL_AFFILIATION_OPTIONS)
 
     return Persona(
         age=age,
@@ -198,11 +188,12 @@ if __name__ == "__main__":
 
     pipe = transformers.pipeline(
         "text-generation",
-        model="unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit",
-        max_new_tokens=10,
+        model="unsloth/Llama-3.3-70B-Instruct-bnb-4bit",
+        max_new_tokens=4,
+        device_map="auto"
     )
 
-    texts = get_texts(Path("data/kumar.json"), num_comments=200)
+    texts = get_texts(Path("data/kumar.json"), num_comments=80)
 
     with open("data/annotation/prompt.txt", "r") as file:
         instructions = file.read()
@@ -216,4 +207,4 @@ if __name__ == "__main__":
 
     results_df = annotations_to_df(results)
     # if this breaks i WILL cry.
-    results_df.to_csv("data/annotation.csv", index=False)
+    results_df.to_csv("data/annotation_70b.csv", index=False)
