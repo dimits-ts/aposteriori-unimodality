@@ -75,10 +75,12 @@ def annotate(
     pipeline, personas: list[Persona], instructions: str, texts: list[str]
 ) -> dict[Persona, dict[str, float]]:
     results = {}
-    for persona in tqdm(personas, desc="Annotators"):
-        prompt = _annotation_prompt(persona=persona, instructions=instructions)
+    for text in tqdm(texts, desc="Comments", leave=False):
         annotations = {}
-        for text in tqdm(texts, desc="Comments", leave=False):
+        for persona in tqdm(personas, desc="Annotators"):
+            prompt = _annotation_prompt(
+                persona=persona, instructions=instructions
+            )
             annotation = _annotate_texts(
                 pipeline=pipeline, prompt=prompt, text=text
             )
@@ -109,9 +111,7 @@ def annotations_to_df(results: dict) -> pd.DataFrame:
 
 
 def get_texts(kumar_path: Path, num_comments: int) -> list[str]:
-    ds = kumar.KumarDataset(
-        dataset_path=kumar_path, num_samples=num_comments
-    )
+    ds = kumar.KumarDataset(dataset_path=kumar_path, num_samples=num_comments)
     texts = ds.df["comment"]
     return texts.tolist()
 
@@ -190,7 +190,7 @@ if __name__ == "__main__":
         "text-generation",
         model="unsloth/Llama-3.3-70B-Instruct-bnb-4bit",
         max_new_tokens=4,
-        device_map="auto"
+        device_map="auto",
     )
 
     texts = get_texts(Path("data/kumar.json"), num_comments=80)
