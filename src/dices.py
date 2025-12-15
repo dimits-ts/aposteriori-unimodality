@@ -40,7 +40,7 @@ class DicesDataset(preprocessing.Dataset):
                 "rater_age",
                 "rater_race",
                 "rater_education",
-                "Q_overall",
+                "Q3_bias_overall",
                 "item_id",
             ],
         ]
