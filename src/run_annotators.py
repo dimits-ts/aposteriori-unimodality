@@ -2,6 +2,7 @@ import dataclasses
 import random
 import json
 import re
+import argparse
 from pathlib import Path
 
 import transformers
@@ -10,6 +11,11 @@ from tqdm.auto import tqdm
 
 from . import kumar
 
+
+MODEL = "unsloth/Llama-3.3-70B-Instruct-bnb-4bit"
+OUTPUT_PATH = "data/annotation_70b.csv"
+NUM_COMMENTS = 1000
+NUM_ANNOTATORS = 100
 SEX_OPTIONS = ["male", "female", "non-binary"]
 
 SEXUAL_ORIENTATION_OPTIONS = [
@@ -61,34 +67,49 @@ class Persona:
         return json.dumps(self.to_dict(), ensure_ascii=False, indent=2)
 
 
-# ---------------------------
-#  Persona Generation
-# ---------------------------
-
-
 def generate_persona_list(n: int = 10):
     """Generate a list of n random Persona objects."""
     return [_generate_random_persona() for _ in range(n)]
 
 
+def append_rows_to_csv(rows: list[dict], output_path: str):
+    df = pd.DataFrame(rows)
+
+    write_header = not Path(output_path).exists()
+    df.to_csv(
+        output_path,
+        mode="a",
+        header=write_header,
+        index=False,
+    )
+
+
 def annotate(
-    pipeline, personas: list[Persona], instructions: str, texts: list[str]
-) -> dict[Persona, dict[str, float]]:
-    results = {}
-    for text in tqdm(texts, desc="Comments", leave=False):
-        annotations = {}
-        for persona in tqdm(personas, desc="Annotators"):
+    pipeline,
+    personas: list[Persona],
+    instructions: str,
+    texts: list[str],
+    output_path: Path,
+) -> None:
+    for text in tqdm(texts, desc="Comments"):
+        rows = []
+
+        for persona in tqdm(personas, desc="Annotators", leave=False):
             prompt = _annotation_prompt(
                 persona=persona, instructions=instructions
             )
             annotation = _annotate_texts(
                 pipeline=pipeline, prompt=prompt, text=text
             )
-            annotations[text] = annotation
 
-        results[persona] = annotations
+            row = {
+                "text": text,
+                "annotation": annotation,
+                **persona.to_dict(),
+            }
+            rows.append(row)
 
-    return results
+        append_rows_to_csv(rows, output_path)
 
 
 def annotations_to_df(results: dict) -> pd.DataFrame:
@@ -144,7 +165,6 @@ def _annotation_prompt(persona: Persona, instructions: str) -> str:
 
 
 def _annotate_texts(pipeline, prompt: str, text: str) -> float:
-
     # Construct chat input if model supports chat format
     messages = [
         {"role": "system", "content": prompt},
@@ -178,33 +198,41 @@ def _parse_response(response: str) -> float:
     return -1
 
 
-# ---------------------------
-#  Example Usage
-# ---------------------------
-
-if __name__ == "__main__":
+def main(output_path: Path):
     random.seed(42)
-    personas = generate_persona_list(100)
+    personas = generate_persona_list(NUM_ANNOTATORS)
 
     pipe = transformers.pipeline(
         "text-generation",
-        model="unsloth/Llama-3.3-70B-Instruct-bnb-4bit",
+        model=MODEL,
         max_new_tokens=4,
         device_map="auto",
     )
 
-    texts = get_texts(Path("data/kumar.json"), num_comments=80)
+    texts = get_texts(Path("data/kumar.json"), num_comments=NUM_COMMENTS)
 
     with open("data/annotation/prompt.txt", "r") as file:
         instructions = file.read()
 
-    results = annotate(
+    annotate(
         pipeline=pipe,
         personas=personas,
         instructions=instructions,
         texts=texts,
+        output_path=output_path,
     )
 
-    results_df = annotations_to_df(results)
-    # if this breaks i WILL cry.
-    results_df.to_csv("data/annotation_70b.csv", index=False)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description=(
+            "Classify forum comments using taxonomy categories and an LLM."
+        )
+    )
+    parser.add_argument(
+        "--output-path",
+        required=True,
+        help="Directory for the CSV result files.",
+    )
+    args = parser.parse_args()
+    main(output_path=Path(args.output_path))
