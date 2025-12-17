@@ -88,10 +88,10 @@ def _plot_matrix(
             alpha=0.7,
         )
 
-    ax.set_xlabel("Annotators", fontsize=LABEL_FONTSIZE)
+    # ax.set_xlabel("Annotators", fontsize=LABEL_FONTSIZE)
     ax.set_xlim(-0.5, len(data) - 0.5)
     ax.set_xticks([])
-    ax.set_ylabel("Hate Speech", fontsize=LABEL_FONTSIZE)
+    # ax.set_ylabel("Hate Speech", fontsize=LABEL_FONTSIZE)
     ax.set_yticks([1, 2, 3, 4, 5])
     ax.set_yticklabels(["☺", "🙂", "😐", "😠", "🤬"], fontsize=LABEL_FONTSIZE)
     ax.set_ylim(0.8, 5.2)
@@ -108,24 +108,29 @@ def plot_annotation_distributions(
         _prepare_distributions(n_annotators, variance)
     )
 
-    fig, axs = plt.subplots(2, 2, figsize=(18, 12))
-    plt.subplots_adjust(hspace=0.3, wspace=0.3)
+    fig, axs = plt.subplots(2, 2, figsize=(18, 12), sharex=True, sharey=True)
+    plt.subplots_adjust(hspace=0.15, wspace=0.15)
 
-    _plot_matrix(
-        axs[0, 0], unimodal, group_labels, "Low Disagreement\nLow Polarization"
+    # ---- Bottom-left: Low polarization, low disagreement
+    _plot_matrix(axs[1, 0], unimodal, group_labels, title="")
+
+    # ---- Bottom-right: High polarization, low disagreement
+    _plot_matrix(axs[0, 0], bimodal, group_labels, title="")
+
+    # ---- Top-left: Low polarization, high disagreement
+    _plot_matrix(axs[0, 1], uniform, group_labels, title="")
+
+    # ---- Top-right: High polarization, high disagreement
+    _plot_matrix(axs[1, 1], multimodal, group_labels, title="")
+
+    # ---- Global labels (optional but very clear)
+    fig.supxlabel("Low ← Disagreement → High", fontsize=SUBTITLE_FONTSIZE)
+    fig.supylabel("Low ← Polarization → High", fontsize=SUBTITLE_FONTSIZE)
+    fig.suptitle(
+        "Hate Speech Annotations for 100 Annotators grouped by religion",
+        fontsize=SUBTITLE_FONTSIZE,
     )
-    _plot_matrix(
-        axs[0, 1], bimodal, group_labels, "Low Disagreement\nHigh Polarization"
-    )
-    _plot_matrix(
-        axs[1, 0], uniform, group_labels, "High Disagreement\nLow Polarization"
-    )
-    _plot_matrix(
-        axs[1, 1],
-        multimodal,
-        group_labels,
-        "High Disagreement\nHigh Polarization",
-    )
+
     plt.savefig(graph_dir / "disagreement_vs_polarization.png")
     plt.close()
 
