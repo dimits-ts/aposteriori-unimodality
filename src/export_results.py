@@ -38,11 +38,9 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
         df = pd.read_csv(file)
         dataset = file.stem
 
-        # Must have SDB Feature column
         if "SDB Feature" not in df.columns:
             continue
 
-        # Detect the ordinal column (values like "1)", "2)", ...)
         ordinal_col = next(
             (
                 c
@@ -54,10 +52,8 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
         if ordinal_col is None:
             continue
 
-        # Work groupwise over SDB Feature
         for feature_name, df_group in df.groupby("SDB Feature"):
 
-            # Keep only ordinal rows
             g = df_group[
                 df_group[ordinal_col].astype(str).str.match(r"^\d+\)")
             ].copy()
@@ -66,16 +62,13 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
             if g.empty:
                 continue
 
-            # Exclude features where *all* pvalues > 0.5
             if (g.pvalue > 0.05).all():
                 continue
 
-            # Extract ordinal number
             g["ordinal"] = (
                 g[ordinal_col].astype(str).str.extract(r"^(\d+)").astype(int)
             )
 
-            # Add all valid rows
             for _, row in g.iterrows():
                 records.append(
                     {
@@ -99,17 +92,38 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
     for feature, df_feat in data.groupby("feature"):
         df_feat = df_feat.sort_values("ordinal").reset_index(drop=True)
         n_rows = len(df_feat)
-
-        # normalize ordinal sequence to 1...max_points
-        stretched_x = np.linspace(1, max_points, n_rows)
-        df_feat["stretched_ordinal"] = stretched_x
+        df_feat["stretched_ordinal"] = np.linspace(1, max_points, n_rows)
         stretched_records.append(df_feat)
 
     data_stretched = pd.concat(stretched_records, ignore_index=True)
 
+    # --- Color configuration ---
+    highlight_group_1 = {
+        "kumar-Religion Important",
+        "dices-990-Age",
+    }
+
+    highlight_group_2 = {
+        "kumar-Education",
+        "kumar-Toxicity Problem",
+    }
+
+    COLOR_GROUP_1 = "#0072B2"  # blue
+    COLOR_GROUP_2 = "#D55E00"  # vermillion
+    COLOR_OTHER = "#B0B0B0"  # light gray
+
+    palette = {}
+    for f in data_stretched["feature"].unique():
+        if f in highlight_group_1:
+            palette[f] = COLOR_GROUP_1
+        elif f in highlight_group_2:
+            palette[f] = COLOR_GROUP_2
+        else:
+            palette[f] = COLOR_OTHER
+
     # --- Plot ---
     plt.figure(figsize=(10, 6))
-    sns.lineplot(
+    ax = sns.lineplot(
         data=data_stretched,
         x="stretched_ordinal",
         y="apunim",
@@ -120,15 +134,20 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
         markersize=10,
         legend=True,
         errorbar=None,
+        palette=palette,
     )
 
-    plt.title(
-        "Ordinal trends (only features with p ≤ 0.5 in at least one factor)"
-    )
+    # De-emphasize non-highlighted lines
+    for line in ax.lines:
+        if line.get_color() == COLOR_OTHER:
+            line.set_alpha(0.6)
+
+    plt.title("Apunim trends in ordinal variables")
     plt.xlabel("Order (normalized)")
     plt.ylabel("Apunim value")
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
+
     graphs.save_plot(graph_output_dir / "apunim_ordinal.png")
 
 
