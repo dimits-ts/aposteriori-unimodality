@@ -521,19 +521,19 @@ The fact that this behavior is not replicated when investigating annotator age i
 \subsection{Investigating ordinal attributes}
 \label{ssec:results:ordinal}
 
-Analysis on annotated data frequently ignores the different kinds of measurements in studies using sociodemographic and LIKERT-style attributes. Researchers often treat all dimensions as \emph{nominal/categorical} even though some are inherently ordinal (e.g., LIKERT, education), and some continuous/ratio variables (e.g., age). By treating these variables as categorical, not only do we lose valuable information, but we may magnify statistical errors \cite{Streiner2002}.
-
-Some researchers attempt to find an ``optimal point'' which can be used to binarize continuous variables \cite{Sokratis}, but this approach is misguided. By using any artificial cut-off point, the resulting analysis is immediately invalidated by any change in the underlying data. Furthermore, some of these approaches tend to produce ouroboroid\footnote{``Snake eating its own tail''.} results; a statistical measure is used to binarize the data during preprocessing, which is then fed to a methodology utilizing the same measure to get results. This is methodologically unsound, since it biases the model by transforming the data in a way that model best recognizes to infer a specific outcome. In this work, we argue that \emph{retaining the order of ordinal attributes can reveal interesting trends} that would be otherwise missed with categorical inference.
-
 \begin{figure}[ht]
 	\includegraphics[width=\linewidth]{apunim_ordinal.png}
 	\caption{The behavior of ordinal variables in all datasets. The x-axis represents the order of each factor (marked as \texttt{1), 2), ...} in Tables~\ref{tab:dices-350},\ref{tab:dices-990},\ref{tab:kumar},\ref{tab:sap}). The x-axis is normalized to the smallest common denominator between the number of ordinal values.}
 	\label{fig:ordinal}
 \end{figure}
 
-Most ordinal attributes (with statistically significant apunim values) tend to cluster around a few dominant values; for example, \emph{Age} and \emph{Education} in the Kumar dataset. This pattern is expected because the Apunim algorithm is designed to identify clusters of annotations, causing nearby or similar values to be absorbed into the main effects driven by a few significant modes.
+Analysis on annotated data frequently ignores the different kinds of measurements in studies using sociodemographic and LIKERT-style attributes. Researchers often treat all dimensions as \emph{nominal/categorical} even though some are inherently ordinal (e.g., LIKERT, education), and some continuous/ratio variables (e.g., age). Others attempt to find an ``optimal point'' which can be used to binarize continuous variables \cite{Sokratis}, but this approach is misguided. By using any artificial cut-off point, the resulting analysis is immediately invalidated by any change in the underlying data, and it also discards valuable information not present in binary or nominal categories By treating these variables as categorical, not only do we lose valuable information, but we may magnify statistical errors \cite{Streiner2002}. 
 
-However, some ordinal attributes (\emph{Age} in both DICES-350 and DICES-990, \emph{Religion Importance} in the Kumar dataset follow a strict, monotonic trend. This implies that, in some cases, the \textbf{amount of polarization increases the further apart an opinion is from neutrality}. For example, non-religious annotators are less likely to have polarizing opinions about what constitutes a toxic comment than the average annotator, while very religious annotators generate very polarizing judgments.
+Figure~\ref{fig:ordinal} shows that \emph{retaining the order of ordinal attributes reveals interesting trends} that would be otherwise missed with categorical inference. We aggregate these trends in two patterns; \emph{``Escalating''} and \emph{``Diverging''}.
+
+\paragraph{Diverging} Some ordinal attributes tend to cluster around a few dominant values; for example, \emph{Age} and \emph{Education} in the Kumar dataset. This pattern is expected because the Apunim algorithm is designed to identify clusters of annotations, causing nearby or similar values to be absorbed into the main effects driven by a few significant modes. Thus, it is common to find two halves of an ordinal scale being dominated by positive and negative apunim values respectively.
+
+\paragraph{Escalating} However, some other attributes (\emph{Age} in both DICES-350 and DICES-990, \emph{Religion Importance} in the Kumar dataset) follow a strict, monotonic trend. This implies that, in some cases, the \textbf{amount of polarization increases the further apart an opinion is from neutrality}. For example, non-religious annotators are less likely to have polarizing opinions about what constitutes a toxic comment than the average annotator, while very religious annotators generate very polarizing judgments.
 
 
 \section{How many annotators?}
