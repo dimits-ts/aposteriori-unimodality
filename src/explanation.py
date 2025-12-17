@@ -16,7 +16,7 @@ DIFF_COMMENTS_SIZE = 200
 NUM_BINS = 10
 LABEL_FONTSIZE = 18
 LESSER_LABEL_SIZE = 18
-SUBTITLE_FONTSIZE = 24
+SUBTITLE_FONTSIZE = 32
 
 
 def _discrete_normal(loc, scale, size):
@@ -198,13 +198,12 @@ def _combined_dfu_plot(
 
 def discussion_example(graph_dir: Path) -> None:
     misogynist_comment = """
-    ``A: Men are naturally more suited for leadership because they’re more
-    decisive. Women are too emotional to handle real responsibility.``
+    A: ``There is a much higher of resistance when
+    dealing with black people compared to anyone else.''
     """
     misandrist_comment = """
-    ``B: Men are just too aggressive and can’t work with others.
-    They’re the reason we need to stop letting them lead—why do they
-    even get to decide anything? ``
+    B: ``Then why does the police seem to like
+    killing only black people?''
     """
     discussion_comment = f"{misogynist_comment}\n{misandrist_comment}"
 
@@ -281,20 +280,21 @@ def _plot_example_individual(
 
     fig, ax = plt.subplots(figsize=(6, 4))
     sns.histplot(
-        men_annot, bins=NUM_BINS, alpha=0.6, label="Men", kde=True, ax=ax
+        men_annot, bins=NUM_BINS, alpha=0.6, label="White", kde=True, ax=ax
     )
     sns.histplot(
-        women_annot, bins=NUM_BINS, alpha=0.6, label="Women", kde=True, ax=ax
+        women_annot, bins=NUM_BINS, alpha=0.6, label="Black", kde=True, ax=ax
     )
     ax.set_title(title, fontsize=LESSER_LABEL_SIZE)
     ax.legend(loc="upper right")
     ax.set_xlabel(
-        f"$nDFU_{{men}}={ndfu_man:.4f}$\n"
-        f"$nDFU_{{women}}={ndfu_woman:.4f}$\n"
-        f"$nDFU_{{all}}={ndfu_all:.4f}$",
+        f"$nDFU_{{White}}={ndfu_man:.4f}$\n"
+        f"$nDFU_{{Black}}={ndfu_woman:.4f}$\n"
+        f"$nDFU_{{All}}={ndfu_all:.4f}$",
         fontsize=LESSER_LABEL_SIZE,
     )
-    ax.set_ylabel(r"\#Comments", fontsize=LABEL_FONTSIZE)
+    ax.set_ylabel(r"\#Annotations", fontsize=LABEL_FONTSIZE)
+    ax.set_xlabel("Toxicity")
     ax.set_xlim(1, 10)
 
     graphs.save_plot(graph_path)
