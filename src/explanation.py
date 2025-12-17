@@ -138,25 +138,25 @@ def dfu_plots(colors, graph_dir: Path) -> None:
     _dfu_plot(
         data=d1,
         graph_path=graph_dir / "ndfu_men.png",
-        label="men",
+        label="Men",
         color=colors[0],
     )
     _dfu_plot(
         data=d2,
         graph_path=graph_dir / "ndfu_women.png",
-        label="women",
+        label="Women",
         color=colors[1],
     )
     _dfu_plot(
         data=d_all,
         graph_path=graph_dir / "ndfu_all.png",
-        label="all",
+        label="All",
         color=colors[2],
     )
     _combined_dfu_plot(
         datasets=[d1, d2, d_all],
         graph_path=graph_dir / "ndfu_combined.png",
-        labels=["men", "women", "all"],
+        labels=["Men", "Women", "All"],
         colors=colors,
     )
 
@@ -168,6 +168,8 @@ def _combined_dfu_plot(
     graph_path: Path,
 ) -> None:
     plt.figure(figsize=(8, 5))
+    ax = plt.gca()
+
     for data, label, color in zip(datasets, labels, colors):
         sns.histplot(
             data,
@@ -176,6 +178,7 @@ def _combined_dfu_plot(
             alpha=0.7,
             color=color,
             label=label,
+            ax=ax,
         )
 
     # Add all nDFU annotations
@@ -186,7 +189,8 @@ def _combined_dfu_plot(
 
     plt.legend(loc="center")
     plt.xlabel(f"Toxicity\n{math_text}", fontsize=LABEL_FONTSIZE)
-    plt.ylabel(r"\#Comments", fontsize=LABEL_FONTSIZE)
+    plt.ylabel(r"\#Annotations", fontsize=LABEL_FONTSIZE)
+    plt.title(r"\texttit{``Most women can't drive well.''}")
 
     graphs.save_plot(graph_path)
     plt.close()
@@ -243,6 +247,7 @@ def _truncated_normal(loc, scale, lower=0, upper=10, size=100):
 
 def _dfu_plot(data: np.ndarray, graph_path: Path, color: str, label) -> None:
     ndfu_value = apunim.dfu(data, bins=NUM_BINS, normalized=True)
+
     plt.figure(figsize=(8, 5))
     sns.histplot(
         data,
@@ -252,10 +257,12 @@ def _dfu_plot(data: np.ndarray, graph_path: Path, color: str, label) -> None:
         color=color,
         label=label,
     )
+
     math_text = f"$\\mathbf{{nDFU_{{{label}}}}}={ndfu_value:.3f}$"
     plt.xlabel(f"Toxicity\n{math_text}", fontsize=LABEL_FONTSIZE)
     plt.ylabel(r"\#Comments", fontsize=LABEL_FONTSIZE)
 
+    # individual pictures to be used for slides
     graphs.save_plot(graph_path)
     plt.close()
 
@@ -296,7 +303,7 @@ def _plot_example_individual(
 
 def main(graph_dir: Path):
     sns.set_theme(style="whitegrid")
-    plt.rcParams.update({"text.usetex": True, "font.family": "Helvetica"})
+    plt.rcParams.update({"text.usetex": False})
     np.random.seed(seed=42)
     colors = sns.color_palette()
 
