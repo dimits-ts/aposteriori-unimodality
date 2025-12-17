@@ -1,11 +1,22 @@
-\begin{table}[ht]\centering
-\caption{Aposteriori unimodality results for the kumar dataset.}
-\label{tab:kumar}
-\begin{tabular}{lllr}
+\begin{longtable}[ht]{lllr}
+\caption{Aposteriori unimodality results for the kumar dataset.} \label{tab:kumar} \\
 \toprule
  &  & apunim & support \\
 SDB Feature & Value &  &  \\
 \midrule
+\endfirsthead
+\caption[]{Aposteriori unimodality results for the kumar dataset.} \\
+\toprule
+ &  & apunim & support \\
+SDB Feature & Value &  &  \\
+\midrule
+\endhead
+\midrule
+\multicolumn{4}{r}{Continued on next page} \\
+\midrule
+\endfoot
+\bottomrule
+\endlastfoot
 Age & 1) 18 - 24 & -0.0090 & 9742 \\
  & 2) 25 - 34 & 0.0324$^{***}$ & 33203 \\
  & 3) 35 - 44 & -0.0093 & 21055 \\
@@ -67,6 +78,4 @@ Toxicity Problem & 1) Never & 0.0058 & 4962 \\
  & 3) Occasionally & -0.0058 & 29476 \\
  & 4) Frequently & -0.0217$^{***}$ & 24774 \\
  & 5) Very Frequently & -0.0145$^{***}$ & 10656 \\
-\bottomrule
-\end{tabular}
-\end{table}
+\end{longtable}
