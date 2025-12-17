@@ -56,8 +56,14 @@ class DicesDataset(preprocessing.Dataset):
 
         df = df.replace(
             {
+                "College degree or higher": "College +",
+                "High school or below": "High school -",
+            }
+        )
+        df = df.replace(
+            {
                 "Asian/Asian subcontinent": "Asian",
-                "Black/African American": "African American",
+                "Black/African American": "African Am.",
                 "LatinX, Latino, Hispanic or Spanish Origin": "Latino",
                 "Self-describe (below)": "Other",
             }
@@ -78,7 +84,7 @@ class DicesDataset(preprocessing.Dataset):
                 "rater_age": "Age",
                 "rater_race": "Race",
                 "rater_education": "Education",
-                "Q_overall": "is_harmful",
+                "Q3_bias_overall": "is_harmful",
             }
         )
         return df
