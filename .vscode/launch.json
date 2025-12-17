@@ -1,7 +1,16 @@
 {
     "version": "0.2.0",
     "configurations": [
-        
+        {
+            "name": "Python Debugger: Annotation Analysis",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "src.annotation_analysis",
+            "args": [
+                "--synthetic-path=data/annotation.csv",
+                "--kumar-path=data/kumar.json"
+            ],
+        },
         {
             "name": "Python Debugger: Kumar",
             "type": "debugpy",

@@ -2,117 +2,64 @@ from pathlib import Path
 import itertools
 import argparse
 
+import krippendorff
 import numpy as np
-import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.metrics import cohen_kappa_score
+from numpy.typing import NDArray
 
-from . import sap
+from . import kumar
 from . import synthetic
 
 
-def mean_pairwise_kappa(annotations: list) -> float | None:
+def cross_group_agreement(
+    human_annotations: list[list[int]], synthetic_annotations: list[list[int]]
+) -> NDArray:
     """
-    Compute mean Cohen's kappa over all annotator pairs
-    within a single group.
+    Computes mean agreement between two annotation groups for one comment.
+    Returns np.nan if either group is empty.
     """
-    if len(annotations) < 2:
-        return None
+    agreement_per_comment = []
+    for human_comment_annotations, synthetic_comment_annotations in zip(
+        human_annotations, synthetic_annotations
+    ):
+        agreement = krippendorff.alpha(
+            [human_comment_annotations, synthetic_comment_annotations],
+            level_of_measurement="ordinal",
+        )
+        agreement_per_comment.append(agreement)
 
-    kappas = []
-    for a, b in itertools.combinations(annotations, 2):
-        try:
-            k = cohen_kappa_score(a, b)
-            if not np.isnan(k):
-                kappas.append(k)
-        except ValueError:
-            continue
-
-    return np.mean(kappas) if kappas else None
+    return np.array(agreement_per_comment)
 
 
-def intergroup_kappa(group_a: list, group_b: list) -> float | None:
-    """
-    Mean Cohen's kappa across all cross-group annotator pairs.
-    """
-    kappas = []
-    for a in group_a:
-        for b in group_b:
-            try:
-                k = cohen_kappa_score(a, b)
-                if not np.isnan(k):
-                    kappas.append(k)
-            except ValueError:
-                continue
+def main(kumar_path: Path, synthetic_path: Path):
 
-    return np.mean(kappas) if kappas else None
-
-
-def main(sap_path: Path, synthetic_path: Path):
-    sap_ds = sap.SapDataset(dataset_path=sap_path)
+    kumar_ds = kumar.KumarDataset(dataset_path=kumar_path)
     synth_ds = synthetic.HundredDataset(dataset_path=synthetic_path)
 
-    sap_df = sap_ds.get_dataset()
+    kumar_df = kumar_ds.get_dataset()
     synth_df = synth_ds.get_dataset()
 
-    sap_key = sap_ds.get_comment_key_column()
+    kumar_key = kumar_ds.get_comment_key_column()
     synth_key = synth_ds.get_comment_key_column()
-
-    sap_ann = sap_ds.get_annotation_column()
-    synth_ann = synth_ds.get_annotation_column()
 
     # ─────────────────────────────────────────────
     # Align datasets on shared comments
     # ─────────────────────────────────────────────
-    merged = sap_df.merge(
+    merged_df = kumar_df.merge(
         synth_df,
-        left_on=sap_key,
+        left_on=kumar_key,
         right_on=synth_key,
-        suffixes=("_sap", "_syn"),
+        suffixes=("_kumar", "_syn"),
     )
 
-    print(f"Shared comments: {len(merged)}")
+    print(f"Shared comments: {len(merged_df)}")
 
-    # ─────────────────────────────────────────────
-    # Intragroup agreement
-    # ─────────────────────────────────────────────
-    sap_kappas = merged[f"{sap_ann}_sap"].apply(mean_pairwise_kappa)
-    syn_kappas = merged[f"{synth_ann}_syn"].apply(mean_pairwise_kappa)
-
-    print("Mean intragroup Cohen's κ")
-    print(f"  SAP:       {sap_kappas.mean():.3f}")
-    print(f"  Synthetic: {syn_kappas.mean():.3f}")
-
-    # ─────────────────────────────────────────────
-    # Intergroup agreement (per comment)
-    # ─────────────────────────────────────────────
-    merged["intergroup_kappa"] = merged.apply(
-        lambda row: intergroup_kappa(
-            row[f"{sap_ann}_sap"],
-            row[f"{synth_ann}_syn"],
-        ),
-        axis=1,
+    agreements = cross_group_agreement(
+        human_annotations=merged_df.Toxicity_kumar,
+        synthetic_annotations=merged_df.Toxicity_syn,
     )
-
-    print(
-        f"Mean intergroup Cohen's κ: "
-        f"{merged['intergroup_kappa'].mean():.3f}"
-    )
-
-    # ─────────────────────────────────────────────
-    # Seaborn histogram
-    # ─────────────────────────────────────────────
-    sns.histplot(
-        merged["intergroup_kappa"].dropna(),
-        bins=30,
-        kde=True,
-    )
-    plt.xlabel("Intergroup Cohen's κ")
-    plt.ylabel("Number of comments")
-    plt.title("Intergroup Annotation Agreement per Comment")
-    plt.tight_layout()
-    plt.show()
+    print(agreements.mean())
 
 
 if __name__ == "__main__":
@@ -122,17 +69,17 @@ if __name__ == "__main__":
         )
     )
     parser.add_argument(
-        "--sap-path",
+        "--kumar-path",
         required=True,
-        help="Path to the sap CSV file.",
+        help="Path to the kumar CSV file.",
     )
     parser.add_argument(
         "--synthetic-path",
         required=True,
-        help="Directory for the synthetic sap CSV file.",
+        help="Directory for the synthetic kumar CSV file.",
     )
     args = parser.parse_args()
     main(
-        sap_path=Path(args.sap_path),
-        synthetic_path=Path(args.synthetic_path)
+        kumar_path=Path(args.kumar_path),
+        synthetic_path=Path(args.synthetic_path),
     )
