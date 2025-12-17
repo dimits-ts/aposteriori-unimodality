@@ -31,7 +31,7 @@ class HundredDataset(preprocessing.Dataset):
         return "text"
 
     def get_annotation_column(self) -> str:
-        return "hate_speech"
+        return "Toxicity"
 
     @staticmethod
     def _base_df(dataset_path: Path) -> pd.DataFrame:
@@ -42,7 +42,7 @@ class HundredDataset(preprocessing.Dataset):
             columns={
                 "age": "Age",
                 "sex": "Gender",
-                "annotation": "hate_speech",
+                "annotation": "Toxicity",
                 "education_level": "Education",
                 "political_affiliation": "Politics",
                 "sexual_orientation": "Sexual Orientation",

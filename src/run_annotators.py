@@ -9,22 +9,18 @@ import transformers
 import pandas as pd
 from tqdm.auto import tqdm
 
-from . import kumar
+from . import kumar, dices
 
 
-MODEL = "unsloth/Llama-3.3-70B-Instruct-bnb-4bit"
-OUTPUT_PATH = "data/annotation_70b.csv"
 NUM_COMMENTS = 1000
 NUM_ANNOTATORS = 100
 SEX_OPTIONS = ["male", "female", "non-binary"]
-
 SEXUAL_ORIENTATION_OPTIONS = [
     "heterosexual",
     "homosexual",
     "bisexual",
     "asexual",
 ]
-
 EDUCATION_LEVEL_OPTIONS = [
     "no formal education",
     "primary education",
@@ -34,7 +30,6 @@ EDUCATION_LEVEL_OPTIONS = [
     "master's degree",
     "doctoral degree",
 ]
-
 POLITICAL_AFFILIATION_OPTIONS = [
     "left-wing",
     "centrist",
@@ -131,9 +126,15 @@ def annotations_to_df(results: dict) -> pd.DataFrame:
     return df
 
 
-def get_texts(kumar_path: Path, num_comments: int) -> list[str]:
-    ds = kumar.KumarDataset(dataset_path=kumar_path, num_samples=num_comments)
+def get_texts(input_path: Path, num_comments: int) -> list[str]:
+    if "kumar" in str(input_path):
+        ds = kumar.KumarDataset(
+            dataset_path=input_path, num_samples=num_comments
+        )
+    else:
+        ds = dices.DicesDataset(input_path, variant="350")
     texts = ds.df["comment"]
+    texts = texts[:num_comments]
     return texts.tolist()
 
 
@@ -198,21 +199,21 @@ def _parse_response(response: str) -> float:
     return -1
 
 
-def main(output_path: Path):
+def main(
+    output_path: Path, hf_url: str, instructions_path: Path, input_path: Path
+):
     random.seed(42)
     personas = generate_persona_list(NUM_ANNOTATORS)
 
     pipe = transformers.pipeline(
         "text-generation",
-        model=MODEL,
+        model=hf_url,
         max_new_tokens=4,
         device_map="auto",
     )
 
-    texts = get_texts(Path("data/kumar.json"), num_comments=NUM_COMMENTS)
-
-    with open("data/annotation/prompt.txt", "r") as file:
-        instructions = file.read()
+    texts = get_texts(input_path, num_comments=NUM_COMMENTS)
+    instructions = instructions_path.read_text()
 
     annotate(
         pipeline=pipe,
@@ -230,9 +231,29 @@ if __name__ == "__main__":
         )
     )
     parser.add_argument(
+        "--hf-model",
+        required=True,
+        help="Hugging Face URL for the model",
+    )
+    parser.add_argument(
+        "--instructions-path",
+        required=True,
+        help="Path for the annotation instructions txt file.",
+    )
+    parser.add_argument(
         "--output-path",
         required=True,
         help="Directory for the CSV result files.",
     )
+    parser.add_argument(
+        "--input-path",
+        required=True,
+        help="Directory for the CSV input files.",
+    )
     args = parser.parse_args()
-    main(output_path=Path(args.output_path))
+    main(
+        output_path=Path(args.output_path),
+        hf_url=args.hf_model,
+        instructions_path=Path(args.instructions_path),
+        input_path=Path(args.input_path),
+    )

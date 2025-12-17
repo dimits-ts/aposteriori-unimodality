@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# python -m src.run_annotators --output-path=data/annotation-70b.csvpython -m src.run_annotators --output-path=data/annotation-70b.csv
-
 parallel --jobs 8 --delay 0.1 \
     ::: \
     'python -m src.variance_analysis --hundred-dataset-path=data/annotation.csv --dices-small-path=data/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-large-path=data/dices/990/diverse_safety_adversarial_dialog_990.csv --graph-output-dir=graphs --cache-dir=cache' \
