@@ -33,6 +33,12 @@ class DicesDataset(preprocessing.Dataset):
     @staticmethod
     def _base_df(dataset_path: Path) -> pd.DataFrame:
         df = pd.read_csv(dataset_path)
+
+        if "Q3_bias_overall" not in df.columns:
+            df = df.rename(
+                {"Q3_unfair_bias_overall": "Q3_bias_overall"}, axis=1
+            )
+
         df = df.loc[
             :,
             [
@@ -44,8 +50,8 @@ class DicesDataset(preprocessing.Dataset):
                 "item_id",
             ],
         ]
-        df.Q_overall = df.Q_overall.map(
-            {"No": -1, "Unsure": "0", "Yes": 1}
+        df.Q3_bias_overall = df.Q3_bias_overall.map(
+            {"No": -1, "Unsure": 0, "Yes": 1}
         ).astype(int)
 
         df = df.replace(

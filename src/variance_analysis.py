@@ -13,19 +13,17 @@ import apunim
 
 from .tasks import graphs
 from .tasks import preprocessing
-from . import synthetic, dices
+from . import dices
 
 
 MARKERS = {
     "DICES-350": "o",
     "DICES-990": "s",
-    "100 Annotator Synthetic": "^",
 }
 
 COLORS = {
     "DICES-350": "#1f77b4",  # blue
     "DICES-990": "#ff7f0e",  # orange
-    "100 Annotator Synthetic": "#2ca02c",  # green
 }
 
 
@@ -210,22 +208,18 @@ def get_dataset_variance(
 
 
 def main(
-    hundred_dataset_path: Path,
     dices_small_path: Path,
     dices_large_path: Path,
     graph_dir: Path,
     cache_dir: Path,
     min_comment_annotators: int = 3,
 ):
-    ds_hundred = synthetic.HundredDataset(
-        dataset_path=hundred_dataset_path
-    )
     dices350 = dices.DicesDataset(dataset_path=dices_small_path, variant="350")
     dices990 = dices.DicesDataset(dataset_path=dices_large_path, variant="990")
 
     variance_df_ls = []
 
-    for dataset in [ds_hundred, dices350, dices990]:
+    for dataset in [dices350, dices990]:
         res_df = get_dataset_variance(
             dataset, cache_dir, min_comment_annotators=min_comment_annotators
         )
@@ -249,11 +243,6 @@ def main(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=("Create plots analyzing effect of #annotators.")
-    )
-    parser.add_argument(
-        "--hundred-dataset-path",
-        required=True,
-        help="Path to the 100 annotator CSV file.",
     )
     parser.add_argument(
         "--dices-small-path",
@@ -283,7 +272,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(
-        hundred_dataset_path=Path(args.hundred_dataset_path),
         dices_small_path=Path(args.dices_small_path),
         dices_large_path=Path(args.dices_large_path),
         graph_dir=Path(args.graph_output_dir),
