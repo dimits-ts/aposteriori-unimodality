@@ -1,10 +1,12 @@
 import argparse
 from pathlib import Path
+from typing import Iterable
 
 import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 
 from .tasks import run_helper
 from .tasks import graphs
@@ -142,6 +144,17 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
         if line.get_color() == COLOR_OTHER:
             line.set_alpha(0.6)
 
+    add_grouped_legend(
+        ax,
+        group_1=highlight_group_1,
+        group_1_title="Escalating",
+        group_2=highlight_group_2,
+        group_2_title="Diverging",
+        others_title="Neither",
+        legend_title="Behavior",
+        loc="lower center"
+    )
+
     plt.title("Apunim trends in ordinal variables")
     plt.xlabel("Order (normalized)")
     plt.ylabel("Apunim value")
@@ -149,6 +162,70 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
     plt.tight_layout()
 
     graphs.save_plot(graph_output_dir / "apunim_ordinal.png")
+
+
+def add_grouped_legend(
+    ax,
+    group_1: Iterable[str],
+    group_2: Iterable[str],
+    group_1_title: str = "Highlighted: Group 1",
+    group_2_title: str = "Highlighted: Group 2",
+    others_title: str = "Other features",
+    legend_title: str = "Feature groups",
+    loc: str = "best",
+):
+    """
+    Create a grouped legend on an existing axis.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axis containing the plotted lines.
+    group_1, group_2 : iterable of str
+        Feature names belonging to the two highlighted groups.
+    """
+    handles, labels = ax.get_legend_handles_labels()
+    handle_map = dict(zip(labels, handles))
+
+    group_1 = list(group_1)
+    group_2 = list(group_2)
+
+    highlighted = set(group_1) | set(group_2)
+
+    legend_handles = []
+    legend_labels = []
+
+    def add_group(title, features):
+        # Section header (dummy handle)
+        legend_handles.append(Line2D([], [], linestyle="none"))
+        legend_labels.append(title)
+
+        for f in features:
+            if f in handle_map:
+                legend_handles.append(handle_map[f])
+                legend_labels.append(f)
+
+    add_group(group_1_title, group_1)
+    add_group(group_2_title, group_2)
+
+    other_features = [f for f in labels if f not in highlighted]
+    if other_features:
+        add_group(others_title, other_features)
+
+    legend = ax.legend(
+        legend_handles,
+        legend_labels,
+        title=legend_title,
+        frameon=True,
+        loc=loc,
+    )
+
+    # Make section headers bold
+    for text in legend.get_texts():
+        if text.get_text() in {group_1_title, group_2_title, others_title}:
+            text.set_weight("bold")
+
+    return legend
 
 
 def main(results_dir: Path, latex_output_dir: Path, graph_output_dir: Path):
