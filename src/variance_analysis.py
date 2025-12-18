@@ -21,11 +21,6 @@ MARKERS = {
     "DICES-990": "s",
 }
 
-COLORS = {
-    "DICES-350": "#1f77b4",  # blue
-    "DICES-990": "#ff7f0e",  # orange
-}
-
 
 def sample_se_vs_sample_size_unimodality(
     df: pd.DataFrame,
@@ -138,7 +133,6 @@ def plot_variance_curve(results_df, graph_path: Path):
         # plot each dataset separately to control markers and colors
         for ds_name, subdf in results_df.groupby("dataset"):
             marker = MARKERS[ds_name]
-            color = COLORS[ds_name]
 
             # lineplot for dataset
             ax = sns.lineplot(
@@ -147,7 +141,6 @@ def plot_variance_curve(results_df, graph_path: Path):
                 y="standard_error",
                 marker=marker,
                 label=ds_name,
-                color=color
             )
 
             # regression trend line (same color but no scatter)
