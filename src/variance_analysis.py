@@ -165,7 +165,7 @@ def plot_variance_curve(results_df, graph_path: Path):
             data=results_df, x="sample_size", y="standard_error", marker="o"
         )
 
-    plt.xlabel("# Annotators")
+    plt.xlabel(r"\# Annotators")
     plt.ylabel("Std Error of Polarization Statistic")
     plt.title("Sample Size Effects on Polarization Statistic Estimation")
     plt.grid(True)
@@ -214,6 +214,7 @@ def main(
     cache_dir: Path,
     min_comment_annotators: int = 3,
 ):
+    graphs.graph_setup()
     dices350 = dices.DicesDataset(dataset_path=dices_small_path, variant="350")
     dices990 = dices.DicesDataset(dataset_path=dices_large_path, variant="990")
 
@@ -227,12 +228,6 @@ def main(
         variance_df_ls.append(res_df)
 
     variance_df = pd.concat(variance_df_ls, ignore_index=True)
-
-    # plot only the two dices variants
-    plot_variance_curve(
-        variance_df[variance_df.dataset != "100 Annotator Synthetic"],
-        graph_path=graph_dir / "ndfu_std_error_sample_size.png",
-    )
 
     plot_variance_curve(
         variance_df,

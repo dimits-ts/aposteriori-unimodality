@@ -229,6 +229,7 @@ def add_grouped_legend(
 
 
 def main(results_dir: Path, latex_output_dir: Path, graph_output_dir: Path):
+    graphs.graph_setup()
     csv_to_latex(results_dir=results_dir, latex_output_dir=latex_output_dir)
     ordinal_graphs(results_dir=results_dir, graph_output_dir=graph_output_dir)
 

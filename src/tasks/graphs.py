@@ -85,3 +85,67 @@ def save_plot(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(path, bbox_inches="tight", dpi=300)
     print(f"Figure saved to {path.resolve()}")
+
+
+def graph_setup() -> None:
+
+    plt.rcParams.update({
+        "text.usetex": True,
+        # Figure
+        "figure.figsize": (6, 4),
+        "figure.dpi": 300,
+        "savefig.dpi": 300,
+        "savefig.bbox": "tight",
+        "savefig.pad_inches": 0.02,
+
+        # Fonts
+        "font.family": "serif",
+        "font.serif": ["Times New Roman", "Times", "DejaVu Serif"],
+        "font.size": 10,
+        "axes.titlesize": 11,
+        "axes.labelsize": 10,
+        "xtick.labelsize": 9,
+        "ytick.labelsize": 9,
+        "legend.fontsize": 9,
+
+        # Axes
+        "axes.linewidth": 0.8,
+        "axes.edgecolor": "black",
+        "axes.grid": False,
+
+        # Ticks
+        "xtick.direction": "in",
+        "ytick.direction": "in",
+        "xtick.major.size": 4,
+        "ytick.major.size": 4,
+        "xtick.major.width": 0.8,
+        "ytick.major.width": 0.8,
+        "xtick.minor.visible": True,
+        "ytick.minor.visible": True,
+
+        # Lines
+        "lines.linewidth": 1.5,
+        "lines.markersize": 5,
+
+        # Legend
+        "legend.frameon": False,
+        "legend.loc": "best",
+
+        # Math text
+        "mathtext.fontset": "cm",
+
+        # PDF/PS output (important for LaTeX + journals)
+        "pdf.fonttype": 42,
+        "ps.fonttype": 42,
+    })
+
+    sns.set_theme(
+        context="paper",
+        style="ticks",
+        font="serif",
+        rc={
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "axes.grid": False,
+        },
+    )

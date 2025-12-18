@@ -309,10 +309,7 @@ def _plot_example_individual(
 
 
 def main(graph_dir: Path):
-    sns.set_theme(style="whitegrid")
-    plt.rcParams.update(
-        {"text.usetex": True, "font.family": "Times New Roman"}
-    )
+    graphs.graph_setup()
     np.random.seed(seed=42)
     colors = sns.color_palette()
 

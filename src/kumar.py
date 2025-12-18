@@ -219,14 +219,16 @@ def map_age_list(age_map, lst):
 
 
 def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
+    graphs.graph_setup()
+
     print("Generating sample polarization plot...")
     ds = KumarDataset(dataset_path=dataset_path, num_samples=NUM_COMMENTS)
-    # graphs.polarization_plot(
-    #    ds=ds, output_path=graph_output_dir / "kumar_sample.png"
-    # )
+    graphs.polarization_plot(
+        ds=ds, output_path=graph_output_dir / "kumar_sample.png"
+    )
     print("Running experiment...")
-    # res = run_helper.run_all_results(ds)
-    # res.to_csv(output_dir / "kumar.csv")
+    res = run_helper.run_all_results(ds)
+    res.to_csv(output_dir / "kumar.csv")
 
     print("Running ablation experiments...")
 

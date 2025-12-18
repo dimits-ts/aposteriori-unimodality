@@ -139,6 +139,7 @@ def main(
     output_dir: Path,
     graph_output_dir: Path,
 ):
+    graphs.graph_setup()
     ds_350 = DicesDataset(dataset_path=dataset_path_small, variant="350")
     graphs.polarization_plot(
         ds=ds_350, output_path=graph_output_dir / "dices-350.png"

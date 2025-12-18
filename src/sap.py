@@ -87,6 +87,7 @@ class SapDataset(preprocessing.Dataset):
 
 
 def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
+    graphs.graph_setup()
     ds = SapDataset(dataset_path=dataset_path)
 
     graphs.polarization_plot(ds=ds, output_path=graph_output_dir / "sap.png")
