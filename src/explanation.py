@@ -195,7 +195,9 @@ def _combined_dfu_plot(
     plt.legend(loc="center")
     plt.xlabel(f"Toxicity\n{math_text}", fontsize=LABEL_FONTSIZE)
     plt.ylabel(r"\#Annotations", fontsize=LABEL_FONTSIZE)
-    plt.title(r"\texttit{``Most women can't drive well.''}")
+    plt.title(
+        r"\textit{``Most women can't drive well.''}", fontsize=LABEL_FONTSIZE
+    )
 
     graphs.save_plot(graph_path)
     plt.close()
@@ -264,7 +266,7 @@ def _dfu_plot(data: np.ndarray, graph_path: Path, color: str, label) -> None:
 
     math_text = f"$\\mathbf{{nDFU_{{{label}}}}}={ndfu_value:.3f}$"
     plt.xlabel(f"Toxicity\n{math_text}", fontsize=LABEL_FONTSIZE)
-    plt.ylabel(r"\#Comments", fontsize=LABEL_FONTSIZE)
+    plt.ylabel(r"\#Annotations", fontsize=LABEL_FONTSIZE)
 
     # individual pictures to be used for slides
     graphs.save_plot(graph_path)
@@ -308,15 +310,16 @@ def _plot_example_individual(
 
 def main(graph_dir: Path):
     sns.set_theme(style="whitegrid")
-    plt.rcParams.update({"text.usetex": False})
+    plt.rcParams.update(
+        {"text.usetex": True, "font.family": "Times New Roman"}
+    )
     np.random.seed(seed=42)
     colors = sns.color_palette()
 
     dfu_plots(colors, graph_dir)
     discussion_example(graph_dir)
 
-    plt.rcParams["font.family"] = "Symbola"
-    plt.rcParams["text.usetex"] = False
+    plt.rcParams.update({"text.usetex": False, "font.family": "Symbola"})
     plot_annotation_distributions(graph_dir)
 
 
