@@ -269,12 +269,14 @@ While the low number of annotators is an important limitation when acquiring the
 
 We can estimate how much polarization is generally present in the dataset, irrespective of any \ac{SDB} by simply averaging the \textit{apriori} polarization of each datapoint: 
 \begin{equation}
+	\label{eq:apriori}
 	pol_{apriori}(d) = \frac{1}{\lvert d \rvert} \sum_{c \in S_d} \frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{P}_i(A(c)))
 \end{equation}
 
 Intuitively, a high apriori polarization value means that much of the polarization in the dataset is driven by factors other than \ac{SDB}. In this case, we would need to observe very strong polarization within a specific \ac{SDB} group in order to conclude that the overall dataset polarization can be attributed to that group. This value will be compared to the average polarization present in the dataset by annotators of \ac{SDB} group $\theta$:
 
 \begin{equation}
+	\label{eq:observed}
 	pol_{obs.}(d, \theta) = \frac{1}{\lvert d \rvert} \sum_{c \in S_d} pol(c, \theta)
 \end{equation}
 
@@ -296,19 +298,55 @@ The scope of the statistic and its relationship with the previously presented st
 
 \subsection{p-value estimation} 
 
-By obtaining the pol-statistics for all data-points in a dataset $d$ we can apply any statistical means test with the null hypothesis:
+By obtaining the pol-statistics for all data-points in a dataset $d$ we can apply any statistical means test with the null hypothesis versus the (multiple) alternative hypotheses:
 
 \begin{equation}
 	\label{eq:null_h}
-	H_0: \forall \theta \in \Theta,  \textit{apunim}(d, \theta) \le 0
-\end{equation}
-\noindent versus the (multiple) alternative hypotheses: 
-\begin{equation}
-	\label{eq:alt_h}
-	H_i: \textit{apunim}(d, \theta_i) >  0
+	H_0: \forall \theta \in \Theta,  \textit{apunim}(d, \theta) = 0, H_i: \textit{apunim}(d, \theta_i) \neq 0
 \end{equation}
 
-Our test assumes that (1) there exist enough data-points to reliably run the means-test, and (2) enough annotations in each data-point and \ac{SDB} group to estimate the \textit{pol-statistics}. We discuss the former assumption in Appendix \ref{sec:ann_size}. The latter can be safely assumed for most datasets, because they feature enough data-points to reliably assume normal residuals ($n \gg 30$---see \S\ref{sec:datasets}), which is why we use the Student-T test \cite{student1908probable} .
+For each group, we construct a null distribution of the apunim statistic by treating each randomized partition (each element in Equation~\ref{eq:apriori}, but without averaging the result) in turn as if it were the observed grouping---essentially, we compute a pseudo-apunim value by comparing its mean DFU to the mean DFU of the remaining random partitions. Repeating this process across all randomizations gives us an empirical null distribution of apunim values that reflects polarization expected by chance under the same group-size constraints. The observed apunim statistic is then compared against this null distribution using a two-sided one-sample t-test. The resulting p-value quantifies how unlikely the observed group polarization is, under the null hypothesis that annotator groups do not contribute to polarization beyond chance. The p-value estimation algorithm can be found in Algorithm~\ref{alg:pvalue}.
+
+\begin{algorithm}[t]
+	\caption{P-value estimation for aposteriori polarization}
+	\label{alg:pvalue}
+	\begin{algorithmic}[1]
+		\Require Observed aposteriori polarization 
+		$\kappa = apunim(d,\theta)$ (Eq.~\ref{eq:observed})
+		\Require Randomized partitions 
+		$\{\tilde{P}_i\}_{i=1}^t$ with matching group sizes
+		\Require Randomized DFU samples 
+		$\{\mathcal{R}_f^{(i)} = nDFU(\tilde{P}_i(A(c)))\}_{i=1}^t$
+		\Ensure p-value for testing whether $\kappa$ differs from chance
+		
+		\State Construct a null distribution of aposteriori polarization
+		\[
+		\mathcal{K}_{\text{null}} = 
+		\left\{
+		\kappa_i \; \middle| \;
+		\kappa_i =
+		\frac{\bar{pol}^{(i)} - \bar{pol}^{(-i)}}{1 - \bar{pol}^{(-i)}},
+		\; i = 1,\dots,t
+		\right\}
+		\]
+		\Statex where $\bar{pol}^{(i)}$ is the mean observed polarization for the $i$-th randomized partition, and $\bar{pol}^{(-i)}$ is the mean over the remaining random partitions
+		
+		\State Test the null hypothesis
+		\[
+		H_0 : \mathbb{E}[\mathcal{K}_{\text{null}}] = \kappa
+		\]
+		\Statex against the alternative hypothesis
+		\[
+		H_1 : \mathbb{E}[\mathcal{K}_{\text{null}}] \neq \kappa
+		\]
+		\Statex using a one-sample Student’s $t$-test
+		
+		\State \Return resulting p-value
+	\end{algorithmic}
+\end{algorithm}
+
+
+Our test assumes that (1) there exist enough data-points to reliably run the means-test, and (2) enough annotations in each data-point and \ac{SDB} group to estimate the \textit{pol-statistics}. We discuss the former assumption in Appendix \ref{sec:ann_size}. The latter can be safely assumed for most datasets, because they feature enough data-points to reliably assume normal residuals ($n \gg 30$---see \S\ref{sec:datasets}), which is why we use the Student-T test \cite{student1908probable}.
 
 Since we are simultaneously considering $\lvert \Theta \rvert$ hypotheses, we apply a multiple comparison correction to the resulting p-values. We choose the Holms method \cite{holms}. The test is parameterized by the \ac{FWER}, which is used to tune the strength of the correction; we can increase this value to make our test more conservative towards multiple hypotheses \cite{ChenFengYi2017}). In general, it is safe to set \ac{FWER} equal to the significance level of our test (e.g., $\textit{FWER} = 0.95$ if we are looking for $p < 0.05$).
 
