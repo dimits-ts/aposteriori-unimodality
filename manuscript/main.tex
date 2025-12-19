@@ -189,18 +189,11 @@ We instead propose the \emph{Apunim (``Aposteriori Unimodality'') metric}, which
 %There are also approaches such as tampering with the sample \cite{eckman_2025_aligning}, creating subgroup-specific classification problems \cite{akhtar_2020_modeling}, or parameterizing the distribution of annotations \cite{casola-etal-2023-confidence}. These approaches however are only useful for downstream tasks, and can not be used to explain differences in annotation between groups.
 
 
-\section{Methodology}
+\section{How to attribute polarization}
 \label{sec:methodology}
 
 \subsection{Problem Formulation}
 \label{ssec:methodology:problem}
-
-\begin{figure}
-	\centering
-	\includegraphics[width=0.7\columnwidth]{ndfu_combined.png}
-	\caption{Example of a polarizing comment, where male and female annotators agree between themselves, but disagree with the opposite gender.}
-	\label{fig:ndfu_combined}
-\end{figure}
 
 \paragraph{Sociodemographic Backgrounds} Since our goal is to pinpoint which specific characteristics contribute to polarization, we need to isolate individual groups within a \ac{SDB}. Let $\Theta$ be one of multiple ``dimensions'' the set of all annotator \ac{SDB} groups for a single dimension (e.g. ``male'', ``female'' and ``non-binary'' if we are investigating annotator gender).
 
@@ -210,41 +203,54 @@ We instead propose the \emph{Apunim (``Aposteriori Unimodality'') metric}, which
 		A(\textit{``Could be better, could be worse''}) = \{(\textit{+}, F), (\textit{---},  M), (\textit{---}, F), \ldots\}
 \end{equation}
 
-\paragraph{Polarization} Each set of annotations features a certain degree of \emph{polarization}. Unpolarized annotations are usually unimodal; the annotators disagree on the details (which would be shown roughly as a bell curve around the median annotation), not fundamentally (which would likely be shown as a multimodal distribution). \cite{pavlopoulos-likas-2024} create a polarization metric, the ``\ac{ndfu}'', which measures whether an annotation set shows no polarization (unimodal distribution---$nDFU \approx 0$), up to complete polarization (multimodal distribution---$nDFU \approx 1$). Thus, we need a metric that measures how much the \ac{ndfu} of a polarizing datapoint can be partially explained by $\theta$.
+\paragraph{Polarization}
+Each set of annotations exhibits a certain degree of \emph{polarization}. In the absence of polarization, annotation distributions are typically unimodal: annotators may disagree on finer details---shown as a bell-shaped distribution around a central mode---rather than on fundamentally different interpretations, which would instead give rise to multimodal distributions. To our knowledge, the only polarization metric explicitly grounded in this assumption is \acf{ndfu} \cite{pavlopoulos-likas-2024}. The metric takes values in the $[0,1]$ range, with $nDFU \approx 0$ indicating no polarization (unimodal distributions) and $nDFU \approx 1$ corresponding to complete polarization (highly multimodal distributions). Our objective is therefore to quantify the extent to which the $nDFU$ of a polarizing datapoint can be partially explained by a given \ac{SDB} group $\theta$.
+
 
 \subsection{Intuition}
 \label{ssec:methodology:intuition}
 
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.7\columnwidth]{ndfu_combined.png}
+	\caption{Example of a polarizing comment, where male and female annotators agree between themselves, but disagree with the opposite gender.}
+	\label{fig:ndfu_combined}
+\end{figure}
+
+
 \paragraph{Polarization attribution} Intuitively, $\theta$ partially explains the polarization of a datapoint $c$ when the annotations grouped by $\theta$ are more polarized compared to the full set of annotations. Figure~\ref{fig:ndfu_combined} exhibits a hypothetical example where a misogynistic comment is annotated for toxicity by male and female annotators. The annotations are generally polarized ($nDFU_{all}=0.625$). The annotations by female annotators exhibit low polarization between themselves ($nDFU_{women}=0.1$), since most agree the data-point is toxic. The set of male annotations, also shows low polarization ($nDFU_{men}=0.3725$), but for the opposite reason---most men agree that it is \emph{not} toxic. This suggests that the overall polarization is driven by disagreements between male and female annotators.
 
 Previous work \cite{pavlopoulos-likas-2024} stopped on a datapoint-level analysis. In practice however, this kind of analysis is inherently noisy due to a lack of information (i.e., annotations) relating to each individual datapoint. In order to get meaningful information, we need to consider information \emph{between} datapoints, as the number of datapoints is usually several orders of magnitude larger than the number of annotations per datapoint (\S\ref{sec:datasets}). In other words, instead of investigating whether a specific group becomes polarized by an individual datapoint (e.g. comment), we investigate whether that group \emph{generally becomes polarized on the specific dataset and task}.
-
-\paragraph{Dataset polarization} Given this observation, we would be tempted to quantify dataset-level polarization attribution by simply aggregating all annotations in the dataset and comparing the \ac{ndfu} of each $\theta$ with the full set of annotations $A(c)$. In fact this is very tempting since aggregating annotations solves the very real and important problem of annotation scarcity; each data point may be annotated by only a handful of annotators (5 is a common number in many publications), leading to a best-case even split between groups (for 5 annotators, a best case scenario would be a 3-2 split). Since \ac{ndfu} is at its core a histogram estimation, 3 annotations may not be enough to acquire a reliable histogram, and thus estimate of polarization (this is discussed in depth in \S\ref{sec:ann_size}).
 
 \begin{figure*}[ht]
 	\centering
 	\includegraphics[width=0.32\linewidth]{ndfu_comment1.png}
 	\includegraphics[width=0.32\linewidth]{ndfu_comment2.png}
 	\includegraphics[width=0.32\linewidth]{ndfu_discussion.png}
-	\caption{Hypothetical example of a polarizing discussion with two comments, for which the annotators disagree on which is the toxic one. If we aggregate the two comments, the polarization scores for both groups significantly rises (the ), obscuring whether the exhibited polarization can be partially attributed to gender.}
+	\caption{Hypothetical example of a polarizing discussion with two comments, for which the annotators disagree on which is the toxic one. If we aggregate the two comments, the polarization scores for both groups significantly rises (we need to compare two bimodal distributions), obscuring whether the exhibited polarization can be partially attributed to ethnic background.}
 	\label{fig:ndfu_discussion}
 \end{figure*}
 
-However, arbitrarily combining annotations would not work well in practice. Figure~\ref{fig:ndfu_discussion} illustrates a hypothetical discussion with two comments, both of which are toxic, but where the two groups of annotators disagree on \emph{which} comment is the toxic one. If we aggregate the annotations to a single discussion, the opposing polarization effects might balance each other out, leading to a false negative. This example demonstrates that polarization has a \emph{direction}, which is not captured by the (symmetric) $nDFU$ metric.
+\paragraph{Dataset polarization} Given this observation, we would be tempted to quantify dataset-level polarization attribution by simply aggregating all annotations in the dataset and comparing the \ac{ndfu} of each $\theta$ with the full set of annotations $A(c)$. In fact this is very tempting since aggregating annotations solves the very real and important problem of annotation scarcity; each datapoint may be annotated by only a handful of annotators (5 is a common number in many publications), leading to a best-case even split between groups (for 5 annotators, a best case scenario would be only two groups with a 3-2 split). Since \ac{ndfu} is at its core a histogram estimation, 3 annotations may not be enough to acquire a reliable histogram, and thus estimate of polarization. This is discussed in more depth in \S\ref{sec:ann_size}.
+
+However, arbitrarily combining annotations would not work well in practice. Figure~\ref{fig:ndfu_discussion} illustrates a hypothetical discussion with two comments, both of which are toxic, but where the two groups of annotators disagree on \emph{which} comment is the toxic one. If we aggregate the annotations to a single discussion, the opposing polarization effects might balance each other out, leading to a false negative. This example demonstrates that dataset-level polarization has a \emph{direction}, which is not captured by the (symmetric) \ac{ndfu} metric.
  
  
  \subsection{Aposteriori polarization}
  \label{ssec:methodology:polstat}
  
-How polarizing a datapoint $c\in d$ is for annotators of group $\theta$ can be directly computed as: 
-\begin{equation}
-	pol(c, \theta) = nDFU(P(A(c), \theta))
-\end{equation}
-\noindent where $P(A(c), \theta_i) = \{a(c; \theta) \in A(c) | \theta=\theta_i\}$ is the partition of $A$ for a datapoint $c$, for which its annotators belong to the \ac{SDB} group $\theta_i$.
+ %TODO: Replace pol-statistic label
+ \begin{figure}[ht]
+ 	\includegraphics[width=\linewidth]{overview.png}
+ 	\caption{An overview of how annotation information is sequentially aggregated for the \emph{Apunim} metric. We gather statistical information from the annotations (different \acp{SDB} are denoted by different colors) via the \ac{ndfu} measure, which is aggregated by the $pol_{apriori}$ and $pol_{observed}$ statistics for each datapoint. We aggregate these statistics on the dataset level, and compare them to get a chance-corrected \emph{Apunim} value.}
+ 	\label{fig:overview}
+ \end{figure}
+
+How polarizing a datapoint $c\in d$ is for annotators of group $\theta$ can be computed as $nDFU(P(A(c), \theta))$, where $P(A(c), \theta_i) = \{a(c; \theta) \in A(c) | \theta=\theta_i\}$ is the set of annotations for $c$ from annotators belonging to the \ac{SDB} group $\theta_i$.
 
 In \S\ref{sec:intro} we mentioned that annotator polarization can be caused either by the annotators \ac{SDB}, or other factors. The latter can be considered ``apriori'' polarization, which is driven by the inherent ``controversy'' of the data point. Previous work \cite{pavlopoulos-likas-2024} considered the case where this apriori polarization was zero; this is not the case in many datasets, as we demonstrate in \S\ref{sec:datasets}. 
 
-Unfortunately, we can not directly follow the intuition presented in \S\ref{ssec:methodology:intuition} and compare the differences in \ac{ndfu} between $A(c)$ and $P(A(c), \theta)$, as we would be comparing statistics between a subset and its superset (see Appendix~\ref{app:theoretical}). Comparing the polarization of groups between themselves is not an option; if we compared the two annotator groups in Figure~\ref{fig:ndfu_combined} have extremely similar \ac{ndfu}, and thus a direct comparison would conclude that there is no polarization present. In a scenario in which each datapoint was annotated with a very large amount of annotations, we could use bootstrapping to compare the apriori and aposteriori polarization for each comment. This however is an unrealistic assumption, since the costs of human annotation force researchers to use few annotators for each task \cite{rossi_2024}. 
+Unfortunately, we can not directly follow the intuition presented in \S\ref{ssec:methodology:intuition} and compare the differences in \ac{ndfu} between $A(c)$ and $P(A(c), \theta)$, as we would be comparing statistics between a subset and its superset (see Appendix~\ref{app:theoretical}). Comparing the polarization of groups between themselves is not an option; if we compared the two annotator groups in Figure~\ref{fig:ndfu_combined} we would conclude that there is no polarization present, since they have extremely similar \acp{ndfu}. In a scenario in which each datapoint was annotated with a very large amount of annotations, we could use bootstrapping to compare the apriori and aposteriori polarization for each comment. This however is an unrealistic assumption, since the costs of human annotation force researchers to use few annotators for each task \cite{rossi_2024}. 
 
 To get around this limitation, we randomly partition the annotations in $\lvert \Theta \rvert$ groups, with matching group sizes,\footnote{E.g., if we have $100$ annotations, $80$ of which are made by male annotators and $20$ by female annotators, we will create random partitions of sizes $80$ and $20$.} which effectively ``breaks up'' the effect of any single isolated group on the polarization of the sample. The randomly partitioned annotations are then sampled $t$ times. Formally, the average apriori polarization for a single datapoint will be given by:
 
@@ -253,14 +259,8 @@ To get around this limitation, we randomly partition the annotations in $\lvert 
 	\frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{P}_i(A(c)))
 \end{equation}
 \noindent where $\tilde{P}_i$ is the random partition operator with matching group sizes.
- 
-\begin{figure}[t]
-	\includegraphics[width=\linewidth]{overview.png}
-	\caption{An overview of the Aposteriori Unimodality Test. We gather statistical information from the annotations (different \acp{SDB} are denoted by different colors) via the \ac{ndfu} measure, which is aggregated on the data-point-level by the pol-statistic. The Aposteriori Unimodality Test is applied on the discussion level, operating on the pol-statistics of the individual data-points.}
-	\label{fig:overview}
-\end{figure}
 
-While the low number of annotators is an important limitation when acquiring the observed polarization \cite{rossi_2024}, this is decisively not the case with the number of data points themselves which can range up to hundreds of thousands. Thus, we have the luxury of filtering data points before computing a dataset-wide metric. Since our metric attributes polarization, unpolarizing datapoints are useless. The same applies for datapoints which are composed of only a single annotator group. We define the subset  $S_d$ of dataset $d$ such that:
+While the low number of annotators is an important limitation when acquiring the observed polarization \cite{rossi_2024}, this is decisively not the case with the number of datapoints themselves which can range up to hundreds of thousands. Thus, we have the luxury of filtering them before computing a dataset-wide metric. Since our metric attributes polarization, unpolarizing datapoints are useless. The same applies for datapoints which are composed of only a single annotator group. We define the subset  $S_d$ of dataset $d$ such that:
 
 \begin{equation}
 	S_d = \{c \in d \mid nDFU(c) > \alpha \textit{ and $c$ annotated by at least two groups}\}
@@ -273,14 +273,17 @@ We can estimate how much polarization is generally present in the dataset, irres
 	pol_{apriori}(d) = \frac{1}{\lvert d \rvert} \sum_{c \in S_d} \frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{P}_i(A(c)))
 \end{equation}
 
-Intuitively, a high apriori polarization value means that much of the polarization in the dataset is driven by factors other than \ac{SDB}. In this case, we would need to observe very strong polarization within a specific \ac{SDB} group in order to conclude that the overall dataset polarization can be attributed to that group. This value will be compared to the average polarization present in the dataset by annotators of \ac{SDB} group $\theta$:
+Intuitively, a high apriori polarization value means that much of the polarization in the dataset is driven by factors other than \acp{SDB}. In this case, we would need to observe very strong polarization within a specific \ac{SDB} group in order to conclude that the overall dataset polarization can be attributed to that group. This value will be compared to the average polarization present in the dataset by annotators of \ac{SDB} group $\theta$:
 
 \begin{equation}
 	\label{eq:observed}
 	pol_{obs.}(d, \theta) = \frac{1}{\lvert d \rvert} \sum_{c \in S_d} pol(c, \theta)
 \end{equation}
 
-The next question would be how do we compare the two values? Given the inherent ``noise'' associated with most annotation tasks, a direct subtraction would not be useful. Instead we define the \emph{``Aposteriori Unimodality'' (Apunim)} Statistic as:
+This formulation implicitly assumes that the overall polarization of a dataset can be captured by averaging polarization scores across datapoints. We consider this assumption reasonable: the mean is a simple and intuitive operator, and it exhibits appropriate sensitivity to outliers. Given that polarization values lie in the 
+$[0,1]$ range, a single extreme datapoint is unlikely to substantially affect the estimate of overall polarization. In contrast, the presence of many such extreme values will meaningfully increase this estimate, which is the pattern we want to capture.
+
+The next question would be how to compare the two values in Equations~\ref{eq:apriori},~\ref{eq:observed}. Given the inherent ``noise'' associated with most annotation tasks, a direct subtraction would not be useful. Instead we define the chance-corrected \emph{``Apunim'' (Aposteriori Unimodality)} metric as:
 \begin{equation}
 	apunim(d, \theta) = \frac{pol_{obs.}(d, \theta) - pol_{apriori}(d)}{1 - pol_{apriori}(d)}
 \end{equation}
@@ -288,17 +291,16 @@ The next question would be how do we compare the two values? Given the inherent 
 The scope of the statistic and its relationship with the previously presented statistics are demonstrated in Figure~\ref{fig:overview}. Since $nDFU \rightarrow [0,1] \Rightarrow apunim \rightarrow [-1,1]$. The interpretation of this metric boils down to three scenarios:
 
 \begin{itemize}
-	\item If $apunim(d, \theta) \approx 0$, the exhibited polarization among annotators of group $\theta$ does not meaningfully differ from all other groups, aka it's indistinguishable from noise.
+	\item If $apunim(d, \theta) \approx 0$, the exhibited polarization among annotators of group $\theta$ does not meaningfully differ from all other groups. In other words, it is indistinguishable from noise.
 	
 	\item If $apunim(d, \theta) > 0$, then the polarization observed in the annotation task rises when this group is added to the annotation pool (equivalently, intragroup polarization is less than intergroup polarization). Example: If we observe $apunim(d, \textit{Afr.American}) = 0.3, apunim(d, \textit{White})=0.001$ in a hate-speech detection task, it is likely that African American annotators fundamentally disagree with white annotators on what constitutes racism in the dataset $d$. 
 	
-	\item Conversely, if $apunim(d, \theta) < 0$, then the overall polarization would actually drop had we removed this group from the annotation task. Mathematically, this occurs when \emph{apriori polarization is higher than the observed polarization} (intragroup polarization is higher than integroup polarization). In other words, annotators of that group may be very polarized between themselves. Example: If we observe $apunim(d, \textit{Latino}) = -0.3, apunim(d, \textit{White})=0.001$ in a hate-speech detection task, it is likely that Latino annotators fundamentally disagree with \emph{each other} (compared to African American or white annotators) on which texts in the dataset $d$ constitutes racism. This may indicate that \emph{other dimensions (acting as confounding variables) are exerting heavy influence on the sample}.
+	\item Conversely, if $apunim(d, \theta) < 0$, then the overall polarization would actually \emph{rise} had we removed this group from the annotation task. Mathematically, this occurs when \emph{apriori polarization is higher than the observed polarization} (intragroup polarization is higher than integroup polarization). In other words, annotators of that group may be very polarized between themselves. Example: If we observe $apunim(d, \textit{Latino}) = -0.3, apunim(d, \textit{White})=0.001$ in a hate-speech detection task, it is likely that Latino annotators fundamentally disagree with \emph{each other} (compared to African American or white annotators) on which texts in the dataset $d$ constitutes racism. This may indicate that \emph{other dimensions (acting as confounding variables) are exerting heavy influence on the sample}.
 \end{itemize}
-
 
 \subsection{p-value estimation} 
 
-By obtaining the pol-statistics for all data-points in a dataset $d$ we can apply any statistical means test with the null hypothesis versus the (multiple) alternative hypotheses:
+The condition $apunim(d, \theta) \approx 0$ is not well defined in the presence of inherent noise, which is why we need a statistical test that checks whether the deviation from 0 is significant. In other words we need to implement the following test:
 
 \begin{equation}
 	\label{eq:null_h}
@@ -346,7 +348,8 @@ For each group, we construct a null distribution of the apunim statistic by trea
 \end{algorithm}
 
 
-Our test assumes that (1) there exist enough data-points to reliably run the means-test, and (2) enough annotations in each data-point and \ac{SDB} group to estimate the \textit{pol-statistics}. We discuss the former assumption in Appendix \ref{sec:ann_size}. The latter can be safely assumed for most datasets, because they feature enough data-points to reliably assume normal residuals ($n \gg 30$---see \S\ref{sec:datasets}), which is why we use the Student-T test \cite{student1908probable}.
+Our test assumes that there exist (1) enough data-points to reliably run the means-test, and (2) enough annotations in each datapoint and \ac{SDB} group to estimate the \acp{ndfu} in Equations~\ref{eq:observed},\ref{eq:apriori}.  The former can be safely assumed for most datasets, because they feature enough data-points to reliably assume normal residuals ($n \gg 30$---see \S\ref{sec:datasets}), which is why we use the Student-T test \cite{student1908probable}.
+We discuss the latter assumption in Appendix \ref{sec:ann_size}.%TODO: Check whether the residuals are normal for small samples
 
 Since we are simultaneously considering $\lvert \Theta \rvert$ hypotheses, we apply a multiple comparison correction to the resulting p-values. We choose the Holms method \cite{holms}. The test is parameterized by the \ac{FWER}, which is used to tune the strength of the correction; we can increase this value to make our test more conservative towards multiple hypotheses \cite{ChenFengYi2017}). In general, it is safe to set \ac{FWER} equal to the significance level of our test (e.g., $\textit{FWER} = 0.95$ if we are looking for $p < 0.05$).
 
