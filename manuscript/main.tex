@@ -357,7 +357,7 @@ Since we are simultaneously considering $\lvert \Theta \rvert$ hypotheses, we ap
 \section{Datasets}
 \label{sec:datasets}
 
-\begin{figure*}[t]
+\begin{figure*}[ht]
 	\includegraphics[width=0.24\columnwidth]{sap.png}
 	\includegraphics[width=0.24\columnwidth]{kumar_full.png}
 	\includegraphics[width=0.24\columnwidth]{dices-350.png}
@@ -366,8 +366,10 @@ Since we are simultaneously considering $\lvert \Theta \rvert$ hypotheses, we ap
 	\label{fig:dataset-polarization}
 \end{figure*}
 
-We use the datasets provided by \cite{kumar-et-al-2021} and \cite{sap-etal-2022-annotators}. They both feature various online comments, each annotated by a number of human annotators (5 and 4-6 annotators per comment respectively). The Kumar \cite{kumar-et-al-2021} dataset stands out for featuring more than 100,000 comments, while also including 10 different dimensions for \acp{SDB} and annotator experiences. %TODO: Annotator experiences are now in the game, remove them from apriori assumption.
-We also use the DICES-350 and DICES-990 datasets \cite{dices}, which are concerned with LLM response safety, considering only labels relating to racism (\texttt{Q3\_bias\_overall}). They feature less annotated comments, but more than an order of magnitude more annotators per comment, making them an invaluable resource for our study. While the datasets technically target different annotation criteria (racism, toxicity and LLM safety respectively), these criteria are closely related to each other.
+We use four datasets used in current \ac{nlp} research and which include \ac{SDB} data on the individual annotators\footnote{While we would like to test our framework on other research areas and domains, \ac{nlp} remains the only large field to our knowledge that systematically investigates annotator biases and includes the necessary \ac{SDB} information.}. Specifically, we use the ``Kumar''\cite{kumar-et-al-2021} and ``Sap''\cite{sap-etal-2022-annotators} datasets, which are concerned with Toxicity and Hate Speech detection respectively, as well as the DICES-350 and DICES-990 datasets \cite{dices}, which are concerned with LLM response safety. In the latter case, we consider only labels relating to racism (\texttt{Q3\_bias\_overall}), turning the dataset into a Hate Speech task as well.
+
+%TODO: Annotator experiences are now in the game, remove them from apriori assumption.
+The Kumar \cite{kumar-et-al-2021} dataset stands out for featuring more than 100,000 comments, while also including 10 different dimensions for \acp{SDB} and annotator experiences. The DICES datasets on the other hand, feature less annotated comments, but more than an order of magnitude more annotators per comment than the other datasets, making them an invaluable resource for our study.
 
 Brief dataset characteristics are given in Table~\ref{tab:datasets}. There is a reasonable amount of polarization in most annotations for all datasets as demonstrated by Figure~\ref{fig:dataset-polarization}. For in-depth information and discussion around our decisions for discretization, refer to Appendix~\ref{app:continuous}. %For in-depth information, the reader may refer to Appendix TODO.
 
@@ -611,6 +613,7 @@ While our work aims to help protect marginalized and disadvantaged groups by att
 		\acro{SDB}{SocioDemographic Background}
 		\acro{ndfu}[nDFU]{normalized Distance From Unimodality}
 		\acro{FWER}{Family-Wise Error Rate}
+		\acro{nlp}[NLP]{Natural Language Processing}
 	\end{acronym}
 	
 	
