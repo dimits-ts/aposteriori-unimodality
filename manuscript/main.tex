@@ -313,37 +313,59 @@ For each group, we construct a null distribution of the apunim statistic by trea
 	\caption{P-value estimation for aposteriori polarization}
 	\label{alg:pvalue}
 	\begin{algorithmic}[1]
-		\Require Observed aposteriori polarization 
-		$\kappa = apunim(d,\theta)$ (Eq.~\ref{eq:observed})
-		\Require Randomized partitions 
-		$\{\tilde{P}_i\}_{i=1}^t$ with matching group sizes
-		\Require Randomized DFU samples 
-		$\{\mathcal{R}_f^{(i)} = nDFU(\tilde{P}_i(A(c)))\}_{i=1}^t$
-		\Ensure p-value for testing whether $\kappa$ differs from chance
 		
-		\State Construct a null distribution of aposteriori polarization
-		\[
-		\mathcal{K}_{\text{null}} = 
+		\Require Dataset $d$, annotator groups $\Theta$
+		\Require Filtered datapoints $S_d$
+		\Require Number of random partitions $t$
+		\Ensure $p$-value for testing whether $apunim(d,\theta)\neq 0$
+		
+		\Statex \textbf{Observed polarization} attribution
+		\State
+		$pol_{obs.}(d,\theta)
+		=
+		\frac{1}{|S_d|}
+		\sum_{c\in S_d}
+		nDFU(P(A(c),\theta))$
+		
+		\State
+		$pol_{apriori}(d)
+		=
+		\frac{1}{|S_d|}
+		\sum_{c\in S_d}
+		\frac{1}{t}
+		\sum_{i=1}^t
+		nDFU(\tilde{P}_i(A(c)))$
+		
+		\State
+		$obs\_apunim
+		=
+		\frac{pol_{obs.}(d,\theta)-pol_{apriori}(d)}
+		{1-pol_{apriori}(d)}$
+		
+		\Statex \textbf{Null distribution}
+		\State
+		$Apunim_{\text{null}}
+		=
 		\left\{
-		\kappa_i \; \middle| \;
-		\kappa_i =
-		\frac{\bar{pol}^{(i)} - \bar{pol}^{(-i)}}{1 - \bar{pol}^{(-i)}},
-		\; i = 1,\dots,t
-		\right\}
-		\]
-		\Statex where $\bar{pol}^{(i)}$ is the mean observed polarization for the $i$-th randomized partition, and $\bar{pol}^{(-i)}$ is the mean over the remaining random partitions
+		apunim^{(i)}
+		\;\middle|\;
+		apunim^{(i)}
+		=
+		\frac{\bar{D}^{(i)}-\bar{D}^{(-i)}}
+		{1-\bar{D}^{(-i)}},
+		\;
+		i=1,\dots,t
+		\right\}$
 		
-		\State Test the null hypothesis
-		\[
-		H_0 : \mathbb{E}[\mathcal{K}_{\text{null}}] = \kappa
-		\]
-		\Statex against the alternative hypothesis
-		\[
-		H_1 : \mathbb{E}[\mathcal{K}_{\text{null}}] \neq \kappa
-		\]
-		\Statex using a one-sample Student’s $t$-test
+		\Statex
+		where $\bar{D}^{(i)}$ denotes the dataset-level mean polarization
+		obtained from the $i$-th randomized partition.
 		
-		\State \Return resulting p-value
+		\Statex \textbf{Statistical test}
+		\State $p=\textit{Student-T} (Apunim_{\text{null}} \neq obs\_apunim)$
+		
+		\State \Return $p$
+		
 	\end{algorithmic}
 \end{algorithm}
 
@@ -356,6 +378,7 @@ Since we are simultaneously considering $\lvert \Theta \rvert$ hypotheses, we ap
 
 \section{Datasets}
 \label{sec:datasets}
+%TODO: Do SDBs include personal experiences now?
 
 \begin{figure*}[ht]
 	\includegraphics[width=0.24\columnwidth]{sap.png}
