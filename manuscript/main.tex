@@ -366,12 +366,36 @@ Since we are simultaneously considering $\lvert \Theta \rvert$ hypotheses, we ap
 	\label{fig:dataset-polarization}
 \end{figure*}
 
-We use four datasets used in current \ac{nlp} research and which include \ac{SDB} data on the individual annotators\footnote{While we would like to test our framework on other research areas and domains, \ac{nlp} remains the only large field to our knowledge that systematically investigates annotator biases and includes the necessary \ac{SDB} information.}. Specifically, we use the ``Kumar''\cite{kumar-et-al-2021} and ``Sap''\cite{sap-etal-2022-annotators} datasets, which are concerned with Toxicity and Hate Speech detection respectively, as well as the DICES-350 and DICES-990 datasets \cite{dices}, which are concerned with LLM response safety. In the latter case, we consider only labels relating to racism (\texttt{Q3\_bias\_overall}), turning the dataset into a Hate Speech task as well.
+\begin{table}[ht]
+	\centering
+	\caption{Overview of the datasets used in this study. \textit{\# Annotators} refers to the number of annotations per comment.}
+	\label{tab:datasets}
+	\begin{tabular}{lrrrrl}
+		\toprule
+		\textbf{Dataset} & \textbf{\#Comments} & \textbf{\#Annotators} & \textbf{\#\ac{SDB} dims} & \textbf{Task} \\
+		\midrule
+		Kumar~\cite{kumar-et-al-2021} 
+		& 106{,}035 & 5--6   & 10 & Toxicity \\
+		
+		Sap~\cite{sap-etal-2022-annotators} 
+		& 626       & 5--6   & 3  & Hate Speech \\
+		
+		DICES-350~\cite{dices} 
+		& 72{,}103  & 60--70 & 4  & Hate Speech \\
+		
+		DICES-990~\cite{dices} 
+		& 43{,}050  & 123    & 4  & Hate Speech \\
+		\bottomrule
+	\end{tabular}
+\end{table}
 
-%TODO: Annotator experiences are now in the game, remove them from apriori assumption.
-The Kumar \cite{kumar-et-al-2021} dataset stands out for featuring more than 100,000 comments, while also including 10 different dimensions for \acp{SDB} and annotator experiences. The DICES datasets on the other hand, feature less annotated comments, but more than an order of magnitude more annotators per comment than the other datasets, making them an invaluable resource for our study.
+We use four datasets from current \ac{nlp} research that include \ac{SDB} information at the level of individual annotators.\footnote{While we would like to test our framework on other research areas and domains, \ac{nlp} remains the only large field to our knowledge that systematically investigates annotator biases and includes the necessary \ac{SDB} information.} Specifically, we use the Kumar''~\cite{kumar-et-al-2021} and Sap''~\cite{sap-etal-2022-annotators} datasets, which are concerned with Toxicity and Hate Speech detection respectively, as well as the DICES-350 and DICES-990 datasets~\cite{dices}, which focus on LLM response safety. For the latter, we consider only labels relating to racism (\texttt{Q3\_bias\_overall}), thereby framing the task as Hate Speech detection.
 
-Brief dataset characteristics are given in Table~\ref{tab:datasets}. There is a reasonable amount of polarization in most annotations for all datasets as demonstrated by Figure~\ref{fig:dataset-polarization}. For in-depth information and discussion around our decisions for discretization, refer to Appendix~\ref{app:continuous}. %For in-depth information, the reader may refer to Appendix TODO.
+While the Toxicity and Hate Speech detection tasks are not equivalent, they share substantial conceptual and operational overlap, as both require annotators to assess the presence and severity of harmful or abusive language. Consequently, the sources of annotator disagreement and bias that arise in these tasks are expected to be structurally similar, which makes them suitable for joint analysis within our framework.
+
+The datasets differ substantially in scale and annotation design. The Kumar dataset stands out for its large size, featuring more than 100{,}000 annotated comments, as well as 10 distinct \ac{SDB} and personal-experience dimensions. In contrast, the DICES datasets contain fewer annotated comments but involve more than an order of magnitude more annotators per comment than the other datasets, making them an invaluable resource for studying polarization and disagreement at scale.
+
+A brief overview of dataset characteristics is provided in Table~\ref{tab:datasets}. Across all datasets, we observe a non-trivial degree of polarization in most annotations, as illustrated in Figure~\ref{fig:dataset-polarization}. Finally, \emph{Age} is represented as a continuous (ratio) variable in some datasets and as a discretized interval variable in others; we discuss the implications of this difference, as well as our own discretization strategy, in Appendix~\ref{app:continuous}.
 
 
 \section{Results}
