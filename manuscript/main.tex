@@ -67,6 +67,7 @@
 \usepackage{subcaption}
 \usepackage{longtable}
 \usepackage{subcaption}
+\usepackage{hyperref}
 
 
 %%%%%=============================================================================%%%%
@@ -155,11 +156,11 @@
 \section{Introduction}
 \label{sec:intro}
 
-Annotations are essential for a wide range of tasks, especially in fields such as content moderation, toxicity detection and hate speech detection. These tasks are especially essential for training systems that protect vulnerable and minority groups in online spaces, where they are often targeted \cite{un_hate_speech_targets, ucdavis_hate_speech}. However, annotations for such tasks are subjective and usually based on majority-group annotators. This may at best limit the usefulness of the data, or at worst lead to biased and misconfigured systems.
+Annotations are essential for a wide range of tasks, especially in fields such as content moderation, toxicity detection and hate speech detection. These tasks are especially essential for training systems that protect vulnerable and minority groups in online spaces, where they are often targeted\cite{un_hate_speech_targets, ucdavis_hate_speech}. However, annotations for such tasks are subjective and usually based on majority-group annotators. This may at best limit the usefulness of the data, or at worst lead to biased and misconfigured systems\cite{sap-etal-2019-risk}.
 
-The core of the problem is simple; if a comment targets marginalized groups, there can be cases where most annotators overlook it, while the few marginalized annotators vehemently disagree in vain. An example of such cases would be racist comments that are presented with coded language (usually referred to as ``dog-whistles'' \cite{quaranto2022dog}), which are not picked up by most annotators, but only by ones belonging in the targeted minority. Inversely, majority-group annotators may bias their own annotations against the minority-group annotators. \cite{sap-etal-2019-risk} for instance show that toxicity models disproportionally marked African American speech as ``toxic''.
+The core of the problem is simple; if a comment targets marginalized groups, there can be cases where most annotators overlook it, while the few marginalized annotators vehemently disagree with the majority. These fundamental disagreements are then ignored via aggregation (e.g., majority label voting) or filtering (e.g., keeping only datapoints with perfect agreement). Racist comments that are presented with coded language (usually referred to as ``dog-whistles''\cite{quaranto2022dog}) are a common example. These comments may not be picked up by most annotators, but only by ones belonging in the targeted minority. Furthermore, majority-group annotators may themselves be biased against minority groups as was the case for toxicity models disproportionally marking African American speech as ``toxic''\cite{sap-etal-2019-risk}.
 
-\emph{Inter-annotator agreement}  is often used to detect such cases \cite{petra_2022_handling}. Metrics based on agreement  mostly measure annotation variance, which may not be an optimal problem formulation for detecting such cases. \emph{Polarization} is a better instrument in this regard, since it formulates annotation analysis as a cluster identification problem \cite{Pavlopoulos2023, pavlopoulos-likas-2024}---specifically whether two or more annotation clusters are present (Figure~\ref{fig:disagreement_vs_polarization}).
+\emph{Inter-annotator agreement}  is often used to detect such cases\cite{petra_2022_handling}. Metrics based on agreement  mostly measure annotation variance, which may not be an optimal problem formulation for detecting such cases. \emph{Polarization} is a better instrument in this regard, since it formulates annotation analysis as a cluster identification problem\cite{Pavlopoulos2023, pavlopoulos-likas-2024}---specifically whether two or more annotation clusters are present (Figure~\ref{fig:disagreement_vs_polarization}).
 
 \begin{figure}[t]
 	\centering
@@ -175,15 +176,17 @@ The core of the problem is simple; if a comment targets marginalized groups, the
 	\label{fig:disagreement_vs_polarization}
 \end{figure}
 
-While we can detect polarization \cite{pavlopoulos-likas-2024, Pavlopoulos2023}, there is little work on how to detect whether it is actually caused by marginalized groups. \cite{pavlopoulos-likas-2024} propose a mechanism which only works in the extreme case where overall polarization is zero; in this work we demonstrate that this case is not frequent in real-world data. % TODO: I will need to demonstrate 
-We instead propose the \emph{Apunim (``Aposteriori Unimodality'') metric}, which attributes polarization to individual annotator sociodemographic groups. Our contributions are:
+While we can detect polarization\cite{pavlopoulos-likas-2024, Pavlopoulos2023}, there is little work on how to detect whether it is actually caused by marginalized groups. \cite{pavlopoulos-likas-2024} propose a mechanism which works only for individual comments, does not produce quantifiable/comparable results, and requires the extreme case where overall polarization is zero.
+We instead propose the \emph{Apunim (``Aposteriori Unimodality'') metric}, which attributes polarization to individual annotator groups. Our contributions are:
 
 \begin{enumerate}
-	\item We introduce a new metric which measures how much polarization can be attributed specific sociodemographic groups.
+	\item We introduce a new metric which quantifies how much polarization can be attributed to specific annotator groups and develop a parametric test for statistical significance. This metric is generalizable across any domain and modality (e.g., video/image classification, toxicity/hate-speech detection) and enables quantitative comparisons across datasets and dimensions (e.g., gender, race, political affiliation). Unlike previous work, our metric is designed to apply to entire datasets instead of individual datapoints.
 	
 	\item  We discover issues not yet acknowledged in literature, such as the presence of inherent polarization and conflicting polarization directions. Our proposed metric is designed to avoid these issues.
 	
-	\item We apply our metric to four datasets; two with human comments and annotations \cite{sap-etal-2022-annotators, kumar-et-al-2021} as well as two generated and annotated by \ac{LLM} agents \cite{tsirmpas2025scalableevaluationonlinefacilitation}.
+	\item We apply our metric to four \ac{nlp} datasets focused on Toxicity and Hate Speech detection. We find that annotator race/ethnicity contributes to polarization across all datasets, but more so on Hate Speech tasks. We also discover that educated annotators are generally more nuanced, and that in some cases, polarization is either concentrated around similar clusters of groups (e.g., age and education) or that annotators become more polarized the more extreme their opinions become (e.g., religion).
+	
+	\item We release an open source Python library that implements the calculation of the metric and its statistical significance. The library can be directly installed through PyPi.\footnote{Library: \url{https://pypi.org/project/apunim/} Documentation: \url{https://dimits-ts.github.io/apunim/} }
 \end{enumerate}
 
 %There are also approaches such as tampering with the sample \cite{eckman_2025_aligning}, creating subgroup-specific classification problems \cite{akhtar_2020_modeling}, or parameterizing the distribution of annotations \cite{casola-etal-2023-confidence}. These approaches however are only useful for downstream tasks, and can not be used to explain differences in annotation between groups.
@@ -617,7 +620,7 @@ Importantly, these effects do not necessarily sum to zero, which suggests that \
 	\label{fig:ordinal}
 \end{figure}
 
-Analysis on annotated data frequently ignores the different kinds of measurements in studies using sociodemographic and LIKERT-style attributes. Researchers often treat all dimensions as \emph{nominal/categorical} even though some are inherently ordinal (e.g., LIKERT-scale, education), and some continuous/ratio variables (e.g., age). Others attempt to find an ``optimal point'' which can be used to binarize continuous variables \cite{Sokratis}, but this approach is misguided. By using any artificial cut-off point, the resulting analysis is immediately invalidated by any change in the underlying data, and it also discards valuable information not present in binary or nominal categories By treating these variables as categorical, not only do we lose valuable information, but we may magnify statistical errors \cite{Streiner2002}. 
+Analysis on annotated data frequently ignores the different kinds of measurements in studies using sociodemographic and LIKERT-style attributes. Researchers often treat all dimensions as \emph{nominal/categorical} even though some are inherently ordinal (e.g., LIKERT-scale, education), and some continuous/ratio variables (e.g., age). Others attempt to find an ``optimal point'' which can be used to binarize continuous variables \cite{Sokratis}, but this approach is misguided since by using any artificial cut-off point, the resulting analysis is immediately invalidated by any change in the underlying data. Binarization also discards valuable information not present in binary or nominal categories By treating these variables as categorical, not only do we lose valuable information, but we may magnify statistical errors \cite{Streiner2002}. 
 
 Figure~\ref{fig:ordinal} shows that \emph{retaining the order of ordinal attributes reveals interesting trends} that would be otherwise missed with categorical inference. We aggregate these trends in two patterns; \emph{``Escalating''} and \emph{``Diverging''}.
 
@@ -629,17 +632,17 @@ Figure~\ref{fig:ordinal} shows that \emph{retaining the order of ordinal attribu
 \section{How many annotators?}
 \label{sec:ann_size}
 
-While our test works best with many annotations per datapoint, the cost required for multiple human annotators is often prohibitive \cite{rossi_2024}. It is thus very important both DICES datasets, as well as the Sap dataset annotated by 100 distinct LLM annotators. While a more appropriate comparison would entail synthetic annotations in the DICES datasets themselves, we elect to use a standard task for LLM-as-a-judge (hate speech detection) instead of the relatively challenging and under-explored area of general LLM safety.
-
 \begin{figure}[ht]
 	\includegraphics[width=\columnwidth]{ndfu_std_error_sample_size.png}
 	\caption{Standard error of the \textit{pol-statistic} when sampled with replacement for various number of annotators.}
 	\label{fig:std_error}
 \end{figure}
 
-For each comment in all datasets, we randomly sample a subset of annotators and compute the apunim value. We repeat the procedure 30 times, and average all observations. This was a necessary step to reduce the variance inherent in random sampling. We also truncate the results for the DICES-350 dataset, since very few comments were annotated by the respective annotator counts.
+While our test works best with many annotations per datapoint, the cost required for multiple human annotators is often prohibitive \cite{rossi_2024}. It is thus imperative that we find the minimum number of annotators needed for Apunim to generate stable and reliable estimates.
 
-Figure~\ref{fig:std_error} demonstrates the effect of the number of annotators on the reliability of the polarization estimation. We can see that the metric becomes consistent with about 20 annotators per comment, after which we start to get diminishing results. This experiment was conducted on a subset of the Sap dataset, with LLM annotators having different \acp{SDB}. 
+We leverage the large numbers of annotations for the DICES datasets to estimate the trend of the apunim value errors. For each comment in both datasets, we randomly sample a subset of annotators with replacement and compute the apunim value. We repeat the procedure 30 times, and average all observations. This was a necessary step to reduce the variance inherent in random sampling. We also truncate the results for the DICES-350 dataset, since we did not have a large enough sample of comments annotated by 71-74 annotators.
+
+Figure~\ref{fig:std_error} demonstrates the effect of the number of annotators on the reliability of the polarization estimation. We can see that the metric becomes consistent with about 20 annotators per comment, after which we start to get diminishing results. 
 
 
 \section{Conclusion}
@@ -656,8 +659,11 @@ Since there are no other established tests that attribute polarization to sociod
 
 While our work aims to help protect marginalized and disadvantaged groups by attributing polarization to certain subgroups, it can be taken advantage of by malicious actors. Given a dataset with fine-grained \ac{SDB} information, these actors can use our test to target specific vulnerable groups. We thus urge researchers to keep datasets including such information protected, and provided to others only under explicit permission.
 
+\bibliography{refs}
+
 % force floats to appear 
 \clearpage
+
 
 
 \begin{appendices}
@@ -688,10 +694,6 @@ While our work aims to help protect marginalized and disadvantaged groups by att
 	In order to make sure our results are not biased, we conduct ablation experiments with all ordinal variables from the Kumar dataset discretized to three factors. We observe that...
 	
 	\input{./generated/kumar_ablation.tex}
-	
-
-
 \end{appendices}
 
-\bibliography{refs}
 \end{document}
