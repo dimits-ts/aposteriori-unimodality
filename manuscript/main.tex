@@ -152,12 +152,6 @@
 \section{Introduction}
 \label{sec:intro}
 
-Annotations are essential for a wide range of tasks, especially in fields such as content moderation, toxicity detection and hate speech detection. These tasks are especially essential for training systems that protect vulnerable and minority groups in online spaces, where they are often targeted\cite{un_hate_speech_targets, ucdavis_hate_speech}. However, annotations for such tasks are subjective and usually based on majority-group annotators. This may at best limit the usefulness of the data, or at worst lead to biased and misconfigured systems\cite{sap-etal-2019-risk}.
-
-The core of the problem is simple; if a comment targets marginalized groups, there can be cases where most annotators overlook it, while the few marginalized annotators vehemently disagree with the majority. These fundamental disagreements are then ignored via aggregation (e.g., majority label voting) or filtering (e.g., keeping only datapoints with perfect agreement). Racist comments that are presented with coded language (usually referred to as ``dog-whistles''\cite{quaranto2022dog}) are a common example. These comments may not be picked up by most annotators, but only by ones belonging in the targeted minority. Furthermore, majority-group annotators may themselves be biased against minority groups as was the case for toxicity models disproportionally marking African American speech as ``toxic''\cite{sap-etal-2019-risk}.
-
-\emph{Inter-annotator agreement}  is often used to detect such cases\cite{petra_2022_handling}. Metrics based on agreement  mostly measure annotation variance, which may not be an optimal problem formulation for detecting such cases. \emph{Polarization} is a better instrument in this regard, since it formulates annotation analysis as a cluster identification problem\cite{Pavlopoulos2023, pavlopoulos-likas-2024}---specifically whether two or more annotation clusters are present (Figure~\ref{fig:disagreement_vs_polarization}).
-
 \begin{figure}[t]
 	\centering
 	\includegraphics[width=0.8\columnwidth]{apunim_example.drawio.png}
@@ -165,14 +159,11 @@ The core of the problem is simple; if a comment targets marginalized groups, the
 	\label{fig:apunim_example}
 \end{figure}
 
-\begin{figure}[t]
-	\centering
-	\includegraphics[width=\columnwidth]{disagreement_vs_polarization.png}
-	\caption{Disagreement is similar to variance; thus it overlooks cases where annotators may be ``split down the middle''. Polarization on the other hand, is able to identify multiple clusters even if they are close together.}
-	\label{fig:disagreement_vs_polarization}
-\end{figure}
+Annotations are essential for a wide range of tasks, especially in fields such as content moderation, toxicity detection and hate speech detection. These tasks are especially essential for training systems that protect vulnerable and minority groups in online spaces, where they are often targeted\cite{un_hate_speech_targets, ucdavis_hate_speech}. However, annotations for such tasks are subjective and usually based on majority-group annotators. This may at best limit the usefulness of the data, or at worst lead to biased and misconfigured systems\cite{sap-etal-2019-risk}.
 
-While we can detect polarization\cite{pavlopoulos-likas-2024, Pavlopoulos2023}, there is little work on how to detect whether it is actually caused by marginalized groups. \cite{pavlopoulos-likas-2024} propose a mechanism which works only for individual comments, does not produce quantifiable/comparable results, and requires the extreme case where overall polarization is zero.
+The core of the problem is simple; if a comment targets marginalized groups, there can be cases where most annotators overlook it, while the few marginalized annotators vehemently disagree with the majority. These fundamental disagreements are then ignored via aggregation (e.g., majority label voting) or filtering (e.g., keeping only datapoints with perfect agreement). Racist comments that are presented with coded language (usually referred to as ``dog-whistles''\cite{quaranto2022dog}) are a common example. These comments may not be picked up by most annotators, but only by ones belonging in the targeted minority. Furthermore, majority-group annotators may themselves be biased against minority groups as was the case for toxicity models disproportionally marking African American speech as ``toxic''\cite{sap-etal-2019-risk}.
+
+\emph{Inter-annotator agreement} is often used to detect such cases\cite{petra_2022_handling}. Metrics based on agreement mostly measure annotation variance, which may not be an optimal problem formulation for detecting such cases. \emph{Polarization} is a better instrument in this regard, since it formulates annotation analysis as a cluster identification problem\cite{Pavlopoulos2023, pavlopoulos-likas-2024}. While we can detect polarization\cite{pavlopoulos-likas-2024, Pavlopoulos2023}, there is little work on how to detect whether it is actually caused by marginalized groups. \cite{pavlopoulos-likas-2024} propose a mechanism which works only for individual comments, does not produce quantifiable/comparable results, and requires the extreme case where overall polarization is zero.
 We instead propose the \emph{Apunim (``Aposteriori Unimodality'') metric}, which attributes polarization to individual annotator groups. Our contributions are:
 
 \begin{enumerate}
@@ -184,8 +175,25 @@ We instead propose the \emph{Apunim (``Aposteriori Unimodality'') metric}, which
 	
 	\item We release an open source Python library that implements the calculation of the metric and its statistical significance. The library can be directly installed through PyPi.\footnote{Library: \url{https://pypi.org/project/apunim/} Documentation: \url{https://dimits-ts.github.io/apunim/} }
 \end{enumerate}
+%TODO: Multilabel?
 
-%There are also approaches such as tampering with the sample \cite{eckman_2025_aligning}, creating subgroup-specific classification problems \cite{akhtar_2020_modeling}, or parameterizing the distribution of annotations \cite{casola-etal-2023-confidence}. These approaches however are only useful for downstream tasks, and can not be used to explain differences in annotation between groups.
+
+\section{Related Work}
+\label{sec:related}
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=0.8\columnwidth]{disagreement_vs_polarization.png}
+	\caption{Disagreement is similar to variance; thus it overlooks cases where annotators may be ``split down the middle''. Polarization on the other hand, is able to identify multiple clusters even if they are close together.}
+	\label{fig:disagreement_vs_polarization}
+\end{figure}
+
+\paragraph{Annotator agreement} There are many popular metrics for measuring inter-annotator agreement such as Cohen's kappa, Krippendorff's alpha and Fleiss's kappa. All of these metrics attempt to distinguish genuine disagreement among annotators from noise (or ``random disagreement'') using statistical methods. However, a number of them can not be generally used for comparing intergroup annotation agreement without extending them (i.e., computing pairwise Cohen's kappa for all groups), or placing constraints on when they can be used (i.e., no missing labels and same number of annotations per annotator for Fleiss's kappa).  They have also been criticized for ignoring fundamental differences that can arise from different social, cultural and demographic backgrounds \cite{FEINSTEIN1990543, Byrt1993}, and for their inability to quanitfy and compare results across experiments \cite{wong-etal-2021-cross}. 
+
+Recent work has attempted to work around these limitations. \cite{wong-etal-2021-cross} adapt Cohen's kappa for subgroup agreement, while \cite{ivey-etal-2025-nutmeg} create a Bayesian model that attempts to explicitly differentiate between subgroup disagreement and noise. While these extensions do improve the performance of these metrics, they are typically less explainable and intuitive. They are also constrained by the same basic assumptions of disagreement metrics, such as not being suitable for multi-label annotations (where annotators can pick more than one option for each item).
+
+\paragraph{Annotator polarization} Due to the nature of disagreement metrics, these extensions may not perform well when comparing annotator groups with greatly mismatched sizes \cite{FEINSTEIN1990543, Byrt1993}. Figure~\ref{fig:disagreement_vs_polarization} shows an example of an annotation task where the minority group annotators may be ignored when computing disagreement, due to the overwhelming number of majority-group annotations. Polarization \cite{pavlopoulos-likas-2024} attempts to solve the problem by framing disagreement as a cluster identification issue; it specifically checks whether the annotations belong in a single cluster. This enables metrics based on polarization to work with multi-label annotations.
+
 
 \section{How to attribute polarization}
 \label{sec:methodology}
