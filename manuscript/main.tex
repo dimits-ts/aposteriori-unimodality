@@ -10,7 +10,6 @@
 %% separately and not embedded in the \TeX\ document itself.       %%
 %%                                                                 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%TODO: Include generated files directly
 
 %%\documentclass[referee,sn-basic]{sn-jnl}% referee option is meant for double line spacing
 
@@ -64,9 +63,6 @@
 \usepackage{tabularx}
 \usepackage{fancyvrb}
 \usepackage{longtable}
-\usepackage{subcaption}
-\usepackage{longtable}
-\usepackage{subcaption}
 \usepackage{hyperref}
 
 
@@ -190,7 +186,6 @@ We instead propose the \emph{Apunim (``Aposteriori Unimodality'') metric}, which
 \end{enumerate}
 
 %There are also approaches such as tampering with the sample \cite{eckman_2025_aligning}, creating subgroup-specific classification problems \cite{akhtar_2020_modeling}, or parameterizing the distribution of annotations \cite{casola-etal-2023-confidence}. These approaches however are only useful for downstream tasks, and can not be used to explain differences in annotation between groups.
-
 
 \section{How to attribute polarization}
 \label{sec:methodology}
@@ -431,87 +426,73 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 \subsection{Which factors contribute to polarization?}
 \label{ssec:results:factors}
 
-\begin{figure}[ht]
-	\centering
-	\scriptsize
-	
-	% ---------- Row 1 ----------
-	\begin{subfigure}{0.46\textwidth}
-		\centering
-		\caption{Aposteriori unimodality results for the dices-350 dataset.}
-		\label{tab:dices-350}
-		\begin{tabular}{lllr}
-			\toprule
-			&  & apunim & support \\
-			\ac{pc} & Value &  &  \\
-			\midrule
-			Age & 1) Gen. X+ & 0.0186 & 9703 \\
-			& 2) Millenial & -0.0059 & 11268 \\
-			& 3) Gen. Z & -0.0066 & 17528 \\
-			Educat. & College + & 0.0124 & 23475 \\
-			& High school - & -0.0152 & 12833 \\
-			& Other & -0.0214$^{*}$ & 2191 \\
-			Gender & Man & -0.0193 & 19093 \\
-			& Woman & 0.0215 & 19406 \\
-			Race & African Am. & -0.0428$^{***}$ & 9077 \\
-			& Asian & 0.0659$^{***}$ & 8138 \\
-			& Latino & -0.0030 & 6886 \\
-			& Multiracial & -0.0001 & 5008 \\
-			& White & -0.0198 & 9390 \\
-			\bottomrule
-		\end{tabular}
-	\end{subfigure}
-	\hfill
-	\begin{subfigure}{0.46\textwidth}
-		\centering
-		\caption{Aposteriori unimodality results for the dices-990 dataset.}
-		\label{tab:dices-990}
-		\begin{tabular}{lllr}
-			\toprule
-			&  & apunim & support \\
-			\ac{pc} & Value &  &  \\
-			\midrule
-			Age & 1) Gen. X+ & -0.0471$^{***}$ & 14384 \\
-			& 2) Millenial & -0.0043 & 38436 \\
-			& 3) Gen. Z & 0.0644$^{***}$ & 13741 \\
-			Educat. & College + & 0.0095 & 59142 \\
-			& High school - & -0.0751$^{***}$ & 7419 \\
-			Gender & Man & 0.0278$^{***}$ & 32494 \\
-			& Woman & -0.0235$^{***}$ & 33471 \\
-			Race & African Am. & 0.0909$^{***}$ & 5810 \\
-			& Asian & 0.0100 & 18428 \\
-			& Latino & -0.1328$^{***}$ & 6610 \\
-			& Other & 0.0753$^{***}$ & 24321 \\
-			& White & -0.1196$^{***}$ & 11392 \\
-			\bottomrule
-		\end{tabular}
-	\end{subfigure}
-	
-	\vspace{1em}
-	
-	% ---------- Row 2 ----------
-	\begin{subfigure}{0.55\textwidth}
-		\centering
-		\caption{Aposteriori unimodality results for the sap dataset.}
-		\label{tab:sap}
-		\begin{tabular}{lllr}
-			\toprule
-			&  & apunim & support \\
-			SDB Feature & Value &  &  \\
-			\midrule
-			Age & 1) Gen. X+ & 0.0192 & 743 \\
-			& 2) Millennial & 0.0189 & 1792 \\
-			& 3) Gen. Z & -0.0153 & 239 \\
-			Ethnicity & black & -0.2967$^{***}$ & 1041 \\
-			& white & 0.1400$^{***}$ & 2048 \\
-			Gender & man & 0.0942$^{***}$ & 1635 \\
-			& woman & -0.1810$^{***}$ & 1333 \\
-			\bottomrule
-		\end{tabular}
-	\end{subfigure}
-	
-	\caption{Aposteriori unimodality results across the dices-350, dices-990, and sap datasets.}
-\end{figure}
+\begin{table}[ht]\centering
+	\caption{Aposteriori unimodality results for the dices-350 dataset.}
+	\label{tab:dices-350}
+	\begin{tabular}{lllr}
+		\toprule
+		&  & apunim & support \\
+		\ac{pc} dimension & Value &  &  \\
+		\midrule
+		Age & 1) Gen. X+ & 0.0186 & 9703 \\
+		& 2) Millenial & -0.0059 & 11268 \\
+		& 3) Gen. Z & -0.0066 & 17528 \\
+		Education & College + & 0.0124 & 23475 \\
+		& High school - & -0.0152 & 12833 \\
+		& Other & -0.0214$^{*}$ & 2191 \\
+		Gender & Man & -0.0193 & 19093 \\
+		& Woman & 0.0215 & 19406 \\
+		Race & African Am. & -0.0428$^{***}$ & 9077 \\
+		& Asian & 0.0659$^{***}$ & 8138 \\
+		& Latino & -0.0030 & 6886 \\
+		& Multiracial & -0.0001 & 5008 \\
+		& White & -0.0198 & 9390 \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\begin{table}[ht]\centering
+	\caption{Aposteriori unimodality results for the dices-990 dataset.}
+	\label{tab:dices-990}
+	\begin{tabular}{lllr}
+		\toprule
+		&  & apunim & support \\
+		\ac{pc} dimension & Value &  &  \\
+		\midrule
+		Age & 1) Gen. X+ & -0.0471$^{***}$ & 14384 \\
+		& 2) Millenial & -0.0043 & 38436 \\
+		& 3) Gen. Z & 0.0644$^{***}$ & 13741 \\
+		Education & College + & 0.0095 & 59142 \\
+		& High school - & -0.0751$^{***}$ & 7419 \\
+		Gender & Man & 0.0278$^{***}$ & 32494 \\
+		& Woman & -0.0235$^{***}$ & 33471 \\
+		Race & African Am. & 0.0909$^{***}$ & 5810 \\
+		& Asian & 0.0100 & 18428 \\
+		& Latino & -0.1328$^{***}$ & 6610 \\
+		& Other & 0.0753$^{***}$ & 24321 \\
+		& White & -0.1196$^{***}$ & 11392 \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\begin{table}[ht]\centering
+	\caption{Aposteriori unimodality results for the sap dataset.}
+	\label{tab:sap}
+	\begin{tabular}{lllr}
+		\toprule
+		&  & apunim & support \\
+		\ac{pc} dimension & Value &  &  \\
+		\midrule
+		Age & 1) Gen. X+ & 0.0192 & 743 \\
+		& 2) Millennial & 0.0189 & 1792 \\
+		& 3) Gen. Z & -0.0153 & 239 \\
+		Ethnicity & black & -0.2967$^{***}$ & 1041 \\
+		& white & 0.1400$^{***}$ & 2048 \\
+		Gender & man & 0.0942$^{***}$ & 1635 \\
+		& woman & -0.1810$^{***}$ & 1333 \\
+		\bottomrule
+	\end{tabular}
+\end{table}
 
 
 \begin{longtable}[ht]{lllr}
@@ -519,7 +500,7 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 	%\scriptsize
 	\toprule
 	&  & apunim & support \\
-	\ac{pc} & Value &  &  \\
+	\ac{pc} dimension & Value &  &  \\
 	\midrule
 	\endfirsthead
 	\caption[]{Aposteriori unimodality results for the kumar dataset.} \\
