@@ -164,7 +164,7 @@ The core of the problem is simple; if a comment targets marginalized groups, the
 
 \begin{figure}[t]
 	\centering
-	\includegraphics[width=0.6\columnwidth]{apunim_example.drawio.png}
+	\includegraphics[width=0.8\columnwidth]{apunim_example.drawio.png}
 	\caption{The Apunim framework attributes annotator polarization to certain characteristics.}
 	\label{fig:apunim_example}
 \end{figure}
@@ -242,10 +242,9 @@ However, arbitrarily combining annotations would not work well in practice. Figu
  \subsection{Aposteriori polarization}
  \label{ssec:methodology:polstat}
  
- %TODO: Replace pol-statistic label
  \begin{figure}[ht]
- 	\includegraphics[width=\linewidth]{overview.png}
- 	\caption{An overview of how annotation information is sequentially aggregated for the \emph{Apunim} metric. We gather statistical information from the annotations (different \acp{pc} are denoted by different colors) via the \ac{ndfu} measure, which is aggregated by the $pol_{apriori}$ and $pol_{observed}$ statistics for each datapoint. We aggregate these statistics on the dataset level, and compare them to get a chance-corrected \emph{Apunim} value.}
+ 	\includegraphics[width=0.9\linewidth]{overview.drawio.png}
+ 	\caption{An overview of how annotation information is sequentially aggregated for the \emph{apunim} metric. For each datapoint we calculate the apriori polarization and the sample aposteriori polarization given each \ac{pc} group. We then aggregate both apriori and aposteriori polarization and compare them on the dataset level to obtain the polarization attribution (``apunim'') values for each group.}
  	\label{fig:overview}
  \end{figure}
 
