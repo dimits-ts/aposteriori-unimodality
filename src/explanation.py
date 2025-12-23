@@ -205,12 +205,12 @@ def _combined_dfu_plot(
 
 def discussion_example(graph_dir: Path) -> None:
     misogynist_comment = """
-    A: ``There is a much higher of resistance when
-    dealing with black people compared to anyone else.''
+    A: ``Why does the police seem to like
+    killing black people?''
     """
     misandrist_comment = """
-    B: ``Then why does the police seem to like
-    killing only black people?''
+    B: ``There is a much risk higher of resistance when
+    dealing with blacks compared to anyone else.''
     """
     discussion_comment = f"{misogynist_comment}\n{misandrist_comment}"
 
@@ -228,14 +228,14 @@ def discussion_example(graph_dir: Path) -> None:
 
     _plot_example_individual(
         misogynist_comment,
-        d_woman_comment2,
-        d_man_comment2,
+        d_man_comment1,
+        d_woman_comment1,
         graph_dir / "ndfu_comment1.png",
     )
     _plot_example_individual(
         misandrist_comment,
-        d_woman_comment1,
-        d_man_comment1,
+        d_man_comment2,
+        d_woman_comment2,
         graph_dir / "ndfu_comment2.png",
     )
     _plot_example_individual(
@@ -287,10 +287,10 @@ def _plot_example_individual(
 
     fig, ax = plt.subplots(figsize=(6, 4))
     sns.histplot(
-        men_annot, bins=NUM_BINS, alpha=0.6, label="White", kde=True, ax=ax
+        men_annot, bins=NUM_BINS, alpha=0.6, label="Black", kde=True, ax=ax
     )
     sns.histplot(
-        women_annot, bins=NUM_BINS, alpha=0.6, label="Black", kde=True, ax=ax
+        women_annot, bins=NUM_BINS, alpha=0.6, label="White", kde=True, ax=ax
     )
     ax.set_title(title, fontsize=LESSER_LABEL_SIZE)
     ax.legend(loc="upper right")
