@@ -427,7 +427,7 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 \label{ssec:results:factors}
 
 \begin{table}[ht]\centering
-	\caption{Aposteriori unimodality results for the dices-350 dataset.}
+	\caption{Aposteriori unimodality results for the DICES-350 dataset.}
 	\label{tab:dices-350}
 	\begin{tabular}{lllr}
 		\toprule
@@ -452,7 +452,7 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 \end{table}
 
 \begin{table}[ht]\centering
-	\caption{Aposteriori unimodality results for the dices-990 dataset.}
+	\caption{Aposteriori unimodality results for the DICES-990 dataset.}
 	\label{tab:dices-990}
 	\begin{tabular}{lllr}
 		\toprule
@@ -476,7 +476,7 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 \end{table}
 
 \begin{table}[ht]\centering
-	\caption{Aposteriori unimodality results for the sap dataset.}
+	\caption{Aposteriori unimodality results for the Sap dataset.}
 	\label{tab:sap}
 	\begin{tabular}{lllr}
 		\toprule
@@ -496,7 +496,7 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 
 
 \begin{longtable}[ht]{lllr}
-	\caption{Aposteriori unimodality results for the kumar dataset.} \label{tab:kumar} \\
+	\caption{Aposteriori unimodality results for the Kumar dataset.} \label{tab:kumar} \\
 	%\scriptsize
 	\toprule
 	&  & apunim & support \\
@@ -506,7 +506,7 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 	\caption[]{Aposteriori unimodality results for the kumar dataset.} \\
 	\toprule
 	&  & apunim & support \\
-	\ac{pc} & Value &  &  \\
+	\ac{pc} dimension & Value &  &  \\
 	\midrule
 	\endhead
 	\midrule
@@ -627,16 +627,6 @@ Figure~\ref{fig:std_error} demonstrates the effect of the number of annotators o
 \section{Conclusion}
 
 We introduced the ``Aposteriori Unimodality Test'', a statistical test that detects whether certain sociodemographic groups partly cause polarization in annotations. Our test is resistant to low samples of annotations, bypasses common statistical issues such as sample dependence, and avoids newly-discovered issues such as the presence of inherent polarization and polarization direction. We apply our test two human-generated and two LLM-generated datasets and find interesting patterns on the former, and verify current literature on LLM \ac{pc} prompting on the latter.
-
-
-\section{Limitations}
-
-Since there are no other established tests that attribute polarization to sociodemographic characteristics, there is no way to verify that the results presented in \S\ref{sec:results} are accurate. Similarly, there is no qualitative way of evaluating our test, other than observations on the (non-) efficacy of LLM \ac{pc} prompting and our own intuition. Lastly, while our test seems to work sufficiently well with a small number of annotators per data-point, we still encourage researchers using this test to have at least a few annotators of each sociodemographic group that is being tested, in their dataset.
-
-
-\section{Ethical Considerations}
-
-While our work aims to help protect marginalized and disadvantaged groups by attributing polarization to certain subgroups, it can be taken advantage of by malicious actors. Given a dataset with fine-grained \ac{pc} information, these actors can use our test to target specific vulnerable groups. We thus urge researchers to keep datasets including such information protected, and provided to others only under explicit permission.
 
 \bibliography{refs}
 
