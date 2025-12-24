@@ -638,11 +638,6 @@ We introduced the ``Aposteriori Unimodality Test'', a statistical test that dete
 
 \bibliography{refs}
 
-% force floats to appear 
-\clearpage
-
-
-
 \begin{appendices}
 	\section {Acronyms}
 	
@@ -655,22 +650,6 @@ We introduced the ``Aposteriori Unimodality Test'', a statistical test that dete
 	\end{acronym}
 	
 	
-	\section{Theoretical limitations}
-	\label{app:theoretical}
-	
-	In \S\ref{ssec:methodology:intuition} we compared the polarization of the whole set of annotations with the partitions by annotator group. This approach uses the same samples for both subset and superset, violating the fundamental hypothesis of independent samples. This also means the statistics for both will \emph{always be similar to an extent}. This is especially pronounced in our case, due to the extreme overlap exhibited by tiny annotation sets. Additionally, when calculating p-values, the non-independence of samples induces an intrinsic, non-zero covariance between any statistic $s$ calculated on $A$ and on $S$. 
-	
-	A standard method of side-stepping this issue is to compare the subset with its complement to the superset. This can not be applied to our case. Consider the example in Figure~\ref{fig:ndfu_combined}; if we compared $nDFU_{men}$ with $nDFU_{women}$, the result would be very close to zero, indicating no polarization attribution to gender.
-	
-	
-	\section{How do we handle continuous variables?}
-	\label{app:continuous}
-	
-	Continuous attributes (such as age) can be discretized during analysis; this practice should generally be avoided \cite{Streiner2002, Andrade2017}, although it is necessary when the data has extremely skewed distributions \cite{Streiner2002}, the underlying data are already in discretized form, or when the tools used for analysis require some form of categorization. Our methodology is built upon \ac{ndfu}, and thus requires histograms to be well-defined. Additionally, the data for Age is already discretized for the DICES and Kumar datasets; for the sake of comparison, we discretize the Sap dataset with the same method as the DICES dataset, instead of using generalized binning techniques based on statistics \cite{Sturges01031926, scott_1979, Freedman1981}.
-	
-	In order to make sure our results are not biased, we conduct ablation experiments with all ordinal variables from the Kumar dataset discretized to three factors. We observe that...
-	
-	\input{./generated/kumar_ablation.tex}
 \end{appendices}
 
 \end{document}
