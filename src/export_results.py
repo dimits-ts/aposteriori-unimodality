@@ -37,6 +37,9 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
 
     # --- Collect all data first ---
     for file in results_dir.rglob("*.csv"):
+        if file.name == "kumar_ablation.csv":
+            continue
+
         df = pd.read_csv(file)
         dataset = file.stem
 
@@ -63,8 +66,9 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
 
             if g.empty:
                 continue
-
-            if (g.pvalue > 0.05).all():
+            
+            # need at least two statistically significant groups
+            if (g.pvalue <= 0.05).sum() < 2:
                 continue
 
             g["ordinal"] = (
@@ -108,6 +112,7 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
     highlight_group_2 = {
         "kumar-Education",
         "kumar-Toxicity Problem",
+        "kumar-Technology Impact"
     }
 
     COLOR_GROUP_1 = "#0072B2"  # blue
