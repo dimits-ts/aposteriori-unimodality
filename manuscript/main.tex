@@ -621,7 +621,7 @@ Figure~\ref{fig:ordinal} shows the trend lines for each ordinal \ac{pc} attribut
 
 \begin{figure}[ht]
 	\includegraphics[width=\columnwidth]{ndfu_std_error_sample_size.png}
-	\caption{Standard error of the \textit{pol-statistic} when sampled with replacement for various number of annotators.}
+	\caption{Std error of the \textit{pol-statistic} when sampled with replacement for various number of annotators.}
 	\label{fig:std_error}
 \end{figure}
 
@@ -634,7 +634,7 @@ Figure~\ref{fig:std_error} demonstrates the effect of the number of annotators o
 
 \section{Conclusion}
 
-We introduced the ``Aposteriori Unimodality Test'', a statistical test that detects whether certain sociodemographic groups partly cause polarization in annotations. Our test is resistant to low samples of annotations, bypasses common statistical issues such as sample dependence, and avoids newly-discovered issues such as the presence of inherent polarization and polarization direction. We apply our test two human-generated and two LLM-generated datasets and find interesting patterns on the former, and verify current literature on LLM \ac{pc} prompting on the latter.
+We introduced the Apunim metric which attributes polarization to annotator subgroups for various \ac{pc} dimensions. Our metric works well for imbalanced annotator splits, is well-defined for multi-label annotation, includes a statistical significance test, and unlike previous work, quantifies the amount of attribution in order to allow for comparisons between various experiments and datasets. Using this metric, we discover that annotator ethnicity is the strongest and most consistent driver of polarization between annotators across datasets, and is much more pronounced on Hate Speech detection tasks. We also discover that education and religion consistently impact the behavior of annotators. Specifically, we discover that very religious annotators fundamentally agree with themselves but disagree with others in Toxicity detection tasks, a trend that is gradually and consistently diminished, and ultimately reversed, by irreligious annotators. We also provide an open-source, PyPI-installable implementation, and an estimation of the number of annotators needed for each datapoint for our method to be constistently reliable.
 
 \bibliography{refs}
 
