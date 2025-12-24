@@ -89,10 +89,21 @@ def save_plot(path: Path) -> None:
 
 def graph_setup() -> None:
 
+    sns.set_theme(
+        context="paper",
+        style="ticks",
+        font="serif",
+        rc={
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "axes.grid": False,
+        },
+    )
+
     plt.rcParams.update({
         "text.usetex": True,
         # Figure
-        "figure.figsize": (6, 4),
+        "figure.figsize": (12, 8),
         "figure.dpi": 300,
         "savefig.dpi": 300,
         "savefig.bbox": "tight",
@@ -101,12 +112,12 @@ def graph_setup() -> None:
         # Fonts
         "font.family": "serif",
         "font.serif": ["Times New Roman", "Times", "DejaVu Serif"],
-        "font.size": 10,
-        "axes.titlesize": 11,
-        "axes.labelsize": 10,
-        "xtick.labelsize": 9,
-        "ytick.labelsize": 9,
-        "legend.fontsize": 9,
+        "font.size": 18,
+        "axes.titlesize": 18,
+        "axes.labelsize": 16,
+        "xtick.labelsize": 14,
+        "ytick.labelsize": 14,
+        "legend.fontsize": 14,
 
         # Axes
         "axes.linewidth": 0.8,
@@ -138,17 +149,6 @@ def graph_setup() -> None:
         "pdf.fonttype": 42,
         "ps.fonttype": 42,
     })
-
-    sns.set_theme(
-        context="paper",
-        style="ticks",
-        font="serif",
-        rc={
-            "axes.spines.top": False,
-            "axes.spines.right": False,
-            "axes.grid": False,
-        },
-    )
 
     COLORBLIND_PALETTE = [
         "#000000",  # black

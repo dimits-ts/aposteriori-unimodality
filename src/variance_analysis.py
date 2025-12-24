@@ -224,7 +224,7 @@ def main(
 
     plot_variance_curve(
         variance_df,
-        graph_path=graph_dir / "ndfu_std_error_sample_size_llm.png",
+        graph_path=graph_dir / "ndfu_std_error_sample_size.png",
     )
 
 

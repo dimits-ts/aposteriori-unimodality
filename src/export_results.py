@@ -156,7 +156,6 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
         group_2=highlight_group_2,
         group_2_title="Diverging",
         others_title="Neither",
-        legend_title="Behavior",
         loc="lower center"
     )
 
@@ -176,7 +175,6 @@ def add_grouped_legend(
     group_1_title: str = "Highlighted: Group 1",
     group_2_title: str = "Highlighted: Group 2",
     others_title: str = "Other features",
-    legend_title: str = "Feature groups",
     loc: str = "best",
 ):
     """
@@ -220,7 +218,6 @@ def add_grouped_legend(
     legend = ax.legend(
         legend_handles,
         legend_labels,
-        title=legend_title,
         frameon=True,
         loc=loc,
     )

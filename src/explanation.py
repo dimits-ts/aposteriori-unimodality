@@ -14,9 +14,6 @@ from .tasks import graphs
 INTUITION_SIZE = 50
 DIFF_COMMENTS_SIZE = 200
 NUM_BINS = 10
-LABEL_FONTSIZE = 18
-LESSER_LABEL_SIZE = 18
-SUBTITLE_FONTSIZE = 32
 
 
 def _discrete_normal(loc, scale, size):
@@ -93,10 +90,10 @@ def _plot_matrix(
     ax.set_xticks([])
     # ax.set_ylabel("Hate Speech", fontsize=LABEL_FONTSIZE)
     ax.set_yticks([1, 2, 3, 4, 5])
-    ax.set_yticklabels(["☺", "🙂", "😐", "😠", "🤬"], fontsize=LABEL_FONTSIZE)
+    ax.set_yticklabels(["☺", "🙂", "😐", "😠", "🤬"])
     ax.set_ylim(0.8, 5.2)
-    ax.set_title(title, fontsize=SUBTITLE_FONTSIZE)
-    ax.legend(title="Annotator Group", loc="upper right")
+    ax.set_title(title)
+    ax.legend(loc="upper right")
 
 
 def plot_annotation_distributions(
@@ -124,11 +121,10 @@ def plot_annotation_distributions(
     _plot_matrix(axs[1, 1], multimodal, group_labels, title="")
 
     # ---- Global labels (optional but very clear)
-    fig.supxlabel("Low ← Disagreement → High", fontsize=SUBTITLE_FONTSIZE)
-    fig.supylabel("Low ← Polarization → High", fontsize=SUBTITLE_FONTSIZE)
+    fig.supxlabel("Low ← Disagreement → High")
+    fig.supylabel("Low ← Polarization → High")
     fig.suptitle(
         "Hate Speech Annotations for 100 Annotators grouped by religion",
-        fontsize=SUBTITLE_FONTSIZE,
     )
 
     plt.savefig(graph_dir / "disagreement_vs_polarization.png")
@@ -193,11 +189,9 @@ def _combined_dfu_plot(
         math_text += f"$\\mathbf{{nDFU_{{{label}}}}}={ndfu_value:.3f}$\n"
 
     plt.legend(loc="center")
-    plt.xlabel(f"Toxicity\n{math_text}", fontsize=LABEL_FONTSIZE)
-    plt.ylabel(r"\#Annotations", fontsize=LABEL_FONTSIZE)
-    plt.title(
-        r"\textit{``Most women can't drive well.''}", fontsize=LABEL_FONTSIZE
-    )
+    plt.xlabel(f"Toxicity\n{math_text}")
+    plt.ylabel(r"\#Annotations")
+    plt.title(r"\textit{``Most women can't drive well.''}")
 
     graphs.save_plot(graph_path)
     plt.close()
@@ -265,8 +259,8 @@ def _dfu_plot(data: np.ndarray, graph_path: Path, color: str, label) -> None:
     )
 
     math_text = f"$\\mathbf{{nDFU_{{{label}}}}}={ndfu_value:.3f}$"
-    plt.xlabel(f"Toxicity\n{math_text}", fontsize=LABEL_FONTSIZE)
-    plt.ylabel(r"\#Annotations", fontsize=LABEL_FONTSIZE)
+    plt.xlabel(f"Toxicity\n{math_text}")
+    plt.ylabel(r"\#Annotations")
 
     # individual pictures to be used for slides
     graphs.save_plot(graph_path)
@@ -292,15 +286,14 @@ def _plot_example_individual(
     sns.histplot(
         women_annot, bins=NUM_BINS, alpha=0.6, label="White", kde=True, ax=ax
     )
-    ax.set_title(title, fontsize=LESSER_LABEL_SIZE)
+    ax.set_title(title)
     ax.legend(loc="upper right")
     ax.set_xlabel(
         f"$nDFU_{{White}}={ndfu_man:.4f}$\n"
         f"$nDFU_{{Black}}={ndfu_woman:.4f}$\n"
         f"$nDFU_{{All}}={ndfu_all:.4f}$",
-        fontsize=LESSER_LABEL_SIZE,
     )
-    ax.set_ylabel(r"\#Annotations", fontsize=LABEL_FONTSIZE)
+    ax.set_ylabel(r"\#Annotations")
     ax.set_xlabel("Toxicity")
     ax.set_xlim(1, 10)
 
