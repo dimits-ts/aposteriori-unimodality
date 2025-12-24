@@ -6,7 +6,18 @@ import seaborn as sns
 import numpy as np
 import apunim
 
-from . import preprocessing, graphs
+from . import preprocessing
+
+COLORBLIND_PALETTE = [
+    "#000000",  # black
+    "#E69F00",  # orange
+    "#56B4E9",  # sky blue
+    "#009E73",  # bluish green
+    "#F0E442",  # yellow
+    "#0072B2",  # blue
+    "#D55E00",  # vermillion
+    "#CC79A7",  # reddish purple
+]
 
 
 def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
@@ -28,49 +39,35 @@ def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
             ):
                 continue
 
-            ndfu_value = apunim.dfu(
-                annotations, bins=bins, normalized=True
-            )
+            ndfu_value = apunim.dfu(annotations, bins=bins, normalized=True)
             records.append({"SDB Feature": sdb_col, "nDFU": ndfu_value})
 
     plot_df = pd.DataFrame(records)
-
-    # important for proper legend handling
-    plot_df["SDB Feature"] = pd.Categorical(
-        plot_df["SDB Feature"], categories=sdb_columns
+    plot_df = plot_df.rename(
+        columns={"SDB Feature": "PC Dimension"}
     )
 
-    # --- Plot ---
-    plt.figure(figsize=(12, 7))
-    sns.set(style="whitegrid", font_scale=1.2)
+    # important for proper legend handling
+    plot_df["PC Dimension"] = pd.Categorical(
+        plot_df["PC Dimension"], categories=sdb_columns
+    )
 
     ax = sns.histplot(
         data=plot_df,
         x="nDFU",
-        hue="SDB Feature",
+        hue="PC Dimension",
         multiple="stack",
         stat="count",
-        palette="tab10",
+        palette=COLORBLIND_PALETTE,
         edgecolor="black",
     )
-
+    ax.get_legend().set_title(None)
     ax.set_xlabel("nDFU (Polarization)")
     ax.set_ylabel("Number of Comments")
     ax.set_title(ds.get_name())
     ax.set_xlim(0, 1)
 
-    # Force legend redraw (ensures it appears even if some bins are empty)
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(
-        handles,
-        labels,
-        title="SDB Feature",
-        bbox_to_anchor=(0.75, 1),  # put legend inside plot
-        loc="upper left",
-    )
-
-    plt.tight_layout()
-    graphs.save_plot(output_path)
+    save_plot(output_path)
     plt.close()
 
 
@@ -100,65 +97,48 @@ def graph_setup() -> None:
         },
     )
 
-    plt.rcParams.update({
-        "text.usetex": True,
-        # Figure
-        "figure.figsize": (12, 8),
-        "figure.dpi": 300,
-        "savefig.dpi": 300,
-        "savefig.bbox": "tight",
-        "savefig.pad_inches": 0.02,
-
-        # Fonts
-        "font.family": "serif",
-        "font.serif": ["Times New Roman", "Times", "DejaVu Serif"],
-        "font.size": 18,
-        "axes.titlesize": 18,
-        "axes.labelsize": 16,
-        "xtick.labelsize": 14,
-        "ytick.labelsize": 14,
-        "legend.fontsize": 14,
-
-        # Axes
-        "axes.linewidth": 0.8,
-        "axes.edgecolor": "black",
-        "axes.grid": False,
-
-        # Ticks
-        "xtick.direction": "in",
-        "ytick.direction": "in",
-        "xtick.major.size": 4,
-        "ytick.major.size": 4,
-        "xtick.major.width": 0.8,
-        "ytick.major.width": 0.8,
-        "xtick.minor.visible": True,
-        "ytick.minor.visible": True,
-
-        # Lines
-        "lines.linewidth": 1.5,
-        "lines.markersize": 5,
-
-        # Legend
-        "legend.frameon": False,
-        "legend.loc": "best",
-
-        # Math text
-        "mathtext.fontset": "cm",
-
-        # PDF/PS output (important for LaTeX + journals)
-        "pdf.fonttype": 42,
-        "ps.fonttype": 42,
-    })
-
-    COLORBLIND_PALETTE = [
-        "#000000",  # black
-        "#E69F00",  # orange
-        "#56B4E9",  # sky blue
-        "#009E73",  # bluish green
-        "#F0E442",  # yellow
-        "#0072B2",  # blue
-        "#D55E00",  # vermillion
-        "#CC79A7",  # reddish purple
-    ]
-
+    plt.rcParams.update(
+        {
+            "text.usetex": True,
+            # Figure
+            "figure.figsize": (12, 8),
+            "figure.dpi": 300,
+            "savefig.dpi": 300,
+            "savefig.bbox": "tight",
+            "savefig.pad_inches": 0.02,
+            # Fonts
+            "font.family": "serif",
+            "font.serif": ["Times New Roman", "Times", "DejaVu Serif"],
+            "font.size": 18,
+            "axes.titlesize": 18,
+            "axes.labelsize": 16,
+            "xtick.labelsize": 14,
+            "ytick.labelsize": 14,
+            "legend.fontsize": 14,
+            # Axes
+            "axes.linewidth": 0.8,
+            "axes.edgecolor": "black",
+            "axes.grid": False,
+            # Ticks
+            "xtick.direction": "in",
+            "ytick.direction": "in",
+            "xtick.major.size": 4,
+            "ytick.major.size": 4,
+            "xtick.major.width": 0.8,
+            "ytick.major.width": 0.8,
+            "xtick.minor.visible": True,
+            "ytick.minor.visible": True,
+            # Lines
+            "lines.linewidth": 1.5,
+            "lines.markersize": 5,
+            # Legend
+            "legend.frameon": False,
+            "legend.loc": "best",
+            # Math text
+            "mathtext.fontset": "cm",
+            # PDF/PS output (important for LaTeX + journals)
+            "pdf.fonttype": 42,
+            "ps.fonttype": 42,
+        }
+    )
     sns.set_palette(COLORBLIND_PALETTE)

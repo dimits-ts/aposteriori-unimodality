@@ -115,9 +115,9 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
         "kumar-Technology Impact"
     }
 
-    COLOR_GROUP_1 = "#0072B2"  # blue
-    COLOR_GROUP_2 = "#D55E00"  # vermillion
-    COLOR_OTHER = "#B0B0B0"  # light gray
+    COLOR_GROUP_1 = graphs.COLORBLIND_PALETTE[0]
+    COLOR_GROUP_2 = graphs.COLORBLIND_PALETTE[1]
+    COLOR_OTHER = graphs.COLORBLIND_PALETTE[2]
 
     palette = {}
     for f in data_stretched["feature"].unique():
