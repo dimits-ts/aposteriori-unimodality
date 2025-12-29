@@ -21,6 +21,8 @@ from . import kumar
 MARKERS = {
     "DICES-350": "o",
     "DICES-990": "s",
+    "Kumar et al. 2021": "^",
+    "Sap et al. 2022": "*"
 }
 
 
