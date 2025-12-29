@@ -14,6 +14,8 @@ import apunim
 from .tasks import graphs
 from .tasks import preprocessing
 from . import dices
+from . import sap
+from . import kumar
 
 
 MARKERS = {
@@ -203,17 +205,27 @@ def get_dataset_variance(
 def main(
     dices_small_path: Path,
     dices_large_path: Path,
+    sap_path: Path,
+    kumar_path: Path,
     graph_dir: Path,
     cache_dir: Path,
     min_comment_annotators: int = 3,
 ):
     graphs.graph_setup()
-    dices350 = dices.DicesDataset(dataset_path=dices_small_path, variant="350")
-    dices990 = dices.DicesDataset(dataset_path=dices_large_path, variant="990")
+    dices350_ds = dices.DicesDataset(
+        dataset_path=dices_small_path, variant="350"
+    )
+    dices990_ds = dices.DicesDataset(
+        dataset_path=dices_large_path, variant="990"
+    )
+    sap_ds = sap.SapDataset(dataset_path=sap_path)
+    kumar_ds = kumar.KumarDataset(
+        dataset_path=kumar_path, num_samples=kumar.NUM_COMMENTS
+    )
 
     variance_df_ls = []
 
-    for dataset in [dices350, dices990]:
+    for dataset in [dices350_ds, dices990_ds, sap_ds, kumar_ds]:
         res_df = get_dataset_variance(
             dataset, cache_dir, min_comment_annotators=min_comment_annotators
         )
@@ -243,6 +255,16 @@ if __name__ == "__main__":
         help="Path to the DICES 990 annotator CSV file.",
     )
     parser.add_argument(
+        "--sap-path",
+        required=True,
+        help="Path to the Sap annotator CSV file.",
+    )
+    parser.add_argument(
+        "--kumar-path",
+        required=True,
+        help="Path to the Kumar annotator CSV file.",
+    )
+    parser.add_argument(
         "--graph-output-dir", required=True, help="Directory for the graphs."
     )
     parser.add_argument(
@@ -262,6 +284,8 @@ if __name__ == "__main__":
     main(
         dices_small_path=Path(args.dices_small_path),
         dices_large_path=Path(args.dices_large_path),
+        sap_path=Path(args.sap_path),
+        kumar_path=Path(args.kumar_path),
         graph_dir=Path(args.graph_output_dir),
         cache_dir=Path(args.cache_dir),
         min_comment_annotators=args.min_comment_annotators,
