@@ -230,49 +230,6 @@ def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
     res = run_helper.run_all_results(ds)
     res.to_csv(output_dir / "kumar.csv")
 
-    print("Running ablation experiments...")
-
-    age_map = {
-        "Under 18": "3) Gen. Z",
-        "1) 18 - 24": "3) Gen. Z",
-        "2) 25 - 34": "3) Gen. Z",
-        "3) 35 - 44": "2) Millennial",
-        "4) 45 - 54": "2) Millennial",
-        "5) 55 - 64": "1) Gen. X+",
-        "6) 65 or older": "1) Gen. X+",
-        "Prefer not to say": "Prefer not to say",
-    }
-
-    # compress ordinals
-    # This categorizes NA answers with Neutral. They are very few so it's fine
-    TRANSFORMS = {
-        "Age": lambda lst: map_age_list(age_map, lst),
-        "Education": ordinal_to_yn_neutral,
-        "Toxicity Problem": ordinal_to_yn_neutral,
-        "Technology Impact": ordinal_to_yn_neutral,
-        "Religion Important": ordinal_to_yn_neutral,
-    }
-
-    # drop categorical variables, keep only ordinals
-    DROP_COLUMNS = [
-        "Political Affiliation",
-        "Gender",
-        "Ethnicity",
-        "Sexual Orientation",
-        "Is Transgender",
-        "Is Parent",
-        "Has Been Targeted",
-        "Seen Toxicity",
-    ]
-
-    ablation_df = ds.df.drop(columns=DROP_COLUMNS).assign(
-        **{col: ds.df[col].apply(func) for col, func in TRANSFORMS.items()}
-    )
-
-    ds.df = ablation_df
-    res = run_helper.run_all_results(ds)
-    res.to_csv(output_dir / "kumar_ablation.csv")
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
