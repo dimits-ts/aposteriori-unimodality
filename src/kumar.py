@@ -1,4 +1,5 @@
 import argparse
+from os import remove
 from pathlib import Path
 
 import pandas as pd
@@ -9,8 +10,15 @@ NUM_COMMENTS = 20_000
 
 
 class KumarDataset(preprocessing.Dataset):
-    def __init__(self, dataset_path: Path, num_samples: int | None = None):
-        self.df = KumarDataset._base_df(dataset_path, num_samples)
+    def __init__(
+        self,
+        dataset_path: Path,
+        num_samples: int | None = None,
+        remove_long_tail_comments: bool = False,
+    ):
+        self.df = KumarDataset._base_df(
+            dataset_path, num_samples, remove_long_tail_comments
+        )
 
     def get_name(self) -> str:
         return "Kumar et al. 2021"
@@ -42,7 +50,11 @@ class KumarDataset(preprocessing.Dataset):
         return "Toxicity"
 
     @staticmethod
-    def _base_df(dataset_path: Path, num_samples: int | None) -> pd.DataFrame:
+    def _base_df(
+        dataset_path: Path,
+        num_samples: int | None,
+        remove_long_tail_comments: bool,
+    ) -> pd.DataFrame:
         df = pd.read_json(dataset_path, lines=True)
         df = df.explode(column="ratings")
         df = df.dropna()
@@ -148,6 +160,24 @@ class KumarDataset(preprocessing.Dataset):
         df.race = df.race.apply(KumarDataset._simplify_ethnicity)
         df = df.groupby("comment").agg(list)
 
+        # --- There is a single comment with 650 annotators ---
+        df["annotator_count"] = df["toxic_score"].apply(_safe_len)
+
+        over_10_mask = df["annotator_count"] > 10
+
+        if over_10_mask.any():
+            over_10_df = pd.DataFrame(
+                {
+                    "comment": df.index[over_10_mask],
+                    "annotator_count": df.loc[over_10_mask, "annotator_count"],
+                }
+            ).sort_values("annotator_count", ascending=False)
+            print(f"#Comments with >10 annotators:{len(over_10_df)}")
+
+        if remove_long_tail_comments:
+            # keep only comments with <=10 annotators
+            df = df.loc[~over_10_mask].drop(columns=["annotator_count"])
+
         if num_samples is not None:
             print(f"Selecting {num_samples} out of {len(df)} total comments.")
             df = df.sample(num_samples, random_state=42)
@@ -197,6 +227,13 @@ class KumarDataset(preprocessing.Dataset):
         return mapping.get(x, "Other")
 
 
+def _safe_len(x):
+    try:
+        return len(x)
+    except Exception:
+        return 0
+
+
 def ordinal_to_yn_neutral(lst):
     new_lst = []
     for x in lst:
@@ -222,7 +259,11 @@ def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
     graphs.graph_setup()
 
     print("Generating sample polarization plot...")
-    ds = KumarDataset(dataset_path=dataset_path, num_samples=NUM_COMMENTS)
+    ds = KumarDataset(
+        dataset_path=dataset_path,
+        num_samples=NUM_COMMENTS,
+        remove_long_tail_comments=False,
+    )
     graphs.polarization_plot(
         ds=ds, output_path=graph_output_dir / "kumar_sample.png"
     )

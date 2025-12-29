@@ -202,6 +202,75 @@ def get_dataset_variance(
     return res_df
 
 
+def plot_annotator_count_histogram_from_datasets(
+    datasets: list[preprocessing.Dataset],
+    graph_path: Path | None = None,
+):
+    """
+    Plot a histogram of annotator counts per comment across multiple datasets,
+    where each dataset may use a different annotation column.
+
+    Parameters
+    ----------
+    datasets : list
+        List of dataset objects implementing:
+        - get_dataset()
+        - get_name()
+        - get_annotation_column()
+    graph_path : Path or None
+        If provided, saves the figure to this path.
+    bins : int
+        Number of histogram bins.
+    """
+
+    rows = []
+
+    for ds in datasets:
+        df = ds.get_dataset().reset_index(drop=True)
+        ann_col = ds.get_annotation_column()
+        ds_name = ds.get_name()
+
+        def _safe_len(x):
+            try:
+                return len(x)
+            except Exception:
+                return np.nan
+
+        tmp = pd.DataFrame(
+            {
+                "dataset": ds_name,
+                "n_annotators": df[ann_col].apply(_safe_len),
+            }
+        )
+        rows.append(tmp)
+
+    all_df = pd.concat(rows, ignore_index=True).dropna(subset=["n_annotators"])
+
+    plt.figure(figsize=(10, 6))
+
+    sns.displot(
+        data=all_df,
+        x="n_annotators",
+        hue="dataset",
+        multiple="layer",  # overlay by dataset
+        edgecolor="black",
+        alpha=0.6,
+        stat="percent",
+        common_norm=False,
+    )
+
+    plt.xlabel(r"\# Annotators")
+    plt.ylabel("Percent of comments")
+    plt.title("Distribution of Annotator Counts per Comment by Dataset")
+    plt.grid(True, linestyle="--", alpha=0.3)
+    plt.tight_layout()
+
+    if graph_path is not None:
+        graphs.save_plot(graph_path)
+
+    plt.close()
+
+
 def main(
     dices_small_path: Path,
     dices_large_path: Path,
@@ -220,11 +289,17 @@ def main(
     )
     sap_ds = sap.SapDataset(dataset_path=sap_path)
     kumar_ds = kumar.KumarDataset(
-        dataset_path=kumar_path, num_samples=kumar.NUM_COMMENTS
+        dataset_path=kumar_path,
+        num_samples=kumar.NUM_COMMENTS,
+        remove_long_tail_comments=True,
+    )
+
+    plot_annotator_count_histogram_from_datasets(
+        datasets=[dices350_ds, dices990_ds, sap_ds, kumar_ds],
+        graph_path=graph_dir / "annotator_count_histogram.png",
     )
 
     variance_df_ls = []
-
     for dataset in [dices350_ds, dices990_ds, sap_ds, kumar_ds]:
         res_df = get_dataset_variance(
             dataset, cache_dir, min_comment_annotators=min_comment_annotators
