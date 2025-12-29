@@ -17,6 +17,14 @@ COLORBLIND_PALETTE = [
     "#0072B2",  # blue
     "#D55E00",  # vermillion
     "#CC79A7",  # reddish purple
+    "#999999",  # mid gray (neutral, high legibility)
+    "#8DD3C7",  # light teal (tone-safe extension)
+    "#FDB462",  # light orange (paired but distinct in luminance)
+    "#B3DE69",  # light yellow-green (safe vs. green due to brightness)
+    "#80B1D3",  # soft blue (lightened blue variant)
+    "#FB8072",  # soft coral (distinct from vermillion)
+    "#CAB2D6",  # lavender (low-saturation purple)
+    "#BC80BD",  # plum (dark purple contrast partner)
 ]
 
 
