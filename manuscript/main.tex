@@ -392,20 +392,20 @@
 	
 	\begin{table}[ht]
 		\centering
-		\caption{Overview of the datasets used in this study. \textit{\# Annotators} refers to the number of annotations per comment.}
+		\caption{Overview of the datasets used in this study. \textit{\# Annotators} refers to the number of annotations per comment. For detailed information on the annotation counts for the comments of each dataset, see Appendix~\ref{app:ann_details}.}
 		\label{tab:datasets}
 		\begin{tabular}{lrrrrl}
 			\toprule
 			\textbf{Dataset} & \textbf{\#Comments} & \textbf{\#Annotators} & \textbf{\#\ac{pc} dims} & \textbf{Task} \\
 			\midrule
 			Kumar~\cite{kumar-et-al-2021} 
-			& 106{,}035 & 5--6   & 10 & Toxicity \\
+			& 106{,}035 & 5   & 10 & Toxicity \\
 			
 			Sap~\cite{sap-etal-2022-annotators} 
 			& 626       & 5--6   & 3  & Hate Speech \\
 			
 			DICES-350~\cite{dices} 
-			& 72{,}103  & 60--70 & 4  & Hate Speech \\
+			& 72{,}103  & 70--76 & 4  & Hate Speech \\
 			
 			DICES-990~\cite{dices} 
 			& 43{,}050  & 123    & 4  & Hate Speech \\
@@ -586,7 +586,7 @@
 	
 	\paragraph{Educated annotators tend to increase polarization} Education tends to have a moderate but consistent directional effect across all three datasets where it is present. The direction of this effect is consistent; the more educated an annotator is, the more polarized their ratings become. In the Kumar dataset, for instance, Bachelor’s-degree holders show a substantial positive contribution ($apunim=0.0401$), while groups with lower education such as “College, no degree” exhibit a negative contribution ($apunim=-0.0335$). This may indicate that educated annotators are more likely to exhibit subjective and nuanced views.
 	
-	\subsection{Investigating ordinal attributes}
+	\subsection{Utilizing ordinal attributes}
 	\label{ssec:results:ordinal}
 	
 	\begin{figure}[ht]
@@ -604,20 +604,20 @@
 	\paragraph{Escalating} \emph{Age} in DICES-990 and \emph{Religion Importance} in the Kumar dataset follow a strict, monotonic trend. This implies that, in some cases, the \emph{amount of polarization increases the further apart an opinion is from neutrality}. For example, non-religious annotators are more divided among themselves, while very religious annotators agree among themselves, but fundamentally disagree with other annotators. 
 	
 	
-	\section{How many annotators?}
+	\section{How many annotators do we need?}
 	\label{sec:ann_size}
 	
 	\begin{figure}[ht]
 		\includegraphics[width=\columnwidth]{ndfu_std_error_sample_size.png}
-		\caption{Std error of the \textit{pol-statistic} when sampled with replacement for various number of annotators.}
+		\caption{Std error of the $pol_{obs}$ statistic (Equation ~\ref{eq:observed}) when sampled with replacement for various number of annotators. We repeat the sampling process thirty times, and plot the average $pol_{obs}$ value.}
 		\label{fig:std_error}
 	\end{figure}
 	
-	While our test works best with many annotations per , the cost required for multiple human annotators is often prohibitive \cite{rossi_2024}. It is thus imperative that we find the minimum number of annotators needed for Apunim to generate stable and reliable estimates.
+	While our test works best with many annotations per item, the cost required for multiple human annotators is often greatly restrictive \cite{rossi_2024}. It is thus imperative that we find the minimum number of annotators needed for Apunim to generate stable and reliable estimates.
 	
-	We leverage the large numbers of annotations for the DICES datasets to estimate the trend of the apunim value errors. For each comment in both datasets, we randomly sample a subset of annotators with replacement and compute the apunim value. We repeat the procedure 30 times, and average all observations. This was a necessary step to reduce the variance inherent in random sampling. We also truncate the results for the DICES-350 dataset, since we did not have a large enough sample of comments annotated by 71-74 annotators.
+	For each comment in all datasets, we randomly sample a subset of annotators with replacement and compute the $pol_{obs}$ value (see Equation~\ref{eq:observed}). We repeat the procedure 30 times, and compute the standard error between the observations. We removed values where the standard error exploded due to a lack of comments annotated by the specified number of annotators (e.g., only 7\% of comments in DICES-990 were annotated by more than 74 annotators---see Appendix~\ref{app:ann_details}).
 	
-	Figure~\ref{fig:std_error} demonstrates the effect of the number of annotators on the reliability of the polarization estimation. We can see that the metric becomes consistent with about 20 annotators per comment, after which we start to get diminishing results. 
+	Figure~\ref{fig:std_error} demonstrates the effect of the number of annotators on the reliability of the polarization estimation. Each dataset features a different standard error even with the same number of annotators, which is likely caused by the varying amount of comments used for each dataset. However, we observe a clear, non-linear, inverse relationship between annotator count and standard error in all datasets. This can be attributed to a more robust histogram estimation used by \ac{ndfu} (\S\ref{ssec:methodology:polstat}) when provided with more points for each of the subgroups. Furthermore, we can see that the metric becomes consistent with about 20 annotators per comment for the DICES datasets, after which we start to get diminishing results. Unfortunately, more datasets with large numbers of annotators that include data about their \ac{pc} characteristics, are needed to generalize this finding.
 	
 	
 	\section{Conclusion}
@@ -638,6 +638,34 @@
 			\acro{gpl}[GPLv3]{GNU General Public Licence v3}
 		\end{acronym}
 		
+		
+		\section{Annotation details}
+		\label{app:ann_details}
+		
+		\begin{figure}[ht]
+			\includegraphics[width=\linewidth]{annotator_count_histogram.png}
+			\caption{We calculate the ratio of comments for each dataset (y-axis) that had $x$ number of annotators (x-axis). We truncate the x-axis to 130 annotators, disregarding very few comments in the Kumar dataset exceeding this threshold (see Table~\ref{tab:num-annot}).}
+			\label{fig:ann_counts}
+		\end{figure}
+		
+		\begin{table}[ht]
+			\caption{Descriptive statistics for the number of annotations per comment, grouped by dataset.}
+			\label{tab:num-annot}
+			\begin{tabular}{lrrrrrrrr}
+				\toprule
+				& count & mean & std & min & 25\% & 50\% & 75\% & max \\
+				\midrule
+				DICES-350 & 350 & 123 & 0 & 123 & 123 & 123 & 123 & 123 \\
+				DICES-990 & 990 & 72.8313 & 1.1652 & 69 & 72 & 73 & 74 & 76 \\
+				Kumar et al. 2021 & 20000 & 5.0925 & 4.8872 & 5 & 5 & 5 & 5 & 650 \\
+				Sap et al. 2022 & 585 & 5.6359 & 0.7713 & 3 & 6 & 6 & 6 & 12 \\
+				\bottomrule
+			\end{tabular}
+		\end{table}
+		
+		The number of annotators per comment for all datasets presented in \S\ref{sec:datasets} can be found in Figure~\ref{fig:ann_counts}, and descriptive statistics can be found in Table~\ref{tab:num-annot}. The DICES-990 dataset has exactly 123 annotations per comment, while the other datasets exhibit a few variations around the central mean reported in Table~\ref{tab:datasets}. Interestingly, the sample used from the Kumar dataset exhibits a few comments that vastly exceed the promised $5$ number of annotators. We included these comments for the experiment presented in Table~\ref{tab:kumar}, but not for the annotator number experiment in Figure~\ref{fig:std_error} since they would produce uninterpretable figures.
+		
+		
 		\section{Software}
 		\label{app:software}
 		
@@ -650,8 +678,6 @@
 		By default, the computation of the apunim values happens on a single thread. In cases of serious computational cost, we recommend running the apunim calculation on multiple concurrent processes, since all operations are CPU-bound and thread-safe. This may be useful in cases where there are multiple \ac{pc} dimensions, each of which is computationally expensive. 
 		
 		In order to lower the computational cost required, we re-use the random partitions ($\tilde{P}_i(A(c))$), which are originally calculated to obtain the apriori polarization values (see Equation~\ref{eq:apriori}), for the p-value calculations (\S\ref{ssec:methodology:pvalue}). This means that in our current implementation, the number of groups for estimating apriori polarization ($\tilde{P}_i$ in Equation~\ref{eq:apriori}), and the number of apunim values used in the p-value calculation ($\tilde{D}_i$ in Algorithm~\ref{alg:pvalue}) have to be the same.
-		
-		
 		
 	\end{appendices}
 	
