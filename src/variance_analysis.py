@@ -22,7 +22,7 @@ MARKERS = {
     "DICES-350": "o",
     "DICES-990": "s",
     "Kumar et al. 2021": "^",
-    "Sap et al. 2022": "*"
+    "Sap et al. 2022": "*",
 }
 
 
@@ -139,23 +139,12 @@ def plot_variance_curve(results_df, graph_path: Path):
             marker = MARKERS[ds_name]
 
             # lineplot for dataset
-            ax = sns.lineplot(
+            sns.lineplot(
                 data=subdf,
                 x="sample_size",
                 y="standard_error",
                 marker=marker,
                 label=ds_name,
-            )
-
-            # regression trend line
-            sns.regplot(
-                data=subdf,
-                x="sample_size",
-                y="standard_error",
-                scatter=False,
-                ci=None,
-                color=ax.lines[-1].get_color(),  # match line color
-                label=None,
             )
     else:
         sns.lineplot(
@@ -163,8 +152,10 @@ def plot_variance_curve(results_df, graph_path: Path):
         )
 
     plt.xlabel(r"\# Annotators")
-    plt.ylabel("Std Error of Polarization Statistic")
-    plt.title("Sample Size Effects on Polarization Statistic Estimation")
+    plt.ylabel("Std Error of pol_{obs.}")
+    plt.title(
+        "Robustness of pol_{obs.} depends on the number of annotators"
+    )
     plt.grid(True)
     plt.tight_layout()
 
@@ -346,7 +337,7 @@ def main(
         position="ht",
         index=True,
         float_format="%.4f",
-        escape=True
+        escape=True,
     )
 
     kumar_ds = cull_kumar_ds(kumar_ds)
