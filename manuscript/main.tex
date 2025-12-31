@@ -375,7 +375,7 @@
 	Our test assumes that there exist (1) enough data-points to reliably run the means-test, and (2) enough annotations in each  and \ac{pc} group to estimate the \acp{ndfu} in Equations~\ref{eq:observed},\ref{eq:apriori}. The former can be safely assumed for most datasets, because they feature enough data-points to reliably assume normal residuals (see \S\ref{sec:datasets}), which is why we use the Student-T test \cite{student1908probable}.
 	We discuss the latter assumption in \S\ref{sec:ann_size}.%TODO: Check whether the residuals are normal for small samples
 	
-	Since we are simultaneously considering $\lvert \Theta \rvert$ hypotheses, we apply a multiple comparison correction to the resulting p-values. We choose the Holms method \cite{holms}. The test is parameterized by the \ac{FWER}, which is used to tune the strength of the correction; we can increase this value to make our test more conservative towards multiple hypotheses \cite{ChenFengYi2017}). In general, it is safe to set \ac{FWER} equal to the significance level of our test (e.g., $\textit{FWER} = 0.95$ if we are looking for $p < 0.05$).
+	Since we are simultaneously considering $\lvert \Theta \rvert$ hypotheses, we apply a multiple comparison correction to the resulting p-values. We choose the Holms method \cite{holms}. The test is parameterized by the \ac{fwer}, which is used to tune the strength of the correction; we can increase this value to make our test more conservative towards multiple hypotheses \cite{ChenFengYi2017}). In general, it is safe to set \ac{fwer} equal to the significance level of our test (e.g., $\textit{FWER} = 0.95$ if we are looking for $p < 0.05$).
 	
 	
 	\section{Datasets}
@@ -423,7 +423,7 @@
 	
 	\subsection{Experimental Setup}
 	
-	Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can partially explain polarization in the toxicity/racism annotations. The results for the DICES-350 and DICES-990 datasets can be found in Tables~\ref{tab:dices-350} and \ref{tab:dices-990}, while Tables~\ref{tab:sap} and \ref{tab:kumar}, display the results for the Kumar and Sap datasets respectively. We sample 20{,}000 comments from the Kumar dataset due to computational costs. Note that some groups are not included, since there were no polarized items annotated by more than one annotator of these groups.
+	Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can partially explain polarization in the toxicity/racism annotations. The results for the DICES-350 and DICES-990 datasets can be found in Tables~\ref{tab:dices-350} and \ref{tab:dices-990}, while Tables~\ref{tab:sap} and \ref{tab:kumar}, display the results for the Kumar and Sap datasets respectively. We sample 20{,}000 comments from the Kumar dataset due to computational costs (see Appendix~\ref{app:software:experiments}). Note that some groups are not included, since there were no polarized items annotated by more than one annotator of these groups. For details on other parameters and execution times, refer to Appendix~\ref{app:software:experiments}.
 	
 	\subsection{Which factors contribute to polarization?}
 	\label{ssec:results:factors}
@@ -615,7 +615,7 @@
 	
 	While our test works best with many annotations per item, the cost required for multiple human annotators is often greatly restrictive \cite{rossi_2024}. It is thus imperative that we find the minimum number of annotators needed for Apunim to generate stable and reliable estimates.
 	
-	For each comment in all datasets, we randomly sample a subset of annotators with replacement and compute the $pol_{obs}$ value (see Equation~\ref{eq:observed}). We repeat the procedure 30 times, and compute the standard error between the observations. We removed values where the standard error exploded due to a lack of comments annotated by the specified number of annotators (e.g., only 7\% of comments in DICES-990 were annotated by more than 74 annotators---see Appendix~\ref{app:ann_details}).
+	For each comment in all datasets, we randomly sample a subset of annotators with replacement and compute the $pol_{obs}$ value (see Equation~\ref{eq:observed}). We repeat the procedure 30 times (since larger values lead to large computation times---see Appendix~\ref{app:software:experiments}), and compute the standard error between the observations. We removed values where the standard error exploded due to a lack of comments annotated by the specified number of annotators (e.g., only 7\% of comments in DICES-990 were annotated by more than 74 annotators---see Appendix~\ref{app:ann_details}).
 	
 	Figure~\ref{fig:std_error} demonstrates the effect of the number of annotators on the reliability of the polarization estimation. Each dataset features a different standard error even with the same number of annotators, which is likely caused by the varying amount of comments used for each dataset. However, we observe a clear, non-linear, inverse relationship between annotator count and standard error in all datasets. This can be attributed to a more robust histogram estimation used by \ac{ndfu} (\S\ref{ssec:methodology:polstat}) when provided with more points for each of the subgroups. Furthermore, we can see that the metric becomes consistent with about 20 annotators per comment for the DICES datasets, after which we start to get diminishing results. Unfortunately, more datasets with large numbers of annotators that include data about their \ac{pc} characteristics, are needed to generalize this finding.
 	
@@ -633,7 +633,7 @@
 			\acro{llm}[LLM]{Large Language Model}
 			\acro{pc}[PC]{Personal Characteristic}
 			\acro{ndfu}[nDFU]{normalized Distance From Unimodality}
-			\acro{FWER}{Family-Wise Error Rate}
+			\acro{fwer}[FWER]{Family-Wise Error Rate}
 			\acro{nlp}[NLP]{Natural Language Processing}
 			\acro{gpl}[GPLv3]{GNU General Public Licence v3}
 		\end{acronym}
@@ -677,8 +677,17 @@
 		\subsection{Implementation details}
 		By default, the computation of the apunim values happens on a single thread. In cases of serious computational cost, we recommend running the apunim calculation on multiple concurrent processes, since all operations are CPU-bound and thread-safe. This may be useful in cases where there are multiple \ac{pc} dimensions, each of which is computationally expensive. 
 		
-		In order to lower the computational cost required, we re-use the random partitions ($\tilde{P}_i(A(c))$), which are originally calculated to obtain the apriori polarization values (see Equation~\ref{eq:apriori}), for the p-value calculations (\S\ref{ssec:methodology:pvalue}). This means that in our current implementation, the number of groups for estimating apriori polarization ($\tilde{P}_i$ in Equation~\ref{eq:apriori}), and the number of apunim values used in the p-value calculation ($\tilde{D}_i$ in Algorithm~\ref{alg:pvalue}) have to be the same.
+		In order to lower the computational cost required, we re-use the random partitions $\tilde{P}_i$), which are originally calculated to obtain the apriori polarization values (see Equation~\ref{eq:apriori}), for the p-value calculations (\S\ref{ssec:methodology:pvalue}). This means that in our current implementation, the number of groups for estimating apriori polarization ($\tilde{P}_i$ in Equation~\ref{eq:apriori}), and the number of apunim values used in the p-value calculation ($\tilde{D}_i$ in Algorithm~\ref{alg:pvalue}) have to be the same.
 		
+		
+		\subsection{Use in experiments}
+		\label{app:software:experiments}
+		
+		We use version \texttt{1.0.1} of the library for our experiments. We use 100 random iterations for the apriori value calculation (Equation~\ref{eq:apriori}) and the p-value estimation (\S\ref{ssec:methodology:pvalue}), and set a \ac{fwer} rate of $0.95$. 
+		
+		The current version of the library handles large number of annotators very well due to the use of vectorized operations, but struggles when faced with a lot of comments when the annotators belong to multiple groups. Indeed, while the experiments for all datasets presented in \S\ref{sec:datasets} need no more than a minute to run, the Kumar dataset requires about 12 hours of computation even with a $20\%$ sample. The annotator variance analysis presented in \S\ref{sec:ann_size} also required more than 10 hours of computation, although that is expected due to the nature of the experiment, which is very computationally demanding, and a non-standard use of our library.
+		
+		This bottleneck is likely caused by repeated creation of numpy arrays, resulting in repeated memory allocations for each subgroup, in each comment, for each \ac{pc} dimension. We plan on profiling and addressing it in the next releases of our software. Until then, we suggest either using multiprocessing for each \ac{pc} subgroup, or running the different experiments in parallel (indeed, we use the \texttt{gnu-parallel} linux package \cite{tange_2025_16944306} for our own experiments).
 	\end{appendices}
 	
 \end{document}
