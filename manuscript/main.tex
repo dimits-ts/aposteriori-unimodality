@@ -271,7 +271,7 @@
 	\[
 	S_d = \{c \in d \mid nDFU(c) > \alpha; \Theta^c>1\}
 	\]
-	\noindent where $\alpha$ is a small positive number and $\Theta^c$ is the number of distinct annotator groups in \( A(c) \). This definition filters out a large fraction of unpolarized items (\S\ref{sec:datasets}), reducing noise and significantly lowering computational costs (see Appendix~\ref{app:software:experiments}).
+	\noindent where $\alpha$ is a small positive number and $\Theta^c$ is the number of distinct annotator groups in \( A(c) \). This definition filters out a large fraction of unpolarized items (\S\ref{sec:datasets}), reducing noise and significantly lowering computational costs (see Appendix~\ref{app:replication}).
 	Then, we can estimate how much polarization is generally present in the dataset, irrespective of any \ac{pc}, by simply averaging the \textit{apriori} polarization of its items: 
 	\begin{equation}
 		\label{eq:apriori}
@@ -443,7 +443,7 @@
 	
 	\subsection{Experimental Setup}
 	
-	Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can partially explain polarization in the toxicity/racism annotations. The results for the DICES-350 and DICES-990 datasets can be found in Tables~\ref{tab:dices-350} and \ref{tab:dices-990}, while Tables~\ref{tab:sap} and \ref{tab:kumar}, display the results for the Kumar and Sap datasets respectively. We sample 20{,}000 comments from the Kumar dataset due to computational costs (see Appendix~\ref{app:software:experiments}). Note that some groups are not included, since there were no polarized items annotated by more than one annotator of these groups. For details on other parameters and execution times, refer to Appendix~\ref{app:software:experiments}.
+	Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can partially explain polarization in the toxicity/racism annotations. The results for the DICES-350 and DICES-990 datasets can be found in Tables~\ref{tab:dices-350} and \ref{tab:dices-990}, while Tables~\ref{tab:sap} and \ref{tab:kumar}, display the results for the Kumar and Sap datasets respectively. We sample 20{,}000 comments from the Kumar dataset due to computational costs (see Appendix~\ref{app:replication}). Note that some groups are not included, since there were no polarized items annotated by more than one annotator of these groups. For details on other parameters and execution times, refer to Appendix~\ref{app:replication}.
 	
 	\subsection{Which factors contribute to polarization?}
 	\label{ssec:results:factors}
@@ -635,7 +635,7 @@
 	
 	While our test works best with many annotations per item, the cost required for multiple human annotators is often greatly restrictive \cite{rossi_2024}. It is thus imperative that we find the minimum number of annotators needed for \emph{apunim} to generate stable and reliable estimates.
 	
-	For each comment in all datasets, we randomly sample a subset of annotators with replacement and compute the $pol_{obs}$ value (see Equation~\ref{eq:observed}). We repeat the procedure 30 times (since larger values lead to large computation times---see Appendix~\ref{app:software:experiments}), and compute the standard error between the observations. We removed values where the standard error exploded due to a lack of comments annotated by the specified number of annotators (e.g., only 7\% of comments in DICES-990 were annotated by more than 74 annotators---see Appendix~\ref{app:ann_details}).
+	For each comment in all datasets, we randomly sample a subset of annotators with replacement and compute the $pol_{obs}$ value (see Equation~\ref{eq:observed}). We repeat the procedure 30 times (since larger values lead to large computation times---see Appendix~\ref{app:replication}), and compute the standard error between the observations. We removed values where the standard error exploded due to a lack of comments annotated by the specified number of annotators (e.g., only 7\% of comments in DICES-990 were annotated by more than 74 annotators---see Appendix~\ref{app:ann_details}).
 	
 	Figure~\ref{fig:std_error} demonstrates the effect of the number of annotators on the reliability of the polarization estimation. Each dataset features a different standard error even with the same number of annotators, which is likely caused by the varying amount of comments used for each dataset. However, we observe a clear, non-linear, inverse relationship between annotator count and standard error in all datasets. This can be attributed to a more robust histogram estimation used by \ac{ndfu} (\S\ref{ssec:methodology:polstat}) when provided with more points for each of the subgroups. Furthermore, we can see that the metric becomes consistent with about 20 annotators per comment for the DICES datasets, after which we start to get diminishing results. Unfortunately, more datasets with large numbers of annotators that include data about their \ac{pc} characteristics, are needed to generalize this finding.
 	
