@@ -448,7 +448,11 @@
 	\subsection{Which factors contribute to polarization?}
 	\label{ssec:results:factors}
 	
-	\begin{table}[ht]\centering
+	%smaller, more compact tables
+	{\scriptsize
+
+	\begin{table}[ht]
+		\centering
 		\caption{Aposteriori unimodality results for the DICES-350 dataset.}
 		\label{tab:dices-350}
 		\begin{tabular}{lllr}
@@ -473,7 +477,8 @@
 		\end{tabular}
 	\end{table}
 	
-	\begin{table}[ht]\centering
+	\begin{table}[ht]
+		\centering
 		\caption{Aposteriori unimodality results for the DICES-990 dataset.}
 		\label{tab:dices-990}
 		\begin{tabular}{lllr}
@@ -497,7 +502,8 @@
 		\end{tabular}
 	\end{table}
 	
-	\begin{table}[ht]\centering
+	\begin{table}[ht]
+		\centering
 		\caption{Aposteriori unimodality results for the Sap dataset.}
 		\label{tab:sap}
 		\begin{tabular}{lllr}
@@ -515,8 +521,9 @@
 			\bottomrule
 		\end{tabular}
 	\end{table}
+	}
 	
-	
+	{\footnotesize
 	\begin{longtable}[ht]{lllr}
 		\caption{Aposteriori unimodality results for the Kumar dataset.} \label{tab:kumar} \\
 		\toprule
@@ -597,7 +604,8 @@
 		& 4) Frequently & -0.0217$^{***}$ & 24774 \\
 		& 5) Very Frequently & -0.0145$^{***}$ & 10656 \\
 	\end{longtable}
-	
+	}
+
 	\paragraph{Polarization is consistently attributed to annotator Ethnicity across all datasets, and especially so on hate-speech detection tasks}
 	Across all four datasets, we observe a consistent pattern in which annotation polarization can be attributed to differences in annotator ethnicity---in many datasets this is the strongest contributor to polarization. In each case, statistically significant effects emerge for at least one of the major ethnic groups represented in the data---most notably \emph{White} and \emph{African American} annotators. Additionally, polarization contribution is substantially more pronounced in the Hate Speech datasets than in the Toxicity dataset. This suggests that \emph{ethnic background constitutes a systematic source of annotator disagreement} rather than isolated noise, and is \emph{more prevalent on tasks explicitly investigating racism}.
 	
