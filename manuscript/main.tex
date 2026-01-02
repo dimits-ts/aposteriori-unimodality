@@ -156,7 +156,7 @@
 	\begin{figure}[t]
 		\centering
 		\includegraphics[width=0.8\columnwidth]{apunim_example.drawio.png}
-		\caption{The Apunim framework attributes annotator polarization to various annotator subgroups.}
+		\caption{The \emph{apunim} framework attributes annotator polarization to various annotator subgroups.}
 		\label{fig:apunim_example}
 	\end{figure}
 	
@@ -166,7 +166,7 @@
 	
 	\emph{Inter-annotator agreement} is often used to detect such cases \cite{petra_2022_handling}. Metrics based on agreement mostly measure annotation variance, which may not be an optimal problem formulation for detecting such cases, and fundamentally constrain analysis on single-label annotation. \emph{Polarization} is a better instrument in this regard, since it formulates annotation analysis as a cluster identification problem \cite{Pavlopoulos2023, pavlopoulos-likas-2024}. While we can detect polarization \cite{pavlopoulos-likas-2024, Pavlopoulos2023}, there is little work on how to detect whether it is actually caused by marginalized groups. An existing mechanism operating on individual comments \cite{pavlopoulos-likas-2024}, operates only as a binary classifier, and as such does not produce quantifiable/comparable results. It also only tests for the extreme case where \emph{all} present polarization can be attributed to any single annotator group, which is rare in real-life datasets (\S\ref{sec:datasets}).
 	
-	We instead propose the \emph{Apunim (``Aposteriori Unimodality'') metric}. Unlike previous methods, Apunim is designed to detect any level of attribution for each annotator group, providing a more fine-grained attribution. Additionally, unlike previous approaches which only work on a comment-to-comment basis, Apunim generalizes results for all annotated items, which is particularly important for our formulation due to the limited number of annotations per item. By considering the entire set of items, Apunim helps to identify genuine polarization and distinguish it from chance attribution, which is essential when analyzing large datasets. Our contributions are:
+	We instead propose the \emph{apunim (``Aposteriori Unimodality'') metric}. Unlike previous methods, \emph{apunim} is designed to detect any level of attribution for each annotator group, providing a more fine-grained attribution. Additionally, unlike previous approaches which only work on a comment-to-comment basis, \emph{apunim} generalizes results for all annotated items, which is particularly important for our formulation due to the limited number of annotations per item. By considering the entire set of items, \emph{apunim} helps to identify genuine polarization and distinguish it from chance attribution, which is essential when analyzing large datasets. Our contributions are:
 	
 	\begin{enumerate}
 		\item We introduce a new metric that quantifies polarization, which can be attributed to specific annotator groups, and we develop a parametric test for statistical significance. This metric works for both single-label and multi-label annotation setups, is generalizable across any domain and modality (e.g., video/image classification, toxicity/hate-speech detection) and enables quantitative comparisons across datasets and dimensions (e.g., gender, race, political affiliation). Unlike previous work, our metric is designed to apply to entire datasets instead of individual items.
@@ -225,7 +225,7 @@
 	\end{figure}
 	
 	
-	\paragraph{Polarization attribution} Intuitively, group $\theta$ partially explains the polarization of an item $c$ when the annotations of that group $A(c \given \theta)$ are more polarized compared to the full set of annotations $A(c)$, where $A(c \given \theta_i) = \{a(c; \theta) \in A(c) \given \theta=\theta_i\}$. Figure~\ref{fig:ndfu_combined} exhibits a hypothetical example where a misogynistic comment is annotated for toxicity by male and female annotators. The annotations are generally polarized ($nDFU_{all}=0.62$). The annotations by female annotators exhibit low polarization between themselves ($nDFU_{women}=0.10$), since most agree that the comment is toxic. The set of male annotations, also shows low polarization ($nDFU_{men}=0.37$), but for the opposite reason---most men agree that it is \emph{not} toxic. This suggests that the overall polarization is driven by disagreements between male and female annotators.
+	\paragraph{Polarization attribution} Intuitively, a group $\theta_i \in \Theta$ partially explains the polarization of an item $c$ when the annotations of that group $A(c \given \theta_i)$ exhibit higher polarization compared to the full set of annotations $A(c)$, where $A(c \given \theta_i) = \{a(c; \theta) \in A(c) \given \theta=\theta_i\}$. Figure~\ref{fig:ndfu_combined} exhibits a hypothetical example where a misogynistic comment is annotated for toxicity by male and female annotators. The annotations are generally polarized ($nDFU_{all}=0.62$). The annotations by female annotators exhibit low polarization between themselves ($nDFU_{women}=0.10$), since most agree that the comment is toxic. The set of male annotations, also shows low polarization ($nDFU_{men}=0.37$), but for the opposite reason---most men agree that it is \emph{not} toxic. This suggests that the overall polarization is driven by disagreements between male and female annotators.
 	
 	Previous work \cite{pavlopoulos-likas-2024} stopped on item-to-item (comment-to-comment) analysis. In practice however, this approach is inherently noisy due to a lack of information (i.e., limited annotations) relating to each individual item. In order to get meaningful information, we need to consider the annotations from all items, as the number of items is usually several orders of magnitude larger than the number of annotations per item (\S\ref{sec:datasets}). We thus reformulate our hypothesis; if an annotator subgroup causes some of the underlying polarization in our dataset, we expect that this attribution will persist across multiple polarizing items.
 	%Thus, instead of investigating whether a specific group causes polarization on any individual item, we investigate whether that group \emph{generally contributes to polarization on the specific dataset and task}.
@@ -259,53 +259,56 @@
 	
 	%Comparing the polarization of groups between themselves is not an option; if we compared the two annotator groups in Figure~\ref{fig:ndfu_combined} we would conclude that there is no polarization present, since they have extremely similar \acp{ndfu}. 
 	
-	In a scenario in which each item was annotated by many annotators, we could use sampling or bootstrapping to compare apriori and aposteriori polarization per comment. This, however, is an unrealistic assumption, since the costs of human annotation force researchers to use few annotators for each task \cite{rossi_2024}. To get around this limitation, we randomly partition the annotations in $\lvert \Theta \rvert$ groups, with matching group sizes,\footnote{E.g., if we have $100$ annotations, $80$ of which are made by male annotators and $20$ by female annotators, we will create random partitions of sizes $80$ and $20$.} which effectively ``breaks up'' the effect of any single isolated group on the polarization of the sample. The randomly partitioned annotations are then sampled $t$ times. Formally, the average apriori polarization for a single item will be given by:
-	\[
-	\frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{P}_i (A(c)))
-	\]
-	\noindent where $\tilde{P}$ is the random partition operator with group sizes matching the group sizes of \ac{pc} $\Theta$. Unlike $A(c)$, we can use this formulation for direct comparisons with $A(c \given \theta)$.
+	\subsubsection{Apriori Polarization}
+	In a scenario in which each item was annotated by many annotators, we could use sampling or bootstrapping to compare apriori and aposteriori polarization per comment. This, however, is an unrealistic assumption, since the costs of human annotation force researchers to use few annotators for each task \cite{rossi_2024}. To get around this limitation, we create random stratified splitswhich effectively ``breaks up'' the effect of any single isolated group on the polarization of the sample.\footnote{E.g., if we have $100$ annotations, $80$ of which are made by male annotators and $20$ by female annotators, we will create random partitions of sizes $80$ and $20$.}  The randomly partitioned annotations are then sampled $t$ times. Formally, the (average) apriori polarization for a single item $c$ is then given by:
+	\begin{equation}
+		P_{apr}(c) = \frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{r}_i (A(c)))	    
+	\end{equation}
+	\noindent where $\tilde{r}$ is the random partition operator with group sizes matching the group sizes of \ac{pc} $\Theta$. Unlike $A(c)$, we can use this formulation for direct comparisons with $A(c \given \theta)$.
 	
+	\subsubsection{Dataset Polarization: Apriori and Observed}
 	While the low number of annotators is an important limitation when acquiring the observed polarization \cite{rossi_2024}, this is decisively not the case with the number of items themselves which can range up to hundreds of thousands. Thus, we have the luxury of filtering them before computing our metric, as proposed in previous work \cite{sokratis}. Since our metric attributes polarization, unpolarizing items and those composed of only a single annotator group are useless. We define the subset $S_d$ of dataset $d$ such that:
 	\[
-	S_d = \{c \in d \mid nDFU(c) > \alpha \textit{ and $c$ annotated by at least two groups}\}
+	S_d = \{c \in d \mid nDFU(c) > \alpha; \Theta^c>1\}
 	\]
-	\noindent where $\alpha$ is a small positive number. This allows us to cut a significant number of unpolarized items (\S\ref{sec:datasets}), reducing noise and significantly lowering computational costs (see Appendix~\ref{app:software:experiments}).
-	
-	We can estimate how much polarization is generally present in the dataset, irrespective of any \ac{pc} by simply averaging the \textit{apriori} polarization of each : 
+	\noindent where $\alpha$ is a small positive number and $\Theta^c$ is the number of distinct annotator groups in \( A(c) \). This definition filters out a large fraction of unpolarized items (\S\ref{sec:datasets}), reducing noise and significantly lowering computational costs (see Appendix~\ref{app:software:experiments}).
+	Then, we can estimate how much polarization is generally present in the dataset, irrespective of any \ac{pc}, by simply averaging the \textit{apriori} polarization of its items: 
 	\begin{equation}
 		\label{eq:apriori}
-		pol_{apriori}(d) = \frac{1}{\lvert S_d \rvert} \sum_{c \in S_d} \frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{P}_i (A(c)))
+		P_{apr}^{d} = \frac{1}{\lvert S_d \rvert} \sum_{c \in S_d} P_{apr}(c)
 	\end{equation}
 	
-	Intuitively, a high apriori polarization value means that much of the polarization in the dataset is driven by factors other than the investigated $\Theta$ dimension. In this case, we would need to observe very strong polarization observed within each $\theta \in \Theta$ in order to conclude that the overall dataset polarization can be attributed to group $\theta$. 
-	
-	This value will be compared to the average polarization present in the dataset by annotators of $\theta$:
+	Intuitively, a high apriori polarization score means that much of the polarization in the dataset is likely not driven by factors of the investigated $\Theta$ dimension, because polarization insists disregarding that dimension. 
+	%Strong polarization observed within each $\theta \in \Theta$ could allow us to attribute the overall dataset polarization to group $\theta$, but that is unlikely.
+	Similarly to Equation~\ref{eq:apriori}, we also define polarization that was \emph{observed} by a specific group of annotators, e.g., $\theta$, as:
 	\begin{equation}
 		\label{eq:observed}
-		pol_{obs.}(d, \theta) = \frac{1}{\lvert S_d \rvert} \sum_{c \in S_d}  \textit{nDFU}(A(c \given \theta))
+		P_{obs}^{d}(\theta) = \frac{1}{\lvert S_d \rvert} \sum_{c \in S_d}  \textit{nDFU}(A(c \given \theta))
 	\end{equation}
 	
-	This formulation implicitly assumes that the overall polarization of a dataset can be captured by averaging polarization scores across items. We consider this assumption reasonable: the mean is a simple and intuitive operator, and it exhibits appropriate sensitivity to outliers. Given that polarization values lie in the 
-	$[0,1]$ range, a single item with extreme polarization is unlikely to substantially affect the estimate of overall polarization. In contrast, the presence of many such extreme values will meaningfully increase this estimate, which is the pattern we want to capture.
+	This formulation implicitly assumes that dataset polarization can be estimated by averaging polarization scores across its items. We consider this assumption reasonable, because the mean is a simple and intuitive operator, exhibiting appropriate sensitivity to outliers. Given that polarization values lie in the $[0,1]$ range, a single item with extreme polarization is unlikely to substantially affect the estimate of overall polarization. In contrast, the presence of many such extreme values will meaningfully increase this estimate, which is the pattern we want to capture.
 	
-	The next question would be how to compare the two values in Equations~\ref{eq:apriori},~\ref{eq:observed}. Given the inherent ``noise'' associated with most annotation tasks, a direct subtraction would not be useful. Instead, we define the chance-corrected \emph{``Apunim'' (Aposteriori Unimodality)} metric as:
-	\begin{equation}
-		apunim(d, \theta) = \frac{pol_{obs.}(d, \theta) - pol_{apriori}(d)}{1 - pol_{apriori}(d)}
+	\subsubsection{Apunim}
+	We can now compare the polarization that is attributed to a single-dimensional annotator group (Equation~\ref{eq:observed}) to a prior one (Eq.~\ref{eq:apriori}). 
+	%Given the inherent ``noise'' associated with most annotation tasks, a direct subtraction would not be useful. Instead, 
+	We define our normalised metric, which we call as \emph{``apunim'' (Aposteriori Unimodality)}, as:
+	\begin{equation}\label{eq:apunim}
+		apunim(\theta) = \frac{P_{obs}^{d}(\theta) - P_{apr}^{d}}{1 - P_{apr}^{d}}
 	\end{equation}
 	
 	The scope of the statistic and its relationship with the previously presented statistics are demonstrated in Figure~\ref{fig:overview}. Since $nDFU \rightarrow [0,1] \Rightarrow apunim \rightarrow [-1,1]$. The interpretation of this metric boils down to three scenarios:
 	
 	\begin{itemize}
-		\item If $apunim(d, \theta) \approx 0$, the exhibited polarization among annotators of group $\theta$ does not meaningfully differ from all other groups. In other words, it is indistinguishable from noise (represented by the apriori polarization).
+		\item If $apunim(\theta) \approx 0$, the exhibited polarization among annotators of group $\theta$ does not meaningfully differ from all other groups. In other words, it is indistinguishable from noise (represented by the apriori polarization).
 		
-		\item If $apunim(d, \theta) > 0$, then the polarization observed in the annotation task rises when this group is added to the annotation pool (equivalently intragroup polarization is lower than apriori polarization). 
-		Example: If we observe $apunim(d, \textit{Afr.American}) = 0.3, apunim(d, \textit{White})=0.001$ in a hate-speech detection task, it is likely that African American annotators fundamentally disagree with white annotators on what constitutes racism in the dataset $d$. 
+		\item If $apunim(\theta) > 0$, then the polarization observed in the annotation task rises when this group is added to the annotation pool (equivalently, intragroup polarization is lower than apriori polarization). 
+		For example, if we observe $apunim(\textit{``African American''}) = 0.3, apunim(\textit{``White''})=0.001$ in a hate-speech detection task, it is likely that African American annotators fundamentally disagree with white annotators on what constitutes racism, regarding dataset $d$. 
 		
-		\item Conversely, if $apunim(d, \theta) < 0$, then the overall polarization \emph{drops} when we add this group from the annotation task. Mathematically, this occurs when intragroup polarization is higher than apriori polarization. This may indicate that \emph{other dimensions (acting as confounding variables) are exerting heavy influence on the sample} or that annotators of that group may be very polarized between themselves.
-		Example: If we observe $apunim(d, \textit{Latino}) = -0.3, apunim(d, \textit{White})=0.001$ in a hate-speech detection task, it is likely that Latino annotators fundamentally disagree with \emph{each other} (compared to African American or white annotators) on which texts in the dataset $d$ constitutes racism. 
+		\item Conversely, if $apunim(\theta) < 0$, then the overall polarization \emph{drops} when we add annotators from this group to this task. Mathematically, this occurs when intragroup polarization is higher than apriori polarization. This may indicate that \emph{other dimensions (acting as confounding variables) are exerting heavy influence on the sample} or that annotators of that group may be very polarized between themselves.
+		For example, if we observe $apunim(\textit{Latino}) = -0.3, apunim(\textit{White})=0.001$ in a hate-speech detection task, it is likely that Latino annotators fundamentally disagree with \emph{each other} (compared to African American or white annotators) on which texts in the dataset $d$ constitutes racism. 
 	\end{itemize}
 	
-	\subsection{p-value estimation}
+	\subsection{P-value estimation}
 	\label{ssec:methodology:pvalue}
 	
 	\begin{algorithm}[t]
@@ -316,64 +319,78 @@
 			\Require Dataset $d$, annotator groups $\Theta$
 			\Require Filtered items $S_d$
 			\Require Number of random partitions $t$
-			\Ensure $p$-value for testing whether $apunim(d,\theta)\neq 0$
+			\Ensure $p$-value for testing whether $apunim(\theta)\neq 0$
 			
 			\State
-			$pol_{obs.}(d,\theta)
+			$P_{obs}^{d}(\theta)
 			=
 			\frac{1}{|S_d|}
 			\sum_{c\in S_d}
 			nDFU(A(c \given \theta))$
+			\Comment{As in Equation~\ref{eq:observed}}
 			
 			\State
-			$pol_{apriori}(d)
+			$P_{apr}^{d}
 			=
 			\frac{1}{|S_d|}
 			\sum_{c\in S_d}
 			\frac{1}{t} 
 			\sum_{i=1}^t 
-			\textit{nDFU}(\tilde{P}_i (A(c)))$
+			\textit{nDFU}(\tilde{r}_i (A(c)))$
+			\Comment{As in Equation~\ref{eq:apriori}}
+			\State
+			$apunim
+			=
+			\frac{P_{obs}^{d}(\theta)-P_{apr}^{d}}
+			{1-P_{apr}^{d}}$
+			\Comment{As in Equation~\ref{eq:apunim}}
+			
+			\State $rand\_apunims = \{\}$
+			\For{$i=1, 2, \ldots, t$}
+			\State
+			$rand\_obs
+			=
+			\frac{1}{|S_d|}
+			\sum_{c\in S_d}
+			nDFU(\tilde{r}_i(A(c))$
+			\Comment{Single random partition}
 			
 			\State
-			$obs\_apunim
+			$rand\_apriori
 			=
-			\frac{pol_{obs.}(d,\theta)-pol_{apriori}(d)}
-			{1-pol_{apriori}(d)}$
+			\frac{1}{|S_d|}
+			\sum_{c\in S_d}
+			\frac{1}{t} 
+			\sum_{i=1}^t 
+			\textit{nDFU}(\tilde{r}_i (A(c)))$
+			\Comment{Same as $P^d_{apr}$}
 			
 			\State
-			$Apunim_{\text{null}}
+			$rand\_apunim
 			=
-			\left\{
-			apunim^{(i)}
-			\;\middle|\;
-			apunim^{(i)}
-			=
-			\frac{\bar{D}^{(i)}-\bar{D}^{(-i)}}
-			{1-\bar{D}^{(-i)}},
-			\;
-			i=1,\dots,t
-			\right\}$
+			\frac{rand\_obs-rand\_apriori}
+			{1-rand\_apriori}$
 			
-			\Statex
-			where $\bar{D}^{(i)}$ denotes the dataset-level mean apunim value
-			obtained from $\tilde{P}_i$
-			
-			\State $p=\textit{Student-T} (Apunim_{\text{null}} \neq obs\_apunim)$
+			\State $rand\_apunims = rand\_apunims \cup rand\_apunim$ 
+			\EndFor
+			\State $p=\textit{Student-T} (rand\_apunims \neq apunim)$
 			
 			\State \Return $p$
 		\end{algorithmic}
-	\end{algorithm}
-	
-	The condition $apunim(d, \theta) \approx 0$ is not well-defined in the presence of inherent noise, which is why we need a statistical test. Our initial formulation was:
+	\end{algorithm}	
+	The strict condition $apunim(\theta) \approx 0$ is not sufficient due to inherent annotation variance.
+	%, which means that subgroups may exhibit minor disagreements across some comments by pure chance. 
+	We initially formulated the following statistical hypothesis:
 	\[
-	H_0: \forall \theta \in \Theta,  \textit{apunim}(d, \theta) = 0, H_i: \textit{apunim}(d, \theta_i) \neq 0
-	\]
+	H_0: \forall \theta \in \Theta,  \textit{apunim}(\theta) = 0\text{ and } H_1: \textit{apunim}(\theta) \neq 0
+	\]	
+	However during early experimentation, we observed that $apunim$ values were rarely statistically close to $0$, which we hypothesize to be caused by the presence of inherent polarization (see \S\ref{ssec:methodology:polstat}). This would indicate that this formulation is not strong enough, and leads to frequent Type I errors. 
 	
-	However during early experimentation, it was discovered that apunim values were rarely statistically close to $0$, which we hypothesize to be caused by the presence of inherent polarization (see \S\ref{ssec:methodology:polstat}). This would indicate that there is also some degree of inherent polarization attribution that can not be explained by chance for most annotator \ac{pc} groups. If the apunim value is significant, we would expect it to significantly differ from apunim values obtained by truly randomized groups on the same sample. We use the individual randomized partitions $P_i(A(c))$ to construct pseudo-apunim values which are then compared to the actual apunim value of the sample using a Student-T test, as shown in Algorithm~\ref{alg:pvalue}. Thus, we test a much stricter hypothesis:
+	For this reason, we reformulate our hypothesis; If the apunim value is statistically significant, we would expect it to significantly differ \emph{from apunim values exhibited by randomized groups} on the same sample. We use the individual randomized partitions $r_i(A(c))$ to construct pseudo-apunim values which are then compared to the actual apunim value of the sample using a Student-T test, as shown in Algorithm~\ref{alg:pvalue}. Thus, we test a much stricter hypothesis:
 	\[
-	H_0: \forall \theta \in \Theta,  \textit{apunim}(d, \theta) = \bar{apunim(d)}, H_i: \textit{apunim}(d, \theta_i) \neq \bar{apunim(d)}
+	H_0: \forall \theta \in \Theta,  \textit{apunim}(\theta) = \bar{apunim(d)}, H_i: \textit{apunim}(d, \theta) \neq \bar{apunim(d)}, \forall \theta \in \Theta
 	\]
-	\noindent where $\bar{apunim(d)}$ denotes the mean apunim values of each random partition $\tilde{P}_i(A(c))$.	
+	\noindent where $\bar{apunim(d)}$ denotes the mean apunim values of each random partition $\tilde{r}_i(A(c))$.	
 	
 	Our test assumes that there exist (1) enough data-points to reliably run the means-test, and (2) enough annotations in each  and \ac{pc} group to estimate the \acp{ndfu} in Equations~\ref{eq:observed},\ref{eq:apriori}. The former can be safely assumed for most datasets, because they feature enough data-points to reliably assume normal residuals (see \S\ref{sec:datasets}), which is why we use the Student-T test \cite{student1908probable}.
 	We discuss the latter assumption in \S\ref{sec:ann_size}.%TODO: Check whether the residuals are normal for small samples
@@ -602,7 +619,7 @@
 	
 	Figure~\ref{fig:ordinal} shows the trend lines for each ordinal \ac{pc} attribute that has at least two statistically significant values. We aggregate these trends in two patterns; \emph{``Clustering''} and \emph{``Escalating''}.
 	
-	\paragraph{Clustering} Some ordinal attributes tend to cluster around a few dominant values; for example, \emph{Age} and \emph{Education} in the Kumar dataset. This pattern is expected because the Apunim algorithm is designed to identify clusters of annotations, causing annotations for nearby or similar values to be absorbed into the main effects driven by a few dominant modes.
+	\paragraph{Clustering} Some ordinal attributes tend to cluster around a few dominant values; for example, \emph{Age} and \emph{Education} in the Kumar dataset. This pattern is expected because the apunim algorithm is designed to identify clusters of annotations, causing annotations for nearby or similar values to be absorbed into the main effects driven by a few dominant modes.
 	
 	\paragraph{Escalating} \emph{Age} in DICES-990 and \emph{Religion Importance} in the Kumar dataset follow a strict, monotonic trend. This implies that, in some cases, the \emph{amount of polarization increases the further apart an opinion is from neutrality}. For example, non-religious annotators are more divided among themselves, while very religious annotators agree among themselves, but fundamentally disagree with other annotators. 
 	
@@ -616,7 +633,7 @@
 		\label{fig:std_error}
 	\end{figure}
 	
-	While our test works best with many annotations per item, the cost required for multiple human annotators is often greatly restrictive \cite{rossi_2024}. It is thus imperative that we find the minimum number of annotators needed for Apunim to generate stable and reliable estimates.
+	While our test works best with many annotations per item, the cost required for multiple human annotators is often greatly restrictive \cite{rossi_2024}. It is thus imperative that we find the minimum number of annotators needed for \emph{apunim} to generate stable and reliable estimates.
 	
 	For each comment in all datasets, we randomly sample a subset of annotators with replacement and compute the $pol_{obs}$ value (see Equation~\ref{eq:observed}). We repeat the procedure 30 times (since larger values lead to large computation times---see Appendix~\ref{app:software:experiments}), and compute the standard error between the observations. We removed values where the standard error exploded due to a lack of comments annotated by the specified number of annotators (e.g., only 7\% of comments in DICES-990 were annotated by more than 74 annotators---see Appendix~\ref{app:ann_details}).
 	
@@ -625,7 +642,7 @@
 	
 	\section{Conclusion}
 	
-	We introduced the Apunim metric which attributes polarization to annotator subgroups for various \ac{pc} dimensions. Our metric works well for imbalanced annotator splits, is well-defined for multi-label annotation, includes a statistical significance test, and unlike previous work, quantifies the amount of attribution in order to allow for comparisons between various experiments and datasets. Using this metric, we discover that annotator ethnicity is the strongest and most consistent driver of polarization between annotators across datasets, and is much more pronounced on Hate Speech detection tasks. We also discover that education and religion consistently impact the behavior of annotators. Specifically, we discover that very religious annotators fundamentally agree with themselves but disagree with others in Toxicity detection tasks, a trend that is gradually and consistently diminished, and ultimately reversed, by irreligious annotators. We also provide an open-source, PyPi-installable implementation, and an estimation of the number of annotators needed for each , for our method to be consistently reliable.
+	We introduced the \emph{apunim} metric which attributes polarization to annotator subgroups for various \ac{pc} dimensions. Our metric works well for imbalanced annotator splits, is well-defined for multi-label annotation, includes a statistical significance test, and unlike previous work, quantifies the amount of attribution in order to allow for comparisons between various experiments and datasets. Using this metric, we discover that annotator ethnicity is the strongest and most consistent driver of polarization between annotators across datasets, and is much more pronounced on Hate Speech detection tasks. We also discover that education and religion consistently impact the behavior of annotators. Specifically, we discover that very religious annotators fundamentally agree with themselves but disagree with others in Toxicity detection tasks, a trend that is gradually and consistently diminished, and ultimately reversed, by irreligious annotators. We also provide an open-source, PyPi-installable implementation, and an estimation of the number of annotators needed for each , for our method to be consistently reliable.
 	
 	\bibliography{refs}
 	
@@ -683,10 +700,10 @@
 		In order to lower the computational cost required, we re-use the random partitions $\tilde{P}_i$), which are originally calculated to obtain the apriori polarization values (see Equation~\ref{eq:apriori}), for the p-value calculations (\S\ref{ssec:methodology:pvalue}). This means that in our current implementation, the number of groups for estimating apriori polarization ($\tilde{P}_i$ in Equation~\ref{eq:apriori}), and the number of apunim values used in the p-value calculation ($\tilde{D}_i$ in Algorithm~\ref{alg:pvalue}) have to be the same.
 		
 		
-		\subsection{Use in experiments}
-		\label{app:software:experiments}
+		\section{Replication Details}
+		\label{app:replication}
 		
-		We use version \texttt{1.0.1} of the library for our experiments. We use 100 random iterations for the apriori value calculation (Equation~\ref{eq:apriori}) and the p-value estimation (\S\ref{ssec:methodology:pvalue}), and set a \ac{fwer} rate of $0.95$. 
+		We use version \texttt{1.0.1} of the \texttt{apunim} library for our experiments. We use 100 random iterations for the apriori value calculation (Equation~\ref{eq:apriori}) and the p-value estimation (\S\ref{ssec:methodology:pvalue}), and set a \ac{fwer} rate of $0.95$. 
 		
 		The current version of the library handles large number of annotators very well due to the use of vectorized operations, but struggles when faced with a lot of comments when the annotators belong to multiple groups. Indeed, while the experiments for all datasets presented in \S\ref{sec:datasets} need no more than a minute to run, the Kumar dataset requires about 12 hours of computation even with a $20\%$ sample. The annotator variance analysis presented in \S\ref{sec:ann_size} also required more than 10 hours of computation, although that is expected due to the nature of the experiment, which is very computationally demanding, and a non-standard use of our library.
 		
