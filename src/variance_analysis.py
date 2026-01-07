@@ -61,63 +61,49 @@ def sample_se_vs_sample_size_unimodality(
     results: list[dict[str, typing.Any]] = []
 
     for size in tqdm(range(min_size, max_size + 1, step), desc="#Annotators"):
-        iter_ses: list[float] = []
+        iter_sds: list[float] = []
 
         for _ in tqdm(range(iters), desc="#Iterations", leave=False):
             sample_stats: list[float] = []
 
-            # loop over comments
             for _, row in df.iterrows():
                 anns = row[annotation_col]
                 grps = row[group_col]
 
-                # skip comments with too few annotators
                 if anns is None:
                     continue
                 try:
                     n_ann = len(anns)
                 except Exception:
-                    # if annotations are stored differently, skip
                     continue
 
-                if n_ann < min_comment_annotators:
-                    continue
-
-                # skip if not enough annotators for this sample size
-                if n_ann < size:
+                if n_ann < min_comment_annotators or n_ann < size:
                     continue
 
                 annotations = np.array(anns)
                 groups = np.array(grps)
 
-                # subsample
                 idx = np.random.choice(n_ann, size=size, replace=False)
                 sub_ann = annotations[idx]
                 sub_grp = groups[idx]
 
-                # compute factor DFU stats
                 stats_dict = apunim._factor_dfu_stat(
                     sub_ann, sub_grp, bins=bins
                 )
 
-                # collect values (drop NaNs)
                 sample_stats.extend(
                     [float(v) for v in stats_dict.values() if not np.isnan(v)]
                 )
 
-            # compute SE for this iteration
             if len(sample_stats) > 1:
-                se = float(
-                    np.std(sample_stats, ddof=1) / np.sqrt(len(sample_stats))
-                )
-                iter_ses.append(se)
+                sd = float(np.std(sample_stats, ddof=1))
+                iter_sds.append(sd)
 
-        # average SE across iterations
-        if len(iter_ses) > 0:
+        if len(iter_sds) > 0:
             results.append(
                 {
                     "sample_size": size,
-                    "standard_error": float(np.mean(iter_ses)),
+                    "standard_deviation": float(np.mean(iter_sds)),
                 }
             )
 
@@ -142,20 +128,21 @@ def plot_variance_curve(results_df, graph_path: Path):
             sns.lineplot(
                 data=subdf,
                 x="sample_size",
-                y="standard_error",
+                y="standard_deviation",
                 marker=marker,
                 label=ds_name,
             )
     else:
         sns.lineplot(
-            data=results_df, x="sample_size", y="standard_error", marker="o"
+            data=results_df,
+            x="sample_size",
+            y="standard_deviation",
+            marker="o",
         )
 
     plt.xlabel(r"\# Annotators")
-    plt.ylabel("Std Error of pol_{obs.}")
-    plt.title(
-        "Robustness of pol_{obs.} depends on the number of annotators"
-    )
+    plt.ylabel("Std deviation of $pol_{obs.}$")
+    plt.title("Robustness of $pol_{obs.}$ depends on the number of annotators")
     plt.grid(True)
     plt.tight_layout()
 
