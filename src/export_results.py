@@ -25,7 +25,7 @@ def csv_to_latex(results_dir: Path, latex_output_dir: Path) -> None:
         )
 
 
-def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
+def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
     """
     For each CSV in results_dir:
     - Identify ordinal-valued rows grouped by the 'SDB Feature' column.
@@ -37,9 +37,6 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
 
     # --- Collect all data first ---
     for file in results_dir.rglob("*.csv"):
-        if file.name == "kumar_ablation.csv":
-            continue
-
         df = pd.read_csv(file)
         dataset = file.stem
 
@@ -152,7 +149,7 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
     add_grouped_legend(
         ax,
         group_1=highlight_group_1,
-        group_1_title="Escalating",
+        group_1_title="Monotonic",
         group_2=highlight_group_2,
         group_2_title="Diverging",
         others_title="Neither",
@@ -160,10 +157,11 @@ def ordinal_graphs(results_dir: Path, graph_output_dir: Path) -> None:
     )
 
     plt.title("Apunim trends in ordinal variables")
-    plt.xlabel("Order (normalized)")
+    plt.xlabel("Order (low → high)")
     plt.ylabel("Apunim value")
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
+    ax.set_xticks([])  # Remove x-axis ticks
 
     graphs.save_plot(graph_output_dir / "apunim_ordinal.png")
 
@@ -233,7 +231,7 @@ def add_grouped_legend(
 def main(results_dir: Path, latex_output_dir: Path, graph_output_dir: Path):
     graphs.graph_setup()
     csv_to_latex(results_dir=results_dir, latex_output_dir=latex_output_dir)
-    ordinal_graphs(results_dir=results_dir, graph_output_dir=graph_output_dir)
+    ordinal_graph(results_dir=results_dir, graph_output_dir=graph_output_dir)
 
 
 if __name__ == "__main__":
