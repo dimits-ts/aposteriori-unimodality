@@ -25,6 +25,67 @@ def csv_to_latex(results_dir: Path, latex_output_dir: Path) -> None:
         )
 
 
+def ordinal_graph_per_feature(
+    results_dir: Path, graph_output_dir: Path
+) -> None:
+    graphs.graph_setup()
+
+    for file in results_dir.rglob("*.csv"):
+        df = pd.read_csv(file)
+        dataset = file.stem
+
+        if "SDB Feature" not in df.columns or "Unnamed: 1" not in df.columns:
+            continue
+
+        for feature_name, g in df.groupby("SDB Feature"):
+
+            g = g[g["Unnamed: 1"].astype(str).str.match(r"^\d+\)")]
+            g = g[g.apunim.notna()]
+            if g.empty:
+                continue
+
+            g["ordinal_num"] = (
+                g["Unnamed: 1"].astype(str).str.extract(r"^(\d+)").astype(int)
+            )
+            g["ordinal_label"] = g["Unnamed: 1"]
+
+            # Drop duplicates so each label appears once
+            g_unique = g.drop_duplicates(subset="ordinal_label")
+
+            plt.figure(figsize=(8, 5))
+            ax = sns.lineplot(
+                data=g,
+                x="ordinal_num",  # use numeric x-axis
+                y="apunim",
+                marker="o",
+                errorbar=None,
+            )
+
+            plt.title(f"{dataset} — {feature_name}")
+            plt.xlabel("Ordinal")
+            plt.ylabel("Apunim value")
+            plt.grid(True, alpha=0.3)
+
+            # One tick per unique label
+            ax.set_xticks(g_unique["ordinal_num"])
+            ax.set_xticklabels(
+                g_unique["ordinal_label"], rotation=45, ha="right"
+            )
+
+            plt.tight_layout()
+
+            safe_feature = (
+                str(feature_name).replace(" ", "_").replace("/", "-")
+            )
+            out_path = (
+                graph_output_dir
+                / f"apunim_ordinal_{dataset}_{safe_feature}.png"
+            )
+
+            graphs.save_plot(out_path)
+            plt.close()
+
+
 def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
     """
     For each CSV in results_dir:
@@ -63,7 +124,7 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
 
             if g.empty:
                 continue
-            
+
             # need at least two statistically significant groups
             if (g.pvalue <= 0.05).sum() < 2:
                 continue
@@ -109,7 +170,7 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
     highlight_group_2 = {
         "kumar-Education",
         "kumar-Toxicity Problem",
-        "kumar-Technology Impact"
+        "kumar-Technology Impact",
     }
 
     COLOR_GROUP_1 = graphs.COLORBLIND_PALETTE[0]
@@ -153,7 +214,7 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
         group_2=highlight_group_2,
         group_2_title="Diverging",
         others_title="Neither",
-        loc="lower center"
+        loc="lower center",
     )
 
     plt.title("Apunim trends in ordinal variables")
@@ -232,6 +293,9 @@ def main(results_dir: Path, latex_output_dir: Path, graph_output_dir: Path):
     graphs.graph_setup()
     csv_to_latex(results_dir=results_dir, latex_output_dir=latex_output_dir)
     ordinal_graph(results_dir=results_dir, graph_output_dir=graph_output_dir)
+    ordinal_graph_per_feature(
+        results_dir=results_dir, graph_output_dir=graph_output_dir
+    )
 
 
 if __name__ == "__main__":
