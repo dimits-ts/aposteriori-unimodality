@@ -436,14 +436,14 @@
 	
 	\subsection{Experimental Setup}
 	
-	Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can partially explain polarization in the toxicity/racism annotations, as shown in Table~\ref{tab:datasets}. We sample 20{,}000 comments from the Kumar dataset due to computational costs (see Appendix~\ref{app:replication}). Note that some groups are not included, either because the results were not statistically significant, or because there were no polarized items annotated by more than one annotator of these groups (see \S\ref{sssec:datapol} about this restriction). Consult Appendix~\ref{app:replication} for details on other parameters and execution times, and Appendix~\ref{app:full} for the full results.
+	Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can partially explain polarization in the toxicity/racism annotations, as shown in Table~\ref{tab:datasets}. We sample 20{,}000 comments from the Kumar dataset due to computational costs (see Appendix~\ref{app:replication}). Note that some groups are not included, either because the results were not statistically significant, or because there were no polarized items annotated by more than one annotator of these groups (see \S\ref{sssec:datapol} about this restriction). Consult Appendix~\ref{app:replication} for details on other parameters and execution times, and Appendix~\ref{app:full:tables} for the full results.
 	
 	
 	\subsection{Which factors contribute to polarization?}
 	\label{ssec:results:factors}
 	
 	\begin{longtable}{lllr r}
-		\caption{Statistically significant ($ \textit{***}: p<0.01, \textit{**}: p<0.05$) aposteriori unimodality results across all four datasets. High \emph{apunim} values indicate that polarization can be attributed to this subgroup. Near-zero values indicate that polarization can not be attributed to the subgroup. Negative values indicate that there is more polarization among annotators of that subgroup than other subgroups (see \S\ref{ssec:methodology:polstat}). For the full results, consult Appendix~\ref{app:full}.}
+		\caption{Statistically significant ($ \textit{***}: p<0.01, \textit{**}: p<0.05$) aposteriori unimodality results across all four datasets. High \emph{apunim} values indicate that polarization can be attributed to this subgroup. Near-zero values indicate that polarization can not be attributed to the subgroup. Negative values indicate that there is more polarization among annotators of that subgroup than other subgroups (see \S\ref{ssec:methodology:polstat}). For the full results, consult Appendix~\ref{app:full:tables}.}
 		\label{tab:merged-apunim} \\
 		\toprule
 		Dataset & \ac{pc} dimension & Value & apunim & support \\
@@ -530,7 +530,7 @@
 	
 	\begin{figure}[ht]
 		\includegraphics[width=\linewidth]{apunim_ordinal.png}
-		\caption{Apunim values across ordinal factor levels with at least two statistically significant values. The x-axis corresponds to the ordered levels of each factor and is normalized so that different ordinal scales are comparable (e.g., education which is measured in different scales across datasets). The left side of the x-axis (low orders) refers to young annotators, low education, low religiousness, and indifference towards the impacts of toxicity and technology. The full ordinal modes for each dimension can be found in Appendix~\ref{app:full}.}
+		\caption{Apunim values across ordinal factor levels with at least two statistically significant values. The x-axis corresponds to the ordered levels of each factor and is normalized so that different ordinal scales are comparable (e.g., education which is measured in different scales across datasets). The left side of the x-axis (low orders) refers to young annotators, low education, low religiousness, and indifference towards the impacts of toxicity and technology. The full ordinal modes for each dimension and their individual labels can be found in Appendix~\ref{app:full:ordinal}.}
 		\label{fig:ordinal}
 	\end{figure}
 	
@@ -606,7 +606,7 @@
 			\end{tabular}
 		\end{table}
 		
-		The number of annotators per comment for all datasets presented in \S\ref{sec:datasets} can be found in Figure~\ref{fig:ann_counts}, and descriptive statistics can be found in Table~\ref{tab:num-annot}. The DICES-990 dataset has exactly 123 annotations per comment, while the other datasets exhibit a few variations around the central mean reported in Table~\ref{tab:datasets}. Interestingly, the sample used from the Kumar dataset exhibits a few comments that vastly exceed the promised $5$ number of annotators. We included these comments for the experiment presented in Table~\ref{tab:kumar}, but not for the annotator number experiment in Figure~\ref{fig:std_error} since they would produce uninterpretable figures.
+		The number of annotators per comment for all datasets presented in \S\ref{sec:datasets} can be found in Figure~\ref{fig:ann_counts}, and descriptive statistics can be found in Table~\ref{tab:num-annot}. The DICES-990 dataset has exactly 123 annotations per comment, while the other datasets exhibit a few variations around the central mean reported in Table~\ref{tab:datasets}. Interestingly, the sample used from the Kumar dataset exhibits a few comments that vastly exceed the promised $5$ number of annotators. We included these comments for the experiment presented in Table~\ref{tab:merged-apunim}, but not for the annotator number experiment in Figure~\ref{fig:std_error} since they would produce uninterpretable figures.
 		
 		
 		\subsection{Polarization}
@@ -648,6 +648,23 @@
 		
 		\section{Full Results}
 		\label{app:full}
+		
+		\subsection{Ordinal dimension analysis}
+		\label{app:full:ordinal}
+		
+		\begin{figure*}[ht]
+			\includegraphics[width=0.46\columnwidth]{apunim_ordinal_dices-990_Age.png}
+			\includegraphics[width=0.46\columnwidth]{apunim_ordinal_kumar_Age.png}
+			\includegraphics[width=0.46\columnwidth]{apunim_ordinal_kumar_Education.png}
+			\includegraphics[width=0.46\columnwidth]{apunim_ordinal_kumar_Religion_Important.png}
+			\includegraphics[width=0.46\columnwidth]{apunim_ordinal_kumar_Toxicity_Problem.png}
+			\caption{Apunim values across ordinal factor levels with at least two statistically significant values, expanded for each ordinal \ac{pc}. This figure is complementary to Figure~\ref{fig:ordinal}. The values in the graphs were extracted from the Tables of Appendix~\ref{app:full:tables}. }
+			\label{fig:ordinal-full}
+		\end{figure*}
+		
+		
+		\subsection{Apunim results}
+		\label{app:full:tables}
 		
 		\begin{table}[ht]
 			\centering

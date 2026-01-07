@@ -62,7 +62,7 @@ def ordinal_graph_per_feature(
             )
 
             plt.title(f"{dataset} — {feature_name}")
-            plt.xlabel("Ordinal")
+            plt.xlabel("")
             plt.ylabel("Apunim value")
             plt.grid(True, alpha=0.3)
 
