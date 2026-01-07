@@ -68,6 +68,7 @@ def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
         stat="count",
         palette=COLORBLIND_PALETTE,
         edgecolor="black",
+        bins=10
     )
     ax.get_legend().set_title(None)
     ax.set_xlabel("nDFU (Polarization)")

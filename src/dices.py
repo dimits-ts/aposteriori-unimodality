@@ -149,7 +149,7 @@ def main(
 
     ds_990 = DicesDataset(dataset_path=dataset_path_large, variant="990")
     graphs.polarization_plot(
-        ds=ds_350, output_path=graph_output_dir / "dices-990.png"
+        ds=ds_990, output_path=graph_output_dir / "dices-990.png"
     )
     res = run_helper.run_all_results(ds=ds_990)
     res.to_csv(output_dir / "dices-990.csv")
