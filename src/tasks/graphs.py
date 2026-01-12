@@ -51,9 +51,7 @@ def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
             records.append({"SDB Feature": sdb_col, "nDFU": ndfu_value})
 
     plot_df = pd.DataFrame(records)
-    plot_df = plot_df.rename(
-        columns={"SDB Feature": "PC Dimension"}
-    )
+    plot_df = plot_df.rename(columns={"SDB Feature": "PC Dimension"})
 
     # important for proper legend handling
     plot_df["PC Dimension"] = pd.Categorical(
@@ -68,7 +66,7 @@ def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
         stat="count",
         palette=COLORBLIND_PALETTE,
         edgecolor="black",
-        bins=10
+        bins=10,
     )
     ax.get_legend().set_title(None)
     ax.set_xlabel("nDFU (Polarization)")
@@ -124,6 +122,8 @@ def graph_setup() -> None:
             "xtick.labelsize": 14,
             "ytick.labelsize": 14,
             "legend.fontsize": 14,
+            "figure.titlesize": 22,
+            "figure.labelsize": 22,
             # Axes
             "axes.linewidth": 0.8,
             "axes.edgecolor": "black",

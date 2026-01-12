@@ -93,7 +93,7 @@ def _plot_matrix(
     ax.set_yticklabels(["☺", "🙂", "😐", "😠", "🤬"])
     ax.set_ylim(0.8, 5.2)
     ax.set_title(title)
-    ax.legend(loc="upper right")
+    #ax.legend(loc="upper right")
 
 
 def plot_annotation_distributions(
@@ -105,7 +105,7 @@ def plot_annotation_distributions(
         _prepare_distributions(n_annotators, variance)
     )
 
-    fig, axs = plt.subplots(2, 2, figsize=(18, 12), sharex=True, sharey=True)
+    fig, axs = plt.subplots(2, 2, sharex=True, sharey=True)
     plt.subplots_adjust(hspace=0.15, wspace=0.15)
 
     # ---- Bottom-left: Low polarization, low disagreement
