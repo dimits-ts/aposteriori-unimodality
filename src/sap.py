@@ -87,21 +87,12 @@ class SapDataset(preprocessing.Dataset):
 
 
 def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
+    graphs.graph_setup()
     ds = SapDataset(dataset_path=dataset_path)
 
     graphs.polarization_plot(ds=ds, output_path=graph_output_dir / "sap.png")
 
     res = run_helper.run_all_results(ds)
-    age_ranking = [
-        "0-20",
-        "20-40",
-        "40-60",
-        "60-80",
-    ]
-    age_ordinal_map = {
-        name: f"{i+1}) {name}" for i, name in enumerate(age_ranking)
-    }
-    res = res.rename(index=age_ordinal_map, level=1)
     res.to_csv(output_dir / "sap.csv")
 
 

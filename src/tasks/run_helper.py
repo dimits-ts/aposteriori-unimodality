@@ -88,7 +88,6 @@ def results_to_latex(
         columns = list(res_df.columns)
 
     latex_str = res_df.to_latex(
-        longtable=False,
         caption=(
             f"Aposteriori unimodality results for the {dataset_name} "
             "dataset."
@@ -99,13 +98,15 @@ def results_to_latex(
         position="ht",
         index=True,
         float_format="%.4f",
+        multirow=False,
+        longtable=dataset_name == "kumar",
     )
 
     # Small font
     if small_fontsize:
         latex_str = latex_str.replace(
             r"\begin{table}[ht]",
-            r"\begin{table}[ht]\scriptsize",
+            r"\begin{table}[ht]\centering",
         )
 
     # Two-column layout support

@@ -33,6 +33,12 @@ class DicesDataset(preprocessing.Dataset):
     @staticmethod
     def _base_df(dataset_path: Path) -> pd.DataFrame:
         df = pd.read_csv(dataset_path)
+
+        if "Q3_bias_overall" not in df.columns:
+            df = df.rename(
+                {"Q3_unfair_bias_overall": "Q3_bias_overall"}, axis=1
+            )
+
         df = df.loc[
             :,
             [
@@ -40,18 +46,24 @@ class DicesDataset(preprocessing.Dataset):
                 "rater_age",
                 "rater_race",
                 "rater_education",
-                "Q_overall",
+                "Q3_bias_overall",
                 "item_id",
             ],
         ]
-        df.Q_overall = df.Q_overall.map(
-            {"No": -1, "Unsure": "0", "Yes": 1}
+        df.Q3_bias_overall = df.Q3_bias_overall.map(
+            {"No": -1, "Unsure": 0, "Yes": 1}
         ).astype(int)
 
         df = df.replace(
             {
+                "College degree or higher": "College +",
+                "High school or below": "High school -",
+            }
+        )
+        df = df.replace(
+            {
                 "Asian/Asian subcontinent": "Asian",
-                "Black/African American": "African American",
+                "Black/African American": "African Am.",
                 "LatinX, Latino, Hispanic or Spanish Origin": "Latino",
                 "Self-describe (below)": "Other",
             }
@@ -72,7 +84,7 @@ class DicesDataset(preprocessing.Dataset):
                 "rater_age": "Age",
                 "rater_race": "Race",
                 "rater_education": "Education",
-                "Q_overall": "is_harmful",
+                "Q3_bias_overall": "is_harmful",
             }
         )
         return df
@@ -127,6 +139,7 @@ def main(
     output_dir: Path,
     graph_output_dir: Path,
 ):
+    graphs.graph_setup()
     ds_350 = DicesDataset(dataset_path=dataset_path_small, variant="350")
     graphs.polarization_plot(
         ds=ds_350, output_path=graph_output_dir / "dices-350.png"
@@ -136,7 +149,7 @@ def main(
 
     ds_990 = DicesDataset(dataset_path=dataset_path_large, variant="990")
     graphs.polarization_plot(
-        ds=ds_350, output_path=graph_output_dir / "dices-990.png"
+        ds=ds_990, output_path=graph_output_dir / "dices-990.png"
     )
     res = run_helper.run_all_results(ds=ds_990)
     res.to_csv(output_dir / "dices-990.csv")

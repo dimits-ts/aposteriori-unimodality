@@ -1,4 +1,5 @@
 import argparse
+from os import remove
 from pathlib import Path
 
 import pandas as pd
@@ -9,8 +10,14 @@ NUM_COMMENTS = 20_000
 
 
 class KumarDataset(preprocessing.Dataset):
-    def __init__(self, dataset_path: Path, num_samples: int | None = None):
-        self.df = KumarDataset._base_df(dataset_path, num_samples)
+    def __init__(
+        self,
+        dataset_path: Path,
+        num_samples: int | None = None
+    ):
+        self.df = KumarDataset._base_df(
+            dataset_path, num_samples
+        )
 
     def get_name(self) -> str:
         return "Kumar et al. 2021"
@@ -42,7 +49,10 @@ class KumarDataset(preprocessing.Dataset):
         return "Toxicity"
 
     @staticmethod
-    def _base_df(dataset_path: Path, num_samples: int | None) -> pd.DataFrame:
+    def _base_df(
+        dataset_path: Path,
+        num_samples: int | None
+    ) -> pd.DataFrame:
         df = pd.read_json(dataset_path, lines=True)
         df = df.explode(column="ratings")
         df = df.dropna()
@@ -219,57 +229,19 @@ def map_age_list(age_map, lst):
 
 
 def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
+    graphs.graph_setup()
+
     print("Generating sample polarization plot...")
-    ds = KumarDataset(dataset_path=dataset_path, num_samples=NUM_COMMENTS)
-    # graphs.polarization_plot(
-    #    ds=ds, output_path=graph_output_dir / "kumar_sample.png"
-    # )
-    print("Running experiment...")
-    # res = run_helper.run_all_results(ds)
-    # res.to_csv(output_dir / "kumar.csv")
-
-    print("Running ablation experiments...")
-
-    age_map = {
-        "Under 18": "3) Gen. Z",
-        "1) 18 - 24": "3) Gen. Z",
-        "2) 25 - 34": "3) Gen. Z",
-        "3) 35 - 44": "2) Millennial",
-        "4) 45 - 54": "2) Millennial",
-        "5) 55 - 64": "1) Gen. X+",
-        "6) 65 or older": "1) Gen. X+",
-        "Prefer not to say": "Prefer not to say",
-    }
-
-    # compress ordinals
-    # This categorizes NA answers with Neutral. They are very few so it's fine
-    TRANSFORMS = {
-        "Age": lambda lst: map_age_list(age_map, lst),
-        "Education": ordinal_to_yn_neutral,
-        "Toxicity Problem": ordinal_to_yn_neutral,
-        "Technology Impact": ordinal_to_yn_neutral,
-        "Religion Important": ordinal_to_yn_neutral,
-    }
-
-    # drop categorical variables, keep only ordinals
-    DROP_COLUMNS = [
-        "Political Affiliation",
-        "Gender",
-        "Ethnicity",
-        "Sexual Orientation",
-        "Is Transgender",
-        "Is Parent",
-        "Has Been Targeted",
-        "Seen Toxicity",
-    ]
-
-    ablation_df = ds.df.drop(columns=DROP_COLUMNS).assign(
-        **{col: ds.df[col].apply(func) for col, func in TRANSFORMS.items()}
+    ds = KumarDataset(
+        dataset_path=dataset_path,
+        num_samples=NUM_COMMENTS
     )
-
-    ds.df = ablation_df
+    graphs.polarization_plot(
+        ds=ds, output_path=graph_output_dir / "kumar_sample.png"
+    )
+    print("Running experiment...")
     res = run_helper.run_all_results(ds)
-    res.to_csv(output_dir / "kumar_ablation.csv")
+    res.to_csv(output_dir / "kumar.csv")
 
 
 if __name__ == "__main__":

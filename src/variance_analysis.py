@@ -13,19 +13,16 @@ import apunim
 
 from .tasks import graphs
 from .tasks import preprocessing
-from . import synthetic, dices
+from . import dices
+from . import sap
+from . import kumar
 
 
 MARKERS = {
     "DICES-350": "o",
     "DICES-990": "s",
-    "100 Annotator Synthetic": "^",
-}
-
-COLORS = {
-    "DICES-350": "#1f77b4",  # blue
-    "DICES-990": "#ff7f0e",  # orange
-    "100 Annotator Synthetic": "#2ca02c",  # green
+    "Kumar et al. 2021": "^",
+    "Sap et al. 2022": "*",
 }
 
 
@@ -64,63 +61,49 @@ def sample_se_vs_sample_size_unimodality(
     results: list[dict[str, typing.Any]] = []
 
     for size in tqdm(range(min_size, max_size + 1, step), desc="#Annotators"):
-        iter_ses: list[float] = []
+        iter_sds: list[float] = []
 
         for _ in tqdm(range(iters), desc="#Iterations", leave=False):
             sample_stats: list[float] = []
 
-            # loop over comments
             for _, row in df.iterrows():
                 anns = row[annotation_col]
                 grps = row[group_col]
 
-                # skip comments with too few annotators
                 if anns is None:
                     continue
                 try:
                     n_ann = len(anns)
                 except Exception:
-                    # if annotations are stored differently, skip
                     continue
 
-                if n_ann < min_comment_annotators:
-                    continue
-
-                # skip if not enough annotators for this sample size
-                if n_ann < size:
+                if n_ann < min_comment_annotators or n_ann < size:
                     continue
 
                 annotations = np.array(anns)
                 groups = np.array(grps)
 
-                # subsample
                 idx = np.random.choice(n_ann, size=size, replace=False)
                 sub_ann = annotations[idx]
                 sub_grp = groups[idx]
 
-                # compute factor DFU stats
                 stats_dict = apunim._factor_dfu_stat(
                     sub_ann, sub_grp, bins=bins
                 )
 
-                # collect values (drop NaNs)
                 sample_stats.extend(
                     [float(v) for v in stats_dict.values() if not np.isnan(v)]
                 )
 
-            # compute SE for this iteration
             if len(sample_stats) > 1:
-                se = float(
-                    np.std(sample_stats, ddof=1) / np.sqrt(len(sample_stats))
-                )
-                iter_ses.append(se)
+                sd = float(np.std(sample_stats, ddof=1))
+                iter_sds.append(sd)
 
-        # average SE across iterations
-        if len(iter_ses) > 0:
+        if len(iter_sds) > 0:
             results.append(
                 {
                     "sample_size": size,
-                    "standard_error": float(np.mean(iter_ses)),
+                    "standard_deviation": float(np.mean(iter_sds)),
                 }
             )
 
@@ -128,7 +111,7 @@ def sample_se_vs_sample_size_unimodality(
 
 
 def plot_variance_curve(results_df, graph_path: Path):
-    # Ensure proper ordering
+    # ensure proper ordering
     if "dataset" in results_df.columns:
         results_df = results_df.sort_values(["dataset", "sample_size"])
     else:
@@ -140,36 +123,26 @@ def plot_variance_curve(results_df, graph_path: Path):
         # plot each dataset separately to control markers and colors
         for ds_name, subdf in results_df.groupby("dataset"):
             marker = MARKERS[ds_name]
-            color = COLORS[ds_name]
 
             # lineplot for dataset
-            ax = sns.lineplot(
+            sns.lineplot(
                 data=subdf,
                 x="sample_size",
-                y="standard_error",
+                y="standard_deviation",
                 marker=marker,
                 label=ds_name,
-                color=color
-            )
-
-            # regression trend line (same color but no scatter)
-            sns.regplot(
-                data=subdf,
-                x="sample_size",
-                y="standard_error",
-                scatter=False,
-                ci=None,
-                color=ax.lines[-1].get_color(),  # match line color
-                label=None,
             )
     else:
         sns.lineplot(
-            data=results_df, x="sample_size", y="standard_error", marker="o"
+            data=results_df,
+            x="sample_size",
+            y="standard_deviation",
+            marker="o",
         )
 
-    plt.xlabel("# Annotators")
-    plt.ylabel("Std Error of Polarization Statistic")
-    plt.title("Sample Size Effects on Polarization Statistic Estimation")
+    plt.xlabel(r"\# Annotators")
+    plt.ylabel("Std deviation of $pol_{obs.}$")
+    plt.title("Robustness of $pol_{obs.}$ depends on the number of annotators")
     plt.grid(True)
     plt.tight_layout()
 
@@ -199,7 +172,7 @@ def get_dataset_variance(
         group_col="Gender",
         bins=5,
         min_size=3,
-        max_size=None,  # let the function determine the proper max
+        max_size=None,
         step=1,
         iters=1000,
         min_comment_annotators=min_comment_annotators,
@@ -209,23 +182,159 @@ def get_dataset_variance(
     return res_df
 
 
+def plot_annotator_count_histogram_from_datasets(
+    datasets: list[preprocessing.Dataset],
+    graph_path: Path,
+):
+    """
+    Plot a histogram of annotator counts per comment across multiple datasets,
+    where each dataset may use a different annotation column.
+
+    Parameters
+    ----------
+    datasets : list
+        List of dataset objects implementing:
+        - get_dataset()
+        - get_name()
+        - get_annotation_column()
+    graph_path : Path or None
+        If provided, saves the figure to this path.
+    bins : int
+        Number of histogram bins.
+    """
+    all_df = get_annotator_counts_df(datasets)
+    plt.figure(figsize=(10, 6))
+
+    g = sns.displot(
+        data=all_df,
+        x="n_annotators",
+        hue="dataset",
+        multiple="layer",
+        edgecolor="black",
+        alpha=0.6,
+        stat="percent",
+        common_norm=False,
+    )
+    g.legend.set_title(None)
+    g.legend.set_loc("center")
+
+    plt.xlabel(r"\# Annotators")
+    plt.ylabel("Percent of comments")
+    plt.title("Distribution of Annotator Counts per Comment by Dataset")
+    plt.grid(True, linestyle="--", alpha=0.3)
+    plt.tight_layout()
+
+    graphs.save_plot(graph_path)
+    plt.close()
+
+
+def get_annotator_counts_df(
+    datasets: list[preprocessing.Dataset],
+) -> pd.DataFrame:
+    rows = []
+
+    for ds in datasets:
+        df = ds.get_dataset().reset_index(drop=True)
+        ann_col = ds.get_annotation_column()
+        ds_name = ds.get_name()
+
+        tmp = pd.DataFrame(
+            {
+                "dataset": ds_name,
+                "n_annotators": df[ann_col].apply(_safe_len),
+            }
+        )
+        rows.append(tmp)
+
+    all_df = pd.concat(rows, ignore_index=True).dropna(subset=["n_annotators"])
+    return all_df
+
+
+def cull_kumar_ds(kumar_ds: preprocessing.Dataset) -> preprocessing.Dataset:
+    # --- There is a single comment with 650 annotators ---
+    df = kumar_ds.get_dataset()
+    df["annotator_count"] = df["Toxicity"].apply(_safe_len)
+
+    over_10_mask = df["annotator_count"] > 10
+
+    if over_10_mask.any():
+        over_10_df = pd.DataFrame(
+            {
+                "comment": df.index[over_10_mask],
+                "annotator_count": df.loc[over_10_mask, "annotator_count"],
+            }
+        ).sort_values("annotator_count", ascending=False)
+        print(f"#Comments with >10 annotators:{len(over_10_df)}")
+
+    df = df.loc[~over_10_mask].drop(columns=["annotator_count"])
+    kumar_ds.df = df
+    return kumar_ds
+
+
+def get_statistics_df(all_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Return a dataframe where each row corresponds to a dataset and each column
+    is a statistic from `describe()` applied to annotator counts.
+    """
+    return (
+        all_df.groupby("dataset")["n_annotators"]
+        .describe()  # computes count, mean, std, min, 25%, 50%, 75%, max
+        .rename_axis(index=None)  # optional: cleaner row index name
+    )
+
+
+def _safe_len(x):
+    try:
+        return len(x)
+    except Exception:
+        return 0
+
+
 def main(
-    hundred_dataset_path: Path,
     dices_small_path: Path,
     dices_large_path: Path,
+    latex_output_dir: Path,
+    sap_path: Path,
+    kumar_path: Path,
     graph_dir: Path,
     cache_dir: Path,
     min_comment_annotators: int = 3,
 ):
-    ds_hundred = synthetic.HundredDataset(
-        dataset_path=hundred_dataset_path
+    graphs.graph_setup()
+    dices350_ds = dices.DicesDataset(
+        dataset_path=dices_small_path, variant="350"
     )
-    dices350 = dices.DicesDataset(dataset_path=dices_small_path, variant="350")
-    dices990 = dices.DicesDataset(dataset_path=dices_large_path, variant="990")
+    dices990_ds = dices.DicesDataset(
+        dataset_path=dices_large_path, variant="990"
+    )
+    sap_ds = sap.SapDataset(dataset_path=sap_path)
+    kumar_ds = kumar.KumarDataset(
+        dataset_path=kumar_path, num_samples=kumar.NUM_COMMENTS
+    )
+    datasets = [dices350_ds, dices990_ds, sap_ds, kumar_ds]
+
+    ann_size_df = get_annotator_counts_df(datasets)
+    stats_df = get_statistics_df(ann_size_df)
+    stats_df.to_latex(
+        latex_output_dir / "ann_stats.tex",
+        caption=(
+            "Descriptive statistics for the number of annotations per dataset."
+        ),
+        label="tab:num-annot",
+        position="ht",
+        index=True,
+        float_format="%.4f",
+        escape=True,
+    )
+
+    kumar_ds = cull_kumar_ds(kumar_ds)
+    plot_annotator_count_histogram_from_datasets(
+        datasets=datasets,
+        graph_path=graph_dir / "annotator_count_histogram.png",
+    )
 
     variance_df_ls = []
-
-    for dataset in [ds_hundred, dices350, dices990]:
+    for dataset in datasets:
         res_df = get_dataset_variance(
             dataset, cache_dir, min_comment_annotators=min_comment_annotators
         )
@@ -234,26 +343,15 @@ def main(
 
     variance_df = pd.concat(variance_df_ls, ignore_index=True)
 
-    # plot only the two dices variants
-    plot_variance_curve(
-        variance_df[variance_df.dataset != "100 Annotator Synthetic"],
-        graph_path=graph_dir / "ndfu_std_error_sample_size.png",
-    )
-
     plot_variance_curve(
         variance_df,
-        graph_path=graph_dir / "ndfu_std_error_sample_size_llm.png",
+        graph_path=graph_dir / "ndfu_std_error_sample_size.png",
     )
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=("Create plots analyzing effect of #annotators.")
-    )
-    parser.add_argument(
-        "--hundred-dataset-path",
-        required=True,
-        help="Path to the 100 annotator CSV file.",
     )
     parser.add_argument(
         "--dices-small-path",
@@ -266,7 +364,22 @@ if __name__ == "__main__":
         help="Path to the DICES 990 annotator CSV file.",
     )
     parser.add_argument(
+        "--sap-path",
+        required=True,
+        help="Path to the Sap annotator CSV file.",
+    )
+    parser.add_argument(
+        "--kumar-path",
+        required=True,
+        help="Path to the Kumar annotator CSV file.",
+    )
+    parser.add_argument(
         "--graph-output-dir", required=True, help="Directory for the graphs."
+    )
+    parser.add_argument(
+        "--latex-output-dir",
+        required=True,
+        help="Directory for the latex tables.",
     )
     parser.add_argument(
         "--cache-dir",
@@ -283,9 +396,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(
-        hundred_dataset_path=Path(args.hundred_dataset_path),
         dices_small_path=Path(args.dices_small_path),
         dices_large_path=Path(args.dices_large_path),
+        latex_output_dir=Path(args.latex_output_dir),
+        sap_path=Path(args.sap_path),
+        kumar_path=Path(args.kumar_path),
         graph_dir=Path(args.graph_output_dir),
         cache_dir=Path(args.cache_dir),
         min_comment_annotators=args.min_comment_annotators,

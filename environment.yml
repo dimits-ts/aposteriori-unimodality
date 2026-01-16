@@ -21,4 +21,4 @@ dependencies:
       - transformers
       - bitsandbytes
       - apunim
-  
+      - krippendorff  
