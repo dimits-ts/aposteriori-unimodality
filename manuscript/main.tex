@@ -1,101 +1,23 @@
-%Version 3.1 December 2024
-% See section 11 of the User Manual for version history
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%                                                                 %%
-%% Please do not use \input{...} to include other tex files.       %%
-%% Submit your LaTeX manuscript as one .tex document.              %%
-%%                                                                 %%
-%% All additional figures and files should be attached             %%
-%% separately and not embedded in the \TeX\ document itself.       %%
-%%                                                                 %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass{article}
 
-%%\documentclass[referee,sn-basic]{sn-jnl}% referee option is meant for double line spacing
-
-%%=======================================================%%
-%% to print line numbers in the margin use lineno option %%
-%%=======================================================%%
-
-%%\documentclass[lineno,pdflatex,sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
-
-%%=========================================================================================%%
-%% the documentclass is set to pdflatex as default. You can delete it if not appropriate.  %%
-%%=========================================================================================%%
-
-%%\documentclass[sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
-
-%%Note: the following reference styles support Namedate and Numbered referencing. By default the style follows the most common style. To switch between the options you can add or remove Numbered in the optional parenthesis. 
-%%The option is available for: sn-basic.bst, sn-chicago.bst%  
-
-%%\documentclass[pdflatex,sn-nature]{sn-jnl}% Style for submissions to Nature Portfolio journals
-%%\documentclass[pdflatex,sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
-\documentclass[pdflatex,sn-nature]{sn-jnl}% Math and Physical Sciences Numbered Reference Style
-%%\documentclass[pdflatex,sn-mathphys-ay]{sn-jnl}% Math and Physical Sciences Author Year Reference Style
-%%\documentclass[pdflatex,sn-aps]{sn-jnl}% American Physical Society (APS) Reference Style
-%%\documentclass[pdflatex,sn-vancouver-num]{sn-jnl}% Vancouver Numbered Reference Style
-%%\documentclass[pdflatex,sn-vancouver-ay]{sn-jnl}% Vancouver Author Year Reference Style
-%%\documentclass[pdflatex,sn-apa]{sn-jnl}% APA Reference Style
-%%\documentclass[pdflatex,sn-chicago]{sn-jnl}% Chicago-based Humanities Reference Style
-
-%%%% Standard Packages
-%%<additional latex packages if required can be included here>
-
+\usepackage[review]{acl}
 \usepackage{graphicx}%
 \usepackage{multirow}%
 \usepackage{amsmath,amssymb,amsfonts}%
 \usepackage{amsthm}%
-\usepackage{mathrsfs}%
 \usepackage[title]{appendix}%
 \usepackage{xcolor}%
 \usepackage{textcomp}%
-\usepackage{manyfoot}%
 \usepackage{booktabs}%
-\usepackage{algorithm}%
-\usepackage{algorithmicx}%
-\usepackage{algpseudocode}%
-\usepackage{listings}%
-%%%%
 
 % ============================ MY PACKAGES ====================
 \usepackage{acronym}
 \usepackage{multirow}
 \usepackage{tabularx}
 \usepackage{fancyvrb}
-\usepackage{longtable}
 \usepackage{hyperref}
 
-
-%%%%%=============================================================================%%%%
-%%%%  Remarks: This template is provided to aid authors with the preparation
-%%%%  of original research articles intended for submission to journals published 
-%%%%  by Springer Nature. The guidance has been prepared in partnership with 
-%%%%  production teams to conform to Springer Nature technical requirements. 
-%%%%  Editorial and presentation requirements differ among journal portfolios and 
-%%%%  research disciplines. You may find sections in this template are irrelevant 
-%%%%  to your work and are empowered to omit any such section if allowed by the 
-%%%%  journal you intend to submit to. The submission guidelines and policies 
-%%%%  of the journal take precedence. A detailed User Manual is available in the 
-%%%%  template package for technical guidance.
-%%%%%=============================================================================%%%%
-
-%% as per the requirement new theorem styles can be included as shown below
-\theoremstyle{thmstyleone}%
-\newtheorem{theorem}{Theorem}%  meant for continuous numbers
-%%\newtheorem{theorem}{Theorem}[section]% meant for sectionwise numbers
-%% optional argument [theorem] produces theorem numbering sequence instead of independent numbers for Proposition
-\newtheorem{proposition}[theorem]{Proposition}% 
-%%\newtheorem{proposition}{Proposition}% to get separate numbers for theorem and proposition etc.
-
-\theoremstyle{thmstyletwo}%
-\newtheorem{example}{Example}%
-\newtheorem{remark}{Remark}%
-
-\theoremstyle{thmstylethree}%
 \newtheorem{definition}{Definition}%
-
-\raggedbottom
-%%\unnumbered% uncomment this for unnumbered level heads
 
 % Insert space after commas in math mode
 \AtBeginDocument{%
@@ -118,37 +40,17 @@
 
 \graphicspath{ {../graphs} {graphs}  }
 
+\title{Quantifying and Attributing Polarization to Annotator Groups}
 
 \begin{document}
 	
-	\title[Article Title]{Quantifying and Attributing Polarization to Annotator Groups}
-	
-	%%=============================================================%%
-	%% GivenName	-> \fnm{Joergen W.}
-	%% Particle	-> \spfx{van der} -> surname prefix
-	%% FamilyName	-> \sur{Ploeg}
-	%% Suffix	-> \sfx{IV}
-	%% \author*[1,2]{\fnm{Joergen W.} \spfx{van der} \sur{Ploeg} 
-		%%  \sfx{IV}}\email{iauthor@gmail.com}
-	%%=============================================================%%
-	\author[1,2]{\fnm{Dimitris} \sur{Tsirmpas}}\email{dim.tsirmpas@aueb.gr}
-	
-	\author*[1,2]{\fnm{John} \sur{Pavlopoulos}}\email{annis@aueb.gr}
-	
-	\affil[1]{\orgdiv{Department of Informatics}, \orgname{Athens University of Economics and Business}, \orgaddress{\street{76, Patission}, \city{Athens}, \postcode{GR-10434}, \state{Attiki}, \country{Greece}}}
-	
-	\affil[2]{\orgdiv{Archimedes Unit}, \orgname{Athena Research Center}, \orgaddress{\street{1, Artemidos}, \city{Athens}, \postcode{GR-15125}, \state{Attiki}, \country{Greece}}}
-	
-	
-	%%==================================%%
-	%% Sample for unstructured abstract %%
-	%%==================================%%
-	
-	\abstract{Current annotation agreement metrics are not well-suited for inter-group analysis, are sensitive to group size imbalances and restricted to single-annotation settings. These restrictions render them insufficient for many subjective tasks such as toxicity and hate-speech detection. For this reason, we introduce a quantifiable metric, paired with a statistical significance test, that attributes polarization to various annotator groups. Our metric enables direct comparisons between heavily imbalanced sociodemographic and ideological subgroups across different datasets and tasks, while also enabling analysis on multi-label settings. We apply this metric to three datasets on hate speech, and one on toxicity detection, discovering that: (1) Polarization is strongly and persistently attributed to annotator race, especially on the hate speech task. (2) Religious annotators do not fundamentally disagree with each other, but do with other annotators, a trend that is gradually diminished and then reversed with irreligious annotators. (3) Less educated annotators are more subjective, while educated ones tend to broadly agree more between themselves. Overall, our results reflect current findings around annotation patterns for various subgroups. Finally, we estimate the minimum number of annotators needed to obtain robust results, and provide an open-source Python library that implements our metric.}
-	
-	\keywords{Polarization, annotation, socio-demographic, statistics, metric}
-	
 	\maketitle
+	
+	\begin{abstract}
+		Current annotation agreement metrics are not well-suited for inter-group analysis, are sensitive to group size imbalances and restricted to single-annotation settings. These restrictions render them insufficient for many subjective tasks such as toxicity and hate-speech detection. For this reason, we introduce a quantifiable metric, paired with a statistical significance test, that attributes polarization to various annotator groups. Our metric enables direct comparisons between heavily imbalanced sociodemographic and ideological subgroups across different datasets and tasks, while also enabling analysis on multi-label settings. We apply this metric to three datasets on hate speech, and one on toxicity detection, discovering that: (1) Polarization is strongly and persistently attributed to annotator race, especially on the hate speech task. (2) Religious annotators do not fundamentally disagree with each other, but do with other annotators, a trend that is gradually diminished and then reversed with irreligious annotators. (3) Less educated annotators are more subjective, while educated ones tend to broadly agree more between themselves. Overall, our results reflect current findings around annotation patterns for various subgroups. Finally, we estimate the minimum number of annotators needed to obtain robust results, and provide an open-source Python library that implements our metric.
+	\end{abstract}
+	
+
 	
 	\section{Introduction}
 	\label{sec:intro}
@@ -319,6 +221,7 @@
 	\subsection{P-value estimation}
 	\label{ssec:methodology:pvalue}
 	
+	\iffalse
 	\begin{algorithm}[t]
 		\caption{P-value estimation for aposteriori polarization}
 		\label{alg:pvalue}
@@ -386,6 +289,7 @@
 			\State \Return $p$
 		\end{algorithmic}
 	\end{algorithm}
+	\fi
 	
 	The strict condition $apunim(\theta) \approx 0$ is not sufficient due to inherent annotation variance.
 	%, which means that subgroups may exhibit minor disagreements across some comments by pure chance. 
@@ -443,7 +347,9 @@
 	
 	\subsection{Which factors contribute to polarization?}
 	\label{ssec:results:factors}
-	{\small
+
+\iffalse
+	\small
 	\begin{longtable}{lllr r}
 		\caption{Statistically significant ($ \textit{***:} p<0.01, \textit{**:} p<0.05$) aposteriori unimodality results across all four datasets, when accounting for multiple comparisons (Appendix~\ref{app:pvalue}). High \emph{apunim} values indicate that polarization can be attributed to this subgroup. Near-zero values indicate that polarization cannot be attributed to the subgroup. Negative values indicate that there is more polarization among annotators of that subgroup compared to other subgroups (see \S\ref{ssec:methodology:polstat}). For the full results, including non-statistically significant dimensions, consult Appendix~\ref{app:full}.}
 		\label{tab:merged-apunim}\\
@@ -514,7 +420,7 @@
 		&  & Very Frequently & -0.0145$^{***}$ & 10656 \\
 		
 	\end{longtable}
-}
+	\fi
 	
 	\paragraph{Polarization is consistently attributed to annotator race/ethnicity across all datasets, and especially so on hate-speech detection tasks}
 	Across all four datasets, we observe a consistent pattern in which annotation polarization can be attributed to differences in annotator ethnicity---in the hate speech detection datasets (DICES-350, DICES-990, Sap) this is the strongest contributor to polarization. In each case, statistically significant effects emerge for at least one of the major ethnic groups represented in the data (\acp{aa}: $-0.0428$/Asians: $0.0659$ for DICES-350, \acp{aa}: $-0.2967$ / Whites: $0.1400$ for Sap, Whites: $-0.0377$ for Kumar, and all ethnicities for DICES-990). This verifies relevant literature~\cite{goyal2022your} suggesting that ethnic background constitutes a systematic source of annotator disagreement rather than isolated noise, and is more prevalent on tasks explicitly investigating racism.
@@ -747,7 +653,7 @@
 			\end{tabular}
 		\end{table}
 		
-		
+\iffalse
 		\begin{longtable}[ht]{lllr}
 			\caption{Aposteriori unimodality results for the Kumar dataset.} \label{tab:kumar-full} \\
 			\toprule
@@ -828,7 +734,7 @@
 			& 4) Frequently & -0.0217$^{***}$ & 24774 \\
 			& 5) Very Frequently & -0.0145$^{***}$ & 10656 \\
 		\end{longtable}
-		
+		\fi
 	\end{appendices}
 	
 \end{document}
