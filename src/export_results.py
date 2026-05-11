@@ -12,6 +12,89 @@ from .tasks import run_helper
 from .tasks import graphs
 
 
+def main(results_dir: Path, latex_output_dir: Path, graph_output_dir: Path):
+    graphs.graph_setup()
+    csv_to_latex(results_dir=results_dir, latex_output_dir=latex_output_dir)
+    ordinal_graph(results_dir=results_dir, graph_output_dir=graph_output_dir)
+    ordinal_graph_per_feature(
+        results_dir=results_dir, graph_output_dir=graph_output_dir
+    )
+    plot_dfu_histograms(
+        file_paths=list(results_dir.rglob("*.npy")),
+        graph_output_dir=graph_output_dir,
+    )
+
+
+def plot_dfu_histograms(
+    file_paths: list[str],
+    graph_output_dir: Path,
+    bins: int = 30,
+):
+    """
+    Plot histogram distributions per dataset with colorblind palette
+    and hatch patterns.
+    """
+    all_data = []
+
+    for path in file_paths:
+        path = Path(path)
+        label = " ".join(path.stem.split("-")[:-1]).capitalize()
+
+        arr = np.load(path)
+        arr = np.asarray(arr, dtype=float)
+        arr = arr[~np.isnan(arr)]
+
+        all_data.append(pd.DataFrame({"value": arr, "dataset": label}))
+
+    full_df = pd.concat(all_data, ignore_index=True)
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    datasets = sorted(full_df["dataset"].unique())
+    legend_handles = []
+    for i, (dataset, color, hatch) in enumerate(
+        zip(datasets, graphs.COLORBLIND_PALETTE, graphs.HATCHES)
+    ):
+        before = len(ax.patches)
+
+        sns.histplot(
+            data=full_df[full_df["dataset"] == dataset],
+            x="value",
+            bins=bins,
+            stat="density",
+            common_norm=False,
+            alpha=0.7,
+            color=color,
+            ax=ax,
+        )
+
+        # Only newly created bars
+        new_patches = ax.patches[before:]
+
+        for patch in new_patches:
+            patch.set_hatch(hatch)
+            patch.set_edgecolor("black")
+            patch.set_linewidth(0.3)
+
+        legend_handles.append(
+            plt.matplotlib.patches.Patch(
+                facecolor=color,
+                edgecolor="black",
+                hatch=hatch,
+                label=dataset,
+                alpha=0.4,
+            )
+        )
+
+    ax.set_xlabel("Apriori polarization")
+    ax.set_ylabel("Density")
+
+    ax.legend(handles=legend_handles)
+
+    graphs.save_plot(graph_output_dir / "apriori.png")
+    plt.close()
+
+
 def csv_to_latex(results_dir: Path, latex_output_dir: Path) -> None:
     for result_file in results_dir.rglob("*.csv"):
         dataset_name = result_file.stem
@@ -287,15 +370,6 @@ def add_grouped_legend(
             text.set_weight("bold")
 
     return legend
-
-
-def main(results_dir: Path, latex_output_dir: Path, graph_output_dir: Path):
-    graphs.graph_setup()
-    csv_to_latex(results_dir=results_dir, latex_output_dir=latex_output_dir)
-    ordinal_graph(results_dir=results_dir, graph_output_dir=graph_output_dir)
-    ordinal_graph_per_feature(
-        results_dir=results_dir, graph_output_dir=graph_output_dir
-    )
 
 
 if __name__ == "__main__":
