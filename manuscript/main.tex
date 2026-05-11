@@ -146,12 +146,28 @@ In the absence of polarization, annotation distributions are typically unimodal:
 \paragraph{Polarization attribution} Intuitively, a \ac{pc} dimension partially explains the polarization of an item $c$ when the annotations of that group $A(c \given g) = \{a(c; g') \in A(c) \given g'=g\}$ exhibit higher polarization compared to the full set of annotations $A(c)$. Figure~\ref{fig:ndfu_combined} exhibits how polarization differs from agreement (left) and a hypothetical example where a misogynistic comment is annotated for toxicity by male and female annotators (right). The annotations are generally polarized ($nDFU_{all}=0.62$). The annotations by female annotators exhibit low polarization between themselves ($nDFU_{women}=0.10$), since most agree that the comment is toxic. The set of male annotations, also shows low polarization ($nDFU_{men}=0.37$), but for the opposite reason---most men agree that it is \emph{not} toxic. This suggests that the overall polarization is driven by substantive disagreements between male and female annotators.
 
 
+\subsection{Inherent polarization}
+
+\begin{figure}[ht]
+	\includegraphics[width=\columnwidth]{apriori.png}
+	\caption{Apriori (inherent rather than observed) polarization across our datasets. Contrary to assumptions made in prior work, inherent polarization is rarely zero and can even reach $nDFU = 1$.}
+	\label{fig:apriori}
+\end{figure}
+
+Inherent polarization refers to disagreement that cannot be explained by \emph{any} grouping of annotators. It may arise from the task itself, the annotation instructions, ambiguity in the content, or simply random variation. Prior work~\cite{pavlopoulos-likas-2024} attributed polarization to annotator groups only when the observed polarization for a grouping became zero, implicitly assuming that inherent polarization was also zero.
+
+To examine this assumption, we create random annotator groupings for each comment in our datasets. Specifically, for every comment, we randomly partition the annotators into groups $n = 100$ times and compute the observed polarization for each partition.\footnote{We assume two same-sized groups for this experiment. This assumption does not compromise the main finding of the experiment, but it is worth noting that we can use group sizes conditioned on the actual annotator group, as shown in \S\ref{ssec:methodology:polstat}.} We then average these polarization scores across all random partitions. Repeating this process for every comment produces the distribution shown in Fig.~\ref{fig:apriori}. The results show that inherent polarization is consistently non-zero and can be substantial for many comments.
+
+\begin{finding}
+	\label{finding:inherent}
+	Each comment may exhibit a degree of inherent polarization that cannot be attributed to any known or latent annotator dimension.
+\end{finding}
 
 
 \subsection{Conflicting polarization}
 \label{ssec:methodology:intuition}
 
-\begin{figure*}[t]
+\begin{figure*}[ht]
 	\centering
 	\includegraphics[width=0.32\linewidth]{ndfu_comment1.png}
 	\includegraphics[width=0.32\linewidth]{ndfu_comment2.png}
@@ -167,18 +183,6 @@ However, \emph{arbitrarily combining annotations would not work} in practice. Fi
 \begin{finding}
 	\label{finding:conflicting}
 	Polarization has a direction, which may compromise cross-comment annotation aggregation.
-\end{finding}
-
-
-\subsection{Inherent polarization}
-
-% TODO: Add a figure here for each dataset
-%We assume that how polarizing an item is depends on two variables: \emph{inherent (``apriori'') polarization}, and polarization caused by \emph{different annotator \acp{pc} (``aposteriori'' polarization)}. 
-Inherent polarization refers to polarization that cannot be explained by any arbitrary annotator grouping. It may be caused by the task itself, the instructions given to the participants, or pure chance. In previous work~\cite{pavlopoulos-likas-2024}, it was assumed to be zero, although this is usually not the case; randomly partitioning annotators to arbitrary groups presents comments with non-zero polarization.
-
-\begin{finding}
-	\label{finding:inherent}
-	Each comment may have a degree of inherent polarization, which can not be attributed to any known or latent annotator dimension.
 \end{finding}
 
 
