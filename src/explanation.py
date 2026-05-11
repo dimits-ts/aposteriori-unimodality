@@ -16,6 +16,28 @@ INTUITION_SIZE = 50
 DIFF_COMMENTS_SIZE = 200
 NUM_BINS = 10
 
+COLOR_MAP = {
+    "Men": graphs.COLORBLIND_PALETTE[0],
+    "Women": graphs.COLORBLIND_PALETTE[1],
+}
+
+HATCH_MAP = {
+    "Men": graphs.HATCHES[0],
+    "Women": graphs.HATCHES[1],
+    "All": graphs.HATCHES[2],
+}
+
+
+def main(graph_dir: Path):
+    graphs.graph_setup()
+    np.random.seed(seed=42)
+    colors = sns.color_palette()
+
+    dfu_plots(colors, graph_dir)
+    discussion_example(graph_dir)
+
+    plot_annotation_distributions(graph_dir)
+
 
 def _apply_hatches(ax, hatch: str):
     for patch in ax.patches:
@@ -258,9 +280,13 @@ def dfu_plots(colors, graph_dir: Path) -> None:
 
     _combined_dfu_plot(
         datasets=[d_all, d1, d2],
-        graph_path=graph_dir / "ndfu_combined.png",
         labels=["All", "Men", "Women"],
-        colors=colors,
+        colors=[
+            graphs.COLORBLIND_PALETTE[2],
+            COLOR_MAP["Men"],
+            COLOR_MAP["Women"],
+        ],
+        graph_path=graph_dir / "ndfu_combined.png",
     )
 
 
@@ -275,19 +301,15 @@ def _combined_dfu_plot(
 
     legend_handles = []
 
-    for data, label, color, hatch in zip(
-        datasets,
-        labels,
-        colors,
-        graphs.HATCHES,
-    ):
+    for data, label, color in zip(datasets, labels, colors):
+        hatch = HATCH_MAP[label]
         before = len(ax.patches)
 
         sns.histplot(
             data,
             bins=NUM_BINS,
             kde=True,
-            alpha=0.7,
+            alpha=0.5,
             color=color,
             ax=ax,
         )
@@ -330,14 +352,13 @@ def _combined_dfu_plot(
 
 def discussion_example(graph_dir: Path) -> None:
     misogynist_comment = """
-    A: ``Why does the police seem to like
-    killing black people?''
+    ``Most women do not drive well.''
     """
     misandrist_comment = """
-    B: ``There is a much risk higher of resistance when
-    dealing with blacks compared to anyone else.''
+    ``Most men need closer friendships,
+    not just romantic support.''
     """
-    discussion_comment = f"{misogynist_comment}\n{misandrist_comment}"
+    discussion_comment = f"{misogynist_comment}{misandrist_comment}"
 
     d_woman_comment1 = _truncated_normal(
         loc=2, scale=1, size=DIFF_COMMENTS_SIZE
@@ -436,7 +457,7 @@ def _plot_example_individual(
         alpha=0.6,
         kde=True,
         ax=ax,
-        color=sns.color_palette()[0],
+        color=COLOR_MAP["Men"],
     )
     men_patches = list(ax.patches)
 
@@ -446,32 +467,31 @@ def _plot_example_individual(
         alpha=0.6,
         kde=True,
         ax=ax,
-        color=sns.color_palette()[1],
+        color=COLOR_MAP["Women"],
     )
-
     women_patches = ax.patches[len(men_patches) :]
 
     for patch in men_patches:
-        patch.set_hatch(graphs.HATCHES[0])
+        patch.set_hatch(HATCH_MAP["Men"])
         patch.set_edgecolor("black")
 
     for patch in women_patches:
-        patch.set_hatch(graphs.HATCHES[1])
+        patch.set_hatch(HATCH_MAP["Women"])
         patch.set_edgecolor("black")
 
     legend_handles = [
         Patch(
-            facecolor=sns.color_palette()[0],
+            facecolor=COLOR_MAP["Men"],
             edgecolor="black",
-            hatch=graphs.HATCHES[0],
-            label="Black",
+            hatch=HATCH_MAP["Men"],
+            label="Men",
             alpha=0.6,
         ),
         Patch(
-            facecolor=sns.color_palette()[1],
+            facecolor=COLOR_MAP["Women"],
             edgecolor="black",
-            hatch=graphs.HATCHES[1],
-            label="White",
+            hatch=HATCH_MAP["Women"],
+            label="Women",
             alpha=0.6,
         ),
     ]
@@ -480,27 +500,16 @@ def _plot_example_individual(
     ax.legend(handles=legend_handles, loc="upper right")
 
     ax.set_xlabel(
-        f"$nDFU_{{White}}={ndfu_man:.4f}$\n"
-        f"$nDFU_{{Black}}={ndfu_woman:.4f}$\n"
+        "Toxicity\n"
+        f"$nDFU_{{Men}}={ndfu_man:.4f}$\n"
+        f"$nDFU_{{Women}}={ndfu_woman:.4f}$\n"
         f"$nDFU_{{All}}={ndfu_all:.4f}$",
     )
     ax.set_ylabel(r"\#Annotations")
-    ax.set_xlabel("Toxicity")
     ax.set_xlim(1, 10)
 
     graphs.save_plot(graph_path)
     plt.close()
-
-
-def main(graph_dir: Path):
-    graphs.graph_setup()
-    np.random.seed(seed=42)
-    colors = sns.color_palette()
-
-    dfu_plots(colors, graph_dir)
-    discussion_example(graph_dir)
-
-    plot_annotation_distributions(graph_dir)
 
 
 if __name__ == "__main__":

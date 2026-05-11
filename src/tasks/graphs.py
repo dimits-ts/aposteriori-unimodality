@@ -28,7 +28,7 @@ COLORBLIND_PALETTE = [
 ]
 
 MARKERS = ["o", "s", "D", "^", "v", "P", "X"]
-HATCHES = ["..", "\\\\", "**", "oo", "//", "xx", "++", "--"]
+HATCHES = ["..", "\\\\", "++", "oo", "//", "xx", "**", "--"]
 
 
 def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
