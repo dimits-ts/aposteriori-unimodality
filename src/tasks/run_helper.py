@@ -199,34 +199,44 @@ def compute_apriori_polarization(
     iterations: int = 100,
     num_bins: int | None = None,
     seed: int | None = 42,
+    debug: bool = False,
 ) -> pd.DataFrame:
-    rng = np.random.default_rng(seed=seed)
+    rng = np.random.default_rng(seed)
 
-    # --------------------------------------------------
-    # Load data
-    # --------------------------------------------------
     df = dataset.get_dataset()
     annotation_col = dataset.get_annotation_column()
     comment_col = dataset.get_comment_key_column()
     sdb_columns = dataset.get_sdb_columns()
 
     if not sdb_columns:
-        raise ValueError("dataset.get_sdb_columns() returned an empty list.")
+        raise ValueError("No SDB columns found.")
 
     sdb_col = sdb_columns[0]
 
+    # --------------------------------------------------
+    # IMPORTANT: NO numeric coercion here
+    # --------------------------------------------------
     df = df[[annotation_col, comment_col, sdb_col]].copy()
-    df[annotation_col] = pd.to_numeric(df[annotation_col], errors="coerce")
-    df = df.dropna(subset=[annotation_col])
 
-    annotations = df[annotation_col].to_numpy(dtype=float)
+    annotations = df[annotation_col].to_numpy()  # each entry is a LIST
     comments = df[comment_col].to_numpy()
-    factors = df[sdb_col].to_numpy()
+    factors = df[sdb_col].to_numpy()  # each entry is a LIST
 
-    bins = num_bins if num_bins is not None else len(np.unique(annotations))
+    if debug:
+        print("[DEBUG] rows:", len(df))
+        print("[DEBUG] example annotation type:", type(annotations[0]))
+        print("[DEBUG] example factor type:", type(factors[0]))
+
+    # bins from flattened values
+    flat_annotations = np.concatenate(
+        [np.asarray(x, dtype=float) for x in annotations]
+    )
+    bins = (
+        num_bins if num_bins is not None else len(np.unique(flat_annotations))
+    )
     bins = max(bins, 2)
 
-    all_factors = list(dict.fromkeys(factors))
+    all_factors = list({f for row in factors for f in row})
     apriori = {f: [] for f in all_factors}
 
     unique_comments = list(dict.fromkeys(comments))
@@ -236,22 +246,29 @@ def compute_apriori_polarization(
     # --------------------------------------------------
     for cid in unique_comments:
         mask = comments == cid
-        comm_ann = annotations[mask]
-        comm_fac = factors[mask]
+
+        comm_ann_lists = annotations[mask]
+        comm_fac_lists = factors[mask]
+
+        # flatten per comment
+        comm_ann = np.concatenate(
+            [np.asarray(x, dtype=float) for x in comm_ann_lists]
+        )
+        comm_fac = np.concatenate(comm_fac_lists)
 
         if len(comm_ann) == 0:
             continue
 
-        if np.isclose(apunim.dfu(comm_ann, bins=bins, normalized=True), 0, atol=0.01):
+        dfu_val = apunim.dfu(comm_ann, bins=bins, normalized=True)
+        if np.isnan(dfu_val) or dfu_val < 0.01:
             continue
 
-        unique_in_comment = set(comm_fac)
-        if len(unique_in_comment) < 2:
+        if len(set(comm_fac)) < 2:
             continue
 
+        # group sizes
         sizes = np.array(
-            [np.sum(comm_fac == f) for f in all_factors],
-            dtype=int
+            [np.sum(comm_fac == f) for f in all_factors], dtype=int
         )
 
         for _ in range(iterations):
@@ -259,15 +276,13 @@ def compute_apriori_polarization(
             start = 0
 
             for f, size in zip(all_factors, sizes):
-                part = shuffled[start:start + size]
+                part = shuffled[start : start + size]
                 start += size
 
                 if part.size == 0:
                     continue
 
-                apriori[f].append(
-                    apunim.dfu(part, bins=bins, normalized=True)
-                )
+                apriori[f].append(apunim.dfu(part, bins=bins, normalized=True))
 
     # --------------------------------------------------
     # Summary
@@ -275,11 +290,16 @@ def compute_apriori_polarization(
     rows = []
     for f, vals in apriori.items():
         vals = np.asarray(vals, dtype=float)
-        rows.append({
-            "factor_level": str(f),
-            "n_values": len(vals),
-            "mean_dfu": float(np.mean(vals)) if len(vals) else float("nan"),
-            "std_dfu": float(np.std(vals)) if len(vals) else float("nan"),
-        })
+
+        rows.append(
+            {
+                "factor_level": str(f),
+                "n_values": len(vals),
+                "mean_dfu": (
+                    float(np.mean(vals)) if len(vals) else float("nan")
+                ),
+                "std_dfu": float(np.std(vals)) if len(vals) else float("nan"),
+            }
+        )
 
     return pd.DataFrame(rows)
