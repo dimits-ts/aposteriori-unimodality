@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 
 import pandas as pd
+import numpy as np
 
 from .tasks import preprocessing
 from .tasks import run_helper
@@ -91,6 +92,9 @@ def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
     ds = SapDataset(dataset_path=dataset_path)
 
     graphs.polarization_plot(ds=ds, output_path=graph_output_dir / "sap.png")
+
+    res = run_helper.compute_apriori_polarization(dataset=ds)
+    np.save(output_dir / "sap-apriori.npy", res)
 
     res = run_helper.run_all_results(ds)
     res.to_csv(output_dir / "sap.csv")

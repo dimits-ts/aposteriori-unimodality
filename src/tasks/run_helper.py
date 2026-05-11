@@ -200,7 +200,13 @@ def compute_apriori_polarization(
     num_bins: int | None = None,
     seed: int | None = 42,
     debug: bool = False,
-) -> pd.DataFrame:
+) -> tuple[pd.DataFrame, list[float]]:
+    """
+    Returns:
+    --------
+    comment_means : list[float]
+        Mean permutation DFU per comment (row-level output).
+    """
     rng = np.random.default_rng(seed)
 
     df = dataset.get_dataset()
@@ -213,21 +219,12 @@ def compute_apriori_polarization(
 
     sdb_col = sdb_columns[0]
 
-    # --------------------------------------------------
-    # IMPORTANT: NO numeric coercion here
-    # --------------------------------------------------
     df = df[[annotation_col, comment_col, sdb_col]].copy()
 
-    annotations = df[annotation_col].to_numpy()  # each entry is a LIST
+    annotations = df[annotation_col].to_numpy()
     comments = df[comment_col].to_numpy()
-    factors = df[sdb_col].to_numpy()  # each entry is a LIST
 
-    if debug:
-        print("[DEBUG] rows:", len(df))
-        print("[DEBUG] example annotation type:", type(annotations[0]))
-        print("[DEBUG] example factor type:", type(factors[0]))
-
-    # bins from flattened values
+    # flatten for global bin estimation
     flat_annotations = np.concatenate(
         [np.asarray(x, dtype=float) for x in annotations]
     )
@@ -236,70 +233,75 @@ def compute_apriori_polarization(
     )
     bins = max(bins, 2)
 
-    all_factors = list({f for row in factors for f in row})
+    all_factors = list({f for row in df[sdb_col] for f in row})
+
     apriori = {f: [] for f in all_factors}
+    comment_means = []
 
     unique_comments = list(dict.fromkeys(comments))
 
     # --------------------------------------------------
-    # Main loop
+    # MAIN LOOP
     # --------------------------------------------------
     for cid in unique_comments:
         mask = comments == cid
 
-        comm_ann_lists = annotations[mask]
-        comm_fac_lists = factors[mask]
-
-        # flatten per comment
         comm_ann = np.concatenate(
-            [np.asarray(x, dtype=float) for x in comm_ann_lists]
+            [np.asarray(x, dtype=float) for x in annotations[mask]]
         )
-        comm_fac = np.concatenate(comm_fac_lists)
 
         if len(comm_ann) == 0:
+            comment_means.append(np.nan)
             continue
 
-        dfu_val = apunim.dfu(comm_ann, bins=bins, normalized=True)
-        if np.isnan(dfu_val) or dfu_val < 0.01:
+        # skip low structure comments
+        base_dfu = apunim.dfu(comm_ann, bins=bins, normalized=True)
+        if np.isnan(base_dfu) or base_dfu < 0.01:
+            comment_means.append(np.nan)
             continue
 
-        if len(set(comm_fac)) < 2:
-            continue
+        # --------------------------------------------------
+        # FIXED-SIZE PERMUTATION SETUP
+        # --------------------------------------------------
+        n = len(comm_ann)
+        k = len(all_factors)
 
-        # group sizes
-        sizes = np.array(
-            [np.sum(comm_fac == f) for f in all_factors], dtype=int
-        )
+        # equal-sized partitions (last absorbs remainder)
+        base_size = n // k
+        sizes = [base_size] * k
+        sizes[-1] += n - sum(sizes)
 
+        perm_comment_values = []
+
+        # --------------------------------------------------
+        # PERMUTATIONS
+        # --------------------------------------------------
         for _ in range(iterations):
             shuffled = rng.permutation(comm_ann)
-            start = 0
 
-            for f, size in zip(all_factors, sizes):
+            start = 0
+            perm_values = []
+
+            for i, size in enumerate(sizes):
                 part = shuffled[start : start + size]
                 start += size
 
                 if part.size == 0:
                     continue
 
-                apriori[f].append(apunim.dfu(part, bins=bins, normalized=True))
+                val = apunim.dfu(part, bins=bins, normalized=True)
+                perm_values.append(val)
 
-    # --------------------------------------------------
-    # Summary
-    # --------------------------------------------------
-    rows = []
-    for f, vals in apriori.items():
-        vals = np.asarray(vals, dtype=float)
+                apriori[all_factors[i]].append(val)
 
-        rows.append(
-            {
-                "factor_level": str(f),
-                "n_values": len(vals),
-                "mean_dfu": (
-                    float(np.mean(vals)) if len(vals) else float("nan")
-                ),
-                "std_dfu": float(np.std(vals)) if len(vals) else float("nan"),
-            }
+            if perm_values:
+                perm_comment_values.append(np.mean(perm_values))
+
+        # mean DFU over permutations for this comment
+        comment_means.append(
+            float(np.mean(perm_comment_values))
+            if perm_comment_values
+            else np.nan
         )
 
-    return pd.DataFrame(rows)
+    return np.array(comment_means)

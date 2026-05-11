@@ -1,8 +1,8 @@
 import argparse
-from os import remove
 from pathlib import Path
 
 import pandas as pd
+import numpy as np
 
 from .tasks import preprocessing, run_helper, graphs
 
@@ -240,6 +240,9 @@ def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
         ds=ds, output_path=graph_output_dir / "kumar_sample.png"
     )
     print("Running experiment...")
+    res = run_helper.compute_apriori_polarization(dataset=ds)
+    np.save(output_dir / "kumar-apriori.npy", res)
+
     res = run_helper.run_all_results(ds)
     res.to_csv(output_dir / "kumar.csv")
 

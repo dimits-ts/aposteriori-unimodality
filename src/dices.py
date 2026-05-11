@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 
 import pandas as pd
+import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -72,7 +73,7 @@ class DicesDataset(preprocessing.Dataset):
         df = df.replace(
             {
                 "gen x+": "1) Gen. X+",
-                "millenial": "2) Millenial",
+                "millenial": "2) Millennial",
                 "gen z": "3) Gen. Z",
             }
         )
@@ -144,6 +145,10 @@ def main(
     graphs.polarization_plot(
         ds=ds_350, output_path=graph_output_dir / "dices-350.png"
     )
+
+    res = run_helper.compute_apriori_polarization(ds_350)
+    np.save(output_dir / "dices-350-apriori.npy", res)
+
     res = run_helper.run_all_results(ds=ds_350)
     res.to_csv(output_dir / "dices-350.csv")
 
@@ -151,6 +156,10 @@ def main(
     graphs.polarization_plot(
         ds=ds_990, output_path=graph_output_dir / "dices-990.png"
     )
+
+    res = run_helper.compute_apriori_polarization(ds_990)
+    np.save(output_dir / "dices-990-apriori.npy", res)
+
     res = run_helper.run_all_results(ds=ds_990)
     res.to_csv(output_dir / "dices-990.csv")
 
