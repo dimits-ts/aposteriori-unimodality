@@ -143,26 +143,11 @@ def dfu_plots(colors, graph_dir: Path) -> None:
     d2 = _truncated_normal(loc=8, scale=1.3, size=INTUITION_SIZE)
     d_all = np.hstack([d1, d2])
 
-    _dfu_plot(
-        data=d1,
-        graph_path=graph_dir / "ndfu_men.png",
-        label="Men",
-        color=colors[0],
-        hatch=graphs.HATCHES[0],
-    )
-    _dfu_plot(
-        data=d2,
-        graph_path=graph_dir / "ndfu_women.png",
-        label="Women",
-        color=colors[1],
-        hatch=graphs.HATCHES[1],
-    )
-    _dfu_plot(
-        data=d_all,
-        graph_path=graph_dir / "ndfu_all.png",
-        label="All",
-        color=colors[2],
-        hatch=graphs.HATCHES[2],
+    _combined_dfu_plot(
+        datasets=[d_all, d1, d2],
+        graph_path=graph_dir / "ndfu_combined.png",
+        labels=["All", "Men", "Women"],
+        colors=colors,
     )
 
 
@@ -178,8 +163,13 @@ def _combined_dfu_plot(
     legend_handles = []
 
     for data, label, color, hatch in zip(
-        datasets, labels, colors, graphs.HATCHES
+        datasets,
+        labels,
+        colors,
+        graphs.HATCHES,
     ):
+        before = len(ax.patches)
+
         sns.histplot(
             data,
             bins=NUM_BINS,
@@ -189,7 +179,12 @@ def _combined_dfu_plot(
             ax=ax,
         )
 
-        _apply_hatches(ax, hatch)
+        # only apply hatch to newly created bars
+        new_patches = ax.patches[before:]
+
+        for patch in new_patches:
+            patch.set_hatch(hatch)
+            patch.set_edgecolor("black")
 
         legend_handles.append(
             Patch(
@@ -204,10 +199,14 @@ def _combined_dfu_plot(
     # Add all nDFU annotations
     math_text = ""
     for data, label in zip(datasets, labels):
-        ndfu_value = apunim.dfu(data, bins=NUM_BINS, normalized=True)
+        ndfu_value = apunim.dfu(
+            data,
+            bins=NUM_BINS,
+            normalized=True,
+        )
         math_text += f"$\\mathbf{{nDFU_{{{label}}}}}={ndfu_value:.3f}$\n"
 
-    plt.legend(handles=legend_handles, loc="center")
+    plt.legend(handles=legend_handles, loc="upper center")
     plt.xlabel(f"Toxicity\n{math_text}")
     plt.ylabel(r"\#Annotations")
     plt.title(r"\textit{``Most women can't drive well.''}")
