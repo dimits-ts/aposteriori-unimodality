@@ -16,9 +16,14 @@
 \usepackage{tabularx}
 \usepackage{fancyvrb}
 \usepackage{hyperref}
+\usepackage{enumitem}
 
 \newtheorem{definition}{Definition}%
 \newtheorem{finding}{Finding}
+\newtheorem*{researchquestion}{RQ}
+
+\setlist[enumerate]{noitemsep, nosep}
+\setlist[itemize]{noitemsep, nosep}
 
 % Insert space after commas in math mode
 \AtBeginDocument{%
@@ -45,42 +50,52 @@
 
 \begin{document}
 	
-	\maketitle
-	
-	\begin{abstract}
-		Current annotation agreement metrics are not well-suited for inter-group analysis, are sensitive to group size imbalances and restricted to single-annotation settings. These restrictions render them insufficient for many subjective tasks such as toxicity and hate-speech detection. For this reason, we introduce a quantifiable metric, paired with a statistical significance test, that attributes polarization to various annotator groups. Our metric enables direct comparisons between heavily imbalanced sociodemographic and ideological subgroups across different datasets and tasks, while also enabling analysis on multi-label settings. We apply this metric to three datasets on hate speech, and one on toxicity detection, discovering that: (1) Polarization is strongly and persistently attributed to annotator race, especially on the hate speech task. (2) Religious annotators do not fundamentally disagree with each other, but do with other annotators, a trend that is gradually diminished and then reversed with irreligious annotators. (3) Less educated annotators are more subjective, while educated ones tend to broadly agree more between themselves. Overall, our results reflect current findings around annotation patterns for various subgroups. Finally, we estimate the minimum number of annotators needed to obtain robust results, and provide an open-source Python library that implements our metric.
-	\end{abstract}
-	
+\maketitle
 
-	
-	\section{Introduction}
-	\label{sec:intro}
-	
-	\begin{figure}[t]
-		\centering
-		\includegraphics[width=\columnwidth]{apunim_example.drawio.png}
-		\caption{The \emph{apunim} framework attributes annotator polarization to various annotator subgroups.}
-		\label{fig:apunim_example}
-	\end{figure}
-	
-	Annotations are essential for a wide range of tasks, especially in fields with subjective judgements, such as content moderation, toxicity detection and hate speech detection. These tasks are especially important for training supervised learning models that remove or flag comments targeting vulnerable and minority groups in online spaces, where they are often vulnerable~\cite{un_hate_speech_targets, ucdavis_hate_speech}. However, annotations for such tasks are subjective and typically aggregated based on majority-voting~\cite{ivey-etal-2025-nutmeg, sokratis, petra_2022_handling, van_der_Velden}. This may at best limit the usefulness of the data, or at worst lead to biased and misconfigured systems~\cite{sap-etal-2019-risk, van_der_Velden}.
-	
-	The core of the problem is simple; if a comment targets marginalized groups, there can be cases where most annotators overlook it, while the few marginalized annotators vehemently disagree with the majority. These fundamental disagreements are then ignored via aggregation (e.g., majority label voting) or filtering (e.g., keeping only items with large overall annotator agreement). Racist comments that are presented with coded language (usually referred to as ``dog-whistles''~\cite{quaranto2022dog}) are a common example; these comments may not be picked up by most annotators, but only by ones belonging in the targeted minority. Furthermore, majority-group annotators may themselves be biased against minority groups as was the case for toxicity models disproportionally marking African American speech as ``toxic''~\cite{sap-etal-2019-risk}.
-	
-	\emph{Inter-annotator agreement} is often used to detect such cases~\cite{petra_2022_handling}. Metrics based on agreement mostly measure annotation variance, which may not be an optimal problem formulation for detecting such cases, and fundamentally constrain analysis on single-label annotation(\S\ref{sec:related}). \emph{Polarization} is a better instrument in this regard, since it formulates annotation analysis as a cluster identification problem~\cite{Pavlopoulos2023, pavlopoulos-likas-2024} on the histograms of (ordinal) annotation values. While we can detect polarization~\cite{pavlopoulos-likas-2024, Pavlopoulos2023}, there is little work on how to detect whether it is actually caused by marginalized groups. An existing mechanism operating on individual comments~\cite{pavlopoulos-likas-2024}, operates only as a binary classifier, and as such does not produce quantifiable/comparable results. It also only tests for the extreme case where \emph{all} present polarization can be attributed to any single annotator group, which is extremely rare in real-life datasets (see Appendix~\ref{app:ann_details}).
+\begin{abstract}
+	Current annotation agreement metrics are not well-suited for inter-group analysis, are sensitive to group size imbalances and restricted to single-annotation settings. These restrictions render them insufficient for many subjective tasks such as toxicity and hate-speech detection. For this reason, we introduce a quantifiable metric, paired with a statistical significance test, that attributes polarization to various annotator groups. Our metric enables direct comparisons between heavily imbalanced sociodemographic and ideological subgroups across different datasets and tasks, while also enabling analysis on multi-label settings. We apply this metric to three datasets on hate speech, and one on toxicity detection, discovering that: (1) Polarization is strongly and persistently attributed to annotator race, especially on the hate speech task. (2) Religious annotators do not fundamentally disagree with each other, but do with other annotators, a trend that is gradually diminished and then reversed with irreligious annotators. (3) Less educated annotators are more subjective, while educated ones tend to broadly agree more between themselves. Overall, our results reflect current findings around annotation patterns for various subgroups. Finally, we estimate the minimum number of annotators needed to obtain robust results, and provide an open-source Python library that implements our metric.
+\end{abstract}
 
-	We instead propose the \emph{apunim (``Aposteriori Unimodality'') metric}. Unlike previous methods which provide only a binary decision (yes/no attribution)~\cite{pavlopoulos-likas-2024, sokratis}, \emph{apunim} quantifies the level of attribution for each annotator subgroup. Additionally, unlike previous approaches which only work on a comment-to-comment basis, \emph{apunim} generalizes results for all annotated comments (or ``items'', since the metric is generalizable to many domains), which is particularly important for our formulation due to the typically limited number of annotations per item. By considering the entire set of items, \emph{apunim} helps to identify genuine polarization and distinguish it from chance attribution, which is essential when analyzing large datasets. Our contributions are:
+
+
+\section{Introduction}
+\label{sec:intro}
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=\columnwidth]{disagreement_vs_polarization.png}
+	\caption{Simulated experiments for four scenarios on a hate speech detection task. Depending on the annotators, there may be a clear pattern where the split in annotations (polarization) can be attributed to a specific group (Muslim annotators in the case of the upper plots).}
+	\label{fig:disagreement-vs-polarization}
+\end{figure}
+
+Annotations are essential for a wide range of tasks, especially in fields with subjective judgements, such as content moderation, toxicity, and hate speech detection. These tasks are especially important for training supervised learning models that remove or flag comments targeting vulnerable and minority groups in online spaces, where they are often vulnerable~\cite{un_hate_speech_targets, ucdavis_hate_speech}. However, annotations for such tasks are subjective and typically aggregated based on majority-voting~\cite{ivey-etal-2025-nutmeg, sokratis, petra_2022_handling, van_der_Velden}. This may at best limit the usefulness of the data, or at worst lead to biased and misconfigured systems~\cite{sap-etal-2019-risk, van_der_Velden}.
+
+The core of the problem is simple; if a comment targets marginalized groups, there can be cases where most annotators overlook it, while the few marginalized annotators vehemently disagree with the majority. These \emph{fundamental} disagreements are typically ignored via aggregation (e.g., majority label voting) or filtering (e.g., keeping only items with large overall annotator agreement). For example, coded language may not be picked up by most annotators but only by ones belonging in the targeted minority~\cite{quaranto2022dog}, as shown in Fig.~\ref{fig:disagreement-vs-polarization}.
+%Racist comments that are presented with coded language (usually referred to as ``dog-whistles'') are a common example; these comments may not be picked up by most annotators, but only by ones belonging in the targeted minority. 
+Furthermore, majority-group annotators may themselves be biased against minority groups, e.g., toxicity models disproportionally marking African American speech as ``toxic''~\cite{sap-etal-2019-risk}.
+
+Instead of using inter-annotator agreement, we could use \emph{polarization}, which formulates annotation analysis as a cluster identification problem~\cite{Pavlopoulos2023, pavlopoulos-likas-2024}. While we can detect polarization~\cite{pavlopoulos-likas-2024, Pavlopoulos2023}, there is little work on how to detect whether it is \emph{actually caused by marginalized groups}. Our work thus tries to answer the following Research Question:
+
+\begin{researchquestion}
+	Can we attribute polarization to annotator subgroups?
+\end{researchquestion}
+
+We first identify limitations of current work on polarization:
+\begin{enumerate}
+	\item Existing mechanisms~\cite{pavlopoulos-likas-2024} operate only as binary classifiers, producing non-quantifiable/comparable results.
 	
-	\begin{enumerate}
-		\item We introduce a new metric that quantifies polarization, which can be attributed to specific annotator groups, and we develop a parametric test for statistical significance. This metric works for both single-label and multi-label annotation setups, is generalizable across any domain and modality (e.g., video/image classification, toxicity/hate-speech detection) and enables quantitative comparisons across datasets and dimensions (e.g., gender, race, political affiliation). %Unlike previous work, our metric is designed to apply to entire datasets instead of individual items.
-		
-		\item We discover issues not yet acknowledged in literature (\S\ref{sec:methodology}). We are the first to report the existence of \emph{inherent polarization}: most annotated items having some degree of polarization that cannot be attributed to \emph{any possible partition} of annotators. We also find that annotator groups may exhibit opposing polarization attribution between items, which can cancel each other out when not handled properly. %Our proposed metric is designed to avoid these issues.
-		
-		\item We apply our metric to four \ac{nlp} datasets focused on Toxicity and Hate Speech detection (\S\ref{sec:results}). We find that annotator race/ethnicity significantly impacts annotation, especially on Hate Speech tasks. We also discover that less educated annotators are generally more subjective, and that in some cases, polarization is either concentrated around similar clusters of groups (e.g., age and education) or that annotators become more polarized the more extreme their opinions become (e.g., religion). Our work verifies current literature on the different annotation patterns of sociodemographic and ideological subgroups~\cite{goyal2022your, binns2017like, giorgi2025human, al2020identifying, sachdeva2022assessing}.
-	\end{enumerate}	
+	\item These mechanisms only test for the extreme case where \emph{all} present polarization can be attributed to a single annotator group, which we find to be extremely rare in real-life datasets (App.~\ref{app:ann_details}).
 	
-	We release an open source Python library (Appendix~\ref{app:software}) that implements the calculation of the metric and its statistical significance, which can be directly installed via PyPi.\footnote{Library: \url{https://pypi.org/project/apunim} Documentation: \url{https://dimits-ts.github.io/apunim} } Furthermore, we provide an estimation on the minimum number of annotators required for robust estimates (\S\ref{sec:ann_size}), and we release the code for the experiments, graph creation, and analysis on our project's repository.\footnote{Replication code: \url{https://github.com/dimits-ts/aposteriori-unimodality}} Finally, we outline a few possible applications of our framework in \S\ref{sec:discussion}.
+	\item We are the first to report the existence of \emph{inherent polarization}: most comments having some degree of polarization that cannot be attributed to \emph{any possible partition} of annotators (Finding~\ref{finding:inherent}).
 	
+	\item We also find that annotator groups may exhibit opposing polarization attribution between comments, requiring isolating annotations to each individual comment when analyzing whole datasets (Finding~\ref{finding:conflicting}).
+\end{enumerate}
+
+We introduce a new metric (``Aposteriori Unimodality--\emph{apunim}'') that attributes polarization to specific annotator groups without  and develop a parametric test for statistical significance. Our metric is generalizable across any domain and modality (e.g., video/image classification) and, unlike previous approaches, enables \emph{quantitative} comparisons across datasets. By considering the entire set of comments in a dataset \emph{apunim} helps to identify genuine polarization and distinguish it from chance attribution, which is essential when analyzing large datasets. 
+
+Having established our metric, we apply it to four \ac{nlp} datasets focused on Toxicity and Hate Speech detection (\S\ref{sec:results}), verifying current literature on the different annotation patterns of sociodemographic and ideological subgroups~\cite{goyal2022your, binns2017like, giorgi2025human, al2020identifying, sachdeva2022assessing}. %We find that annotator race/ethnicity significantly impacts annotation, especially on Hate Speech tasks. We also discover that less educated annotators are generally more subjective, and that in some cases, polarization is either concentrated around similar clusters of groups (e.g., age and education) or that annotators become more polarized the more extreme their opinions become (e.g., religion). 
+Finally, we release an open source Python library (Appendix~\ref{app:software}) that implements our metric, which can be directly installed via PyPi.\footnote{Library: \url{https://pypi.org/project/apunim} Documentation: \url{https://dimits-ts.github.io/apunim} } and provide an estimation on the minimum number of annotators required for robust estimates (\S\ref{sec:ann_size}). The code for the experiments, graph creation, and analysis can be found on our project's repository.\footnote{Replication code: \url{https://github.com/dimits-ts/aposteriori-unimodality}}
+
 	
 	\section{Related Work}
 	\label{sec:related}
@@ -106,17 +121,6 @@
 \section{Can we use polarization instead of agreement?}
 \label{sec:polarization}
 
-\subsection{Why polarization?}
-
-\begin{figure}[ht]
-	\centering
-	\includegraphics[width=\columnwidth]{disagreement_vs_polarization.png}
-	\caption{Disagreement is similar to variance, overlooking cases where a minority group (green) detects something the majority group (blue) may miss. Polarization on the other hand, identifies multiple clusters even if they are close together}
-	\label{fig:disagreement-vs-polarization}
-\end{figure}
-
-TODO: write stuff here
-
 \subsection{Problem Formulation}
 \label{ssec:methodology:problem}
 
@@ -128,7 +132,7 @@ TODO: write stuff here
 	\end{array}\right\}
 \end{multline*}
 
-\begin{figure}[ht]
+\begin{figure}[t]
 	\centering
 	\includegraphics[width=\columnwidth]{ndfu_combined.png}
 	\caption{Synthetic experiment simulating a polarizing comment, where male and female annotators agree between themselves, but disagree with the opposite gender.}
