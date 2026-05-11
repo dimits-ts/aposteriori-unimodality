@@ -7,6 +7,7 @@ import seaborn as sns
 import scipy.stats
 import apunim
 from numpy.typing import NDArray
+from matplotlib.patches import Patch
 
 from .tasks import graphs
 
@@ -14,6 +15,12 @@ from .tasks import graphs
 INTUITION_SIZE = 50
 DIFF_COMMENTS_SIZE = 200
 NUM_BINS = 10
+
+
+def _apply_hatches(ax, hatch: str):
+    for patch in ax.patches:
+        patch.set_hatch(hatch)
+        patch.set_edgecolor("black")
 
 
 def _discrete_normal(loc, scale, size):
@@ -93,7 +100,7 @@ def _plot_matrix(
     ax.set_yticklabels(["☺", "🙂", "😐", "😠", "🤬"])
     ax.set_ylim(0.8, 5.2)
     ax.set_title(title)
-    #ax.legend(loc="upper right")
+    # ax.legend(loc="upper right")
 
 
 def plot_annotation_distributions(
@@ -141,24 +148,21 @@ def dfu_plots(colors, graph_dir: Path) -> None:
         graph_path=graph_dir / "ndfu_men.png",
         label="Men",
         color=colors[0],
+        hatch=graphs.HATCHES[0],
     )
     _dfu_plot(
         data=d2,
         graph_path=graph_dir / "ndfu_women.png",
         label="Women",
         color=colors[1],
+        hatch=graphs.HATCHES[1],
     )
     _dfu_plot(
         data=d_all,
         graph_path=graph_dir / "ndfu_all.png",
         label="All",
         color=colors[2],
-    )
-    _combined_dfu_plot(
-        datasets=[d1, d2, d_all],
-        graph_path=graph_dir / "ndfu_combined.png",
-        labels=["Men", "Women", "All"],
-        colors=colors,
+        hatch=graphs.HATCHES[2],
     )
 
 
@@ -171,15 +175,30 @@ def _combined_dfu_plot(
     plt.figure(figsize=(8, 5))
     ax = plt.gca()
 
-    for data, label, color in zip(datasets, labels, colors):
+    legend_handles = []
+
+    for data, label, color, hatch in zip(
+        datasets, labels, colors, graphs.HATCHES
+    ):
         sns.histplot(
             data,
             bins=NUM_BINS,
             kde=True,
             alpha=0.7,
             color=color,
-            label=label,
             ax=ax,
+        )
+
+        _apply_hatches(ax, hatch)
+
+        legend_handles.append(
+            Patch(
+                facecolor=color,
+                edgecolor="black",
+                hatch=hatch,
+                label=label,
+                alpha=0.7,
+            )
         )
 
     # Add all nDFU annotations
@@ -188,7 +207,7 @@ def _combined_dfu_plot(
         ndfu_value = apunim.dfu(data, bins=NUM_BINS, normalized=True)
         math_text += f"$\\mathbf{{nDFU_{{{label}}}}}={ndfu_value:.3f}$\n"
 
-    plt.legend(loc="center")
+    plt.legend(handles=legend_handles, loc="center")
     plt.xlabel(f"Toxicity\n{math_text}")
     plt.ylabel(r"\#Annotations")
     plt.title(r"\textit{``Most women can't drive well.''}")
@@ -245,24 +264,42 @@ def _truncated_normal(loc, scale, lower=0, upper=10, size=100):
     return scipy.stats.truncnorm(a, b, loc=loc, scale=scale).rvs(size)
 
 
-def _dfu_plot(data: np.ndarray, graph_path: Path, color: str, label) -> None:
+def _dfu_plot(
+    data: np.ndarray,
+    graph_path: Path,
+    color: str,
+    label,
+    hatch: str,
+) -> None:
     ndfu_value = apunim.dfu(data, bins=NUM_BINS, normalized=True)
 
-    plt.figure(figsize=(8, 5))
+    fig, ax = plt.subplots(figsize=(8, 5))
+
     sns.histplot(
         data,
         bins=NUM_BINS,
         kde=True,
         alpha=0.7,
         color=color,
+        ax=ax,
+    )
+
+    _apply_hatches(ax, hatch)
+
+    legend_handle = Patch(
+        facecolor=color,
+        edgecolor="black",
+        hatch=hatch,
         label=label,
+        alpha=0.7,
     )
 
     math_text = f"$\\mathbf{{nDFU_{{{label}}}}}={ndfu_value:.3f}$"
     plt.xlabel(f"Toxicity\n{math_text}")
     plt.ylabel(r"\#Annotations")
 
-    # individual pictures to be used for slides
+    ax.legend(handles=[legend_handle])
+
     graphs.save_plot(graph_path)
     plt.close()
 
@@ -280,14 +317,56 @@ def _plot_example_individual(
     )
 
     fig, ax = plt.subplots(figsize=(6, 4))
+
     sns.histplot(
-        men_annot, bins=NUM_BINS, alpha=0.6, label="Black", kde=True, ax=ax
+        men_annot,
+        bins=NUM_BINS,
+        alpha=0.6,
+        kde=True,
+        ax=ax,
+        color=sns.color_palette()[0],
     )
+    men_patches = list(ax.patches)
+
     sns.histplot(
-        women_annot, bins=NUM_BINS, alpha=0.6, label="White", kde=True, ax=ax
+        women_annot,
+        bins=NUM_BINS,
+        alpha=0.6,
+        kde=True,
+        ax=ax,
+        color=sns.color_palette()[1],
     )
+
+    women_patches = ax.patches[len(men_patches) :]
+
+    for patch in men_patches:
+        patch.set_hatch(graphs.HATCHES[0])
+        patch.set_edgecolor("black")
+
+    for patch in women_patches:
+        patch.set_hatch(graphs.HATCHES[1])
+        patch.set_edgecolor("black")
+
+    legend_handles = [
+        Patch(
+            facecolor=sns.color_palette()[0],
+            edgecolor="black",
+            hatch=graphs.HATCHES[0],
+            label="Black",
+            alpha=0.6,
+        ),
+        Patch(
+            facecolor=sns.color_palette()[1],
+            edgecolor="black",
+            hatch=graphs.HATCHES[1],
+            label="White",
+            alpha=0.6,
+        ),
+    ]
+
     ax.set_title(title)
-    ax.legend(loc="upper right")
+    ax.legend(handles=legend_handles, loc="upper right")
+
     ax.set_xlabel(
         f"$nDFU_{{White}}={ndfu_man:.4f}$\n"
         f"$nDFU_{{Black}}={ndfu_woman:.4f}$\n"

@@ -27,6 +27,9 @@ COLORBLIND_PALETTE = [
     "#BC80BD",  # plum (dark purple contrast partner)
 ]
 
+MARKERS = ["o", "s", "D", "^", "v", "P", "X"]
+HATCHES = ["//", "\\\\", "xx", "oo", "..", "**", "++", "--"]
+
 
 def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
     df = ds.get_dataset()
@@ -92,7 +95,6 @@ def save_plot(path: Path) -> None:
 
 
 def graph_setup() -> None:
-
     sns.set_theme(
         context="paper",
         style="ticks",
@@ -115,13 +117,13 @@ def graph_setup() -> None:
             "savefig.pad_inches": 0.02,
             # Fonts
             "font.family": "serif",
-            "font.serif": ["Times New Roman", "Times", "DejaVu Serif"],
+            "font.serif": ["Liberation Serif", "Nimbus Roman"],
             "font.size": 18,
             "axes.titlesize": 18,
-            "axes.labelsize": 16,
+            "axes.labelsize": 22,
             "xtick.labelsize": 14,
             "ytick.labelsize": 14,
-            "legend.fontsize": 14,
+            "legend.fontsize": 22,
             "figure.titlesize": 22,
             "figure.labelsize": 22,
             # Axes
