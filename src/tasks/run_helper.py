@@ -1,9 +1,10 @@
 from pathlib import Path
 import re
 
-import pandas as pd
-from tqdm.auto import tqdm
 import apunim
+import pandas as pd
+import numpy as np
+from tqdm.auto import tqdm
 
 from . import preprocessing
 
@@ -191,3 +192,94 @@ def significance_superscript(p):
         return r"$^{*}$"
     else:
         return ""
+
+
+def compute_apriori_polarization(
+    dataset: preprocessing.Dataset,
+    iterations: int = 100,
+    num_bins: int | None = None,
+    seed: int | None = 42,
+) -> pd.DataFrame:
+    rng = np.random.default_rng(seed=seed)
+
+    # --------------------------------------------------
+    # Load data
+    # --------------------------------------------------
+    df = dataset.get_dataset()
+    annotation_col = dataset.get_annotation_column()
+    comment_col = dataset.get_comment_key_column()
+    sdb_columns = dataset.get_sdb_columns()
+
+    if not sdb_columns:
+        raise ValueError("dataset.get_sdb_columns() returned an empty list.")
+
+    sdb_col = sdb_columns[0]
+
+    df = df[[annotation_col, comment_col, sdb_col]].copy()
+    df[annotation_col] = pd.to_numeric(df[annotation_col], errors="coerce")
+    df = df.dropna(subset=[annotation_col])
+
+    annotations = df[annotation_col].to_numpy(dtype=float)
+    comments = df[comment_col].to_numpy()
+    factors = df[sdb_col].to_numpy()
+
+    bins = num_bins if num_bins is not None else len(np.unique(annotations))
+    bins = max(bins, 2)
+
+    all_factors = list(dict.fromkeys(factors))
+    apriori = {f: [] for f in all_factors}
+
+    unique_comments = list(dict.fromkeys(comments))
+
+    # --------------------------------------------------
+    # Main loop
+    # --------------------------------------------------
+    for cid in unique_comments:
+        mask = comments == cid
+        comm_ann = annotations[mask]
+        comm_fac = factors[mask]
+
+        if len(comm_ann) == 0:
+            continue
+
+        if np.isclose(apunim.dfu(comm_ann, bins=bins, normalized=True), 0, atol=0.01):
+            continue
+
+        unique_in_comment = set(comm_fac)
+        if len(unique_in_comment) < 2:
+            continue
+
+        sizes = np.array(
+            [np.sum(comm_fac == f) for f in all_factors],
+            dtype=int
+        )
+
+        for _ in range(iterations):
+            shuffled = rng.permutation(comm_ann)
+            start = 0
+
+            for f, size in zip(all_factors, sizes):
+                part = shuffled[start:start + size]
+                start += size
+
+                if part.size == 0:
+                    continue
+
+                apriori[f].append(
+                    apunim.dfu(part, bins=bins, normalized=True)
+                )
+
+    # --------------------------------------------------
+    # Summary
+    # --------------------------------------------------
+    rows = []
+    for f, vals in apriori.items():
+        vals = np.asarray(vals, dtype=float)
+        rows.append({
+            "factor_level": str(f),
+            "n_values": len(vals),
+            "mean_dfu": float(np.mean(vals)) if len(vals) else float("nan"),
+            "std_dfu": float(np.std(vals)) if len(vals) else float("nan"),
+        })
+
+    return pd.DataFrame(rows)
