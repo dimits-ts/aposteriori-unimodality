@@ -68,43 +68,80 @@ def _prepare_distributions(n_annotators, variance):
 
 
 def _plot_matrix(
-    ax, data, group_labels, title, horizontal_jitter=0.25, vertical_jitter=0.15
+    ax,
+    data,
+    group_labels,
+    title,
+    horizontal_jitter=0.25,
+    vertical_jitter=0.15,
 ):
     color_map = {0: "blue", 1: "green"}
-    label_map = {0: "Christian", 1: "Muslim"}
 
-    # Scatter points for each group separately to add legend
+    marker_map = {
+        0: graphs.MARKERS[0],
+        1: graphs.MARKERS[1],
+    }
+
+    # Scatter points for each group separately
     for group in [0, 1]:
         idx = [i for i, g in enumerate(group_labels) if g == group]
+
         x_jittered = np.array(idx) + np.random.uniform(
-            -horizontal_jitter, horizontal_jitter, size=len(idx)
+            -horizontal_jitter,
+            horizontal_jitter,
+            size=len(idx),
         )
+
         y_jittered = np.array([data[i] for i in idx]) + np.random.uniform(
-            -vertical_jitter, vertical_jitter, size=len(idx)
+            -vertical_jitter,
+            vertical_jitter,
+            size=len(idx),
         )
+
         ax.scatter(
             x_jittered,
             y_jittered,
             c=color_map[group],
+            marker=marker_map[group],
             edgecolor="black",
-            s=60,
-            label=label_map[group],
-            alpha=0.7,
+            s=65,
+            alpha=0.75,
+            linewidth=0.7,
         )
 
-    # ax.set_xlabel("Annotators", fontsize=LABEL_FONTSIZE)
     ax.set_xlim(-0.5, len(data) - 0.5)
     ax.set_xticks([])
-    # ax.set_ylabel("Hate Speech", fontsize=LABEL_FONTSIZE)
+    ax.minorticks_off()
+
+    # emoji labels that render in standard unicode fonts
     ax.set_yticks([1, 2, 3, 4, 5])
-    ax.set_yticklabels(["☺", "🙂", "😐", "😠", "🤬"])
+    ax.set_yticklabels(
+        [r"$\heartsuit\heartsuit$", r"$\heartsuit$", "?", "!", "!!"]
+    )
+
     ax.set_ylim(0.8, 5.2)
-    ax.set_title(title)
-    # ax.legend(loc="upper right")
+
+    ax.set_title(
+        title,
+        pad=10,
+        fontweight="bold",
+    )
+
+    # remove unnecessary subplot spines
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+
+    # keep left spine for emoji scale
+    ax.spines["left"].set_linewidth(1.0)
+
+    ax.tick_params(axis="x", length=0)
 
 
 def plot_annotation_distributions(
-    graph_dir: Path, n_annotators=100, variance=0.3, random_seed=42
+    graph_dir: Path,
+    n_annotators=100,
+    variance=0.3,
+    random_seed=42,
 ):
     np.random.seed(random_seed)
 
@@ -112,29 +149,105 @@ def plot_annotation_distributions(
         _prepare_distributions(n_annotators, variance)
     )
 
-    fig, axs = plt.subplots(2, 2, sharex=True, sharey=True)
-    plt.subplots_adjust(hspace=0.15, wspace=0.15)
-
-    # ---- Bottom-left: Low polarization, low disagreement
-    _plot_matrix(axs[1, 0], unimodal, group_labels, title="")
-
-    # ---- Bottom-right: High polarization, low disagreement
-    _plot_matrix(axs[0, 0], bimodal, group_labels, title="")
-
-    # ---- Top-left: Low polarization, high disagreement
-    _plot_matrix(axs[0, 1], uniform, group_labels, title="")
-
-    # ---- Top-right: High polarization, high disagreement
-    _plot_matrix(axs[1, 1], multimodal, group_labels, title="")
-
-    # ---- Global labels (optional but very clear)
-    fig.supxlabel("Low ← Disagreement → High")
-    fig.supylabel("Low ← Polarization → High")
-    fig.suptitle(
-        "Hate Speech Annotations for 100 Annotators grouped by religion",
+    fig, axs = plt.subplots(
+        2,
+        2,
+        figsize=(13, 10),
+        sharex=True,
+        sharey=True,
     )
 
-    plt.savefig(graph_dir / "disagreement_vs_polarization.png")
+    # MUCH larger spacing
+    plt.subplots_adjust(
+        hspace=0.32,
+        wspace=0.18,
+        left=0.16,
+        right=0.96,
+        top=0.86,
+        bottom=0.16,
+    )
+
+    # Low polarization / low disagreement
+    _plot_matrix(
+        axs[1, 0],
+        unimodal,
+        group_labels,
+        title="Agreement",
+    )
+
+    # High polarization / low disagreement
+    _plot_matrix(
+        axs[0, 0],
+        bimodal,
+        group_labels,
+        title="Group split",
+    )
+
+    # High polarization / high disagreement
+    _plot_matrix(
+        axs[0, 1],
+        multimodal,
+        group_labels,
+        title="Group split, mixed opinions",
+    )
+
+    # Low polarization / high disagreement
+    _plot_matrix(
+        axs[1, 1],
+        uniform,
+        group_labels,
+        title="Overall mixed opinions",
+    )
+
+    # clearer matrix-style labels
+    fig.supxlabel(
+        "Low disagreement $\\rightarrow$ High disagreement",
+        fontweight="bold",
+        y=0.08,  # avoid legend
+    )
+
+    fig.supylabel(
+        "Low polarization $\\rightarrow$ High polarization", fontweight="bold"
+    )
+
+    fig.suptitle(
+        "``We will never stop in our fight against Radical Islamic Terrorism''",
+        fontweight="bold",
+    )
+
+    legend_handles = [
+        plt.Line2D(
+            [],
+            [],
+            linestyle="",
+            marker=graphs.MARKERS[1],
+            markersize=18,
+            markerfacecolor="green",
+            markeredgecolor="black",
+            label="Muslim",
+        ),
+        plt.Line2D(
+            [],
+            [],
+            linestyle="",
+            marker=graphs.MARKERS[0],
+            markersize=18,
+            markerfacecolor="blue",
+            markeredgecolor="black",
+            label="Non-Muslim",
+        ),
+    ]
+
+    fig.legend(
+        handles=legend_handles,
+        loc="lower center",
+        ncol=2,
+        bbox_to_anchor=(0.5, 0.01),
+        fontsize=18,
+        frameon=True,
+    )
+
+    graphs.save_plot(graph_dir / "disagreement_vs_polarization.png")
     plt.close()
 
 
@@ -387,7 +500,6 @@ def main(graph_dir: Path):
     dfu_plots(colors, graph_dir)
     discussion_example(graph_dir)
 
-    plt.rcParams.update({"text.usetex": False, "font.family": "Symbola"})
     plot_annotation_distributions(graph_dir)
 
 
