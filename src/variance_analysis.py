@@ -11,11 +11,11 @@ import matplotlib.pyplot as plt
 from tqdm.auto import tqdm
 import apunim
 
-from .tasks import graphs
-from .tasks import preprocessing
-from . import dices
-from . import sap
-from . import kumar
+import tasks.graphs
+import tasks.preprocessing
+import sap
+import kumar
+import dices
 
 
 MARKERS = {
@@ -24,6 +24,65 @@ MARKERS = {
     "Kumar et al. 2021": "^",
     "Sap et al. 2022": "*",
 }
+
+
+def main(
+    dices_small_path: Path,
+    dices_large_path: Path,
+    latex_output_dir: Path,
+    sap_path: Path,
+    kumar_path: Path,
+    graph_dir: Path,
+    cache_dir: Path,
+    min_comment_annotators: int = 3,
+):
+    tasks.graphs.graph_setup()
+    dices350_ds = dices.DicesDataset(
+        dataset_path=dices_small_path, variant="350"
+    )
+    dices990_ds = dices.DicesDataset(
+        dataset_path=dices_large_path, variant="990"
+    )
+    sap_ds = sap.SapDataset(dataset_path=sap_path)
+    kumar_ds = kumar.KumarDataset(
+        dataset_path=kumar_path, num_samples=kumar.NUM_COMMENTS
+    )
+    datasets = [dices350_ds, dices990_ds, sap_ds, kumar_ds]
+
+    ann_size_df = get_annotator_counts_df(datasets)
+    stats_df = get_statistics_df(ann_size_df)
+    stats_df.to_latex(
+        latex_output_dir / "ann_stats.tex",
+        caption=(
+            "Descriptive statistics for the number of annotations per dataset."
+        ),
+        label="tab:num-annot",
+        position="ht",
+        index=True,
+        float_format="%.4f",
+        escape=True,
+    )
+
+    kumar_ds = cull_kumar_ds(kumar_ds)
+    plot_annotator_count_histogram_from_datasets(
+        datasets=datasets,
+        graph_path=graph_dir / "annotator_count_histogram.png",
+    )
+
+    variance_df_ls = []
+    for dataset in datasets:
+        res_df = get_dataset_variance(
+            dataset, cache_dir, min_comment_annotators=min_comment_annotators
+        )
+        res_df["dataset"] = dataset.get_name()
+        variance_df_ls.append(res_df)
+
+    variance_df = pd.concat(variance_df_ls, ignore_index=True)
+
+    plot_variance_curve(
+        variance_df,
+        graph_path=graph_dir / "ndfu_std_error_sample_size.png",
+    )
 
 
 def sample_se_vs_sample_size_unimodality(
@@ -146,12 +205,12 @@ def plot_variance_curve(results_df, graph_path: Path):
     plt.grid(True)
     plt.tight_layout()
 
-    graphs.save_plot(graph_path)
+    tasks.graphs.save_plot(graph_path)
     plt.close()
 
 
 def get_dataset_variance(
-    dataset: preprocessing.Dataset,
+    dataset: tasks.preprocessing.Dataset,
     cache_dir: Path,
     min_comment_annotators: int,
 ) -> pd.DataFrame:
@@ -183,7 +242,7 @@ def get_dataset_variance(
 
 
 def plot_annotator_count_histogram_from_datasets(
-    datasets: list["preprocessing.Dataset"],
+    datasets: list[tasks.preprocessing.Dataset],
     graph_path: Path,
 ):
     """
@@ -210,7 +269,7 @@ def plot_annotator_count_histogram_from_datasets(
     bins_edges = np.linspace(min_val, max_val, N_BINS + 1)
 
     for i, dataset_name in enumerate(dataset_names):
-        data_subset = all_df[all_df['dataset'] == dataset_name]['n_annotators']
+        data_subset = all_df[all_df["dataset"] == dataset_name]["n_annotators"]
 
         raw_counts, edges = np.histogram(data_subset, bins=bins_edges)
 
@@ -221,10 +280,10 @@ def plot_annotator_count_histogram_from_datasets(
         else:
             percentage_counts = np.zeros_like(raw_counts, dtype=float)
 
-        selected_color = graphs.COLORBLIND_PALETTE[
-            i % len(graphs.COLORBLIND_PALETTE)
+        selected_color = tasks.graphs.COLORBLIND_PALETTE[
+            i % len(tasks.graphs.COLORBLIND_PALETTE)
         ]
-        selected_hatch = graphs.HATCHES[i % len(graphs.HATCHES)]
+        selected_hatch = tasks.graphs.HATCHES[i % len(tasks.graphs.HATCHES)]
 
         ax.bar(
             x=edges[:-1],
@@ -244,12 +303,12 @@ def plot_annotator_count_histogram_from_datasets(
     ax.grid(True, linestyle="--", alpha=0.3)
     plt.tight_layout()
 
-    graphs.save_plot(graph_path)
+    tasks.graphs.save_plot(graph_path)
     plt.close()
 
 
 def get_annotator_counts_df(
-    datasets: list[preprocessing.Dataset],
+    datasets: list[tasks.preprocessing.Dataset],
 ) -> pd.DataFrame:
     rows = []
 
@@ -270,7 +329,9 @@ def get_annotator_counts_df(
     return all_df
 
 
-def cull_kumar_ds(kumar_ds: preprocessing.Dataset) -> preprocessing.Dataset:
+def cull_kumar_ds(
+    kumar_ds: tasks.preprocessing.Dataset,
+) -> tasks.preprocessing.Dataset:
     # --- There is a single comment with 650 annotators ---
     df = kumar_ds.get_dataset()
     df["annotator_count"] = df["Toxicity"].apply(_safe_len)
@@ -308,65 +369,6 @@ def _safe_len(x):
         return len(x)
     except Exception:
         return 0
-
-
-def main(
-    dices_small_path: Path,
-    dices_large_path: Path,
-    latex_output_dir: Path,
-    sap_path: Path,
-    kumar_path: Path,
-    graph_dir: Path,
-    cache_dir: Path,
-    min_comment_annotators: int = 3,
-):
-    graphs.graph_setup()
-    dices350_ds = dices.DicesDataset(
-        dataset_path=dices_small_path, variant="350"
-    )
-    dices990_ds = dices.DicesDataset(
-        dataset_path=dices_large_path, variant="990"
-    )
-    sap_ds = sap.SapDataset(dataset_path=sap_path)
-    kumar_ds = kumar.KumarDataset(
-        dataset_path=kumar_path, num_samples=kumar.NUM_COMMENTS
-    )
-    datasets = [dices350_ds, dices990_ds, sap_ds, kumar_ds]
-
-    ann_size_df = get_annotator_counts_df(datasets)
-    stats_df = get_statistics_df(ann_size_df)
-    stats_df.to_latex(
-        latex_output_dir / "ann_stats.tex",
-        caption=(
-            "Descriptive statistics for the number of annotations per dataset."
-        ),
-        label="tab:num-annot",
-        position="ht",
-        index=True,
-        float_format="%.4f",
-        escape=True,
-    )
-
-    kumar_ds = cull_kumar_ds(kumar_ds)
-    plot_annotator_count_histogram_from_datasets(
-        datasets=datasets,
-        graph_path=graph_dir / "annotator_count_histogram.png",
-    )
-
-    variance_df_ls = []
-    for dataset in datasets:
-        res_df = get_dataset_variance(
-            dataset, cache_dir, min_comment_annotators=min_comment_annotators
-        )
-        res_df["dataset"] = dataset.get_name()
-        variance_df_ls.append(res_df)
-
-    variance_df = pd.concat(variance_df_ls, ignore_index=True)
-
-    plot_variance_curve(
-        variance_df,
-        graph_path=graph_dir / "ndfu_std_error_sample_size.png",
-    )
 
 
 if __name__ == "__main__":

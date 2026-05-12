@@ -6,12 +6,12 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from .tasks import preprocessing
-from .tasks import run_helper
-from .tasks import graphs
+import tasks.graphs
+import tasks.preprocessing
+import tasks.run_helper
 
 
-class DicesDataset(preprocessing.Dataset):
+class DicesDataset(tasks.preprocessing.Dataset):
     def __init__(self, dataset_path: Path, variant: str):
         self.df = DicesDataset._base_df(dataset_path)
         self.variant = variant
@@ -140,27 +140,27 @@ def main(
     output_dir: Path,
     graph_output_dir: Path,
 ):
-    graphs.graph_setup()
+    tasks.graphs.graph_setup()
     ds_350 = DicesDataset(dataset_path=dataset_path_small, variant="350")
-    graphs.polarization_plot(
+    tasks.graphs.polarization_plot(
         ds=ds_350, output_path=graph_output_dir / "dices-350.png"
     )
 
-    res = run_helper.compute_apriori_polarization(ds_350)
+    res = tasks.run_helper.compute_apriori_polarization(ds_350)
     np.save(output_dir / "dices-350-apriori.npy", res)
 
-    res = run_helper.run_all_results(ds=ds_350)
+    res = tasks.run_helper.run_all_results(ds=ds_350)
     res.to_csv(output_dir / "dices-350.csv")
 
     ds_990 = DicesDataset(dataset_path=dataset_path_large, variant="990")
-    graphs.polarization_plot(
+    tasks.graphs.polarization_plot(
         ds=ds_990, output_path=graph_output_dir / "dices-990.png"
     )
 
-    res = run_helper.compute_apriori_polarization(ds_990)
+    res = tasks.run_helper.compute_apriori_polarization(ds_990)
     np.save(output_dir / "dices-990-apriori.npy", res)
 
-    res = run_helper.run_all_results(ds=ds_990)
+    res = tasks.run_helper.run_all_results(ds=ds_990)
     res.to_csv(output_dir / "dices-990.csv")
 
     plot_annotation_histograms(

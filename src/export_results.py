@@ -8,12 +8,12 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
-from .tasks import run_helper
-from .tasks import graphs
+import tasks.graphs
+import tasks.run_helper
 
 
 def main(results_dir: Path, latex_output_dir: Path, graph_output_dir: Path):
-    graphs.graph_setup()
+    tasks.graphs.graph_setup()
     csv_to_latex(results_dir=results_dir, latex_output_dir=latex_output_dir)
     ordinal_graph(results_dir=results_dir, graph_output_dir=graph_output_dir)
     ordinal_graph_per_feature(
@@ -53,7 +53,7 @@ def plot_dfu_histograms(
     datasets = sorted(full_df["dataset"].unique())
     legend_handles = []
     for i, (dataset, color, hatch) in enumerate(
-        zip(datasets, graphs.COLORBLIND_PALETTE, graphs.HATCHES)
+        zip(datasets, tasks.graphs.COLORBLIND_PALETTE, tasks.graphs.HATCHES)
     ):
         before = len(ax.patches)
 
@@ -91,7 +91,7 @@ def plot_dfu_histograms(
 
     ax.legend(handles=legend_handles)
 
-    graphs.save_plot(graph_output_dir / "apriori.png")
+    tasks.graphs.save_plot(graph_output_dir / "apriori.png")
     plt.close()
 
 
@@ -100,7 +100,7 @@ def csv_to_latex(results_dir: Path, latex_output_dir: Path) -> None:
         dataset_name = result_file.stem
         df = pd.read_csv(result_file)
         df = df.loc[df.pvalue.notna()]
-        run_helper.results_to_latex(
+        tasks.run_helper.results_to_latex(
             res_df=df,
             output_path=latex_output_dir / f"{dataset_name}.tex",
             dataset_name=dataset_name,
@@ -111,8 +111,6 @@ def csv_to_latex(results_dir: Path, latex_output_dir: Path) -> None:
 def ordinal_graph_per_feature(
     results_dir: Path, graph_output_dir: Path
 ) -> None:
-    graphs.graph_setup()
-
     for file in results_dir.rglob("*.csv"):
         df = pd.read_csv(file)
         dataset = file.stem
@@ -165,7 +163,7 @@ def ordinal_graph_per_feature(
                 / f"apunim_ordinal_{dataset}_{safe_feature}.png"
             )
 
-            graphs.save_plot(out_path)
+            tasks.graphs.save_plot(out_path)
             plt.close()
 
 
@@ -256,9 +254,9 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
         "kumar-Technology Impact",
     }
 
-    COLOR_GROUP_1 = graphs.COLORBLIND_PALETTE[0]
-    COLOR_GROUP_2 = graphs.COLORBLIND_PALETTE[1]
-    COLOR_OTHER = graphs.COLORBLIND_PALETTE[2]
+    COLOR_GROUP_1 = tasks.graphs.COLORBLIND_PALETTE[0]
+    COLOR_GROUP_2 = tasks.graphs.COLORBLIND_PALETTE[1]
+    COLOR_OTHER = tasks.graphs.COLORBLIND_PALETTE[2]
 
     palette = {}
     for f in data_stretched["feature"].unique():
@@ -307,7 +305,7 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
     plt.tight_layout()
     ax.set_xticks([])  # Remove x-axis ticks
 
-    graphs.save_plot(graph_output_dir / "apunim_ordinal.png")
+    tasks.graphs.save_plot(graph_output_dir / "apunim_ordinal.png")
 
 
 def add_grouped_legend(

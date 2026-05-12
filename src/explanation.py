@@ -9,7 +9,7 @@ import apunim
 from numpy.typing import NDArray
 from matplotlib.patches import Patch
 
-from .tasks import graphs
+import tasks.graphs
 
 
 INTUITION_SIZE = 50
@@ -17,23 +17,22 @@ DIFF_COMMENTS_SIZE = 200
 NUM_BINS = 10
 
 COLOR_MAP = {
-    "Men": graphs.COLORBLIND_PALETTE[0],
-    "Women": graphs.COLORBLIND_PALETTE[1],
+    "Men": tasks.graphs.COLORBLIND_PALETTE[0],
+    "Women": tasks.graphs.COLORBLIND_PALETTE[1],
 }
 
 HATCH_MAP = {
-    "Men": graphs.HATCHES[0],
-    "Women": graphs.HATCHES[1],
-    "All": graphs.HATCHES[2],
+    "Men": tasks.graphs.HATCHES[0],
+    "Women": tasks.graphs.HATCHES[1],
+    "All": tasks.graphs.HATCHES[2],
 }
 
 
 def main(graph_dir: Path):
-    graphs.graph_setup()
+    tasks.graphs.graph_setup()
     np.random.seed(seed=42)
-    colors = sns.color_palette()
 
-    dfu_plots(colors, graph_dir)
+    dfu_plots(graph_dir)
     discussion_example(graph_dir)
 
     plot_annotation_distributions(graph_dir)
@@ -100,8 +99,8 @@ def _plot_matrix(
     color_map = {0: "blue", 1: "green"}
 
     marker_map = {
-        0: graphs.MARKERS[0],
-        1: graphs.MARKERS[1],
+        0: tasks.graphs.MARKERS[0],
+        1: tasks.graphs.MARKERS[1],
     }
 
     # Scatter points for each group separately
@@ -242,7 +241,7 @@ def plot_annotation_distributions(
             [],
             [],
             linestyle="",
-            marker=graphs.MARKERS[1],
+            marker=tasks.graphs.MARKERS[1],
             markersize=18,
             markerfacecolor="green",
             markeredgecolor="black",
@@ -252,7 +251,7 @@ def plot_annotation_distributions(
             [],
             [],
             linestyle="",
-            marker=graphs.MARKERS[0],
+            marker=tasks.graphs.MARKERS[0],
             markersize=18,
             markerfacecolor="blue",
             markeredgecolor="black",
@@ -269,11 +268,11 @@ def plot_annotation_distributions(
         frameon=True,
     )
 
-    graphs.save_plot(graph_dir / "disagreement_vs_polarization.png")
+    tasks.graphs.save_plot(graph_dir / "disagreement_vs_polarization.png")
     plt.close()
 
 
-def dfu_plots(colors, graph_dir: Path) -> None:
+def dfu_plots(graph_dir: Path) -> None:
     d1 = _truncated_normal(loc=2, scale=1.3, size=INTUITION_SIZE)
     d2 = _truncated_normal(loc=8, scale=1.3, size=INTUITION_SIZE)
     d_all = np.hstack([d1, d2])
@@ -282,7 +281,7 @@ def dfu_plots(colors, graph_dir: Path) -> None:
         datasets=[d_all, d1, d2],
         labels=["All", "Men", "Women"],
         colors=[
-            graphs.COLORBLIND_PALETTE[2],
+            tasks.graphs.COLORBLIND_PALETTE[2],
             COLOR_MAP["Men"],
             COLOR_MAP["Women"],
         ],
@@ -346,7 +345,7 @@ def _combined_dfu_plot(
     plt.ylabel(r"\#Annotations")
     plt.title(r"\textit{``Most women can't drive well.''}")
 
-    graphs.save_plot(graph_path)
+    tasks.graphs.save_plot(graph_path)
     plt.close()
 
 
@@ -395,46 +394,6 @@ def discussion_example(graph_dir: Path) -> None:
 def _truncated_normal(loc, scale, lower=0, upper=10, size=100):
     a, b = (lower - loc) / scale, (upper - loc) / scale
     return scipy.stats.truncnorm(a, b, loc=loc, scale=scale).rvs(size)
-
-
-def _dfu_plot(
-    data: np.ndarray,
-    graph_path: Path,
-    color: str,
-    label,
-    hatch: str,
-) -> None:
-    ndfu_value = apunim.dfu(data, bins=NUM_BINS, normalized=True)
-
-    fig, ax = plt.subplots(figsize=(8, 5))
-
-    sns.histplot(
-        data,
-        bins=NUM_BINS,
-        kde=True,
-        alpha=0.7,
-        color=color,
-        ax=ax,
-    )
-
-    _apply_hatches(ax, hatch)
-
-    legend_handle = Patch(
-        facecolor=color,
-        edgecolor="black",
-        hatch=hatch,
-        label=label,
-        alpha=0.7,
-    )
-
-    math_text = f"$\\mathbf{{nDFU_{{{label}}}}}={ndfu_value:.3f}$"
-    plt.xlabel(f"Toxicity\n{math_text}")
-    plt.ylabel(r"\#Annotations")
-
-    ax.legend(handles=[legend_handle])
-
-    graphs.save_plot(graph_path)
-    plt.close()
 
 
 def _plot_example_individual(
@@ -508,7 +467,7 @@ def _plot_example_individual(
     ax.set_ylabel(r"\#Annotations")
     ax.set_xlim(1, 10)
 
-    graphs.save_plot(graph_path)
+    tasks.graphs.save_plot(graph_path)
     plt.close()
 
 

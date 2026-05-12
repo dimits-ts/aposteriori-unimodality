@@ -4,12 +4,12 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
-from .tasks import preprocessing
-from .tasks import run_helper
-from .tasks import graphs
+import tasks.graphs
+import tasks.preprocessing
+import tasks.run_helper
 
 
-class SapDataset(preprocessing.Dataset):
+class SapDataset(tasks.preprocessing.Dataset):
     def __init__(self, dataset_path: Path):
         self.df = SapDataset._base_df(dataset_path)
 
@@ -88,15 +88,15 @@ class SapDataset(preprocessing.Dataset):
 
 
 def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
-    graphs.graph_setup()
+    tasks.graphs.graph_setup()
     ds = SapDataset(dataset_path=dataset_path)
 
-    graphs.polarization_plot(ds=ds, output_path=graph_output_dir / "sap.png")
+    tasks.graphs.polarization_plot(ds=ds, output_path=graph_output_dir / "sap.png")
 
-    res = run_helper.compute_apriori_polarization(dataset=ds)
+    res = tasks.run_helper.compute_apriori_polarization(dataset=ds)
     np.save(output_dir / "sap-apriori.npy", res)
 
-    res = run_helper.run_all_results(ds)
+    res = tasks.run_helper.run_all_results(ds)
     res.to_csv(output_dir / "sap.csv")
 
 
