@@ -18,6 +18,7 @@
 \usepackage{hyperref}
 \usepackage{enumitem}
 \usepackage{xcolor,colortbl}
+\usepackage{siunitx}
 
 \newtheorem{definition}{Definition}%
 \newtheorem{finding}{Finding}
@@ -164,7 +165,7 @@ In the absence of polarization, annotation distributions are typically unimodal:
 
 Inherent polarization refers to disagreement that cannot be explained by \emph{any} grouping of annotators. It may arise from the task itself, the annotation instructions, ambiguity in the content, or simply random variation. Prior work~\cite{pavlopoulos-likas-2024} attributed polarization to annotator groups only when the observed polarization for a grouping became zero, implicitly assuming that inherent polarization was also zero.
 
-To examine this assumption, we create random annotator groupings for each comment in our datasets. Specifically, for every comment, we randomly partition the annotators into groups $n = 100$ times and compute the observed polarization for each partition.\footnote{We assume two same-sized groups for this experiment. This assumption does not compromise the main finding of the experiment, but it is worth noting that we can use group sizes conditioned on the actual annotator group, as shown in \S\ref{ssec:methodology:polstat}.} We then average these polarization scores across all random partitions. Repeating this process for every comment produces the distribution shown in Fig.~\ref{fig:apriori}. The results show that inherent polarization is consistently non-zero and can be substantial for many comments.
+To examine this assumption, we create random annotator groupings for each comment in our datasets. Specifically, for every comment, we randomly partition the annotators into groups 100 times and compute the observed polarization for each partition.\footnote{We assume two same-sized groups for this experiment. This assumption does not compromise the main finding of the experiment, but it is worth noting that we can use group sizes conditioned on the actual annotator group, as shown in \S\ref{ssec:methodology:polstat}.} We then average these polarization scores across all random partitions. Repeating this process for every comment produces the distribution shown in Fig.~\ref{fig:apriori}. The results show that inherent polarization is consistently non-zero and can be substantial for many comments.
 
 \begin{finding}
 	\label{finding:inherent}
@@ -514,9 +515,9 @@ Each dataset features a different standard deviation even with the same number o
 	This work has been partially supported by project MIS 5154714 of the National Recovery and Resilience Plan Greece 2.0 funded by the European Union under the NextGenerationEU Program.
 	
 	
-	\bibliography{refs}
+\bibliography{refs}
+\appendix
 	
-	\begin{appendices}
 		\section {Acronyms}
 		
 		\begin{acronym}[WWW]
@@ -549,7 +550,8 @@ Each dataset features a different standard deviation even with the same number o
 			\label{fig:ann_counts}
 		\end{figure}
 		
-		\begin{table}[ht]
+		\begin{table*}[ht]
+			\centering
 			\caption{Descriptive statistics for the number of annotations per comment, grouped by dataset.}
 			\label{tab:num-annot}
 			\begin{tabular}{lrrrrrrrr}
@@ -562,7 +564,7 @@ Each dataset features a different standard deviation even with the same number o
 				Sap et al. 2022 & 585 & 5.6359 & 0.7713 & 3 & 6 & 6 & 6 & 12 \\
 				\bottomrule
 			\end{tabular}
-		\end{table}
+		\end{table*}
 		
 		The number of annotators per comment for all datasets presented in \S\ref{sec:datasets} can be found in Figure~\ref{fig:ann_counts}, and descriptive statistics can be found in Table~\ref{tab:num-annot}. The DICES-990 dataset has exactly 123 annotations per comment, while the other datasets exhibit a few variations around the central mean reported in Table~\ref{tab:datasets}. Interestingly, the sample used from the Kumar dataset exhibits a few comments that vastly exceed the promised $5$ number of annotators. We included these comments for the experiment presented in Table~\ref{tab:merged-apunim}, but not for the annotator number experiment in Figure~\ref{fig:std_error} since they would produce uninterpretable figures.
 				
@@ -602,171 +604,214 @@ Each dataset features a different standard deviation even with the same number o
 		In Figure~\ref{fig:std_error}, we removed values where there was a lack of items annotated by the specified number of annotators (e.g., only 7\% of comments in DICES-990 were annotated by more than 73 annotators---see \ref{app:ann_details}).
 		
 		
-		\section{Full Results}
-		\label{app:full}
-				
-		\begin{figure*}[ht]
-			\includegraphics[width=0.46\columnwidth]{apunim_ordinal_dices-990_Age.png}
-			\includegraphics[width=0.46\columnwidth]{apunim_ordinal_kumar_Age.png}
-			\includegraphics[width=0.46\columnwidth]{apunim_ordinal_kumar_Education.png}
-			\includegraphics[width=0.46\columnwidth]{apunim_ordinal_kumar_Religion_Important.png}
-			\includegraphics[width=0.46\columnwidth]{apunim_ordinal_kumar_Toxicity_Problem.png}
-			\caption{Apunim values across ordinal factor levels with at least two statistically significant values, expanded for each ordinal \ac{pc}. This figure is complementary to Figure~\ref{fig:ordinal}. The values in the graphs were extracted from the Tables of \ref{app:full}. }
-			\label{fig:ordinal-full}
-		\end{figure*}
+\section{Full Results}
+\label{app:full}
+
+\begin{table}[t]
+	\centering
+	\small 
+	\begin{tabularx}{\columnwidth}{X r r}
+		\toprule
+		\textbf{Group} & \textbf{apunim} & \textbf{support} \\
+		\midrule
+		\multicolumn{3}{c}{\textbf{Sap}} \\
+		\midrule
+		Age=GenX+ & $0.0192$ & 743 \\
+		Age=Millennial & $0.0189$ & 1792 \\
+		\rowcolor{gray!15} Age=GenZ & $-0.0153$ & 239 \\
+		\rowcolor{gray!15} Eth=Black & $-0.2967$ & 1041 \\
+		Eth=White & $0.1400$ & 2048 \\
+		Gender=Male & $0.0942$ & 1635 \\
+		\rowcolor{gray!15} Gender=Female & $-0.1810$ & 1333 \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Full apunim results for the Sap Dataset.}
+	\label{tab:sap-full}
+\end{table}
+
+\begin{table}[t]
+	\centering
+	\small 
+	\begin{tabularx}{\columnwidth}{X r r}
+		\toprule
+		\textbf{Group} & \textbf{apunim} & \textbf{support} \\
+		\midrule
+
+		\multicolumn{3}{c}{\textbf{Kumar}} \\
+		\midrule
+		\rowcolor{gray!15} Age=1) 18-24 & $-0.009$ & 9742 \\
+		Age=2) 25-34 & $0.032^{***}$ & 33203 \\
+		\rowcolor{gray!15} Age=3) 35-44 & $-0.009$ & 21055 \\
+		Age=4) 45-54 & $0.001$ & 11025 \\
+		\rowcolor{gray!15} Age=5) 55-64 & $-0.004$ & 6123 \\
+		Age=6) 65+ & $0.000$ & 2567 \\
+		\midrule
+		Edu=1) Doctoral degree & $0.005$ & 1019 \\
+		Edu=2) Prof. degree & $0.004$ & 1321 \\
+		Edu=3) Master's degree & $0.015^{**}$ & 13420 \\
+		Edu=4) Bachelor's degree & $0.040^{***}$ & 34085 \\
+		\rowcolor{gray!15} Edu=5) Associate degree & $-0.011^{**}$ & 9122 \\
+		\rowcolor{gray!15} Edu=6) College, no degree & $-0.034^{***}$ & 16666 \\
+		\rowcolor{gray!15} Edu=7) High School & $-0.008^{*}$ & 7326 \\
+		Edu=8) No high school & $0.000$ & 462 \\
+		\midrule
+		\rowcolor{gray!15} Eth=Asian & $-0.002$ & 5062 \\
+		Eth=Black & $0.011^{*}$ & 10999 \\
+		\rowcolor{gray!15} Eth=Hispanic & $-0.003$ & 2389 \\
+		\rowcolor{gray!15} Eth=Multiracial & $-0.004$ & 3682 \\
+		Eth=Other & $0.002$ & 1507 \\
+		\rowcolor{gray!15} Eth=Unknown & $-0.003$ & 1160 \\
+		\rowcolor{gray!15} Eth=White & $-0.038^{***}$ & 45306 \\
+		\midrule
+		\rowcolor{gray!15} Gender=Female & $-0.028^{***}$ & 40686 \\
+		Gender=Male & $0.028^{***}$ & 37929 \\
+		\rowcolor{gray!15} Gender=Nonbinary & $-0.001$ & 489 \\
+		\rowcolor{gray!15} Gender=Unknown & $-0.003$ & 621 \\
+		\midrule
+		\rowcolor{gray!15} Target=False & $-0.063^{***}$ & 45234 \\
+		Target=True & $0.035^{***}$ & 24491 \\
+		\midrule
 		
-		\begin{table}[ht]
-			\centering
-			\caption{Aposteriori unimodality results for the DICES-350 dataset.}
-			\label{tab:dices-350-full}
-			\begin{tabular}{lllr}
-				\toprule
-				&  & apunim & support \\
-				\ac{pc} dimension & Value &  &  \\
-				\midrule
-				Age & 1) Gen. X+ & 0.0186 & 9703 \\
-				& 2) Millenial & -0.0059 & 11268 \\
-				& 3) Gen. Z & -0.0066 & 17528 \\
-				Education & College or higher & 0.0124 & 23475 \\
-				& High school or lower & -0.0152 & 12833 \\
-				& Other & -0.0214$^{*}$ & 2191 \\
-				Gender & Man & -0.0193 & 19093 \\
-				& Woman & 0.0215 & 19406 \\
-				Race & African Am. & -0.0428 & 9077 \\
-				& Asian & 0.0659 & 8138 \\
-				& Latino & -0.0030 & 6886 \\
-				& Multiracial & -0.0001 & 5008 \\
-				& White & -0.0198 & 9390 \\
-				\bottomrule
-			\end{tabular}
-		\end{table}
+		% --- Is Parent ---
+		\rowcolor{gray!15} Parent=No & $-0.071^{***}$ & 37231 \\
+		\rowcolor{gray!15} Parent=Prefer not to say & $-0.002$ & 831 \\
+		Parent=Yes & $0.054^{***}$ & 41493 \\
+		\midrule
 		
-		\begin{table}[ht]
-			\centering
-			\caption{Aposteriori unimodality results for the DICES-990 dataset.}
-			\label{tab:dices-990-full}
-			\begin{tabular}{lllr}
-				\toprule
-				&  & apunim & support \\
-				\ac{pc} dimension & Value &  &  \\
-				\midrule
-				Age & 1) Gen. X+ & -0.0471 & 14384 \\
-				& 2) Millenial & -0.0043 & 38436 \\
-				& 3) Gen. Z & 0.0644 & 13741 \\
-				Education & College or higher & 0.0095 & 59142 \\
-				& High school or lower & -0.0751 & 7419 \\
-				Gender & Man & 0.0278 & 32494 \\
-				& Woman & -0.0235 & 33471 \\
-				Race & African Am. & 0.0909 & 5810 \\
-				& Latino & -0.0030 & 6886 \\
-				& Multiracial & -0.0001 & 5008 \\
-				& White & -0.0198 & 9390 \\
-				\bottomrule
-			\end{tabular}
-		\end{table}
+		% --- Is Transgender ---
+		\rowcolor{gray!15} Trans=No & $-0.089^{***}$ & 11978 \\
+		Trans=Prefer not to say & $0.000$ & 856 \\
+		Trans=Yes & $0.001$ & 2306 \\
+		\midrule
 		
-		\begin{table}[ht]
-			\centering
-			\caption{Aposteriori unimodality results for the Sap dataset.}
-			\label{tab:sap-full}
-			\begin{tabular}{lllr}
-				\toprule
-				&  & apunim & support \\
-				\ac{pc} dimension & Value &  &  \\
-				\midrule
-				Age & 1) Gen. X+ & 0.0192 & 743 \\
-				& 2) Millennial & 0.0189 & 1792 \\
-				& 3) Gen. Z & -0.0153 & 239 \\
-				Ethnicity & Black & -0.2967 & 1041 \\
-				& White & 0.1400 & 2048 \\
-				Gender & Male & 0.0942 & 1635 \\
-				& Female & -0.1810 & 1333 \\
-				\bottomrule
-			\end{tabular}
-		\end{table}
+		% --- Political Affiliation ---
+		Pol=Conservative & $0.033^{***}$ & 23010 \\
+		\rowcolor{gray!15} Pol=Independent & $-0.016^{***}$ & 22818 \\
+		\rowcolor{gray!15} Pol=Liberal & $-0.029^{***}$ & 32917 \\
+		\rowcolor{gray!15} Pol=Other & $-0.005$ & 1822 \\
+		Pol=Prefer not to say & $0.002$ & 3548 \\
+		\midrule
 		
-\iffalse
-		\begin{longtable}[ht]{lllr}
-			\caption{Aposteriori unimodality results for the Kumar dataset.} \label{tab:kumar-full} \\
-			\toprule
-			&  & apunim & support \\
-			\ac{pc} dimension & Value &  &  \\
-			\midrule
-			\endfirsthead
-			\caption[]{Aposteriori unimodality results for the kumar dataset.} \\
-			\toprule
-			&  & apunim & support \\
-			\ac{pc} dimension & Value &  &  \\
-			\midrule
-			\endhead
-			\midrule
-			\multicolumn{4}{r}{Continued on next page} \\
-			\midrule
-			\endfoot
-			\bottomrule
-			\endlastfoot
-			Age & 1) 18 - 24 & -0.0090 & 9742 \\
-			& 2) 25 - 34 & 0.0324 & 33203 \\
-			& 3) 35 - 44 & -0.0093 & 21055 \\
-			& 4) 45 - 54 & 0.0006 & 11025 \\
-			& 5) 55 - 64 & -0.0037 & 6123 \\
-			& 6) 65 or older & 0.0001 & 2567 \\
-			Education & 1) Doctoral degree & 0.0048 & 1019 \\
-			& 2) Professional degree & 0.0038 & 1321 \\
-			& 3) Master's degree & 0.0147$^{**}$ & 13420 \\
-			& 4) Bachelor's degree & 0.0401 & 34085 \\
-			& 5) Associate degree & -0.0113$^{**}$ & 9122 \\
-			& 6) College, no degree & -0.0335 & 16666 \\
-			& 7) High School graduate & -0.0079$^{*}$ & 7326 \\
-			& 8) No high school & 0.0004 & 462 \\
-			Ethnicity & Asian & -0.0019 & 5062 \\
-			& Black & 0.0110$^{*}$ & 10999 \\
-			& Hispanic & -0.0025 & 2389 \\
-			& Multiracial & -0.0041 & 3682 \\
-			& Other & 0.0022 & 1507 \\
-			& Unknown & -0.0030 & 1160 \\
-			& White & -0.0377 & 45306 \\
-			Gender & Female & -0.0278 & 40686 \\
-			& Male & 0.0275 & 37929 \\
-			& Nonbinary & -0.0008 & 489 \\
-			& Unknown & -0.0029 & 621 \\
-			Has Been Targeted & False & -0.0633 & 45234 \\
-			& True & 0.0349 & 24491 \\
-			Is Parent & No & -0.0707 & 37231 \\
-			& Prefer not to say & -0.0023 & 831 \\
-			& Yes & 0.0535 & 41493 \\
-			Is Transgender & No & -0.0894 & 11978 \\
-			& Prefer not to say & 0.0005 & 856 \\
-			& Yes & 0.0013 & 2306 \\
-			Political Affiliation & Conservative & 0.0331 & 23010 \\
-			& Independent & -0.0157 & 22818 \\
-			& Liberal & -0.0287 & 32917 \\
-			& Other & -0.0049 & 1822 \\
-			& Prefer not to say & 0.0015 & 3548 \\
-			Religion Important & 1) No & -0.0804 & 26008 \\
-			& 2) Not very & -0.0154 & 10055 \\
-			& 3) Somewhat & 0.0210 & 20169 \\
-			& 4) Very & 0.0487 & 27284 \\
-			& Prefer not to say & 0.0001 & 1179 \\
-			Seen Toxicity & False & 0.0311 & 20185 \\
-			& True & -0.0717 & 43265 \\
-			Sexual Orientation & Bisexual & 0.0175 & 10005 \\
-			& Heterosexual & -0.0571 & 38048 \\
-			& Homosexual & -0.0017 & 2975 \\
-			& Other & -0.0003 & 728 \\
-			& Prefer not to say & -0.0017 & 1751 \\
-			Technology Impact & 1) Very negative & -0.0009 & 784 \\
-			& 2) Somewhat negative & -0.0080 & 7973 \\
-			& 3) Neutral & 0.0027 & 10720 \\
-			& 4) Somewhat positive & -0.0265 & 40477 \\
-			& 5) Very positive & 0.0208 & 22471 \\
-			Toxicity Problem & 1) Never & 0.0058 & 4962 \\
-			& 2) Rarely & 0.0177 & 14457 \\
-			& 3) Occasionally & -0.0058 & 29476 \\
-			& 4) Frequently & -0.0217 & 24774 \\
-			& 5) Very Frequently & -0.0145 & 10656 \\
-		\end{longtable}
-		\fi
-	\end{appendices}
-	
+		% --- Religion Important ---
+		\rowcolor{gray!15} Rel=1) No & $-0.080^{***}$ & 26008 \\
+		\rowcolor{gray!15} Rel=2) Not very & $-0.015^{***}$ & 10055 \\
+		Rel=3) Somewhat & $0.021^{***}$ & 20169 \\
+		Rel=4) Very & $0.049^{***}$ & 27284 \\
+		Rel=Prefer not to say & $0.000$ & 1179 \\
+		
+		\bottomrule
+	\end{tabularx}
+	\caption{Full apunim results for the Kumar Dataset.}
+	\label{tab:kumar-full1}
+\end{table}
+
+\begin{table}[t]
+	\centering
+	\small 
+	\begin{tabularx}{\columnwidth}{X r r}
+		\toprule
+		\textbf{Group} & \textbf{apunim} & \textbf{support} \\
+		\midrule
+		\multicolumn{3}{c}{\textbf{Kumar}} \\
+		\midrule
+		% --- Seen Toxicity ---
+		Tox=False & $0.031^{***}$ & 20185 \\
+		\rowcolor{gray!15} Tox=True & $-0.072^{***}$ & 43265 \\
+		
+		% --- Sexual Orientation ---
+		SO=Bisexual & $0.018^{***}$ & 10005 \\
+		\rowcolor{gray!15} SO=Heterosexual & $-0.057^{***}$ & 38048 \\
+		\rowcolor{gray!15} SO=Homosexual & $-0.002$ & 2975 \\
+		SO=Other & $-0.000$ & 728 \\
+		\rowcolor{gray!15} SO=Prefer not to say & $-0.002$ & 1751 \\
+		% --- Technology Impact ---
+		\rowcolor{gray!15} Tech=1) Very Low & $-0.001$ & 784 \\
+		\rowcolor{gray!15} Tech=2) Low & $-0.008$ & 7973 \\
+		Tech=3) Mid & $0.003$ & 10720 \\
+		\rowcolor{gray!15} Tech=4) High & $-0.027^{***}$ & 40477 \\
+		Tech=5) Very high & $0.021^{***}$ & 22471 \\
+		\midrule
+		
+		% --- Toxicity Problem ---  
+		ToxP=1) Never & $0.006$ & 4962 \\
+		ToxP=2) Rarely & $0.018^{***}$ & 14457 \\
+		\rowcolor{gray!15} ToxP=3) Occasionally & $-0.006$ & 29476 \\
+		\rowcolor{gray!15} ToxP=4) Frequently & $-0.022^{***}$ & 24774 \\
+		\rowcolor{gray!15} ToxP=5) Very Frequently & $-0.015^{***}$ & 10656 \\
+		\bottomrule
+		\end{tabularx}
+		\caption{Full apunim results for the Kumar Dataset (cont'ed).}
+		\label{tab:kumar-full2}
+\end{table}
+
+\begin{table}[t]
+	\centering
+	\small 
+	\begin{tabularx}{\columnwidth}{X r r}
+		\toprule
+		\textbf{Group} & \textbf{apunim} & \textbf{support} \\
+		\midrule
+		\multicolumn{3}{c}{\textbf{DICES-350}} \\
+		\midrule
+		\rowcolor{gray!15} Race=AfricanAm. & $-0.0428$ & 9077 \\
+		Race=Asian & $0.0659$ & 8138 \\
+		\midrule
+		\rowcolor{gray!15} Age=Millenial & $-0.0059$ & 11268 \\
+		\rowcolor{gray!15} Age=GenZ & $-0.0066$ & 17528 \\
+		\midrule
+		Edu=College or higher & $0.0124$ & 23475 \\
+		\rowcolor{gray!15} Edu=High school or lower & $-0.0152$ & 12833 \\
+		\rowcolor{gray!15} Edu=Other & $-0.0214^{*}$ & 2191 \\
+		\midrule
+		\rowcolor{gray!15} Gender=Man & $-0.0193$ & 19093 \\
+		Gender=Woman & $0.0215$ & 19406 \\
+		\midrule
+		\rowcolor{gray!15} Race=Latino & $-0.0030$ & 6886 \\
+		\rowcolor{gray!15} Race=Multiracial & $-0.0001$ & 5008 \\
+		\rowcolor{gray!15} Race=White & $-0.0198$ & 9390 \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Full apunim results for the DICES-350 Dataset.}
+	\label{tab:dices350-full}
+\end{table}
+
+\begin{table}[t]
+	\centering
+	\small 
+	\begin{tabularx}{\columnwidth}{X r r}
+		\toprule
+		\textbf{Group} & \textbf{apunim} & \textbf{support} \\
+		\midrule
+		\multicolumn{3}{c}{\textbf{DICES-990}} \\
+		\midrule
+		\rowcolor{gray!15} Age=GenX+ & $-0.0471$ & 14384 \\
+		\rowcolor{gray!15} Age=Millenial & $-0.0043$ & 38436 \\
+		Age=GenZ & $0.0644$ & 13741 \\
+		\midrule
+		Edu=College or higher & $0.0095$ & 59142 \\
+		\rowcolor{gray!15} Edu=High school or lower & $-0.0751$ & 7419 \\
+		\midrule
+		Gender=Man & $0.0278$ & 32494 \\
+		\rowcolor{gray!15} Gender=Woman & $-0.0235$ & 33471 \\
+		\midrule
+		Race=AfricanAm. & $0.0909$ & 5810 \\
+		\rowcolor{gray!15} Race=Latino & $-0.0030$ & 6886 \\
+		\rowcolor{gray!15} Race=Multiracial & $-0.0001$ & 5008 \\
+		\rowcolor{gray!15} Race=White & $-0.0198$ & 9390 \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Full apunim results for the DICES-990 Dataset.}
+	\label{tab:dices990-full}
+\end{table}
+
+\begin{figure*}[t]
+	\includegraphics[width=\columnwidth]{apunim_ordinal_dices-990_Age.png}
+	\includegraphics[width=\columnwidth]{apunim_ordinal_kumar_Age.png}
+	\includegraphics[width=\columnwidth]{apunim_ordinal_kumar_Education.png}
+	\includegraphics[width=\columnwidth]{apunim_ordinal_kumar_Religion_Important.png}
+	\includegraphics[width=\columnwidth]{apunim_ordinal_kumar_Toxicity_Problem.png}
+	\caption{Apunim values across ordinal factor levels with at least two statistically significant values, expanded for each ordinal \ac{pc}. This figure is complementary to Figure~\ref{fig:ordinal}. The values in the graphs were extracted from the Tables of \ref{app:full}. }
+	\label{fig:ordinal-full}
+\end{figure*}
+
 \end{document}
