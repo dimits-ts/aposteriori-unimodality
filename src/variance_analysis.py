@@ -183,45 +183,65 @@ def get_dataset_variance(
 
 
 def plot_annotator_count_histogram_from_datasets(
-    datasets: list[preprocessing.Dataset],
+    datasets: list["preprocessing.Dataset"],
     graph_path: Path,
 ):
     """
     Plot a histogram of annotator counts per comment across multiple datasets,
-    where each dataset may use a different annotation column.
+    showing the percentage of comments for each bin.
 
     Parameters
     ----------
     datasets : list
-        List of dataset objects implementing:
-        - get_dataset()
-        - get_name()
-        - get_annotation_column()
-    graph_path : Path or None
+        List of dataset objects.
+    graph_path : Path
         If provided, saves the figure to this path.
-    bins : int
-        Number of histogram bins.
     """
+    N_BINS = 100
     all_df = get_annotator_counts_df(datasets)
-    plt.figure(figsize=(10, 6))
 
-    g = sns.displot(
-        data=all_df,
-        x="n_annotators",
-        hue="dataset",
-        multiple="layer",
-        edgecolor="black",
-        alpha=0.6,
-        stat="percent",
-        common_norm=False,
-    )
-    g.legend.set_title(None)
-    g.legend.set_loc("center")
+    dataset_names = all_df["dataset"].unique().tolist()
 
-    plt.xlabel(r"\# Annotators")
-    plt.ylabel("Percent of comments")
-    plt.title("Distribution of Annotator Counts per Comment by Dataset")
-    plt.grid(True, linestyle="--", alpha=0.3)
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # Determine bin boundaries
+    min_val = all_df["n_annotators"].min()
+    max_val = all_df["n_annotators"].max()
+    bins_edges = np.linspace(min_val, max_val, N_BINS + 1)
+
+    for i, dataset_name in enumerate(dataset_names):
+        data_subset = all_df[all_df['dataset'] == dataset_name]['n_annotators']
+
+        raw_counts, edges = np.histogram(data_subset, bins=bins_edges)
+
+        total_comments_for_dataset = len(data_subset)
+
+        if total_comments_for_dataset > 0:
+            percentage_counts = raw_counts / total_comments_for_dataset
+        else:
+            percentage_counts = np.zeros_like(raw_counts, dtype=float)
+
+        selected_color = graphs.COLORBLIND_PALETTE[
+            i % len(graphs.COLORBLIND_PALETTE)
+        ]
+        selected_hatch = graphs.HATCHES[i % len(graphs.HATCHES)]
+
+        ax.bar(
+            x=edges[:-1],
+            height=percentage_counts * 100,
+            width=(edges[1] - edges[0]),
+            label=dataset_name,
+            color=selected_color,
+            alpha=0.6,
+            hatch=selected_hatch,
+            edgecolor="black",
+        )
+
+    ax.legend(title=None, loc="center")
+    ax.set_xlabel(r"\# Annotators")
+    ax.set_ylabel(r"Comments (\%)")
+    ax.set_title(r"\# Annotators per comment for each dataset")
+    ax.grid(True, linestyle="--", alpha=0.3)
     plt.tight_layout()
 
     graphs.save_plot(graph_path)
