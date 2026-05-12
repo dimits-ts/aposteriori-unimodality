@@ -35,6 +35,9 @@ def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
     df = ds.get_dataset()
     annotation_col = ds.get_annotation_column()
     sdb_columns = ds.get_sdb_columns()
+
+    # 1. Data Preparation (This remains unchanged)
+    # Determine the number of unique annotation categories
     bins = len(
         np.unique(np.concatenate(df[ds.get_annotation_column()].to_list()))
     )
@@ -50,32 +53,36 @@ def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
             ):
                 continue
 
+            # Calculate nDFU
             ndfu_value = apunim.dfu(annotations, bins=bins, normalized=True)
             records.append({"SDB Feature": sdb_col, "nDFU": ndfu_value})
 
     plot_df = pd.DataFrame(records)
     plot_df = plot_df.rename(columns={"SDB Feature": "PC Dimension"})
 
-    # important for proper legend handling
+    # IMPORTANT: Ensure categories are ordered correctly for the plot
     plot_df["PC Dimension"] = pd.Categorical(
-        plot_df["PC Dimension"], categories=sdb_columns
+        plot_df["PC Dimension"], categories=sdb_columns, ordered=True
     )
 
-    ax = sns.histplot(
+    fig, ax = plt.subplots(figsize=(15, 8))
+
+    sns.boxplot(
+        x="PC Dimension",
+        y="nDFU",
         data=plot_df,
-        x="nDFU",
-        hue="PC Dimension",
-        multiple="stack",
-        stat="count",
+        ax=ax,
         palette=COLORBLIND_PALETTE,
-        edgecolor="black",
-        bins=10,
     )
-    ax.get_legend().set_title(None)
-    ax.set_xlabel("nDFU (Polarization)")
-    ax.set_ylabel("Number of Comments")
+
+    ax.set_xlabel("PC Dimension")
+    ax.set_ylabel("nDFU")
     ax.set_title(ds.get_name())
-    ax.set_xlim(0, 1)
+
+    ax.set_ylim(-0.05, 1.05)
+
+    plt.xticks(rotation=20, ha="right")
+    plt.grid(axis="y", alpha=0.5)
 
     save_plot(output_path)
     plt.close()
