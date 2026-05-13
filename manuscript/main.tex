@@ -106,32 +106,55 @@ Finally, we release an open source Python library (Appendix~\ref{app:software}) 
 
 There are many popular metrics for measuring inter-annotator agreement such as Cohen's kappa, Krippendorff's alpha and Fleiss's kappa. All of these metrics attempt to distinguish genuine disagreement among annotators from noise (or ``random disagreement'') using statistical methods. However, most cannot be generally used for comparing intergroup annotation agreement without extending them (e.g., computing pairwise Cohen's kappa for all groups), or placing constraints on when they can be used (e.g., no missing labels and same number of annotations per annotator for Fleiss's kappa). They have also been criticized for ignoring fundamental differences that can arise from different social, cultural and demographic backgrounds~\cite{FEINSTEIN1990543, Byrt1993, van_der_Velden, checco_2017}, for their inability to quantify and compare results across experiments~\cite{wong-etal-2021-cross}, and for fundamentally faulty assumptions around the concept of ``chance-correction''~\cite{checco_2017}.
 
-Recent work has attempted to work around these limitations, by working with simpler statistical models~\cite{van_der_Velden}, adapting Cohen's kappa for subgroup agreement~\cite{wong-etal-2021-cross}, or creating a Bayesian model to explicitly differentiate between subgroup disagreement and noise~\cite{ivey-etal-2025-nutmeg}. While these extensions do improve the performance of these metrics, they are typically less explainable and intuitive. They are also constrained by the same basic assumptions of disagreement metrics, such as not being suitable for multi-label annotations (where annotators can pick more than one option for each item).
+Recent work has attempted to work around these limitations, by working with simpler statistical models~\cite{van_der_Velden}, adapting Cohen's kappa for subgroup agreement~\cite{wong-etal-2021-cross}, or creating a Bayesian model to explicitly differentiate between subgroup disagreement and noise~\cite{ivey-etal-2025-nutmeg}. While these extensions do improve the performance of these metrics, they are typically less explainable and intuitive.
 
 
 \subsection{Polarization}
 \label{sec:related:polarization}
 
-%Due to their nature, disagreement metrics may not perform well when comparing annotator groups with greatly mismatched sizes~\cite{FEINSTEIN1990543, Byrt1993}.
-There are multiple competing formulations for polarization. One of these approaches~\cite{akhtar_2019} utilizes $\chi^2$ to estimate in-group vs out-group variance, but still necessitates traditional agreement metrics for analysis. 
-%It did however lay foundational concepts, such as the distinction between disagreement and polarization.
-Others attempt to solve this problem by framing disagreement as a cluster identification problem, applying either parametric~\cite{checco_2017}, or non-parametric~\cite{pavlopoulos-likas-2024, Mignemi2024} approaches to the annotation histograms. This formulation, besides being appropriate for imbalanced groups, also enables metrics based on polarization to work with multi-label annotations, since we are no longer comparing individual annotations against those of other annotators, but rather each annotator's histograms (see \S\ref{ssec:methodology:problem}). We use a non-parametric, normalized and intuitive approach~\cite{pavlopoulos-likas-2024} as the basis for our metric.
+There are multiple competing formulations for polarization. One of these approaches~\cite{akhtar_2019} utilizes $\chi^2$ to estimate in-group vs out-group variance, but still necessitates traditional agreement metrics for analysis.
+Others attempt to solve this problem by framing disagreement as a cluster identification problem, applying either parametric~\cite{checco_2017}, or non-parametric~\cite{pavlopoulos-likas-2024, Mignemi2024} approaches to the annotation histograms. 
+
+For our work, we use a non-parametric approach, \ac{ndfu} \cite{pavlopoulos-likas-2024}, which measures the degree of polarization in a distribution of opinions. The metric takes values in the range $[0,1]$, where values close to $0$ indicate little or no polarization (i.e., opinions are concentrated around a single mode), while values close to $1$ indicate strong polarization with multiple distinct peaks. The metric is defined as follows:
+
+\begin{equation}
+\label{eq:ndfu}
+	\begin{aligned}
+		\mathrm{nDFU}(X)
+		&=
+		\frac{
+			\displaystyle
+			\max_{i \neq m}
+			\left(
+			f_i -
+			\begin{cases}
+				f_{i-1}, & \text{if } i > m \\
+				f_{i+1}, & \text{if } i < m
+			\end{cases}
+			\right)
+		}{
+			f_m
+		} \\
+		&\text{where }
+		m = \arg\max_i f_i
+	\end{aligned}
+\end{equation}
+
+Here, $X$ denotes the set of annotations, and $f_i$ the relative frequency of the $i$-th annotation, and $m$ the histogram peak. Intuitively, \ac{ndfu} measures how prominent secondary peaks are compared to the main peak.
 
 
 \subsection{Attributing polarization to groups}
 \label{sec:related:attribution}
-While many studies study the effect of subgroups on annotation agreement~\cite{ goyal2022your, binns2017like, giorgi2025human, al2020identifying, sachdeva2022assessing}, attributing polarization to subgroups is a relatively new idea. Under the name \emph{aposteriori unimodality}~\cite{pavlopoulos-likas-2024}, the original idea is that if polarization in a single item is positive, but zero for all annotator subgroups, then those subgroups are ``causing'' the exhibited polarization. Though promising, this idea is not practically usable, since subgroup polarization being exactly zero is an edge-case in real-life annotation tasks (Appendix~\ref{app:ann_details}). Additionally, getting polarization estimates from few annotations per item is extremely noisy, which is especially problematic when the output is binary (i.e., an item either is or is not polarizing) instead of a quantifiable value.\footnote{For example, when presented with noisy estimates of a metric in the  $[0,1]$ range, we would ideally want to distinguish between cases where attribution is close to $0.001$, and cases where attribution is $0.49$.}
+While many studies study the effect of subgroups on annotation agreement~\cite{ goyal2022your, binns2017like, giorgi2025human, al2020identifying, sachdeva2022assessing}, attributing polarization to subgroups is a relatively new idea. Under the name \emph{aposteriori unimodality}~\cite{pavlopoulos-likas-2024}, the original idea is that if polarization in a single item is positive, but zero for all annotator subgroups, then those subgroups are ``causing'' the exhibited polarization. Though promising, this mechanism operates on an edge-case scenario where \emph{all} polarization is explained by a single split. Additionally, getting polarization estimates from few annotations per item is extremely noisy, which is especially problematic when the output is binary (i.e., an item either is or is not polarizing) instead of a quantifiable value.\footnote{For example, when presented with noisy estimates of a metric in the  $[0,1]$ range, we would ideally want to distinguish between cases where attribution is close to $0.001$, and cases where attribution is $0.49$.}
 
-Such a binary analysis has been applied to discover whether \acp{llm} are biased in the same way as specific human subgroups~\cite{sokratis}. This work shows that polarization is a versatile tool, but also highlights the constraints of using the non-quantifiable binary classification given by the traditional aposteriori unimodality framework. For instance, the authors have to resort to Cohen's kappa agreement for any kind of comparison between \acp{llm} and human annotator groups, constraining their analysis with the restrictions outlined above. The authors also show how ordinal dependent variables can extract ``better'' categorical labels via dataset-dependent thresholding, an idea that is promising yet limited (see \S\ref{ssec:results:ordinal}).
 	
-	
-\section{Can we use polarization instead of agreement?}
+\section{What are the limitations of polarization attribution?}
 \label{sec:problems}
 
 \subsection{Problem Formulation}
 \label{sec:problems:formulation}
 
-\paragraph{Annotations} Let $d = \{c_1, c_2, \ldots\}$ be a dataset composed of multiple annotated comments.\footnote{These items could be of any modality, such as comments in a discussion, images, videos or survey questions, even though we consider comments in this study.} Each comment $c$ is assigned multiple annotators,  which creates the annotation multi-set $A(c)=  \{(a_1, g_1), (a_2, g_2), \ldots \}$, where $a$ is a single annotation. As an example, the annotations for a comment in a sentiment analysis task where we group the annotators by gender, would be formulated as:
+Let $d = \{c_1, c_2, \ldots\}$ be a dataset composed of multiple annotated comments.\footnote{These items could be of any modality, such as comments in a discussion, images, videos or survey questions, even though we consider comments in this study.} Each comment $c$ is assigned multiple annotators,  which creates the annotation multi-set $A(c)=  \{(a_1, g_1), (a_2, g_2), \ldots \}$, where $a$ is a single annotation. As an example, the annotations for a comment in a sentiment analysis task where we group the annotators by gender, would be formulated as:
 \begin{multline*}
 	A(\text{``Could be better, could be worse''})\\
 	= \left\{\begin{array}{l}
@@ -146,11 +169,7 @@ Such a binary analysis has been applied to discover whether \acp{llm} are biased
 	\label{fig:ndfu_combined}
 \end{figure}
 
-\paragraph{Measuring polarization}
-In the absence of polarization, annotation distributions are typically unimodal: annotators may disagree on finer details--shown as a bell-shaped distribution around a central mode--rather than on fundamentally different interpretations, which would instead give rise to multimodal distributions (Figure~\ref{fig:ndfu_combined}). We express unimodality through \acf{ndfu}~\cite{pavlopoulos-likas-2024}, which takes values in the $[0,1]$ range, with $nDFU \approx 0$ indicating no polarization (unimodal distributions) and $nDFU \approx 1$ corresponding to complete polarization (highly multimodal distributions). Our objective is therefore to quantify the extent to which the ($nDFU$) score of a polarizing item can be (partially) explained by a given \ac{pc} group $\theta$.
-
-
-\paragraph{Polarization attribution} Intuitively, a \ac{pc} dimension partially explains the polarization of an item $c$ when the annotations of that group $A(c \given g) = \{a(c; g') \in A(c) \given g'=g\}$ exhibit higher polarization compared to the full set of annotations $A(c)$. Figure~\ref{fig:ndfu_combined} exhibits how polarization differs from agreement (left) and a hypothetical example where a misogynistic comment is annotated for toxicity by male and female annotators (right). The annotations are generally polarized ($nDFU_{all}=0.62$). The annotations by female annotators exhibit low polarization between themselves ($nDFU_{women}=0.10$), since most agree that the comment is toxic. The set of male annotations, also shows low polarization ($nDFU_{men}=0.37$), but for the opposite reason---most men agree that it is \emph{not} toxic. This suggests that the overall polarization is driven by substantive disagreements between male and female annotators.
+Intuitively, a group partially explains the polarization of a comment $c$ when the annotations of that group $A(c \given g) = \{a(c; g') \in A(c) \given g'=g\}$ exhibit higher polarization compared to the full set of annotations $A(c)$. Consider the (simulated) case where a misogynistic comment is annotated for toxicity by male and female annotators shown in Fig.~\ref{fig:ndfu_combined}. The annotations are generally polarized ($nDFU_{all}=0.62$); but both female ($nDFU_{women}=0.10$) and male ($nDFU_{men}=0.37$) annotators exhibit low polarization between their respective groups. This pattern suggests that the overall polarization is driven by substantive disagreements between male and female annotators.
 
 
 \subsection{Inherent polarization}
@@ -164,7 +183,7 @@ In the absence of polarization, annotation distributions are typically unimodal:
 
 Inherent polarization refers to disagreement that cannot be attributed to \emph{any specific} grouping of annotators; that is, polarization that exists no matter how we split the annotators in any arbitrary group. Prior work~\cite{pavlopoulos-likas-2024} attributed polarization to annotator groups only when the observed polarization for each individual group became exactly zero (e.g. $nDFU_{all} > nDFU_{men}=nDFU_{women} = 0$). The presence of inherent polarization would invalidate this theory, since there would be no possible group $g \textit{ s.t. } nDFU_{g} = 0$.
 
-To examine this assumption, we create random annotator groupings for each comment in our datasets. Specifically, for every comment, we randomly partition the annotators into random groups (with randomly selected sizes) z	100 times and compute the observed polarization for each partition. We then take the \emph{minimum} observed polarization scores across all random partitions, which guarantees that we check for all possible variables, known and latent. Repeating this process for every comment produces the distribution shown in Fig.~\ref{fig:apriori}, demonstrating that inherent polarization is consistently non-zero and can even be substantial for many comments. The Kumar dataset is an exception, which is likely attributed to the low number of annotators, which prevents the reliable computation of \ac{ndfu} in many cases.
+To examine this assumption, we create random annotator groupings for each comment in our datasets. Specifically, for every comment, we randomly partition the annotators into random groups (with randomly selected sizes) 100 times and compute the observed polarization for each partition. We then take the \emph{minimum} observed polarization scores across all random partitions, which guarantees that we check for all possible variables, known and latent. Repeating this process for every comment produces the distribution shown in Fig.~\ref{fig:apriori}, demonstrating that inherent polarization is consistently non-zero and can even be substantial for many comments.
 
 \begin{finding}
 	\label{finding:inherent}
@@ -184,9 +203,10 @@ To examine this assumption, we create random annotator groupings for each commen
 	\label{fig:ndfu_discussion}
 \end{figure*}
 
-Previous work~\cite{pavlopoulos-likas-2024} stopped on a comment-to-comment analysis. In practice however, this approach is inherently noisy due to a lack of information (i.e., limited annotations) relating to each individual comment. Many datasets in \ac{nlp} are annotated by only 3--5 annotators per comment, which is especially problematic when we want to analyze patterns in annotator subgroups; in a best-case scenario of 5 annotators split evenly between two groups, we would get a 3-2 split. This issue exists across any subgroup analysis, including polarization. Since \ac{ndfu} is at its core a histogram-based estimation, three annotations may not be enough to acquire a reliable histogram, and thus estimate of polarization.  In order to get meaningful information, we need to consider the annotations from all comments in a dataset. 
+Previous work~\cite{pavlopoulos-likas-2024} stopped on a comment-to-comment analysis. In practice however, this approach is inherently noisy due to a lack of information (i.e., limited annotations) relating to each individual comment. Many datasets in \ac{nlp} are annotated by only 3--5 annotators per comment, which is especially problematic when we want to analyze patterns in annotator subgroups; in a best-case scenario of 5 annotators split evenly between two groups, we would get a 3-2 split. This issue is especially prevalent for polarization, since \emph{\ac{ndfu} is undefined for groups of two} (and arguably marginally useful for groups of three), since it requires at least two histogram peaks to function (see Eq.~\ref{eq:ndfu}), a limitation not acknowledged in the original work.
 
-However, \emph{arbitrarily combining annotations would not work} in practice. Figure~\ref{fig:ndfu_discussion} illustrates a hypothetical discussion with two comments, both of which are toxic, but where the two groups of annotators disagree on \emph{which} comment is the toxic one. If we aggregate the annotations to a single discussion, the opposing polarization effects might balance each other out, leading to a false negative. This demonstrates that item-level polarization  attribution has a \emph{direction}, which is not captured by \ac{ndfu}, and has to be taken into account when aggregating annotations between items. This approach follows similar work which assumes different base annotation modes for each item~\cite{checco_2017}.
+This limitation leaves us with two choises: (1) only use datasets featuring at least 6--8 annotators, and (2) aggregate annotations across comments for each dataset.
+The former case is unrealistic, especially for most \ac{nlp} datasets due to annotation costs. We consider the latter case in an experiment shown in Fig.~\ref{fig:ndfu_discussion} where we combine annotations across two comments. We observe that, should the two comments be polarized for the opposite reason, the opposing polarization effects might balance each other out, leading to a false negative. Therefore, we should never aggregate annotations across comments.\footnote{A similar assumption was followed in early parametric approaches, which assumed different parameters for each comment~\cite{checco_2017}.}
 
 \begin{finding}
 	\label{finding:conflicting}
@@ -194,7 +214,7 @@ However, \emph{arbitrarily combining annotations would not work} in practice. Fi
 \end{finding}
 
 
-\section{Fixing polarization attribution}
+\section{How do we fix it?}
 \label{sec:apunim}
 
 \subsection{Group vs global polarization}
