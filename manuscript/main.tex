@@ -162,13 +162,13 @@ In the absence of polarization, annotation distributions are typically unimodal:
 	\label{fig:apriori}
 \end{figure}
 
-Inherent polarization refers to disagreement that cannot be explained by \emph{any} grouping of annotators. It may arise from the task itself, the annotation instructions, ambiguity in the content, or simply random variation. Prior work~\cite{pavlopoulos-likas-2024} attributed polarization to annotator groups only when the observed polarization for a grouping became zero, implicitly assuming that inherent polarization was also zero.
+Inherent polarization refers to disagreement that cannot be attributed to \emph{any specific} grouping of annotators; that is, polarization that exists no matter how we split the annotators in any arbitrary group. Prior work~\cite{pavlopoulos-likas-2024} attributed polarization to annotator groups only when the observed polarization for each individual group became exactly zero (e.g. $nDFU_{all} > nDFU_{men}=nDFU_{women} = 0$). The presence of inherent polarization would invalidate this theory, since there would be no possible group $g \textit{ s.t. } nDFU_{g} = 0$.
 
-To examine this assumption, we create random annotator groupings for each comment in our datasets. Specifically, for every comment, we randomly partition the annotators into groups $n = 100$ times and compute the observed polarization for each partition.\footnote{We assume two same-sized groups for this experiment. This assumption does not compromise the main finding of the experiment, but it is worth noting that we can use group sizes conditioned on the actual annotator group, as shown in \S\ref{ssec:methodology:polstat}.} We then average these polarization scores across all random partitions. Repeating this process for every comment produces the distribution shown in Fig.~\ref{fig:apriori}. The results show that inherent polarization is consistently non-zero and can be substantial for many comments.
+To examine this assumption, we create random annotator groupings for each comment in our datasets. Specifically, for every comment, we randomly partition the annotators into random groups (with randomly selected sizes) z	100 times and compute the observed polarization for each partition. We then take the \emph{minimum} observed polarization scores across all random partitions, which guarantees that we check for all possible variables, known and latent. Repeating this process for every comment produces the distribution shown in Fig.~\ref{fig:apriori}, demonstrating that inherent polarization is consistently non-zero and can even be substantial for many comments. The Kumar dataset is an exception, which is likely attributed to the low number of annotators, which prevents the reliable computation of \ac{ndfu} in many cases.
 
 \begin{finding}
 	\label{finding:inherent}
-	Each comment may exhibit a degree of inherent polarization that cannot be attributed to any known or latent annotator dimension.
+	Each comment may exhibit a degree of inherent polarization that cannot be attributed to any known or latent annotator grouping.
 \end{finding}
 
 
