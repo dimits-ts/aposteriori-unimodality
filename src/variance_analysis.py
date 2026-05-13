@@ -87,7 +87,7 @@ def sample_se_vs_sample_size_unimodality(
                 sub_ann = annotations[idx]
                 sub_grp = groups[idx]
 
-                stats_dict = apunim._factor_dfu_stat(
+                stats_dict = apunim.apunim._factor_dfu_stat(
                     sub_ann, sub_grp, bins=bins
                 )
 
