@@ -108,7 +108,7 @@ def graph_setup() -> None:
 
     plt.rcParams.update(
         {
-            "text.usetex": True,
+            "text.usetex": False,
             # Figure
             "figure.figsize": (12, 8),
             "figure.dpi": 300,
