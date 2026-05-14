@@ -1,12 +1,10 @@
 import argparse
 from pathlib import Path
-from typing import Iterable
 
 import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
 
 from .tasks import run_helper
 from .tasks import graphs

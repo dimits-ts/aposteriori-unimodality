@@ -117,7 +117,7 @@ Recent work has attempted to work around these limitations by using simpler stat
 There are multiple competing formulations for polarization. One of these approaches~\cite{akhtar_2019} utilizes $\chi^2$ to estimate in-group vs out-group variance, but still necessitates traditional agreement metrics for analysis.
 Others attempt to solve this problem by framing disagreement as a cluster identification problem, applying either parametric~\cite{checco_2017}, or non-parametric~\cite{pavlopoulos-likas-2024, Mignemi2024} approaches to the annotation histograms. 
 
-For our work, we use a non-parametric approach, \ac{ndfu} \cite{pavlopoulos-likas-2024}, which measures the degree of polarization in a distribution of opinions. The metric takes values in the range $[0,1]$, where values close to $0$ indicate little or no polarization (i.e., opinions are concentrated around a single mode), while values close to $1$ indicate strong polarization with multiple distinct peaks. The metric is defined as follows:
+For our work, we use a non-parametric polarization metric, \ac{ndfu}, which has been shown to correlate better with human judgment of disagreement than established metrics \citep{pavlopoulos-likas-2024}. \ac{ndfu} takes values in the range $[0,1]$, where values close to $0$ indicate little or no polarization (i.e., opinions are concentrated around a single mode), while values close to $1$ indicate strong polarization with multiple distinct peaks. The metric is defined as follows:
 
 \begin{equation}
 \label{eq:ndfu}
@@ -137,12 +137,11 @@ For our work, we use a non-parametric approach, \ac{ndfu} \cite{pavlopoulos-lika
 		}{
 			f_m
 		} \\
-		&\text{where }
-		m = \arg\max_i f_i
+		& m = \arg\max_i f_i
 	\end{aligned}
 \end{equation}
 
-Here, $X$ denotes the set of annotations, $f_i$ the relative frequency of the $i$-th annotation, and $m$ the histogram peak. Intuitively, \ac{ndfu} measures how prominent secondary peaks are compared to the main peak.
+\noindent where, $X$ denotes the set of annotations, $f_i$ the relative frequency of the $i$-th annotation, and $m$ the histogram peak. Intuitively, \ac{ndfu} measures how prominent secondary peaks are compared to the main peak.
 
 
 \subsection{Attributing polarization to groups}
@@ -183,7 +182,7 @@ Intuitively, a group partially explains the polarization of a comment $c$ when t
 	\label{fig:apriori}
 \end{figure}
 
-Inherent polarization refers to disagreement that cannot be attributed to \emph{any specific} grouping of annotators; that is, polarization that exists no matter how we split the annotators in any arbitrary group. Prior work~\cite{pavlopoulos-likas-2024} attributed polarization to annotator groups only when the observed polarization for each individual group became exactly zero (e.g. $nDFU_{all} > nDFU_{men}=nDFU_{women} = 0$). The presence of inherent polarization would invalidate this theory, since there would be no possible group $g \textit{ s.t. } nDFU_{g} = 0$.
+Inherent polarization refers to disagreement that cannot be attributed to \emph{any specific} grouping of annotators; that is, polarization that exists no matter how we split the annotators in any arbitrary group. Prior work~\cite{pavlopoulos-likas-2024} attributed polarization to annotator groups only when the observed polarization for each individual group became exactly zero (e.g. $nDFU(all) > nDFU(men)=nDFU(women) = 0$). The presence of inherent polarization would invalidate this theory, since there would be no possible group $g \textit{ s.t. } nDFU(g) = 0$.
 
 To examine this assumption, we create random annotator groupings for each comment in our datasets. Specifically, for every comment, we randomly partition the annotators into random groups (with randomly selected sizes) 100 times and compute the observed polarization for each partition. We then take the \emph{minimum} observed polarization scores across all random partitions, which guarantees that we check for all possible variables, known and latent. 
 
@@ -277,13 +276,21 @@ Since $nDFU \rightarrow [0,1] \Rightarrow apunim \rightarrow [-1,1]$. The interp
 \subsection{Statistical significance}
 \label{sec:apunim:statistical}
 
-Since the underlying annotation histograms may be noisy, we develop a statistical significance test.
-If the apunim value is statistically significant, we expect it to significantly differ from \emph{apunim values exhibited by random annotator groups}. We use the individual randomized partitions $r_i(A(c))$ to compute pseudo-apunim values, which are then compared to the actual apunim value of the sample using a Student-T test. Thus, we test a much stricter hypothesis:
+Since annotation histograms may be noisy, we additionally assess whether the observed apunim value could arise by chance. To assess statistical significance, we construct a null distribution of apunim values from the randomized partitions and compare the observed apunim against this distribution using a one-sample Student-\(t\) test. Thus, the null hypothesis states that the observed polarization is indistinguishable from polarization induced by random annotator assignments:
 \[
-H_0:  \textit{apunim}(d, g) = \bar{apunim(d)}
+H_0:\ 
+\textit{apunim}(d,g)
+\sim
+\textit{apunim}_{\mathrm{rand}}(d,g)
 \]
-\[H_a: \textit{apunim}(d, g) \neq \bar{apunim(d)}\]
-\noindent where $\bar{apunim(d)}$ denotes the mean apunim values of each random partition $\tilde{r}_i(A(c))$. For a detailed explanation of the p-value implementation, as well as a discussion around the assumptions made about the test, refer to App.~\ref{app:pvalue}.
+\[
+H_a:\ 
+\textit{apunim}(d,g)
+\not\sim
+\textit{apunim}_{\mathrm{rand}}(d,g)
+\]
+\noindent where 
+\(\textit{apunim}_{\mathrm{rand}}(d,g)\) denotes the distribution of apunim values obtained from randomized annotator partitions. For a detailed explanation of the p-value computation and the assumptions underlying the test, refer to App.~\ref{app:pvalue}.
 
 
 \section{Attributing real-life polarization to human groups}
@@ -491,7 +498,8 @@ Our framework has broad applications across \ac{nlp} tasks related to content mo
 
 \section{Limitations}
 
-Researchers often release only aggregated single-label annotations or omit annotator sociodemographic characteristics entirely. As a result, both our analysis and the applicability of our framework are limited by the scarcity of suitable datasets. In addition, because datasets with large numbers of annotators per item are rare, our approach operates only at the dataset level. This limitation prevents us from identifying individual comments or examples that could serve as concrete explanations for the observed \textit{apunim} values.
+Researchers often release only aggregated single-label annotations or omit annotator sociodemographic characteristics entirely. As a result, both our analysis and the applicability of our framework are limited by the scarcity of suitable datasets. In addition, because datasets with large numbers of annotators per item are rare, our approach operates only at the dataset level. This limitation prevents us from identifying individual comments or examples that could serve as concrete explanations for the observed \textit{apunim} values. Finally, although we compare findings across datasets and relate them to prior work, we do not directly compare polarization and agreement metrics, since they rely on fundamentally different assumptions and mechanisms (see \S\ref{sec:related:polarization}). This also makes it difficult to fully explain certain patterns in our results, such as why some groups show statistically significant effects while others do not.
+
 
 
 \section{Ethical Considerations}
