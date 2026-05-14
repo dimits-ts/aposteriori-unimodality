@@ -54,7 +54,8 @@
 \maketitle
 
 \begin{abstract}
-	Current annotation agreement metrics are not well-suited for inter-group analysis, are sensitive to group size imbalances and restricted to single-annotation settings. These restrictions render them insufficient for many subjective tasks such as toxicity and hate-speech detection. For this reason, we introduce a quantifiable metric, paired with a statistical significance test, that attributes polarization to various annotator groups. Our metric enables direct comparisons between heavily imbalanced sociodemographic and ideological subgroups across different datasets and tasks, while also enabling analysis on multi-label settings. We apply this metric to three datasets on hate speech, and one on toxicity detection, discovering that: (1) Polarization is strongly and persistently attributed to annotator race, especially on the hate speech task. (2) Religious annotators do not fundamentally disagree with each other, but do with other annotators, a trend that is gradually diminished and then reversed with irreligious annotators. (3) Less educated annotators are more subjective, while educated ones tend to broadly agree more between themselves. Overall, our results reflect current findings around annotation patterns for various subgroups. Finally, we estimate the minimum number of annotators needed to obtain robust results, and provide an open-source Python library that implements our metric.
+	Current annotation agreement metrics are sensitive to group size imbalances and noise, rendering them insufficient for many subjective tasks such as toxicity and hate-speech detection. Polarization has been proposed as a robust mechanism that discerns minor disagreements from systematic, fundamental differences of opinion, but there exist no practical tools that attribute polarization to annotator subgroups. We evaluate current approaches, discovering severe flaws in practical settings; (1) the existence of ``inherent'' polarization that is unattributable to any known or latent groups, and (2) opposing directions in polarization canceling out aggregated annotations. Thus, we introduce a new metric which quantifies and checks the statistical significance of attribution of polarization to any group, while circumventing these limitations. We apply our metric to four subjective NLP datasets, finding generalizable results across all datasets, and validating results from prior literature.
+	Finally, we estimate the minimum number of annotators needed to obtain robust results, and provide an open-source Python library that implements our metric.
 \end{abstract}
 
 
@@ -183,7 +184,16 @@ Intuitively, a group partially explains the polarization of a comment $c$ when t
 
 Inherent polarization refers to disagreement that cannot be attributed to \emph{any specific} grouping of annotators; that is, polarization that exists no matter how we split the annotators in any arbitrary group. Prior work~\cite{pavlopoulos-likas-2024} attributed polarization to annotator groups only when the observed polarization for each individual group became exactly zero (e.g. $nDFU_{all} > nDFU_{men}=nDFU_{women} = 0$). The presence of inherent polarization would invalidate this theory, since there would be no possible group $g \textit{ s.t. } nDFU_{g} = 0$.
 
-To examine this assumption, we create random annotator groupings for each comment in our datasets. Specifically, for every comment, we randomly partition the annotators into random groups (with randomly selected sizes) 100 times and compute the observed polarization for each partition. We then take the \emph{minimum} observed polarization scores across all random partitions, which guarantees that we check for all possible variables, known and latent. Repeating this process for every comment produces the distribution shown in Fig.~\ref{fig:apriori}, demonstrating that inherent polarization is consistently non-zero and can even be substantial for many comments.
+To examine this assumption, we create random annotator groupings for each comment in our datasets. Specifically, for every comment, we randomly partition the annotators into random groups (with randomly selected sizes) 100 times and compute the observed polarization for each partition. We then take the \emph{minimum} observed polarization scores across all random partitions, which guarantees that we check for all possible variables, known and latent. 
+
+Formally, the inherent polarization for a single comment $c$ is given by:
+\begin{equation}
+\label{eq:inherent}
+	Pol_{inh}(c) = \min_{i} \{\textit{nDFU}(\tilde{r}_i (A(c)))\}	
+\end{equation}
+\noindent where $\tilde{r}$ is the random partition operator.
+
+Repeating this process for every comment produces the distribution shown in Fig.~\ref{fig:apriori}, demonstrating that inherent polarization is consistently non-zero and can even be substantial for many comments.
 
 \begin{finding}
 	\label{finding:inherent}
@@ -217,58 +227,49 @@ The former case is unrealistic, especially for most \ac{nlp} datasets due to ann
 \section{How do we fix it?}
 \label{sec:apunim}
 
-\subsection{Group vs global polarization}
+\subsection{From inherent to apriori polarization}
 \label{sec:apunim:group-vs-global}
 
-In \S\ref{sec:problems:formulation}, we explained how our methodology needs to compare the polarization of $A(c)$ and $A(c \given g)$. Direct comparisons are not advisable, since we would be comparing statistics between a set and its subset. In this case, standard practice dictates that we should compare the subset with its complement; i.e., the in-group vs. the out-group instead of the in-group vs. all the annotations. However, this also would not work; if we apply the subset-vs-complement method in the example of Fig.~\ref{fig:ndfu_combined}, we would end up subtracting the \acp{ndfu} of men and women, which are similar as they are both unimodal distributions, concluding that there is no polarization present.
+In \S\ref{sec:problems:formulation}, we explained how our methodology needs to compare the polarization of $A(c)$ and $A(c \given g)$. Direct comparisons are not advisable, since we would be comparing statistics between a set and its subset--in this case, standard practice dictates comparing the subset with its complement; i.e., the in-group vs. the out-group instead of the in-group vs. all the annotations. However, this also would not work; if we apply the subset-vs-complement method in the example of Fig.~\ref{fig:ndfu_combined}, we would end up subtracting the \acp{ndfu} of men and women, which are similar as they are both unimodal distributions, concluding that there is no polarization present.
 
-In order to bypass this restriction, we substitute calculating the observed polarization of $A(c)$ for the inherent polarization of the comment (\S\ref{}). Specifically, we create random stratified splits that effectively ``break up'' the effect of any single isolated group on the polarization of the sample; i.e., if we have $100$ annotations, $80$ of which are made by male annotators and $20$ by female annotators, we create random partitions (disregarding gender) of sizes $80$ and $20$, which we repeat $t$ times. Formally, the (average) apriori polarization for a single comment $c$ is given by:
-\[
-	P_{apr}(c) = \frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{r}_i (A(c)))	    
-\]
-\noindent where $\tilde{r}$ is the random partition operator with group sizes matching the group sizes of the estimated groups.
+We instead compare the observed polarization of $A(c)$ with its inherent polarization, following the methodology introduced in \S\ref{sec:problems:inherent} with two key distinctions. (1) Instead of using random splits, we create random stratified splits.\footnote{I.e., if we have $100$ annotations, $80$ of which are made by male annotators and $20$ by female annotators, we create random partitions of sizes $80$ and $20$.} (2) Instead of finding the minimum possible polarization exhibited by any group, we calculate the average. Therefore, we do not test whether the group is polarized against the whole; nor whether the group explains \emph{some polarization} (as would be the case if we used Eq.~\ref{eq:inherent}), but rather whether the group explains polarization \emph{more than other groups}, which is a much stricter question.\footnote{Indeed, by definition, all groups exhibit equal or larger polarization than the inherent pol. value.} Specifically, we define a-priori unimodality for a comment $c$ as:
+\begin{equation}
+\label{eq:apriori}
+	Pol_{apr}(c) = \frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{r}_i (A(c)))
+\end{equation}
 
 
 \subsection{Expanding to the whole dataset}
 \label{sec:apunim:dataset}
 
-Then, we can estimate how much polarization is generally present in the dataset, irrespective of any group, by simply averaging the \textit{apriori} polarization of its comments. Intuitively, a high apriori polarization score means that much of the polarization in the dataset is likely not driven by any group.  
+As discussed in \S\ref{sec:problems:conflicting}, we must not aggregate the annotations themselves before applying the \ac{ndfu} metric. We can however estimate how much polarization is generally present in the dataset, by simply averaging the \textit{a-priori} polarization of its comments. Intuitively, a high apriori polarization score means that much of the polarization in the dataset is likely not driven by any group.  
 \begin{equation}
-	\label{eq:apriori}
-	P_{apr}^{d} = \frac{1}{\lvert d \rvert} \sum_{c \in d} P_{apr}(c)
+	\label{eq:apriori-dataset}
+	Pol_{apr}^{d} = \frac{1}{\lvert d \rvert} \sum_{c \in d} Pol_{apr}(c)
 \end{equation}
 
-
-Similarly to Equation~\ref{eq:apriori}, we also define polarization that was \emph{observed} by an annotator subgroup as:
+Which we will compare with the average observed polarization of all comments:
 \begin{equation}
 	\label{eq:observed}
-	P_{obs}^{d}(g) = \frac{1}{\lvert d \rvert} \sum_{c \in d}  \textit{nDFU}(A(c \given g))
+	Pol_{obs}^{d}(g) = \frac{1}{\lvert d \rvert} \sum_{c \in d}  \textit{nDFU}(A(c \given g))
 \end{equation}
 
-This formulation implicitly assumes that dataset polarization can be estimated by averaging polarization scores across its items. We consider this assumption reasonable, because the mean is a simple and intuitive operator, exhibiting appropriate sensitivity to outliers. Given that polarization values lie in the $[0,1]$ range, a single item with extreme polarization is unlikely to substantially affect the estimate of overall polarization. In contrast, the presence of many such extreme values will meaningfully increase this estimate, which is the pattern we want to capture.
+%This formulation implicitly assumes that dataset polarization can be estimated by averaging polarization scores across its items. We consider this assumption reasonable, because the mean is a simple and intuitive operator, exhibiting appropriate sensitivity to outliers. Given that polarization values lie in the $[0,1]$ range, a single item with extreme polarization is unlikely to substantially affect the estimate of overall polarization. In contrast, the presence of many such extreme values will meaningfully increase this estimate, which is the pattern we want to capture.
 
-\begin{figure}[t]
-	\includegraphics[width=\linewidth]{overview.drawio.png}
-	\caption{An overview of how annotation information is sequentially aggregated for the \emph{apunim} metric. For each item we calculate the apriori polarization and the sample aposteriori polarization given each \ac{pc} group. We then aggregate both apriori and aposteriori polarization and compare them on the dataset level to obtain the polarization attribution (``apunim'') values for each group.}
-	\label{fig:overview}
-\end{figure}
+We can now compare the polarization that is attributed to a single-dimensional annotator group (Equation~\ref{eq:observed}) to a prior one (Equation~\ref{eq:apriori-dataset}). We define our normalized metric, which we call \emph{``apunim'' (Aposteriori Unimodality)}, as:
 
-We can now compare the polarization that is attributed to a single-dimensional annotator group (Equation~\ref{eq:observed}) to a prior one (Equation~\ref{eq:apriori}). We define our normalized metric, which we call as \emph{``apunim'' (Aposteriori Unimodality)}, as:
-\begin{equation}\label{eq:apunim}
-	apunim(g) = \frac{P_{obs}^{d}(g) - P_{apr}^{d}}{1 - P_{apr}^{d}}
+\begin{equation}
+	\label{eq:apunim}
+	apunim(d, g) = \frac{Pol_{obs}^{d}(g) - Pol_{apr}^{d}}{1 - Pol_{apr}^{d}}
 \end{equation}
 
-The scope of the statistic and its relationship with the previously presented statistics are demonstrated in Figure~\ref{fig:overview}. Since $nDFU \rightarrow [0,1] \Rightarrow apunim \rightarrow [-1,1]$. The interpretation of this metric boils down to three scenarios:
+Since $nDFU \rightarrow [0,1] \Rightarrow apunim \rightarrow [-1,1]$. The interpretation of this metric boils down to three scenarios:
 \begin{itemize}
-	\item$apunim(\theta) \approx 0$: The exhibited polarization among annotators of group $\theta$ does not meaningfully differ from all other groups. In other words, it is indistinguishable from noise (represented by the apriori polarization).
+	\item$apunim(\theta) \approx 0$: The examined group does not meaningfully disagree with the other annotators.
 	
-	\item $apunim(\theta) > 0$: The polarization observed in the annotation task rises when this group is added to the annotation pool (equivalently, intragroup polarization is lower than apriori polarization). 
-	For example, if we observe $apunim(\textit{``African American''}) = 0.3, apunim(\textit{``White''})=0.001$ in a hate-speech detection task, it is likely that \ac{aa} annotators fundamentally disagree with white annotators on what constitutes racism, regarding dataset $d$. 
+	\item $apunim(\theta) > 0$: The examined group has fundamental disagreements with the other annotators. 
 	
-	\item $apunim(\theta) < 0$: The overall polarization \emph{drops} when we add annotators from this group to this task. Mathematically, this occurs when intragroup polarization is higher than apriori polarization. This may indicate that 
-	%\emph{other dimensions} (acting as confounding variables) \emph{are exerting heavy influence on the sample} or that 
-	annotators of that group may be very polarized between themselves.
-	For example, if we observe $apunim(\textit{Latino}) = -0.3, apunim(\textit{White})=0.001$, it is likely that Latino annotators fundamentally disagree with \emph{each other}, compared to \ac{aa} or white annotators. 
+	\item $apunim(\theta) < 0$: Overall polarization \emph{drops} when we add annotators from this group to this task. This occurs when intragroup polarization is higher than apriori polarization; indicating that annotators of that group are polarized between themselves.
 \end{itemize}
 
 
@@ -315,7 +316,7 @@ H_0:  \textit{apunim}(g) = \bar{apunim(d)}
 	\label{tab:datasets}
 \end{table}
 
-We use four datasets from current \ac{nlp} research that include \ac{pc} information at the level of individual annotators; specifically, the ``Kumar''\cite{kumar-et-al-2021} and ``Sap''\cite{sap-etal-2022-annotators} datasets, which are concerned with Toxicity and hate speech detection respectively, and the DICES-350 and DICES-990 datasets~\cite{dices}, which focus on LLM response safety. \footnote{For the latter, we consider only labels relating to racism (\texttt{Q3\_bias\_overall}), thereby transforming the task to hate speech detection.} While the Toxicity and hate speech detection tasks are not equivalent, they share substantial conceptual and operational overlap, as both require annotators to assess the presence and severity of harmful or abusive language. Thus, we expect the sources of annotator disagreement and bias that arise in these tasks will be broadly similar.
+We use four datasets from current \ac{nlp} research that include \ac{pc} information at the level of individual annotators; specifically, the ``Kumar''\cite{kumar-et-al-2021} and ``Sap''\cite{sap-etal-2022-annotators} datasets, which are concerned with Toxicity and hate speech detection respectively, and the DICES-350 and DICES-990 datasets~\cite{dices}, which focus on LLM response safety.\footnote{For the latter, we consider only labels relating to racism (\texttt{Q3\_bias\_overall}), thereby transforming the task to hate speech detection.} While the toxicity and hate speech detection tasks are not equivalent, they share substantial conceptual and operational overlap, as both require annotators to assess the presence and severity of harmful or abusive language. Thus, we expect the sources of annotator disagreement and bias that arise in these tasks will be broadly similar.
 
 The datasets differ substantially in scale and annotation design. The Kumar dataset stands out for its large size, featuring more than 100{,}000 annotated comments, as well as 10 distinct \ac{pc} dimensions. In contrast, the DICES datasets contain fewer annotated comments but involve more than an order of magnitude more annotators per comment than the other datasets. A brief overview of dataset characteristics is provided in Table~\ref{tab:datasets}. The Kumar and Sap datasets contain a large number of polarizing items, unlike the DICES datasets, where most items are unpolarized (Fig.~\ref{fig:dataset-polarization}).\footnote{This systematic discrepancy could be attributed to the DICES datasets being composed of \ac{llm}-generated dialogues with already-aligned models tuned to avoid racist speech.}
 
@@ -323,7 +324,7 @@ The datasets differ substantially in scale and annotation design. The Kumar data
 \subsection{Experimental Setup}
 \label{sec:results:experimental}
 
-Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can partially explain polarization in the toxicity / hate speech annotations, as shown in Table~\ref{tab:datasets}.\footnote{We sample 20{,}000 comments from the Kumar dataset due to computational costs.} Note that some groups are not included, either because the results were not statistically significant, or because there were no polarized items annotated by more than one annotator of these groups (see \S\ref{sssec:datapol}). Consult Appendix~\ref{app:replication} for details on other parameters and execution times, and Appendix~\ref{app:full} for the full results.
+Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can partially explain polarization in the toxicity / hate speech annotations, as shown in Table~\ref{tab:datasets}.\footnote{We sample 10{,}000 comments from the Kumar dataset due to computational costs.} Note that some groups are not included, either because the results were not statistically significant, or because there were no polarized items annotated by more than one annotator of these groups (see \S\ref{sssec:datapol}). See App.~\ref{app:replication} for details on other parameters and execution times, and App.~\ref{app:full} for the full results.
 
 
 \subsection{Which factors contribute to polarization?}
@@ -458,29 +459,7 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 	\label{tab:merged-apunim}
 \end{table}
 
-\begin{finding}
-	\label{finding:race}
-	Polarization is consistently attributed to annotator race/ethnicity across all datasets, and especially so on hate-speech detection tasks
-\end{finding}
-	
-	
-Across all four datasets, we observe a consistent pattern in which annotation polarization can be attributed to differences in annotator ethnicity---in the hate speech detection datasets (DICES-350, DICES-990, Sap) this is the strongest contributor to polarization. In each case, statistically significant effects emerge for at least one of the major ethnic groups represented in the data (\acp{aa}: $-0.0428$/Asians: $0.0659$ for DICES-350, \acp{aa}: $-0.2967$ / Whites: $0.1400$ for Sap, Whites: $-0.0377$ for Kumar, and all ethnicities for DICES-990). This verifies relevant literature~\cite{goyal2022your} suggesting that ethnic background constitutes a systematic source of annotator disagreement rather than isolated noise, and is more prevalent on tasks explicitly investigating racism.
-
-\begin{finding}
-	\label{finding:overall-influence}
-	Some \ac{pc} dimensions exert a non-zero-sum influence on the dataset.
-\end{finding}
-
-There is a general tendency for the \emph{apunim} values of subgroups of the same \ac{pc} to sum to zero. This indicates that overall, these \acp{pc} does not contribute to the polarization of this task, or equivalently, that its subgroups ``cancel each other out''. Examples of this pattern can be found in Kumar for \texttt{``Education'', ``Gender'', ``Political Affiliation'', ``Religion Important''} and \texttt{``Technology Impact''}. This does not mean that differences within these groups do not exist---indeed, our results verify relevant studies on the different annotation patterns for annotators of different gender~\cite{goyal2022your, binns2017like, giorgi2025human, al2020identifying}, and religious beliefs~\cite{sachdeva2022assessing}.
-
-Some \ac{pc} dimensions however do not necessarily sum to zero, which suggests that \emph{these dimensions may exert a systematic influence} on the total polarization of the dataset. In other words, some annotator characteristics can consistently increase or decrease observed polarization (\S\ref{ssec:methodology:polstat}). In the Kumar dataset, for example, respondents who report having been previously targeted contribute positively to polarization ($0.0349$), while those who have not been targeted contribute much more negatively ($-0.0633$). Similarly, transgender annotators contribute negatively to polarization ($-0.0894$) which is not balanced out by cisgender ones ($0.0013$). These asymmetries indicate that some characteristics shape the overall polarization of the dataset rather than simply redistributing it across groups.
-
-
-\begin{finding}
-	Less educated annotators are more subjective.
-\end{finding}
-
-Education tends to have a moderate but consistent effect across the Kumar and DICES-990 datasets; the more educated an annotator is, the more they fundamentally disagree with other annotators. In the Kumar dataset, for instance, Bachelor’s-degree holders show a substantial positive contribution ($0.0401$), while groups with lower education such as “College, no degree” exhibit a negative contribution ($-0.0335$). The same pattern can be found in DICES-990, where annotators with at most a high-school education exhibit negative polarization attribution $-0.0751$, versus college-educated annotators whose values are extremely close to $0$ (hence, why they are not shown in Table~\ref{tab:merged-apunim}---the full results can be found in \ref{app:full}). This may indicate that less educated annotators are more likely to exhibit subjective views, while educated annotators will tend to broadly agree with each other.
+Across all four datasets, we observe a consistent pattern in which annotation polarization is linked to annotator characteristics, particularly ethnicity. In the hate speech detection datasets (DICES-350, DICES-990, Sap), \emph{ethnicity is the strongest contributor to polarization}, with statistically significant effects for at least one major ethnic group in each dataset (\acp{aa}: $-0.0428$/Asians: $0.0659$ for DICES-350, \acp{aa}: $-0.2967$/Whites: $0.1400$ for Sap, Whites: $-0.0377$ for Kumar, and all ethnicities for DICES-990). These results align with prior work suggesting that ethnic background is a systematic source of annotator disagreement rather than isolated noise~\cite{goyal2022your}, validating our initial motivation. Similarly, less educated annotators tend to show higher subjectivity, with negative polarization contributions in DICES-990 ($-0.0751$) and lower contributions from college-educated groups (Table~\ref{tab:merged-apunim}). Overall, our results support prior studies on how annotator characteristics--including ethnicity, education, gender, and personal experiences--shape annotation patterns~\cite{goyal2022your, binns2017like, giorgi2025human, al2020identifying, sachdeva2022assessing}, confirming that polarization is influenced by systematic factors rather than random noise.
 
 
 \subsection{Why we should stop binarizing groups}
@@ -513,25 +492,23 @@ Figure~\ref{fig:std_error} demonstrates the effect of the number of annotators o
 Each dataset features a different standard deviation even with the same number of annotators, which is broadly consistent with the amount of polarization in each dataset (Appendix~\ref{app:ann_details}). However, we observe a clear, non-linear, inverse relationship between the number of annotators and the standard error across datasets. This can be attributed to a more robust histogram estimation used by \ac{ndfu} (\S\ref{ssec:methodology:polstat}) when provided with more points for each of the subgroups. In the case of our datasets, we observe that after about 20 points, the estimation is good enough that more annotations contribute trivially to the robustness of the metric.
 	
 	
-	\section{Conclusion}
+\section{Conclusion \& Future work}
+
+We introduced the \emph{apunim} metric which attributes polarization to annotator subgroups for various \ac{pc} dimensions. Our metric works well for imbalanced annotator splits, is well-defined for multi-label annotation, includes a statistical significance test, and unlike previous work, quantifies the amount of attribution in order to allow for comparisons between various experiments and datasets. Using this metric, we discover that annotator ethnicity is the strongest and most consistent driver of polarization between annotators across datasets, and is much more pronounced on hate speech detection tasks. We also discover that education and religion consistently impact the behavior of annotators. Specifically, we discover that very religious annotators fundamentally agree with themselves but disagree with others in Toxicity detection tasks, a trend that is gradually and consistently diminished, and ultimately reversed, by irreligious annotators. We also provide an open-source, PyPi-installable implementation, and an estimation of the number of annotators needed for each item, for our method to be consistently reliable.
+
+Our framework has broad applications in \ac{nlp} sub-tasks relating to content moderation (such as toxicity and hate speech detection). Since many such tasks are run on multiple discussions, our framework can be used on the discussion, instead of the dataset level. In that case, researchers may be able to isolate polarizing discussions, and investigate underlying patterns of polarization for individual minority groups. Alternatively, items can be grouped by comment turn, allowing researchers to investigate the evolution of polarization across discussions. Lastly, our work can be used to more reliably test whether \ac{llm}-as-a-judge systems can replicate the polarization patterns of certain minority groups.
+
+
+\section{Limitations}
+
+Researchers often only publish single-label, aggregated data, or datasets without annotator \ac{pc} characteristics. Our analysis and the applicability of our framework is thus constrained by the lack of availability of such datasets. Additionally, while the findings presented in \S\ref{sec:results} do generally agree with current literature, the polarization patterns observed should be verified with more datasets before any generalizable claims are made.
+
+
+\section{Ethical Considerations}
+
+All datasets used in this study were either publicly accessible, or were provided to us by the authors with full disclosure on the purpose of our research. No identifiable, personal information is included in our pipeline. We did not perform any annotation tasks ourselves.
 	
-	We introduced the \emph{apunim} metric which attributes polarization to annotator subgroups for various \ac{pc} dimensions. Our metric works well for imbalanced annotator splits, is well-defined for multi-label annotation, includes a statistical significance test, and unlike previous work, quantifies the amount of attribution in order to allow for comparisons between various experiments and datasets. Using this metric, we discover that annotator ethnicity is the strongest and most consistent driver of polarization between annotators across datasets, and is much more pronounced on hate speech detection tasks. We also discover that education and religion consistently impact the behavior of annotators. Specifically, we discover that very religious annotators fundamentally agree with themselves but disagree with others in Toxicity detection tasks, a trend that is gradually and consistently diminished, and ultimately reversed, by irreligious annotators. We also provide an open-source, PyPi-installable implementation, and an estimation of the number of annotators needed for each item, for our method to be consistently reliable.
-	
-	
-	\section{Discussion}
-	\label{sec:discussion}
-	
-	\paragraph{Future work}
-	Our framework has broad applications in \ac{nlp} sub-tasks relating to content moderation (such as toxicity and hate speech detection). Since many such tasks are run on multiple discussions, our framework can be used on the discussion, instead of the dataset level. In that case, researchers may be able to isolate polarizing discussions, and investigate underlying patterns of polarization for individual minority groups. Alternatively, items can be grouped by comment turn, allowing researchers to investigate the evolution of polarization across discussions. Lastly, our work can be used to more reliably test whether \ac{llm}-as-a-judge systems can replicate the polarization patterns of certain minority groups.
-	
-	\paragraph{Limitations}
-	Researchers often only publish single-label, aggregated data, or datasets without annotator \ac{pc} characteristics. Our analysis and the applicability of our framework is thus constrained by the lack of availability of such datasets. Additionally, as with related work, the substantial costs of human annotation prevent us from getting reliable estiamtes from an item-level analysis.
-	
-	\paragraph{AI use Statement}
-	\acp{llm} were used for minor styling changes in this document, for some implementation details in the Python framework, as well for some of the code used for figure generation. The authors have verified all \ac{llm} outputs.
-	
-	\paragraph{Acknowledgments}
-	This work has been partially supported by project MIS 5154714 of the National Recovery and Resilience Plan Greece 2.0 funded by the European Union under the NextGenerationEU Program.
+
 	
 	
 	\bibliography{refs}
