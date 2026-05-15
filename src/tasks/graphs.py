@@ -120,7 +120,7 @@ def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
 
     ax.set_ylim(-0.05, 1.05)
 
-    plt.xticks(rotation=20, ha="right")
+    plt.xticks(rotation=90, ha="right")
     plt.grid(axis="y", alpha=0.5)
 
     save_plot(output_path)
