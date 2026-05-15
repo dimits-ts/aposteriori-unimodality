@@ -236,7 +236,7 @@ def compute_apriori_polarization(
     all_factors = list({f for row in df[sdb_col] for f in row})
 
     apriori = {f: [] for f in all_factors}
-    comment_means = []
+    comment_mins = []
 
     unique_comments = list(dict.fromkeys(comments))
 
@@ -251,13 +251,13 @@ def compute_apriori_polarization(
         )
 
         if len(comm_ann) == 0:
-            comment_means.append(np.nan)
+            comment_mins.append(np.nan)
             continue
 
         # skip low structure comments
         base_dfu = apunim.dfu(comm_ann, bins=bins, normalized=True)
         if np.isnan(base_dfu) or base_dfu < 0.01:
-            comment_means.append(np.nan)
+            comment_mins.append(np.nan)
             continue
 
         # --------------------------------------------------
@@ -266,10 +266,15 @@ def compute_apriori_polarization(
         n = len(comm_ann)
         k = len(all_factors)
 
-        # equal-sized partitions (last absorbs remainder)
-        base_size = n // k
-        sizes = [base_size] * k
-        sizes[-1] += n - sum(sizes)
+        # random partition sizes that sum to n
+        # allow empty groups if k > n
+        if k == 1:
+            sizes = [n]
+        else:
+            # choose k-1 cut points between 0 and n
+            cuts = np.sort(rng.integers(0, n + 1, size=k - 1))
+            cuts = np.concatenate(([0], cuts, [n]))
+            sizes = np.diff(cuts).tolist()
 
         perm_comment_values = []
 
@@ -286,7 +291,7 @@ def compute_apriori_polarization(
                 part = shuffled[start : start + size]
                 start += size
 
-                if part.size == 0:
+                if part.size <= 2:
                     continue
 
                 val = apunim.dfu(part, bins=bins, normalized=True)
@@ -298,10 +303,11 @@ def compute_apriori_polarization(
                 perm_comment_values.append(np.mean(perm_values))
 
         # mean DFU over permutations for this comment
-        comment_means.append(
-            float(np.mean(perm_comment_values))
+        comment_mins.append(
+            float(np.min(perm_comment_values))
             if perm_comment_values
             else np.nan
         )
 
-    return np.array(comment_means)
+    return np.array(comment_mins)
+

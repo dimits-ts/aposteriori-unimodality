@@ -1,12 +1,10 @@
 import argparse
 from pathlib import Path
-from typing import Iterable
 
 import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
 
 import tasks.graphs
 import tasks.run_helper
@@ -86,7 +84,7 @@ def plot_dfu_histograms(
             )
         )
 
-    ax.set_xlabel("Apriori polarization")
+    ax.set_xlabel("Inherent polarization")
     ax.set_ylabel("Density")
 
     ax.legend(handles=legend_handles)
@@ -171,7 +169,7 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
     """
     For each CSV in results_dir:
     - Identify ordinal-valued rows grouped by the 'SDB Feature' column.
-    - Keep only groups where at least one ordinal factor has pvalue <= 0.5.
+    - Keep only groups where at least two ordinal factors have pvalue <= 0.05.
     - Extract ordinals and build a stretched x-axis per feature.
     - Plot ordinal vs apunim across all datasets.
     """
@@ -193,6 +191,7 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
             ),
             None,
         )
+
         if ordinal_col is None:
             continue
 
@@ -201,13 +200,10 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
             g = df_group[
                 df_group[ordinal_col].astype(str).str.match(r"^\d+\)")
             ].copy()
+
             g = g[g.pvalue.notna()]
 
             if g.empty:
-                continue
-
-            # need at least two statistically significant groups
-            if (g.pvalue <= 0.05).sum() < 2:
                 continue
 
             g["ordinal"] = (
@@ -217,7 +213,6 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
             for _, row in g.iterrows():
                 records.append(
                     {
-                        "dataset": dataset,
                         "feature": f"{dataset}-{feature_name}",
                         "ordinal": row["ordinal"],
                         "apunim": row["apunim"],
@@ -236,138 +231,50 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
 
     for feature, df_feat in data.groupby("feature"):
         df_feat = df_feat.sort_values("ordinal").reset_index(drop=True)
+
         n_rows = len(df_feat)
-        df_feat["stretched_ordinal"] = np.linspace(1, max_points, n_rows)
+
+        df_feat["stretched_ordinal"] = np.linspace(
+            1,
+            max_points,
+            n_rows,
+        )
+
         stretched_records.append(df_feat)
 
-    data_stretched = pd.concat(stretched_records, ignore_index=True)
+    data_stretched = pd.concat(
+        stretched_records,
+        ignore_index=True,
+    )
 
-    # --- Color configuration ---
-    highlight_group_1 = {
-        "kumar-Religion Important",
-        "dices-990-Age",
-    }
+    plt.figure(figsize=(12, 7))
 
-    highlight_group_2 = {
-        "kumar-Education",
-        "kumar-Toxicity Problem",
-        "kumar-Technology Impact",
-    }
-
-    COLOR_GROUP_1 = tasks.graphs.COLORBLIND_PALETTE[0]
-    COLOR_GROUP_2 = tasks.graphs.COLORBLIND_PALETTE[1]
-    COLOR_OTHER = tasks.graphs.COLORBLIND_PALETTE[2]
-
-    palette = {}
-    for f in data_stretched["feature"].unique():
-        if f in highlight_group_1:
-            palette[f] = COLOR_GROUP_1
-        elif f in highlight_group_2:
-            palette[f] = COLOR_GROUP_2
-        else:
-            palette[f] = COLOR_OTHER
-
-    # --- Plot ---
-    plt.figure(figsize=(10, 6))
-    ax = sns.lineplot(
+    sns.lineplot(
         data=data_stretched,
         x="stretched_ordinal",
         y="apunim",
         hue="feature",
         style="feature",
-        markers=True,
+        markers=tasks.graphs.MARKERS,
         dashes=True,
-        markersize=10,
-        legend=True,
-        errorbar=None,
-        palette=palette,
+        palette=tasks.graphs.COLORBLIND_PALETTE,
+        linewidth=1.8,
+        markersize=7,
+        estimator=None,
     )
 
-    # De-emphasize non-highlighted lines
-    for line in ax.lines:
-        if line.get_color() == COLOR_OTHER:
-            line.set_alpha(0.6)
-
-    add_grouped_legend(
-        ax,
-        group_1=highlight_group_1,
-        group_1_title="Monotonic",
-        group_2=highlight_group_2,
-        group_2_title="Diverging",
-        others_title="Neither",
-        loc="lower center",
+    plt.title("Pol. attribution is generally monotonic")
+    plt.xlabel(
+        r"$\{Age | Opinion | Education\}: Low \rightarrow High$"
     )
-
-    plt.title("Apunim trends in ordinal variables")
-    plt.xlabel("Order (low → high)")
     plt.ylabel("Apunim value")
-    plt.grid(True, alpha=0.3)
+
+    plt.legend(loc="center")
+
     plt.tight_layout()
-    ax.set_xticks([])  # Remove x-axis ticks
 
     tasks.graphs.save_plot(graph_output_dir / "apunim_ordinal.png")
 
-
-def add_grouped_legend(
-    ax,
-    group_1: Iterable[str],
-    group_2: Iterable[str],
-    group_1_title: str = "Highlighted: Group 1",
-    group_2_title: str = "Highlighted: Group 2",
-    others_title: str = "Other features",
-    loc: str = "best",
-):
-    """
-    Create a grouped legend on an existing axis.
-
-    Parameters
-    ----------
-    ax : matplotlib.axes.Axes
-        Axis containing the plotted lines.
-    group_1, group_2 : iterable of str
-        Feature names belonging to the two highlighted groups.
-    """
-    handles, labels = ax.get_legend_handles_labels()
-    handle_map = dict(zip(labels, handles))
-
-    group_1 = list(group_1)
-    group_2 = list(group_2)
-
-    highlighted = set(group_1) | set(group_2)
-
-    legend_handles = []
-    legend_labels = []
-
-    def add_group(title, features):
-        # Section header (dummy handle)
-        legend_handles.append(Line2D([], [], linestyle="none"))
-        legend_labels.append(title)
-
-        for f in features:
-            if f in handle_map:
-                legend_handles.append(handle_map[f])
-                legend_labels.append(f)
-
-    add_group(group_1_title, group_1)
-    add_group(group_2_title, group_2)
-
-    other_features = [f for f in labels if f not in highlighted]
-    if other_features:
-        add_group(others_title, other_features)
-
-    legend = ax.legend(
-        legend_handles,
-        legend_labels,
-        frameon=True,
-        loc=loc,
-    )
-
-    # Make section headers bold
-    for text in legend.get_texts():
-        if text.get_text() in {group_1_title, group_2_title, others_title}:
-            text.set_weight("bold")
-
-    return legend
 
 
 if __name__ == "__main__":
