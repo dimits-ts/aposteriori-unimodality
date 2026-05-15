@@ -65,14 +65,14 @@
 
 \graphicspath{ {../graphs} {graphs}  }
 
-\title{Detecting, quantifying, and attributing fundamental disagreements to annotator groups}
+\title{Detecting, quantifying, and attributing fundamental disagreements across annotator groups}
 
 \begin{document}
 	
 \maketitle
 
 \begin{abstract}
-	Current annotation agreement metrics are often sensitive to group size imbalances and noise, making them inadequate for many subjective tasks such as toxicity and hate-speech detection. Polarization has recently been proposed as a more robust way to distinguish minor disagreements from systematic differences in opinion, but existing approaches do not provide practical tools for attributing polarization to specific annotator groups. We evaluate current methods and identify two major limitations in realistic settings: (1) the presence of ``inherent'' polarization that cannot be attributed to any known or latent groups, and (2) opposing polarization effects canceling each other out in aggregated annotations. 
+	Current annotation agreement metrics are often sensitive to group size imbalances and noise, making them inadequate for many subjective tasks such as toxicity and hate-speech detection, where minority opinions are most important. Polarization has recently been proposed as a more robust way to distinguish minor disagreements from systematic differences in opinion, but existing approaches do not provide practical tools for attributing polarization to specific annotator groups. We evaluate current methods and identify two major limitations in realistic settings: (1) the presence of ``inherent'' polarization that cannot be attributed to any known or latent groups, and (2) opposing polarization effects canceling each other out in aggregated annotations. 
 	To address these issues, we introduce a new metric that measures and tests the statistical significance of polarization attribution for annotator groups while avoiding these limitations. We apply our method to four subjective NLP datasets and find that gender and race consistently explain polarization patterns, while differences between annotator groups become stronger as the groups are further apart. Finally, we estimate the minimum number of annotators required for reliable results and release an open-source Python library implementing our approach.
 \end{abstract}
 
@@ -84,7 +84,7 @@
 \begin{figure}[ht]
 	\centering
 	\includegraphics[width=\columnwidth]{disagreement_vs_polarization.png}
-	\caption{Simulated experiments for four scenarios on a hate speech detection task. Depending on the annotators, there may be a clear pattern where the split in annotations (polarization) can be attributed to a specific group (Muslim annotators in the case of the upper plots).}
+	\caption{Simulated experiment exploring four scenarios of a hate speech detection task applied to a controversial statement by D. Trump (Jan. 2019). The variance in annotations across different annotators--Muslim annotators in the upper plots--may cause traditional agreement metrics may fail to capture distinct group biases \citep{pavlopoulos-likas-2024}, especially when mixed opinions occur (top-right).}
 	\label{fig:disagreement-vs-polarization}
 \end{figure}
 
