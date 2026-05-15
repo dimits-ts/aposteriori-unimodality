@@ -242,12 +242,14 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
     highlight_group_1 = {
         "kumar-Religion Important",
         "dices-990-Age",
+        "kumar-Toxicity Problem",
+        "sap-Age"
     }
 
     highlight_group_2 = {
-        "kumar-Education",
-        "kumar-Toxicity Problem",
+        "kumar-Age",
         "kumar-Technology Impact",
+        "kumar-Education",
     }
 
     COLOR_GROUP_1 = tasks.graphs.COLORBLIND_PALETTE[0]
@@ -356,7 +358,7 @@ def add_grouped_legend(
         legend_labels,
         frameon=True,
         loc=loc,
-        bbox_to_anchor=(1.3, 0)
+        bbox_to_anchor=(1.3, 0),
     )
 
     # Make section headers bold

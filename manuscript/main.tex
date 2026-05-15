@@ -117,6 +117,7 @@ Having established our metric, we apply it to four \ac{nlp} datasets focused on 
 
 Finally, we release an open source Python library that implements our metric, which can be directly installed via PyPi.\footnote{Library: \librarylink\\Documentation: \doclink } and provide an estimation on the minimum number of annotators required for robust estimates (\S\ref{sec:ann_size}). The code for the experiments, graph creation, and analysis can be found on our project's repository.\footnote{Replication code: \explink}
 
+\textbf{This publication includes examples of controversial and potentially harmful speech for the purposes of demonstration. These examples do not represent the views of the authors.}
 
 \section{Related Work}
 \label{sec:related}
@@ -302,6 +303,8 @@ Since $nDFU \rightarrow [0,1] \Rightarrow apunim \rightarrow [-1,1]$. The interp
 	\item $apunim(\theta) < 0$: Overall polarization \emph{drops} when we add annotators from this group to this task. This occurs when intragroup polarization is higher than apriori polarization; indicating that annotators of that group are polarized between themselves.
 \end{itemize}
 
+Because \textit{apunim} is fundamentally designed to quantify polarization, we exclude comments that exhibit no measurable polarization ($nDFU(c)=0$). Furthermore, to enhance computational efficiency, we also exclude comments annotated exclusively by a single group (e.g., comments annotated only by male or only by female annotators when considering gender). 
+
 
 \subsection{Statistical significance}
 \label{sec:apunim:statistical}
@@ -361,13 +364,13 @@ A brief overview of dataset characteristics is provided in Table~\ref{tab:datase
 \subsection{Experimental Setup}
 \label{sec:results:experimental}
 
-Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided sociodemographic dimensions can partially explain polarization in the toxicity / hate speech annotations, as shown in Table~\ref{tab:datasets}.\footnote{We sample 10{,}000 comments from the Kumar dataset due to computational costs arising from the extraordinary amount of \acp{pc}.} Note that some groups are not included, either because the results were not statistically significant, or because there were no polarized items annotated by more than one annotator of these groups. See App.~\ref{app:replication} for details on other parameters and execution times, and App.~\ref{app:full} for the full results.
+Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided sociodemographic dimensions can partially explain polarization in the toxicity / hate speech annotations, as shown in Table~\ref{tab:datasets}.\footnote{We sample 20{,}000 comments from the Kumar dataset due to computational costs arising from the extraordinary amount of distinct participant groups.} Note that some groups are not included, either because the results were not statistically significant, or because there were no polarized items annotated by more than one annotator of these groups. See App.~\ref{app:replication} for details on other parameters and execution times, and App.~\ref{app:full} for the full results.
 
 
 \subsection{Which factors contribute to polarization?}
 \label{ssec:results:factors}
 
-\begin{table}[!ht]
+\begin{table}[t]
 	\small
 	\centering
 	
@@ -420,73 +423,34 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 		\midrule
 		\multicolumn{3}{c}{\textbf{Kumar}} \\
 		\midrule
-		
-		Age=18--24 & 0.611 & 331 \\
-		Age=25--34 & 0.606 & 8506 \\
-		Age=35--44 & 0.557 & 2556 \\
-		Age=45--54 & 0.555 & 441 \\
-		Age=55--64 & 0.637 & 110 \\
-		
-		Edu=Masters & 0.642 & 858 \\
-		Edu=Bachelors & 0.594 & 9013 \\
-		Edu=Associate degree & 0.585 & 335 \\
-		Edu=College, no degree & 0.570 & 1425 \\
-		Edu=High School graduate & 0.446 & 144 \\
-		
-		Eth=Asian & 0.461 & 49 \\
-		Eth=Black & 0.618 & 468 \\
-		Eth=White & 0.546 & 26239 \\
-		
-		Gender=Female & 0.586 & 14479 \\
-		Gender=Male & 0.588 & 11716 \\
-		
-		PastTargeted=No & 0.551 & 25773 \\
-		PastTargeted=Yes & 0.608 & 3893 \\
-		
-		Parent=No & 0.566 & 10784 \\
-		Parent=Yes & 0.593 & 15929 \\
-		
-		Trans=No & 0.484 & 40404 \\
-		
-		Politics=Conservative & 0.620 & 3075 \\
-		Politics=Independent & 0.574 & 3270 \\
-		Politics=Liberal & 0.580 & 7897 \\
-		
-		ReligionImportant=No & 0.555 & 4041 \\
-		ReligionImportant=Low & 0.572 & 315 \\
-		ReligionImportant=Mid & 0.624 & 2542 \\
-		ReligionImportant=High & 0.631 & 5403 \\
-		
-		SeenToxicity=No & 0.627 & 2454 \\
-		SeenToxicity=Yes & 0.529 & 28821 \\
-		
-		SexOrientation=Bi & 0.621 & 467 \\
-		SexOrientation=Het & 0.528 & 32217 \\
-		
-		TechImportant=Negative & 0.492 & 217 \\
-		TechImportant=Neutral & 0.587 & 426 \\
-		TechImportant=Positive & 0.579 & 13685 \\
-		TechImportant=Very pos. & 0.622 & 2942 \\
-		
-		ToxProblem=Never & 0.451 & 55 \\
-		ToxProblem=Rare & 0.572 & 1007 \\
-		ToxProblem=Occasionally & 0.588 & 6082 \\
-		ToxProblem=Freq & 0.579 & 3961 \\
-		ToxProblem=VeryFreq & 0.588 & 410 \\
-		
+		% Ethnicity
+		Race=AfricanAmerican & $0.2072$ & 356 \\
+		% Target
+		\rowcolor{gray!15} ToxTarget=False & $-0.0017$ & 2199 \\
+		ToxTarget=True & $0.0329$ & 1176 \\
+		% Is Parent
+		\rowcolor{gray!15} Parent=No & $-0.0591$ & 1868 \\
+		% Is Transgender
+		Trans=Yes & $0.5322$ & 31 \\
+		% Religion Important
+		\rowcolor{gray!15} ReligionImportant=No & $-0.1069$ & 1069 \\
+		% Sexual Orientation
+		SO=Bisexual & $0.1639$ & 283 \\
+		% Toxicity Problem
+		ToxProblem=Never & $0.2975$ & 92 \\
 		\bottomrule
 	\end{tabularx}
 	\caption{Statistically significant ($p<0.05$) aposteriori unimodality results across all four datasets. Gray rows show negative values. Consult App.~\ref{app:full} for the full results.}
 	\label{tab:merged-apunim}
 \end{table}
 
-\paragraph{Race} Across all datasets apart from Sap, we observe a consistent pattern in which annotation polarization is linked to annotator characteristics, particularly ethnicity. In the hate speech detection datasets (DICES-350, DICES-990) \emph{ethnicity is the strongest contributor to polarization}, with statistically significant effects for at least one major ethnic group in each dataset (\acp{aa}: $-0.0428$/Asians: $0.0659$ for DICES-350, Whites: $-0.0377$ for Kumar, and all ethnicities for DICES-990). These results align with prior work suggesting that ethnic background is a systematic source of annotator disagreement rather than isolated noise~\cite{goyal2022your}, validating our initial motivation.
+\paragraph{Race} Across all datasets apart from Sap, we observe a consistent pattern in which annotation polarization is linked to annotator ethnicity, and particularly by African American annotators. Additionally, \emph{ethnicity is the strongest contributor to polarization}, with statistically significant effects for at least one major ethnic group in each dataset (\acp{aa}: $-0.0428$/Asians: $0.0659$ for DICES-350, \acp{aa}: $0.2072$ for Kumar--a close second, and all ethnicities for DICES-990). These results align with prior work suggesting that ethnic background is a systematic source of annotator disagreement rather than isolated noise~\cite{goyal2022your}.
 
-\paragraph{Gender} Polarization is also consistently linked to gender across all datasets except DICES-350. In DICES-990, men and women show statistically significant effects in opposite directions (Men: $0.028$, Women: $-0.025$), mirrored in Sap, where men have a positive attribution score ($0.091$) and women a strongly negative one ($-0.244$). By comparison, the Kumar dataset shows almost identical attribution scores for female and male annotators (Female: $0.586$, Male: $0.588$), a pattern that also holds for many other attributes in that dataset. This may indicate that \emph{apunim} is partly task-dependent, or that the test becomes less discriminative when many comments are annotated by relatively few annotators. Nevertheless, these patterns mirror prior findings with respect to hate speech~\citep{wojatzki2018women} and toxicity\cite{binns2017like} annotation.
+\paragraph{Gender} Polarization consistently relates to gender across two of our hate speech datasets, with DICES-350 being the exception.  DICES-990 shows that men and women have statistically significant, opposite effects (Men: $0.028$; Women: $-0.025$). This pattern is similar to Sap, where men display a positive attribution score ($0.091$) and women display a strongly negative score ($-0.244$). These results are consistent with previous findings regarding hate speech~\citep{wojatzki2018women} and general toxicity annotation~\cite{binns2017like}. Interestingly, the Kumar dataset--the only one providing this demographic data--indicates that transgender annotators showed the highest degree of polarization, even given their small representation in the dataset. This finding strongly supports our choice to use polarization as a metric, rather than depending on traditional inter-annotator agreement (Fig.~\ref{fig:disagreement-vs-polarization}).
 
 \begin{finding}
 \label{finding:categorical}
-	Annotator age and race are consistent causes of polarization.
+	Annotator age and race are consistent causes of polarization, even when their representation in the annotations is sparse.
 \end{finding}
 
 \begin{figure}[t]
@@ -495,12 +459,12 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 	\label{fig:ordinal}
 \end{figure}
 
-\paragraph{Polarization attribution follows a monotonic trend}
-Figure~\ref{fig:ordinal} shows \emph{apunim} trends across ordinal sociodemographic attributes listed in Table~\ref{tab:merged-apunim}. We find that polarization attribution changes consistently in one direction as we move from one end of an attribute scale to the other--for example, from irreligious to very religious annotators. This monotonic pattern appears across \emph{all} ordinal sociodemographic dimensions and \emph{all} datasets (apart from \texttt{Age} in the Kumar dataset, which is U-shaped), suggesting that perceived differences become stronger between groups that are further apart ideologically or demographically.
+\paragraph{Polarization attribution grows the more different annotator groups become}
+Figure~\ref{fig:ordinal} shows \emph{apunim} trends across ordinal sociodemographic attributes listed in Table~\ref{tab:merged-apunim}. We find that polarization attribution changes consistently in one direction as we move from one end of an attribute scale to the other--for example, from irreligious to very religious annotators. In some sociodemographic dimensions this is expressed in a monotonic pattern, suggesting that perceived differences become stronger between groups that are further apart ideologically or demographically. In other cases, polarization attribution is caused by a few dominant modes.
 
 \begin{finding}
 	\label{finding:ordinal}
-	For ordinal sociodemographic dimensions, polarization attribution tends to grow stronger as the differences between annotator groups increase.
+	For ordinal sociodemographic dimensions, polarization attribution tends either to grow stronger as the differences between annotator groups increase, or coalesce around a few opposing groups.
 \end{finding}
 
 
@@ -537,7 +501,7 @@ Finally, although we compare findings across datasets and relate them to prior w
 \section{Ethical Considerations}
 
 All datasets used in this study were either publicly accessible, or were provided to us by the authors with full disclosure on the purpose of our research. No identifiable, personal information is included in our pipeline. We did not perform any annotation tasks ourselves.
-Additionally, this study uses dichotomies across the two predominant genders, and religious groups as examples. The authors do not claim that these examples necessarily reflect the views or behaviors of these groups; they exist only for the purpose of demonstration.
+Additionally, this study uses dichotomies across the two predominant genders, and religious groups as examples. The authors do not claim that these examples necessarily reflect the views or behaviors of these groups; they exist only for the purpose of demonstration. The controversial statements expressed in this publication also do not express the views of the authors.
 
 \bibliography{refs}
 \appendix
@@ -620,13 +584,12 @@ In order to lower the computational cost required, we re-use the random partitio
 \section{Replication Details}
 \label{app:replication}
 
+
 We use version \texttt{1.0.1} of the \texttt{apunim} library for our experiments. We use 100 random iterations for the apriori value calculation (Equation~\ref{eq:apriori}) and the p-value estimation (\S\ref{sec:apunim:statistical}), and set a \ac{fwer} rate of $0.95$. 
 
-The current version of the library handles large number of annotators very well due to the use of vectorized operations, but struggles when faced with a lot of comments when the annotators belong to multiple groups. Indeed, while the experiments for all datasets presented in \S\ref{sec:results:datasets} need no more than a minute to run, the Kumar dataset requires about 12 hours of computation even with a $20\%$ sample. The annotator variance analysis presented in \S\ref{sec:ann_size} also required more than 10 hours of computation, although that is expected due to the nature of the experiment, which is very computationally demanding, and a non-standard use of our library.
+While the library efficiently handles a large number of annotators through vectorized operations, performance degrades significantly when processing a high volume of comments, particularly when annotators belong to multiple distinct groups. For instance, while experiments across all datasets in $\S\ref{sec:results:datasets}$ complete within a minute, the Kumar dataset necessitates approximately one hour of computation, even when using a 3\% sample. Furthermore, the annotator variance analysis detailed in $\S\ref{sec:ann_size}$ required over ten hours. While this latter time investment is anticipated due to the inherently demanding nature and non-standard application of our library, it highlights a scaling bottleneck under specific data structures. We hypothesize that this bottleneck is likely caused by repeated creation of numpy arrays, resulting in repeated memory allocations for each subgroup, in each comment, for each sociodemographic dimension. We plan on profiling and addressing it in the next releases of our software. Until then, we suggest either using multiprocessing for each sociodemographic subgroup, or running the different experiments in parallel (indeed, we use the \texttt{gnu-parallel} linux package~\cite{tange_2025_16944306} for our own experiments).
 
-This bottleneck is likely caused by repeated creation of numpy arrays, resulting in repeated memory allocations for each subgroup, in each comment, for each sociodemographic dimension. We plan on profiling and addressing it in the next releases of our software. Until then, we suggest either using multiprocessing for each sociodemographic subgroup, or running the different experiments in parallel (indeed, we use the \texttt{gnu-parallel} linux package~\cite{tange_2025_16944306} for our own experiments).
-
-In Figure~\ref{fig:std_error}, we removed values where there was a lack of items annotated by the specified number of annotators (e.g., only 7\% of comments in DICES-990 were annotated by more than 73 annotators---see \ref{app:ann_details}).
+In Figure~\ref{fig:std_error}, we removed values where there was a lack of items annotated by the specified number of annotators (e.g., only 7\% of comments in DICES-990 were annotated by more than 73 annotators---see App.~\ref{app:ann_details}).
 
 
 \section{Full Results}
@@ -662,83 +625,93 @@ In Figure~\ref{fig:std_error}, we removed values where there was a lack of items
 		\multicolumn{3}{c}{\textbf{Kumar}} \\
 		\midrule
 		% Age
-		\rowcolor{gray!15} Age=18-24 & $0.6112^{***}$ & 331 \\
-		Age=25-34 & $0.6058^{***}$ & 8506 \\
-		\rowcolor{gray!15} Age=35-44 & $0.5573^{***}$ & 2556 \\
-		\rowcolor{gray!15} Age=45-54 & $0.5550^{***}$ & 441 \\
-		\rowcolor{gray!15} Age=5-64 & $0.6372^{***}$ & 110 \\
+		\rowcolor{gray!15} Age=18-24 & $-0.0494$ & 223 \\
+		Age=25-34 & $0.0365$ & 1188 \\
+		Age=35-44 & $0.0069$ & 762 \\
+		Age=45-54 & $0.0155$ & 291 \\
+		\rowcolor{gray!15} Age=55-64 & $-0.0650$ & 130 \\
+		\rowcolor{gray!15} Age=65+ & $-0.1752$ & 17 \\
 		\midrule
 		% Education
-		Edu=Master's degree & $0.6423^{***}$ & 858 \\
-		Edu=Bachelor's degree & $0.5936^{***}$ & 9013 \\
-		\rowcolor{gray!15} Edu=Associate degree & $0.5854^{***}$ & 335 \\
-		\rowcolor{gray!15} Edu=College, no degree & $0.5704^{***}$ & 1425 \\
-		\rowcolor{gray!15} Edu=High School & $0.4461^{***}$ & 144 \\
+		Edu=Doctoral degree & $0.0426$ & 8 \\
+		\rowcolor{gray!15} Edu=Professional degree & $-0.2278$ & 7 \\
+		Edu=Master's degree & $0.1159^{*}$ & 459 \\
+		Edu=Bachelor's degree & $0.0126$ & 1193 \\
+		\rowcolor{gray!15} Edu=Associate degree & $-0.1270$ & 176 \\
+		\rowcolor{gray!15} Edu=College, no degree & $-0.2258^{***}$ & 540 \\
+		\rowcolor{gray!15} Edu=High School grad & $-0.0739$ & 122 \\
 		\midrule
 		% Ethnicity
-		\rowcolor{gray!15} Eth=Asian & $0.4607^{*}$ & 49 \\
-		\rowcolor{gray!15} Eth=Black & $0.6183^{***}$ & 468 \\
-		Eth=Hispanic & $0.2593$ & 15 \\
-		\rowcolor{gray!15} Eth=Multiracial & $0.1262$ & 12 \\
-		\rowcolor{gray!15}Eth=Other & $ -0.0736$ & 8 \\
-		\rowcolor{gray!15} Eth=White & $0.5462^{***}$ & 26239 \\
+		Asian & $0.0729$ & 75 \\
+		Black & $0.2072^{***}$ & 356 \\
+		Hispanic & $0.0255$ & 25 \\
+		\rowcolor{gray!15} Multiracial & $-0.1099$ & 44 \\
+		Other & $0.1992$ & 17 \\
+		\rowcolor{gray!15} Unknown & $-0.0246$ & 7 \\
+		\rowcolor{gray!15} White & $-0.0436$ & 1253 \\
 		\midrule
 		% Gender
-		\rowcolor{gray!15} Gender=Female & $0.5857^{***}$ & 14479 \\
-		Gender=Male & $0.5883^{***}$ & 11716 \\
+		\rowcolor{gray!15} Gender=Female & $-0.0370$ & 2070 \\
+		Gender=Male & $0.0422$ & 1974 \\
 		\midrule
 		% Target
-		\rowcolor{gray!15} Target=False & $0.5510^{***}$ & 25773 \\
-		Target=True & $0.6075^{***}$ & 3893 \\
+		\rowcolor{gray!15} Target=False & $-0.0017$ & 2199 \\
+		Target=True & $0.0329$ & 1176 \\
 		\midrule
 		% Is Parent
-		\rowcolor{gray!15} Parent=No & $0.5660^{***}$ & 10784 \\
-		Parent=Yes & $0.5929^{***}$ & 15929 \\
+		\rowcolor{gray!15} Parent=No & $-0.0591^{***}$ & 1868 \\
+		\rowcolor{gray!15} Parent=Prefer not to say & $-0.1858$ & 4 \\
+		Parent=Yes & $0.0205$ & 2156 \\
 		\midrule
 		% Is Transgender
-		\rowcolor{gray!15} Trans=No & $0.4841^{***}$ & 40404 \\
+		\rowcolor{gray!15} Trans=No & $-0.0143$ & 561 \\
+		Trans=Prefer not to say & $0.3697$ & 7 \\
+		Trans=Yes & $0.5322^{**}$ & 31 \\
 		\midrule
 		% Political Affiliation
-		Pol=Conservative & $0.6200^{***}$ & 3075 \\
-		\rowcolor{gray!15} Pol=Independent & $0.5739^{***}$ & 3270 \\
-		\rowcolor{gray!15} Pol=Liberal & $0.5800^{***}$ & 7897 \\
-		\rowcolor{gray!15} Pol=Other & $0.2902$ & 25 \\
-		Pol=Prefer not to say & $0.4618$ & 18 \\
+		Conservative & $0.0552$ & 1021 \\
+		\rowcolor{gray!15} Independent & $-0.0610$ & 895 \\
+		\rowcolor{gray!15} Liberal & $-0.0419$ & 1449 \\
+		\rowcolor{gray!15} Other & $-0.1127$ & 21 \\
+		\rowcolor{gray!15} Prefer not to say & $-0.0148$ & 54 \\
 		\midrule
 		% Religion Important
-		\rowcolor{gray!15} Rel=No & $0.5547^{***}$ & 4041 \\
-		\rowcolor{gray!15} Rel=Not very & $0.5723^{***}$ & 315 \\
-		Rel=Somewhat & $0.6240^{***}$ & 2542 \\
-		\rowcolor{gray!15} Rel=Very & $0.6306^{***}$ & 5403 \\
-				\midrule
-		% --- Seen Toxicity ---
-		SeenTox=False & $0.6271^{***}$ & 2454 \\
-		\rowcolor{gray!15} SeenTox=True & $0.5291^{***}$ & 28821 \\
+		\rowcolor{gray!15} Rel=No & $-0.1069^{***}$ & 1069 \\
+		\rowcolor{gray!15} Rel=Not very & $-0.0706$ & 241 \\
+		Somewhat & $0.0206$ & 837 \\
+		Very & $0.0595$ & 1199 \\
+		\rowcolor{gray!15} Prefer not to say & $-0.2144$ & 13 \\
+		\midrule
+		% Seen Toxicity
+		False & $0.0594$ & 849 \\
+		\rowcolor{gray!15} True & $-0.0387$ & 2051 \\
 		\midrule
 		
-		% --- Sexual Orientation ---
-		SO=Bisexual & $0.6205^{***}$ & 467 \\
-		\rowcolor{gray!15} SO=Heterosexual & $0.5281^{***}$ & 32217 \\
-		SO=Homosexual & $0.0493$ & 15 \\
+		% Sexual Orientation
+		SO=Bisexual & $0.1639^{**}$ & 283 \\
+		\rowcolor{gray!15} SO=Heterosexual & $-0.0353$ & 1170 \\
+		\rowcolor{gray!15} SO=Homosexual & $-0.0103$ & 32 \\
+		\rowcolor{gray!15} SO=Prefer not to say & $-0.2791$ & 23 \\
 		\midrule
 		
-		% --- Technology Impact ---
-		\rowcolor{gray!15} Tech=Very Neg & $0.4918^{***}$ & 217 \\
-		\rowcolor{gray!15} Tech=Negative & $0.5871^{***}$ & 426 \\ 
-		Tech=Neutral & $0.5789^{***}$ & 13685 \\ 
-		\rowcolor{gray!15} Tech=High & $0.6220^{***}$ & 2942 \\ 
+		% Technology Impact
+		Tech=Very negative & $0.2157$ & 4 \\
+		\rowcolor{gray!15} Tech=Negative & $-0.1614$ & 176 \\
+		Tech=Neutral & $0.0705$ & 320 \\
+		\rowcolor{gray!15} Tech=Positive & $-0.0283$ & 1606 \\
+		Tech=Very Positive & $0.0263$ & 1000 \\
 		\midrule
 		
-		% --- Toxicity Problem ---  
-		ToxProblem=Never & $0.4513^{*}$ & 55 \\
-		ToxProblem=Rarely & $0.5724^{***}$ & 1007 \\
-		\rowcolor{gray!15} ToxProblem=Sometimes & $0.5884^{***}$ & 6082 \\
-		\rowcolor{gray!15} ToxProblem=Freq & $0.5785^{***}$ & 3961 \\
-		\rowcolor{gray!15} ToxProblem=Very Freq & $0.5878^{***}$ & 410 \\
+		% Toxicity Problem
+		ToxProblem=Never & $0.2975^{**}$ & 92 \\
+		ToxProblem=Rarely & $0.0024$ & 498 \\
+		\rowcolor{gray!15} ToxProblem=Occasionally & $-0.0105$ & 1096 \\
+		\rowcolor{gray!15}ToxProblem=Frequently & $-0.0181$ & 958 \\
+		\rowcolor{gray!15} ToxProblem=Very Freq & $-0.0925$ & 252 \\
 		\bottomrule
 	\end{tabularx}
-	\caption{Aposteriori unimodality results for the Kumar Dataset. $^{*}$ denotes $p<0.10$, $^{**}$ denotes $p<0.05$, and $^{***}$ denotes $p<0.01$.  Rows shaded in gray indicate a negative $\text{apunim}$ value. Groups for which no polarized comments among groups not included.}
-	\label{tab:kumar-full}
+	\caption{Aposteriori unimodality results for the dataset. $^{*}$ denotes $p<0.10$, $^{**}$ denotes $p<0.05$, and $^{***}$ denotes $p<0.01$. Rows shaded in gray indicate a negative $\text{apunim}$ value.}
+	\label{tab:sdb-features}
 \end{table}
 
 
