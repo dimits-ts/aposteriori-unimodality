@@ -8,7 +8,7 @@ import tasks.graphs
 import tasks.preprocessing
 import tasks.run_helper
 
-NUM_COMMENTS = 10_000
+NUM_COMMENTS = 60_000
 
 
 class KumarDataset(tasks.preprocessing.Dataset):

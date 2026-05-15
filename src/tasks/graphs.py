@@ -36,10 +36,7 @@ def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
     annotation_col = ds.get_annotation_column()
     sdb_columns = ds.get_sdb_columns()
 
-    # 1. Data Preparation
-
-    # Determine the number of unique annotation categories
-    # We must process the entire annotation list across all items first.
+    # Data Preparation
     all_annotations = []
     for annotations_list in df[annotation_col].to_list():
         if isinstance(annotations_list, (list, np.ndarray)):
@@ -55,7 +52,7 @@ def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
 
     records = []
 
-    # ITERATE THROUGH ALL COMMENTS (Rows in the DataFrame)
+    # ITERATE THROUGH ALL COMMENTS
     for _, row in df.iterrows():
         annotations = row[annotation_col]
 
@@ -74,29 +71,19 @@ def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
             print(f"Error calculating NDFU for an item: {e}")
             continue
 
-        # This score (ndfu_value) is the polarization score for the *entire comment*.
-        # Now, we must attribute this single score to every group/rater present in this comment.
-
-        # ITERATE THROUGH SDB COLUMNS (e.g., "Gender", "Race")
         for sdb_col in sdb_columns:
             sdb_values = row[
                 sdb_col
-            ]  # This is the list of categories (e.g., ["Male", "Female"])
+            ] 
 
-            # Iterate over every rater/group defined in this SDB column for the current comment
             for value in sdb_values:
-
-                # Combine the SDB column name and the specific value (e.g., "Gender: Male")
                 combined_category = f"{sdb_col}: {value}"
-
-                # Record the score, attributing the item's polarization to this specific group
                 records.append(
                     {"PC Dimension": combined_category, "nDFU": ndfu_value}
                 )
 
     plot_df = pd.DataFrame(records)
 
-    # Set the categorical type.
     # Note: Since the categories are now complex strings (e.g., "Race: Asian"),
     # setting a strict, predefined order is usually necessary for clean visualization.
     plot_df["PC Dimension"] = pd.Categorical(
@@ -114,7 +101,7 @@ def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
         palette=COLORBLIND_PALETTE[1:],
     )
 
-    ax.set_xlabel("PC Dimension")
+    ax.set_xlabel("Group")
     ax.set_ylabel("nDFU")
     ax.set_title(ds.get_name())
 
