@@ -65,15 +65,15 @@
 
 \graphicspath{ {../graphs} {graphs}  }
 
-\title{Detecting, quantifying, and attributing fundamental disagreements across annotator groups}
+\title{Are we chasing ghosts? Quantifying unattributable polarization, and attributing the rest to annotator groups}
 
 \begin{document}
 	
 \maketitle
 
 \begin{abstract}
-	Current annotation agreement metrics are often sensitive to group size imbalances and noise, making them inadequate for many subjective tasks such as toxicity and hate-speech detection, where minority opinions are most important. Polarization has recently been proposed as a more robust way to distinguish minor disagreements from systematic differences in opinion, but existing approaches do not provide practical tools for attributing polarization to specific annotator groups. We evaluate current methods and identify two major limitations in realistic settings: (1) the presence of ``inherent'' polarization that cannot be attributed to any known or latent groups, and (2) opposing polarization effects canceling each other out in aggregated annotations. 
-	To address these issues, we introduce a new metric that measures and tests the statistical significance of polarization attribution for annotator groups while avoiding these limitations. We apply our method to four subjective NLP datasets and find that gender and race consistently explain polarization patterns, while differences between annotator groups become stronger as the groups are further apart. Finally, we estimate the minimum number of annotators required for reliable results and release an open-source Python library implementing our approach.
+	Standard agreement metrics often fail to capture systematic differences in opinion between minority and majority-group annotators, jeopardizing tasks such as hate speech and toxicity detection. Polarization has recently been proposed as a more robust way to distinguish minor disagreements from systematic differences in opinion, but existing approaches do not provide practical tools for attributing it to specific annotator groups. We evaluate current methods and identify two major limitations in realistic settings: (1) the presence of ``inherent'' polarization that cannot be attributed to any known or latent groups, and (2) opposing polarization effects canceling each other out in aggregated annotations.
+	To address these issues, we introduce a new metric that measures and tests the statistical significance of polarization attribution for annotator groups while avoiding these limitations, finding a maximum of 20 annotators per comment for reliable estimation. We apply our method to four subjective NLP datasets and find that gender and race consistently explain polarization patterns, while differences between annotator groups become stronger as the groups are further apart. Finally, we release an open-source Python library implementing our approach.
 \end{abstract}
 
 
@@ -84,40 +84,27 @@
 \begin{figure}[ht]
 	\centering
 	\includegraphics[width=\columnwidth]{disagreement_vs_polarization.png}
-	\caption{Simulated experiment exploring four scenarios of a hate speech detection task applied to a controversial statement by D. Trump (Jan. 2019). The variance in annotations across different annotators--Muslim annotators in the upper plots--may cause traditional agreement metrics may fail to capture distinct group biases \citep{pavlopoulos-likas-2024}, especially when mixed opinions occur (top-right).}
+	\caption{Simulated experiment exploring four scenarios of a hate speech detection task applied to a controversial statement by D. Trump (Jan. 2019). The variance in annotations across different annotators may cause traditional agreement metrics to ignore minority opinions \citep{pavlopoulos-likas-2024}, especially when opinions are mixed (top-right).}
 	\label{fig:disagreement-vs-polarization}
 \end{figure}
 
-Annotations are essential for a wide range of tasks, especially in fields with subjective judgements, such as content moderation, toxicity, and hate speech detection. These tasks are especially important for training supervised learning models that remove or flag comments targeting vulnerable and minority groups in online spaces, where they are often vulnerable~\cite{un_hate_speech_targets, ucdavis_hate_speech}. However, annotations for such tasks are subjective and typically aggregated based on majority-voting~\cite{ivey-etal-2025-nutmeg, sokratis, petra_2022_handling, van_der_Velden}. This may at best limit the usefulness of the data, or at worst lead to biased and misconfigured systems~\cite{sap-etal-2019-risk, van_der_Velden}.
+Annotations are essential for a wide range of tasks, especially in fields with subjective judgements, such as content moderation, toxicity, and hate speech detection. These tasks are especially important for training supervised learning models that remove or flag comments targeting vulnerable and minority groups in online spaces, where they are often vulnerable~\cite{un_hate_speech_targets, ucdavis_hate_speech}. However, in practice annotations are typically aggregated or filtered based on inter-annotator agreement or majority-vote~\cite{ivey-etal-2025-nutmeg, sokratis, petra_2022_handling, van_der_Velden}, which may at best limit the usefulness of the data, or at worst lead to biased and misconfigured systems~\cite{sap-etal-2019-risk, van_der_Velden}. Additionally, these practices may discard \emph{fundamental} disagreements between minority groups and the majority; for example, coded language may not be picked up by most annotators but only by ones belonging in the targeted minority~\cite{quaranto2022dog}, as shown in Fig.~\ref{fig:disagreement-vs-polarization}. Furthermore, majority-group annotators may themselves be biased against minority groups, e.g., toxicity models disproportionally marking \ac{aa} speech as ``toxic''~\cite{sap-etal-2019-risk}.
 
-The core of the problem is simple; if a comment targets marginalized groups, there can be cases where most annotators overlook it, while the few marginalized annotators vehemently disagree with the majority. These \emph{fundamental} disagreements are typically ignored via aggregation (e.g., majority label voting) or filtering (e.g., keeping only items with large overall annotator agreement). For example, coded language may not be picked up by most annotators but only by ones belonging in the targeted minority~\cite{quaranto2022dog}, as shown in Fig.~\ref{fig:disagreement-vs-polarization}.
-%Racist comments that are presented with coded language (usually referred to as ``dog-whistles'') are a common example; these comments may not be picked up by most annotators, but only by ones belonging in the targeted minority. 
-Furthermore, majority-group annotators may themselves be biased against minority groups, e.g., toxicity models disproportionally marking \ac{aa} speech as ``toxic''~\cite{sap-etal-2019-risk}.
-
-Instead of using inter-annotator agreement, we could use \emph{polarization}, which formulates annotation analysis as a cluster identification problem~\cite{Pavlopoulos2023, pavlopoulos-likas-2024}. While we can detect polarization~\cite{pavlopoulos-likas-2024}, there is little work on how to detect whether it is \emph{actually caused by marginalized groups}. Our work thus tries to answer the following Research Question:
+One alternative is using \emph{polarization}, which correlates better with human judgments and is much less sensitive to different group sizes \cite{Pavlopoulos2023, pavlopoulos-likas-2024}. While we can detect polarization~\cite{pavlopoulos-likas-2024}, there is little work on how to detect whether it is \emph{actually caused by marginalized groups}. Our work thus tries to answer the following Research Question:
 
 \begin{researchquestion}
-	Can we attribute polarization to annotator subgroups?
+	How much polarization can we attribute to annotator subgroups?
 \end{researchquestion}
 
-We first identify limitations of current work on polarization:
-\begin{enumerate}
-	\item Existing mechanisms~\cite{pavlopoulos-likas-2024} operate only as binary classifiers, producing non-quantifiable/comparable results.
-	
-	\item These mechanisms only test for the extreme case where \emph{all} present polarization can be attributed to a single annotator group, which we find to be extremely rare in real-life datasets (App.~\ref{app:ann_details}).
-	
-	\item We are the first to report the existence of \emph{inherent polarization}: most comments having some degree of polarization that cannot be attributed to \emph{any possible partition} of annotators (Finding~\ref{finding:inherent}).
-	
-	\item We also find that annotator groups may exhibit opposing polarization attribution between comments, requiring isolating annotations to each individual comment when analyzing whole datasets (Finding~\ref{finding:conflicting}).
-\end{enumerate}
+While prior work assumed that all polarization can be explained and attributed to some known or latent annotator characteristic, our study discovers the existence of ``inherent polarization'', which cannot be attributed to \emph{any possible partition} of annotators (Finding~\ref{finding:inherent}). This finding disproves earlier attempts at attributing polarization to groups \citep{pavlopoulos-likas-2024} and establishes a hard limit on the extent to which polarization can be explained by any annotator characteristic.
 
-We then introduce a new metric (``Aposteriori Unimodality--\emph{apunim}'') that attributes polarization to specific annotator groups without  and develop a parametric test for statistical significance. Our metric is generalizable across any domain and modality (e.g., video/image classification) and, unlike previous approaches, enables \emph{quantitative} comparisons across datasets. By considering the entire set of comments in a dataset \emph{apunim} helps to identify genuine polarization and distinguish it from chance attribution, which is essential when analyzing large datasets. 
+We also discover that polarization across comments has a \emph{direction}, which prevents us from solving known issues with low annotator counts by aggregating annotations on the dataset level (Finding~\ref{finding:conflicting}). Our analysis then pivots to estimating the number of annotators needed for robust polarization attribution, finding that no-more than 20 annotators are typically needed, and that polarization reliability is capped to a certain degree (Finding~\ref{finding:ann-size}).
 
-Having established our metric, we apply it to four \ac{nlp} datasets focused on Toxicity and Hate Speech detection (\S\ref{sec:results}),  finding that annotator gender and race significantly impacts annotation (Finding~\ref{finding:categorical}), and that fundamental disagreements grow more pronounced the further apart annotator groups are (e.g., irreligious vs. very religious annotators--Finding~\ref{finding:ordinal}).
+In order to solve these issues we introduce a new metric (``Aposteriori Unimodality--\emph{apunim}'') that attributes polarization to specific annotator groups and develop a parametric test for statistical significance. Our metric is generalizable across any domain and modality (e.g., video/image classification) and, unlike previous approaches, enables \emph{quantitative} comparisons across datasets. By considering the entire set of comments in a dataset \emph{apunim} helps to identify genuine polarization and distinguish it from chance attribution, which is essential when analyzing large datasets, without relying on large annotator counts which are uncommon in \ac{nlp} datasets. 
 
-Finally, we release an open source Python library that implements our metric, which can be directly installed via PyPi.\footnote{Library: \librarylink\\Documentation: \doclink } and provide an estimation on the minimum number of annotators required for robust estimates (\S\ref{sec:ann_size}). The code for the experiments, graph creation, and analysis can be found on our project's repository.\footnote{Replication code: \explink}
+Having established our metric, we apply it to four \ac{nlp} datasets focused on Toxicity and Hate Speech detection (\S\ref{sec:results}),  finding that annotator gender and race significantly impacts annotation (Finding~\ref{finding:categorical}), and that fundamental disagreements grow more pronounced the further apart annotator groups are (e.g., irreligious vs. very religious annotators--Finding~\ref{finding:ordinal}). Finally, we release an open source Python (PyPi) library that implements our metric.\footnote{Library: \librarylink\\Documentation: \doclink }. The code for the experiments, graph creation, and analysis can be found on our project's repository.\footnote{Replication code: \explink}
 
-\textbf{This publication includes examples of controversial and potentially harmful speech for the purposes of demonstration. These examples do not represent the views of the authors.}
+\noindent\textbf{Warning: This publication includes examples of controversial and potentially harmful speech for the purposes of demonstration. These examples do not represent the views of the authors.}
 
 \section{Related Work}
 \label{sec:related}
@@ -326,6 +313,23 @@ H_a:\
 \(\textit{apunim}_{\mathrm{rand}}(d,g)\) denotes the distribution of apunim values obtained from randomized annotator partitions. For a detailed explanation of the p-value computation and the assumptions underlying the test, refer to App.~\ref{app:pvalue}.
 
 
+\subsection{How many annotators do we need?}
+\label{sec:apunim:ann-size}
+
+\begin{figure}[t]
+	\includegraphics[width=\columnwidth]{ndfu_std_error_sample_size.png}
+	\caption{Standard deviation of 30 randomly sampled (with replacement) $pol_{obs}$ values (Eq.~\ref{eq:observed}). The x-axis shows the sample size (number of annotators), starting from 3 and increasing one at a time, up to the largest annotator count for which a sufficient number of items exists (\ref{app:ann_details}).}
+	\label{fig:std_error}
+\end{figure}
+
+Fig.~\ref{fig:std_error} illustrates the impact of annotator count on the reliability of polarization estimation. Each dataset exhibits a unique standard deviation, even when the annotator count is fixed--which aligns broadly with the intrinsic level of polarization within that specific dataset (App.~\ref{app:ann_details}), and converges to the same level with enough annotators. Additionally, we observe a clear, non-linear, inverse relationship between the number of annotators and the standard error across all datasets. This pattern can be attributed to the enhanced robustness of the histogram estimation employed by \ac{ndfu} (\S\ref{sec:apunim:group-vs-global}) when supplied with greater point density for each group. While the improvement in polarization estimates is rapid and substantial with increased annotator input, the rate of improvement becomes increasingly marginal after 20 annotators. Interestingly, some variability in polarization persists even with an extraordinary amount of annotators, which we hypothesize to be caused by the presence of inherent polarization (Finding~\ref{finding:inherent}).
+
+\begin{finding}
+	\label{finding:ann-size}
+	To achieve a reasonably reliable estimation of polarization attribution, a maximum of 20 annotators per item is sufficient. However, there is a definite ceiling to the reliability of polarization, irrespective of annotator count.
+\end{finding} 
+
+
 \section{Attributing real-life polarization to human groups}
 \label{sec:results}
 
@@ -466,21 +470,6 @@ Figure~\ref{fig:ordinal} shows \emph{apunim} trends across ordinal sociodemograp
 	\label{finding:ordinal}
 	For ordinal sociodemographic dimensions, polarization attribution tends either to grow stronger as the differences between annotator groups increase, or coalesce around a few opposing groups.
 \end{finding}
-
-
-\section{How many annotators do we need?}
-\label{sec:ann_size}
-
-\begin{figure}[t]
-	\includegraphics[width=\columnwidth]{ndfu_std_error_sample_size.png}
-	\caption{Standard deviation of 30 randomly sampled (with replacement) $pol_{obs}$ values (Eq.~\ref{eq:observed}). The x-axis shows the sample size (number of annotators), starting from 3 and increasing one at a time, up to the largest annotator count for which a sufficient number of items exists (\ref{app:ann_details}).}
-	\label{fig:std_error}
-\end{figure}
-
-While \emph{apunim} works best with many annotations per item, the cost required for multiple human annotators is often greatly restrictive~\cite{rossi_2024}. Thus, it is imperative to find the least annotators needed for \emph{apunim} to generate stable and reliable estimates.	For each item per dataset, we randomly sample with replacement a subset of annotators and compute the standard deviation of 30 sampled $pol_{obs}$ values (see Equation~\ref{eq:observed}).
-Figure~\ref{fig:std_error} demonstrates the effect of the number of annotators on the reliability of the polarization estimation, which we discuss next.
-
-Each dataset features a different standard deviation even with the same number of annotators, which is broadly consistent with the amount of polarization in each dataset (App.~\ref{app:ann_details}). However, we observe a clear, non-linear, inverse relationship between the number of annotators and the standard error across datasets. This can be attributed to a more robust histogram estimation used by \ac{ndfu} (\S\ref{sec:apunim:group-vs-global}) when provided with more points for each of the subgroups. In the case of our datasets, we observe that after about 20 points, the estimation is good enough that more annotations contribute trivially to the robustness of the metric.
 
 
 \section{Conclusion \& Future work}
