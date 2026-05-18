@@ -1,4 +1,6 @@
 from pathlib import Path
+from itertools import combinations
+from collections.abc import Iterable
 import re
 
 import apunim
@@ -194,120 +196,210 @@ def significance_superscript(p):
         return ""
 
 
-def compute_apriori_polarization(
+def _compute_bins(
+    annotations: np.ndarray,
+    num_bins: int | None,
+) -> int:
+    """
+    Compute global histogram bin count.
+    """
+
+    flat_annotations = np.concatenate(
+        [np.asarray(x, dtype=float) for x in annotations]
+    )
+
+    bins = (
+        num_bins if num_bins is not None else len(np.unique(flat_annotations))
+    )
+
+    return max(bins, 2)
+
+
+def _iter_exhaustive_groups(
+    n: int,
+    min_group_size: int = 3,
+) -> Iterable[tuple[int, ...]]:
+    """
+    Yield ALL possible subsets of indices with size >= min_group_size.
+    """
+
+    for size in range(min_group_size, n + 1):
+        yield from combinations(range(n), size)
+
+
+def _iter_random_groups(
+    n: int,
+    iterations: int,
+    rng: np.random.Generator,
+    min_group_size: int = 3,
+) -> Iterable[np.ndarray]:
+    """
+    Yield random subsets of indices.
+
+    Group sizes are sampled uniformly from:
+        [min_group_size, n]
+    """
+
+    if n < min_group_size:
+        return
+
+    for _ in range(iterations):
+
+        size = rng.integers(min_group_size, n + 1)
+
+        idxs = rng.choice(
+            n,
+            size=size,
+            replace=False,
+        )
+
+        yield idxs
+
+
+def _evaluate_groups(
+    comm_ann: np.ndarray,
+    group_iterator: Iterable,
+    bins: int,
+) -> list[float]:
+    """
+    Compute DFU for a sequence of groups.
+    """
+
+    values = []
+
+    for idxs in group_iterator:
+
+        subset = comm_ann[list(idxs)]
+
+        if len(subset) < 3:
+            continue
+
+        val = apunim.dfu(
+            subset,
+            bins=bins,
+            normalized=True,
+        )
+
+        if np.isnan(val):
+            continue
+
+        values.append(val)
+
+    return values
+
+
+def _compute_comment_polarization(
     dataset: preprocessing.Dataset,
-    iterations: int = 100,
+    group_generator_fn,
+    max_annotators: int,
     num_bins: int | None = None,
-    seed: int | None = 42,
-    debug: bool = False,
-) -> tuple[pd.DataFrame, list[float]]:
+    **generator_kwargs,
+) -> tuple[np.ndarray, dict]:
     """
-    Returns:
-    --------
-    comment_means : list[float]
-        Mean permutation DFU per comment (row-level output).
+    Shared engine for polarization computation.
     """
-    rng = np.random.default_rng(seed)
 
     df = dataset.get_dataset()
+
     annotation_col = dataset.get_annotation_column()
     comment_col = dataset.get_comment_key_column()
-    sdb_columns = dataset.get_sdb_columns()
 
-    if not sdb_columns:
-        raise ValueError("No SDB columns found.")
-
-    sdb_col = sdb_columns[0]
-
-    df = df[[annotation_col, comment_col, sdb_col]].copy()
+    df = df[[annotation_col, comment_col]].copy()
 
     annotations = df[annotation_col].to_numpy()
     comments = df[comment_col].to_numpy()
 
-    # flatten for global bin estimation
-    flat_annotations = np.concatenate(
-        [np.asarray(x, dtype=float) for x in annotations]
-    )
-    bins = (
-        num_bins if num_bins is not None else len(np.unique(flat_annotations))
-    )
-    bins = max(bins, 2)
-
-    all_factors = list({f for row in df[sdb_col] for f in row})
-
-    apriori = {f: [] for f in all_factors}
-    comment_mins = []
+    bins = _compute_bins(annotations, num_bins)
 
     unique_comments = list(dict.fromkeys(comments))
 
-    # --------------------------------------------------
-    # MAIN LOOP
-    # --------------------------------------------------
-    for cid in unique_comments:
+    comment_mins = []
+    all_group_values = {}
+
+    for cid in tqdm(unique_comments, desc="Computing inherent polarization"):
         mask = comments == cid
 
         comm_ann = np.concatenate(
             [np.asarray(x, dtype=float) for x in annotations[mask]]
         )
 
-        if len(comm_ann) == 0:
-            comment_mins.append(np.nan)
-            continue
-
-        # skip low structure comments
-        base_dfu = apunim.dfu(comm_ann, bins=bins, normalized=True)
-        if np.isnan(base_dfu) or base_dfu < 0.01:
-            comment_mins.append(np.nan)
-            continue
-
-        # --------------------------------------------------
-        # FIXED-SIZE PERMUTATION SETUP
-        # --------------------------------------------------
         n = len(comm_ann)
-        k = len(all_factors)
 
-        # random partition sizes that sum to n
-        # allow empty groups if k > n
-        if k == 1:
-            sizes = [n]
-        else:
-            # choose k-1 cut points between 0 and n
-            cuts = np.sort(rng.integers(0, n + 1, size=k - 1))
-            cuts = np.concatenate(([0], cuts, [n]))
-            sizes = np.diff(cuts).tolist()
+        if n < 3 or n > max_annotators:
+            comment_mins.append(np.nan)
+            continue
 
-        perm_comment_values = []
-
-        # --------------------------------------------------
-        # PERMUTATIONS
-        # --------------------------------------------------
-        for _ in range(iterations):
-            shuffled = rng.permutation(comm_ann)
-
-            start = 0
-            perm_values = []
-
-            for i, size in enumerate(sizes):
-                part = shuffled[start : start + size]
-                start += size
-
-                if part.size <= 2:
-                    continue
-
-                val = apunim.dfu(part, bins=bins, normalized=True)
-                perm_values.append(val)
-
-                apriori[all_factors[i]].append(val)
-
-            if perm_values:
-                perm_comment_values.append(np.mean(perm_values))
-
-        # mean DFU over permutations for this comment
-        comment_mins.append(
-            float(np.min(perm_comment_values))
-            if perm_comment_values
-            else np.nan
+        base_dfu = apunim.dfu(
+            comm_ann,
+            bins=bins,
+            normalized=True,
         )
+
+        if np.isnan(base_dfu):
+            comment_mins.append(np.nan)
+            continue
+
+        group_iterator = group_generator_fn(
+            n=n,
+            **generator_kwargs,
+        )
+
+        values = _evaluate_groups(
+            comm_ann=comm_ann,
+            group_iterator=group_iterator,
+            bins=bins,
+        )
+
+        comment_mins.append(np.min(values) if values else np.nan)
+
+        all_group_values[cid] = values
 
     return np.array(comment_mins)
 
+
+def compute_inherent_polarization_exhaustive(
+    dataset: preprocessing.Dataset,
+    num_bins: int | None = None,
+    max_annotators: int = 420,
+) -> tuple[np.ndarray, dict]:
+    """
+    Exhaustively evaluates ALL possible annotator groups.
+
+    Total groups per comment:
+
+    :contentReference[oaicite:0]{index=0}
+    """
+
+    return _compute_comment_polarization(
+        dataset=dataset,
+        group_generator_fn=_iter_exhaustive_groups,
+        num_bins=num_bins,
+        max_annotators=max_annotators,
+    )
+
+
+def compute_inherent_polarization_random(
+    dataset: preprocessing.Dataset,
+    iterations: int = 10_000,
+    num_bins: int | None = None,
+    seed: int | None = 42,
+    max_annotators: int = 420,
+) -> tuple[np.ndarray, dict]:
+    """
+    Randomly samples annotator groups.
+
+    Group size is sampled uniformly from:
+
+    :contentReference[oaicite:1]{index=1}
+    """
+
+    rng = np.random.default_rng(seed)
+
+    return _compute_comment_polarization(
+        dataset=dataset,
+        group_generator_fn=_iter_random_groups,
+        num_bins=num_bins,
+        max_annotators=max_annotators,
+        iterations=iterations,
+        rng=rng,
+    )

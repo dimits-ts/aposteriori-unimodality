@@ -88,6 +88,7 @@ def plot_dfu_histograms(
 
     ax.set_xlabel("Inherent polarization")
     ax.set_ylabel("Density")
+    ax.set_xlim(0, 1)
 
     ax.legend(handles=legend_handles)
 

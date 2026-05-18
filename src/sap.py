@@ -91,9 +91,11 @@ def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
     tasks.graphs.graph_setup()
     ds = SapDataset(dataset_path=dataset_path)
 
-    tasks.graphs.polarization_plot(ds=ds, output_path=graph_output_dir / "sap.png")
+    tasks.graphs.polarization_plot(
+        ds=ds, output_path=graph_output_dir / "sap.png"
+    )
 
-    res = tasks.run_helper.compute_apriori_polarization(dataset=ds)
+    res = tasks.run_helper.compute_inherent_polarization_exhaustive(dataset=ds)
     np.save(output_dir / "sap-apriori.npy", res)
 
     res = tasks.run_helper.run_all_results(ds)

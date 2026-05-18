@@ -146,7 +146,7 @@ def main(
         ds=ds_350, output_path=graph_output_dir / "dices-350.png"
     )
 
-    res = tasks.run_helper.compute_apriori_polarization(ds_350)
+    res = tasks.run_helper.compute_inherent_polarization_random(ds_350)
     np.save(output_dir / "dices-350-apriori.npy", res)
 
     res = tasks.run_helper.run_all_results(ds=ds_350)
@@ -157,7 +157,7 @@ def main(
         ds=ds_990, output_path=graph_output_dir / "dices-990.png"
     )
 
-    res = tasks.run_helper.compute_apriori_polarization(ds_990)
+    res = tasks.run_helper.compute_inherent_polarization_random(ds_990)
     np.save(output_dir / "dices-990-apriori.npy", res)
 
     res = tasks.run_helper.run_all_results(ds=ds_990)
