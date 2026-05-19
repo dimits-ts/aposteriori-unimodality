@@ -73,9 +73,8 @@
 
 \begin{abstract}
 	Standard agreement metrics often fail to capture systematic differences in opinion between minority and majority-group annotators, jeopardizing tasks such as hate speech and toxicity detection. Polarization has recently been proposed as a more robust way to distinguish minor disagreements from systematic differences in opinion, but existing approaches do not provide practical tools for attributing it to specific annotator groups. We evaluate current methods and identify two major limitations in realistic settings: (1) the presence of ``inherent'' polarization that cannot be attributed to any known or latent groups, and (2) opposing polarization effects canceling each other out in aggregated annotations.
-	To address these issues, we introduce a new metric that measures and tests the statistical significance of polarization attribution for annotator groups while avoiding these limitations, finding that no more than 20 annotators are needed per comment for reliable estimation. We apply our method to four subjective NLP datasets and find that gender and race consistently explain polarization patterns, while differences between annotator groups become stronger as the groups are further apart. Finally, we release an open-source Python library implementing our approach.
+	To address these issues, we introduce a new metric that measures and tests the statistical significance of polarization attribution for annotator groups while avoiding these limitations, as well as an open-source Python library implementation, finding that no more than 20 annotators are needed per comment for reliable estimation. We apply our method to four subjective NLP datasets and find that gender and race consistently explain polarization patterns, while differences between annotator groups become stronger as the groups are further apart.
 \end{abstract}
-
 
 
 \section{Introduction}
@@ -84,23 +83,23 @@
 \begin{figure}[ht]
 	\centering
 	\includegraphics[width=\columnwidth]{disagreement_vs_polarization.png}
-	\caption{Simulated experiment exploring four scenarios of a hate speech detection task applied to a controversial statement by D. Trump (Jan. 2019). The variance in annotations across different annotators may cause traditional agreement metrics to ignore minority opinions \citep{pavlopoulos-likas-2024}, especially when opinions are mixed (top-right).}
+	\caption{Simulated experiment exploring four scenarios of a hate speech detection task applied to a controversial statement by D. Trump (Jan. 2019). The variance in annotations across different annotators may cause traditional agreement metrics to ignore minority opinions, especially when opinions are mixed (top-right).}
 	\label{fig:disagreement-vs-polarization}
 \end{figure}
 
 Annotations are essential for a wide range of tasks, especially in fields with subjective judgements, such as content moderation, toxicity, and hate speech detection. These tasks are especially important for training supervised learning models that remove or flag comments targeting vulnerable and minority groups in online spaces, where they are often vulnerable~\cite{un_hate_speech_targets, ucdavis_hate_speech}. However, in practice annotations are typically aggregated or filtered based on inter-annotator agreement or majority-vote~\cite{ivey-etal-2025-nutmeg, sokratis, petra_2022_handling, van_der_Velden}, which may at best limit the usefulness of the data, or at worst lead to biased and misconfigured systems~\cite{sap-etal-2019-risk, van_der_Velden}. Additionally, these practices may discard \emph{fundamental} disagreements between minority groups and the majority; for example, coded language may not be picked up by most annotators but only by ones belonging in the targeted minority~\cite{quaranto2022dog}, as shown in Fig.~\ref{fig:disagreement-vs-polarization}. Furthermore, majority-group annotators may themselves be biased against minority groups, e.g., toxicity models disproportionally marking \ac{aa} speech as ``toxic''~\cite{sap-etal-2019-risk}.
 
-One alternative is using \emph{polarization}, which correlates better with human judgments and is much less sensitive to different group sizes \cite{Pavlopoulos2023, pavlopoulos-likas-2024}. While we can detect polarization~\cite{pavlopoulos-likas-2024}, there is little work on how to detect whether it is \emph{actually caused by marginalized groups}. Our work thus tries to answer the following Research Question:
+One alternative is using \emph{polarization}, which correlates better with human judgments and is much less sensitive to different group sizes \cite{Pavlopoulos2023, pavlopoulos-likas-2024}. While we can detect polarization, there is little work on how to detect whether it is \emph{actually caused by marginalized groups}. Our work thus tries to answer the following Research Question:
 
 \begin{researchquestion}
 	How much polarization can we practically attribute to annotator subgroups given existing datasets?
 \end{researchquestion}
 
-The largest obstacle towards explaining fundamental disagreements between groups is the low annotation counts per item exhibited by most current \ac{nlp} datasets. Specifically, while prior work assumed that all polarization can be explained and attributed to some known or latent annotator characteristic, our study discovers the existence of ``inherent polarization'', which cannot be attributed to \emph{any possible group} of annotators, known or unknown, which we show to exist in cases of low annotation counts per item (Finding~\ref{finding:inherent}). This finding establishes a hard limit on the extent to which polarization can be explained by any annotator characteristic  \citep{pavlopoulos-likas-2024} when considering the majority of current annotated \ac{nlp} datasets. We also discover that polarization across comments has a \emph{direction}, which prevents us from solving the issue of low annotator counts by aggregating annotations on the dataset level (Finding~\ref{finding:conflicting}). Our analysis then pivots to estimating the number of annotators needed for robust polarization attribution, finding that no-more than 20 annotators are typically needed, and that polarization reliability is capped to a certain degree (Finding~\ref{finding:ann-size}).
+While prior work assumed that all polarization can be explained and attributed to some known or latent annotator characteristic, through the exhaustive creation of theoretical annotator groups, our study discovers the existence of ``inherent polarization''--polarization  that cannot be attributed to \emph{any possible group} of annotators, known or unknown (Finding~\ref{finding:inherent}). This phenomenon could either be attributed to the overall polarization of the dataset, or the limited number of annotations per item in many \ac{nlp} datasets. Nevertheless, it establishes a hard limit on the extent to which polarization can be explained by any annotator characteristic  \citep{pavlopoulos-likas-2024} when considering the majority of current annotated \ac{nlp} datasets. We also discover that polarization across comments has a \emph{direction}, which prevents us from solving the issue of low annotator counts by aggregating annotations on the dataset level (Finding~\ref{finding:conflicting}). Our analysis then pivots to estimating the number of annotators needed for robust polarization attribution, finding that no-more than 20 annotators are typically needed, and that polarization reliability is asymptotically capped, even when both annotated items and annotations per item are abundant (Finding~\ref{finding:ann-size}).
 
 In order to solve these issues we introduce a new metric (``Aposteriori Unimodality--\emph{apunim}'') that attributes polarization to specific annotator groups and develop a parametric test for statistical significance. Our metric is generalizable across any domain and modality (e.g., video/image classification) and, unlike previous approaches, enables \emph{quantitative} comparisons across datasets. By considering the entire set of comments in a dataset \emph{apunim} helps to identify genuine polarization and distinguish it from chance attribution, which is essential when analyzing large datasets without large annotator counts per item. 
 
-Having established our metric, we apply it to four \ac{nlp} datasets focused on Toxicity and Hate Speech detection (\S\ref{sec:results}), finding that annotator gender and race significantly impacts annotation (Finding~\ref{finding:categorical}), and that fundamental disagreements grow more pronounced the further apart annotator groups are (e.g., irreligious vs. very religious annotators--Finding~\ref{finding:ordinal}). Finally, we release an open source Python (PyPi) library that implements our metric.\footnote{Library: \librarylink\\Documentation: \doclink }. The code for the experiments, graph creation, and analysis can be found on our project's repository.\footnote{Replication code: \explink}
+Having established our metric, we apply it to four \ac{nlp} datasets focused on Toxicity and Hate Speech detection (\S\ref{sec:results}), finding that annotator gender and race significantly impact annotation (Finding~\ref{finding:categorical}), and that fundamental disagreements grow more pronounced the further apart annotator groups are (e.g., irreligious vs. very religious annotators--Finding~\ref{finding:ordinal}). Finally, we release an open source Python (PyPi) library that implements our metric.\footnote{Library: \librarylink\\Documentation: \doclink } The code for the experiments, graph creation, and analysis can be found on our project's repository.\footnote{Replication code: \explink}
 
 \noindent\textbf{Warning: This publication includes examples of controversial and potentially harmful speech for the purposes of demonstration. These examples do not represent the views of the authors.}
 
@@ -153,7 +152,7 @@ For our work, we use a non-parametric polarization metric, \ac{ndfu}, which has 
 
 \subsection{Attributing polarization to groups}
 \label{sec:related:attribution}
-While many studies study the effect of subgroups on annotation agreement~\cite{ goyal2022your, binns2017like, giorgi2025human, al2020identifying, sachdeva2022assessing}, attributing polarization to subgroups is a relatively new idea. Under the name \emph{aposteriori unimodality}~\cite{pavlopoulos-likas-2024}, the original idea is that if polarization in a single item is positive, but zero for all annotator subgroups, then those subgroups are ``causing'' the exhibited polarization. Though promising, this mechanism operates on an edge-case scenario where \emph{all} polarization is explained by a single split. Additionally, getting polarization estimates from few annotations per item is extremely noisy, which is especially problematic when the output is binary (i.e., an item either is or is not polarizing) instead of a quantifiable value.\footnote{For example, when presented with noisy estimates of a metric in the  $[0,1]$ range, we would ideally want to distinguish between cases where attribution is close to $0.001$, and cases where attribution is $0.49$.}
+While many studies study the effect of subgroups on annotation agreement~\cite{goyal2022your, binns2017like, giorgi2025human, al2020identifying, sachdeva2022assessing}, attributing polarization to subgroups is a relatively new idea. Under the name \emph{aposteriori unimodality}~\cite{pavlopoulos-likas-2024}, the original idea is that if polarization in a single item is positive, but zero for all annotator subgroups, then those subgroups are ``causing'' the exhibited polarization. Though promising, this mechanism operates on an edge-case scenario where \emph{all} polarization is explained by a single split. Additionally, getting polarization estimates from few annotations per item is extremely noisy, which is especially problematic when the output is binary (i.e., an item either is or is not polarizing) instead of a quantifiable value.\footnote{For example, when presented with noisy estimates of a metric in the  $[0,1]$ range, we would ideally want to distinguish between cases where attribution is close to $0.001$, and cases where attribution is $0.49$.}
 
 	
 \section{Is it possible to attribute all polarization to annotator groups?}
@@ -177,7 +176,7 @@ Let $d = \{c_1, c_2, \ldots\}$ be a dataset composed of multiple annotated comme
 	\label{fig:ndfu_combined}
 \end{figure}
 
-Intuitively, a group partially explains the polarization of a comment $c$ when the annotations of that group $A(c \given g) = \{a(c; g') \in A(c) \given g'=g\}$ exhibit higher polarization compared to the full set of annotations $A(c)$. Consider the (simulated) case where a misogynistic comment is annotated for toxicity by male and female annotators shown in Fig.~\ref{fig:ndfu_combined}. The annotations are generally polarized ($nDFU_{all}=0.62$); but both female ($nDFU_{women}=0.10$) and male ($nDFU_{men}=0.37$) annotators exhibit low polarization between their respective groups. This pattern suggests that the overall polarization stems from substantive disagreements between male and female annotators. \footnote{\label{foot:iterative}The continued polarization observed within the male annotators suggests that a specific subgroup of men may also contribute to this polarization.} 
+Intuitively, a group partially explains the polarization of a comment $c$ when the annotations of that group $A(c \given g) = \{a(c, g') \in A(c) \given g'=g\}$ exhibit higher polarization compared to the full set of annotations $A(c)$. Consider the case where a misogynistic comment is annotated for toxicity by male and female annotators shown in Fig.~\ref{fig:ndfu_combined}. The annotations are generally polarized ($nDFU_{all}=0.62$); but both female ($nDFU_{women}=0.10$) and male ($nDFU_{men}=0.37$) annotators exhibit low polarization between their respective groups. This pattern suggests that the overall polarization is partially caused by substantive disagreements between male and female annotators. \footnote{\label{foot:iterative}The continued polarization observed within the male annotators may suggest that a specific subgroup of men could also contribute to this polarization.} 
 
 
 \subsection{Datasets}
@@ -245,15 +244,21 @@ We systematically explore the space of annotator groups by generating random par
 	\right\}
 \end{equation}
 
-Since enumerating all subsets is computationally intractable for large annotator counts, we approximate this quantity via Monte Carlo sampling when $\lvert A(c) \rvert \ge 10$. Specifically, we draw $10{,}000$ random partitions of the annotators into groups of random sizes (each group containing at least three annotators), and compute:
+Since enumerating all subsets is computationally intractable for large annotator counts, we approximate this quantity via Monte Carlo sampling when $\lvert A(c) \rvert \ge 10$. Specifically, we draw $1000$ random partitions of the annotators into groups of random sizes (each group containing at least three annotators), and compute:
 
 \begin{equation}
 	\label{eq:random}
-	Pol_{inh}(c) =
-	\min_{j=1}^{10\,000}
+	Pol_{inh}^{MC}(c) =
+	\min_{j=1}^{1000}
 	\left\{
 	\textit{nDFU}\!\left(\tilde{r}_j(A(c))\right)
 	\right\}
+\end{equation}
+
+Because this Monte Carlo approximation considers only a strict subset of the total possible configurations, the approximation provides a lower bound:  
+\begin{equation}
+	\label{eq:lower-bound}
+	Pol_{inh}^{MC}(c) \ge Pol_{inh}(c) \forall c
 \end{equation}
 
 
@@ -266,7 +271,7 @@ Since enumerating all subsets is computationally intractable for large annotator
 	\label{fig:apriori}
 \end{figure}
 
-We compute the inherent polarization for each comment across the four datasets. For Sap and Kumar, we use the exhaustive formulation (Eq.~\ref{eq:exhaustive}), whereas for the two DICES datasets we rely on the Monte Carlo approximation (Eq.~\ref{eq:random}) due to the annotator counts making the exhaustive formulation intractable. Fig.~\ref{fig:apriori} shows that in all DICES comments there exists at least one group that fully accounts for the observed polarization. Interestingly, this observation does not hold for the Kumar and Sap datasets, despite evaluating all possible annotator groups exhaustively.
+We compute the inherent polarization for each comment across the four datasets. For Sap and Kumar, we use the exhaustive formulation (Eq.~\ref{eq:exhaustive}), whereas for the two DICES datasets we rely on the Monte Carlo approximation (Eq.~\ref{eq:random}) due to the annotator counts making the exhaustive formulation intractable. Fig.~\ref{fig:apriori} shows that in all DICES comments there exists at least one group that fully accounts for the observed polarization.\footnote{$Pol_{inh}^{MC}(c)=0 \Rightarrow Pol_{inh}(c)=0$ due to Eq.~\ref{eq:lower-bound}. The same logic applies if we tried to increase the number of random partitions in Eq.~\ref{eq:random}. } Interestingly, this observation does not hold for the Kumar and Sap datasets, despite evaluating all possible annotator groups exhaustively.
 
 Initially, we hypothesized that this discrepancy suggested that inherent polarization appears primarily in settings with limited annotator counts; i.e., although a latent group could in principle explain the observed polarization, such a group may be \emph{effectively unidentifiable when only a few annotators are available}. However, further experimentation shows that this difference seems to be in fact dataset-specific; the DICES datasets display zero inherent polarization \emph{even when selecting 5 annotators} with replacement. We repeat this procedure 10 times and find that all comments can be adequately explained by some random grouping. 
 
@@ -286,9 +291,9 @@ An alternative explanation is that the zero inherent polarization could be cause
 
 In \S\ref{sec:inherent:formulation}, we explained how our methodology needs to compare the polarization of $A(c)$ and $A(c \given g)$. Direct comparisons are not advisable, since we would be comparing statistics between a set and its subset--in this case, standard practice dictates comparing the subset with its complement; i.e., the in-group vs. the out-group instead of the in-group vs. all the annotations. However, this also would not work; if we apply the subset-vs-complement method in the example of Fig.~\ref{fig:ndfu_combined}, we would end up subtracting the \acp{ndfu} of men and women, which are similar as they are both unimodal distributions, falsely concluding that there is no polarization present.
 
-We instead compare the observed polarization of $A(c)$ with its inherent polarization, following the methodology introduced in \S\ref{sec:inherent:inherent} with two key distinctions. (1) Instead of using random splits, we create random stratified splits.\footnote{I.e., if we have $100$ annotations, $80$ of which are made by male annotators and $20$ by female annotators, we create random partitions of sizes $80$ and $20$.} (2) Instead of finding the minimum possible polarization exhibited by any known or latent group, we calculate the \emph{expected} (average). Therefore, we do not test whether the group is polarized against the whole; nor whether the group explains \emph{some polarization} (as would be the case if we used Eq.~\ref{eq:inherent}), but rather whether the group explains polarization \emph{more than other groups}, which is a much stricter test.\footnote{Indeed, by definition, all groups exhibit equal or larger polarization than the inherent pol. value.} 
+We instead compare the observed polarization of $A(c)$ with its inherent polarization, following the methodology introduced in \S\ref{sec:inherent:inherent} with two key distinctions. (1) Instead of using randomly sized splits, we create random stratified splits.\footnote{I.e., if we have $100$ annotations, $80$ of which are made by male annotators and $20$ by female annotators, we create random partitions of sizes $80$ and $20$.} (2) Instead of finding the minimum possible polarization exhibited by any known or latent group, we calculate the \emph{expected} (average). Therefore, we do not test whether the group is polarized against the whole; nor whether the group explains \emph{some polarization} (as would be the case if we used Eq.~\ref{eq:inherent}), but rather whether the group explains polarization \emph{more than other groups}, which is a much stricter test.\footnote{Indeed, by definition, all groups exhibit equal or larger polarization than the inherent pol. value.} 
 
-\begin{definition}[A-priori polarization]
+\begin{definition}[Apriori polarization]
 	\label{def:apriori}
 	The expected polarization of a comment's annotations.
 \end{definition}
@@ -298,6 +303,7 @@ Specifically, we define a-priori polarization for a comment $c$ as:
 \label{eq:apriori}
 	Pol_{apr}(c) = \frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{r}_i (A(c)))
 \end{equation}
+\noindent where $\tilde{r}$ is the random partition operator (similar to Eq.~\ref{eq:inherent}, but with matching group sizes).
 
 
 
@@ -394,7 +400,7 @@ H_a:\
 	\label{fig:std_error}
 \end{figure}
 
-Fig.~\ref{fig:std_error} illustrates the impact of annotator count on the reliability of polarization estimation. Each dataset exhibits a unique standard deviation, even when the annotator count is fixed--which aligns broadly with the intrinsic level of polarization within that specific dataset (App.~\ref{sec:app:ann_details}), and converges to the same level with enough annotators. Additionally, we observe a clear, non-linear, inverse relationship between the number of annotators and the standard error across all datasets. This pattern can be attributed to the enhanced robustness of the histogram estimation employed by \ac{ndfu} (\S\ref{sec:apunim:group-vs-global}) when supplied with greater point density for each group. While the improvement in polarization estimates is rapid and substantial with increased annotator input, the rate of improvement becomes increasingly marginal after 20 annotators. Interestingly, some variability in polarization persists even with an extraordinary amount of annotators, which we hypothesize to be caused by the presence of inherent polarization (Finding~\ref{finding:inherent}).
+Fig.~\ref{fig:std_error} illustrates the impact of annotator count on the reliability of polarization estimation. Each dataset exhibits a unique standard deviation, even when the annotator count is fixed--which aligns broadly with the intrinsic level of polarization within that specific dataset (App.~\ref{sec:app:ann_details}), and converges to the same level with enough annotators. Additionally, we observe a clear, non-linear, inverse relationship between the number of annotators and the standard error across all datasets. This pattern can be attributed to the enhanced robustness of the histogram estimation employed by \ac{ndfu} (\S\ref{sec:apunim:group-vs-global}) when supplied with greater point density for each group. While the improvement in polarization estimates is rapid and substantial with increased annotator input, the rate of improvement becomes increasingly marginal after 20 annotators. Interestingly, some variability in polarization persists even with an extraordinary amount of annotators, which we hypothesize to be caused by inherent noise in the dataset.
 
 \begin{finding}
 	\label{finding:ann-size}

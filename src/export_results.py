@@ -330,9 +330,8 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
         loc="lower center",
     )
 
-    plt.title("Apunim trends in ordinal variables")
     plt.xlabel("Order (low → high)")
-    plt.ylabel("Apunim value")
+    plt.ylabel("Apunim")
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     ax.set_xticks([])  # Remove x-axis ticks

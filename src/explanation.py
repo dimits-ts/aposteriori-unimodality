@@ -187,7 +187,7 @@ def plot_annotation_distributions(
         axs[1, 0],
         unimodal,
         group_labels,
-        title="Agreement",
+        title="No disagreements",
     )
 
     # High polarization / low disagreement
@@ -195,7 +195,7 @@ def plot_annotation_distributions(
         axs[0, 0],
         bimodal,
         group_labels,
-        title="Group split",
+        title="Minority split",
     )
 
     # High polarization / high disagreement
@@ -203,7 +203,7 @@ def plot_annotation_distributions(
         axs[0, 1],
         multimodal,
         group_labels,
-        title="Group split, mixed opinions",
+        title="Minority split, mixed opinions",
     )
 
     # Low polarization / high disagreement
