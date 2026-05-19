@@ -23,6 +23,10 @@ def main(results_dir: Path, latex_output_dir: Path, graph_output_dir: Path):
         file_paths=list(results_dir.rglob("*.npy")),
         graph_output_dir=graph_output_dir,
     )
+    plot_sample_size_polarization(
+        csv_path=results_dir / "sample_size_polarization.csv",
+        output_path=graph_output_dir / "sample_size_polarization.png",
+    )
 
 
 def plot_dfu_histograms(
@@ -98,15 +102,16 @@ def plot_dfu_histograms(
 
 def csv_to_latex(results_dir: Path, latex_output_dir: Path) -> None:
     for result_file in results_dir.rglob("*.csv"):
-        dataset_name = result_file.stem
-        df = pd.read_csv(result_file)
-        df = df.loc[df.pvalue.notna()]
-        tasks.run_helper.results_to_latex(
-            res_df=df,
-            output_path=latex_output_dir / f"{dataset_name}.tex",
-            dataset_name=dataset_name,
-            table_label=f"tab:{dataset_name}",
-        )
+        if "sample_size" not in result_file.stem:
+            dataset_name = result_file.stem
+            df = pd.read_csv(result_file)
+            df = df.loc[df.pvalue.notna()]
+            tasks.run_helper.results_to_latex(
+                res_df=df,
+                output_path=latex_output_dir / f"{dataset_name}.tex",
+                dataset_name=dataset_name,
+                table_label=f"tab:{dataset_name}",
+            )
 
 
 def ordinal_graph_per_feature(
@@ -166,6 +171,34 @@ def ordinal_graph_per_feature(
 
             tasks.graphs.save_plot(out_path)
             plt.close()
+
+
+def plot_sample_size_polarization(csv_path: Path, output_path: Path):
+    df = pd.read_csv(csv_path)
+
+    _, ax = plt.subplots(figsize=(8, 5))
+
+    for dataset, group in df.groupby("dataset"):
+        color = sns.color_palette()[
+            list(df["dataset"].unique()).index(dataset)
+        ]
+        ax.plot(
+            group["sample_size"], group["mean"], label=dataset, color=color
+        )
+        ax.fill_between(
+            group["sample_size"],
+            group["mean"] - group["std"],
+            group["mean"] + group["std"],
+            alpha=0.2,
+            color=color,
+        )
+
+    ax.set_xlabel("Number of annotators")
+    ax.set_ylabel("Mean polarization")
+    ax.legend(title="Dataset")
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
 
 
 def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
@@ -244,7 +277,7 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
         "kumar-Religion Important",
         "dices-990-Age",
         "kumar-Toxicity Problem",
-        "sap-Age"
+        "sap-Age",
     }
 
     highlight_group_2 = {

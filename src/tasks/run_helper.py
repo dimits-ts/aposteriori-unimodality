@@ -293,8 +293,7 @@ def _compute_comment_polarization(
     group_generator_fn,
     max_annotators: int,
     num_bins: int | None = None,
-    **generator_kwargs,
-) -> tuple[np.ndarray, dict]:
+) -> np.ndarray:
     """
     Shared engine for polarization computation.
     """
@@ -316,7 +315,7 @@ def _compute_comment_polarization(
     comment_mins = []
     all_group_values = {}
 
-    for cid in tqdm(unique_comments, desc="Computing inherent polarization"):
+    for cid in unique_comments:
         mask = comments == cid
 
         comm_ann = np.concatenate(
@@ -339,10 +338,7 @@ def _compute_comment_polarization(
             comment_mins.append(np.nan)
             continue
 
-        group_iterator = group_generator_fn(
-            n=n,
-            **generator_kwargs,
-        )
+        group_iterator = group_generator_fn(n=n)
 
         values = _evaluate_groups(
             comm_ann=comm_ann,
@@ -361,7 +357,7 @@ def compute_inherent_polarization_exhaustive(
     dataset: preprocessing.Dataset,
     num_bins: int | None = None,
     max_annotators: int = 420,
-) -> tuple[np.ndarray, dict]:
+) -> np.ndarray:
     """
     Exhaustively evaluates ALL possible annotator groups.
 
@@ -380,11 +376,11 @@ def compute_inherent_polarization_exhaustive(
 
 def compute_inherent_polarization_random(
     dataset: preprocessing.Dataset,
-    iterations: int = 10_000,
+    iterations: int = 1_000,
     num_bins: int | None = None,
     seed: int | None = 42,
     max_annotators: int = 420,
-) -> tuple[np.ndarray, dict]:
+) -> np.ndarray:
     """
     Randomly samples annotator groups.
 

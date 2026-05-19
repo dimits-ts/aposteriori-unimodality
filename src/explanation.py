@@ -38,12 +38,6 @@ def main(graph_dir: Path):
     plot_annotation_distributions(graph_dir)
 
 
-def _apply_hatches(ax, hatch: str):
-    for patch in ax.patches:
-        patch.set_hatch(hatch)
-        patch.set_edgecolor("black")
-
-
 def _discrete_normal(loc, scale, size):
     vals = np.random.normal(loc, scale, size)
     vals = np.clip(

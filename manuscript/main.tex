@@ -203,13 +203,13 @@ Intuitively, a group partially explains the polarization of a comment $c$ when t
 		& 43{,}050  & 123    & 4  & HS \\
 		\bottomrule
 	\end{tabular}
-	\caption{Datasets used in this study. \textit{\#Ann} refers to the number of annotations per comment (see App.~\ref{app:ann_details}), and \textit{\#Dims} to sociodemographic dimensions (e.g., age, gender). Tasks are either toxicity (Tox) or hate speech detection (HS).}
+	\caption{Datasets used in this study. \textit{\#Ann} refers to the number of annotations per comment (see App.~\ref{sec:app:ann_details}), and \textit{\#Dims} to sociodemographic dimensions (e.g., age, gender). Tasks are either toxicity (Tox) or hate speech detection (HS).}
 	\label{tab:datasets}
 \end{table}
 
 We use four datasets from current \ac{nlp} research that include sociodemographic information at the level of individual annotators; specifically, the ``Kumar''\cite{kumar-et-al-2021} and ``Sap''\cite{sap-etal-2022-annotators} datasets, which are concerned with Toxicity and hate speech detection respectively, and the DICES-350 and DICES-990 datasets~\cite{dices}, which focus on LLM response safety.\footnote{For the latter, we consider only labels relating to racism (\texttt{Q3\_bias\_overall}), thereby transforming the task to hate speech detection.} While the toxicity and hate speech detection tasks are not equivalent, they share substantial conceptual and operational overlap, as both require annotators to assess the presence and severity of harmful or abusive language. Thus, we expect the sources of annotator disagreement and bias that arise in these tasks will be broadly similar.
 
-A brief overview of dataset characteristics is provided in Table~\ref{tab:datasets}. The Kumar dataset stands out for its large size, featuring more than 100{,}000 annotated comments, as well as 10 distinct sociodemographic dimensions. In contrast, the DICES datasets contain fewer annotated comments but involve more than an order of magnitude more annotators per comment than the other datasets. The Kumar and Sap datasets contain a large number of polarizing items, unlike the DICES datasets, where most items are unpolarized (Fig.~\ref{fig:dataset-polarization}).\footnote{This systematic discrepancy could be attributed to the DICES datasets being composed of \ac{llm}-generated dialogues with already-aligned models tuned to avoid racist speech.}
+A brief overview of dataset characteristics is provided in Table~\ref{tab:datasets}. The Kumar dataset stands out for its large size, featuring more than 100{,}000 annotated comments, as well as 10 distinct sociodemographic dimensions. In contrast, the DICES datasets contain fewer annotated comments but involve more than an order of magnitude more annotators per comment than the other datasets. The Kumar and Sap datasets contain a large number of polarizing items, unlike the DICES datasets, where most items are unpolarized (App.~\ref{sec:app:ann_details}; Fig.~\ref{fig:dataset-polarization}).\footnote{\label{foot:dices-pol}This systematic discrepancy could be attributed to the DICES datasets being composed of LLM-generated dialogues with already-aligned models tuned to avoid undafe speech. Even if such speech exists, it is likely that it is much easier to distinguish than similar comments in actual human discussions. }
 
 
 \subsection{Inherent polarization}
@@ -268,11 +268,13 @@ Since enumerating all subsets is computationally intractable for large annotator
 
 We compute the inherent polarization for each comment across the four datasets. For Sap and Kumar, we use the exhaustive formulation (Eq.~\ref{eq:exhaustive}), whereas for the two DICES datasets we rely on the Monte Carlo approximation (Eq.~\ref{eq:random}) due to the annotator counts making the exhaustive formulation intractable. Fig.~\ref{fig:apriori} shows that in all DICES comments there exists at least one group that fully accounts for the observed polarization. Interestingly, this observation does not hold for the Kumar and Sap datasets, despite evaluating all possible annotator groups exhaustively.
 
-This discrepancy suggests that inherent polarization appears primarily in settings with limited annotator counts. It may indicate that, although a latent group could in principle explain the observed polarization, such a group may be \emph{effectively unidentifiable when only a small number of annotators is available}. This limitation poses a significant challenge for \ac{nlp}, where low annotation budgets are common even for highly subjective tasks, and it raises concerns about conclusions that attribute fundamental differences to sociodemographic groupings using datasets with low annotation counts.
+Initially, we hypothesized that this discrepancy suggested that inherent polarization appears primarily in settings with limited annotator counts; i.e., although a latent group could in principle explain the observed polarization, such a group may be \emph{effectively unidentifiable when only a few annotators are available}. However, further experimentation shows that this difference seems to be in fact dataset-specific; the DICES datasets display zero inherent polarization \emph{even when selecting 5 annotators} with replacement. We repeat this procedure 10 times and find that all comments can be adequately explained by some random grouping. 
+
+An alternative explanation is that the zero inherent polarization could be caused by the low \emph{overall} polarization exhibited in the DICES datasets (App.~\ref{sec:app:ann_details}; Fig.~\ref{fig:dataset-polarization}), since the comments presented in the dataset are less divisive by their nature (see Footnote~\ref{foot:dices-pol}). Unfortunately, since there are no other datasets to our knowledge featuring very large annotator counts with accompanying sociodemographic information, it is impossible for us to verify whether zero inherent polarization is caused by the dataset itself, or by the number of annotators per item.
 
 \begin{finding}
 	\label{finding:inherent}
-	Comments may exhibit a degree of inherent polarization that cannot be attributed to any known or latent annotator grouping, which could be caused by low annotation counts.
+	Comments may exhibit a degree of inherent polarization that cannot be attributed to any known or latent annotator grouping.
 \end{finding}
 
 
@@ -318,7 +320,7 @@ The former case is unrealistic, especially for most \ac{nlp} datasets due to ann
 
 \begin{finding}
 	\label{finding:conflicting}
-	Polarization has a direction, which may compromise cross-comment annotation aggregation.
+	Polarization has a direction, which is unique for each annotated item, and may compromise cross-comment annotation aggregation.
 \end{finding}
 
 
@@ -388,11 +390,11 @@ H_a:\
 
 \begin{figure}[t]
 	\includegraphics[width=\columnwidth]{ndfu_std_error_sample_size.png}
-	\caption{Standard deviation of 30 randomly sampled (with replacement) $pol_{obs}$ values (Eq.~\ref{eq:observed}). The x-axis shows the sample size (number of annotators), starting from 3 and increasing one at a time, up to the largest annotator count for which a sufficient number of items exists (App.~\ref{app:ann_details}).}
+	\caption{Standard deviation of 30 randomly sampled (with replacement) $pol_{obs}$ values (Eq.~\ref{eq:observed}). The x-axis shows the sample size (number of annotators), starting from 3 and increasing one at a time, up to the largest annotator count for which a sufficient number of items exists (App.~\ref{sec:app:ann_details}).}
 	\label{fig:std_error}
 \end{figure}
 
-Fig.~\ref{fig:std_error} illustrates the impact of annotator count on the reliability of polarization estimation. Each dataset exhibits a unique standard deviation, even when the annotator count is fixed--which aligns broadly with the intrinsic level of polarization within that specific dataset (App.~\ref{app:ann_details}), and converges to the same level with enough annotators. Additionally, we observe a clear, non-linear, inverse relationship between the number of annotators and the standard error across all datasets. This pattern can be attributed to the enhanced robustness of the histogram estimation employed by \ac{ndfu} (\S\ref{sec:apunim:group-vs-global}) when supplied with greater point density for each group. While the improvement in polarization estimates is rapid and substantial with increased annotator input, the rate of improvement becomes increasingly marginal after 20 annotators. Interestingly, some variability in polarization persists even with an extraordinary amount of annotators, which we hypothesize to be caused by the presence of inherent polarization (Finding~\ref{finding:inherent}).
+Fig.~\ref{fig:std_error} illustrates the impact of annotator count on the reliability of polarization estimation. Each dataset exhibits a unique standard deviation, even when the annotator count is fixed--which aligns broadly with the intrinsic level of polarization within that specific dataset (App.~\ref{sec:app:ann_details}), and converges to the same level with enough annotators. Additionally, we observe a clear, non-linear, inverse relationship between the number of annotators and the standard error across all datasets. This pattern can be attributed to the enhanced robustness of the histogram estimation employed by \ac{ndfu} (\S\ref{sec:apunim:group-vs-global}) when supplied with greater point density for each group. While the improvement in polarization estimates is rapid and substantial with increased annotator input, the rate of improvement becomes increasingly marginal after 20 annotators. Interestingly, some variability in polarization persists even with an extraordinary amount of annotators, which we hypothesize to be caused by the presence of inherent polarization (Finding~\ref{finding:inherent}).
 
 \begin{finding}
 	\label{finding:ann-size}
@@ -402,7 +404,6 @@ Fig.~\ref{fig:std_error} illustrates the impact of annotator count on the reliab
 
 \section{Attributing real-life polarization to human groups}
 \label{sec:results}
-
 
 \subsection{Experimental Setup}
 \label{sec:results:experimental}
@@ -515,7 +516,7 @@ Figure~\ref{fig:ordinal} shows \emph{apunim} trends across ordinal sociodemograp
 
 We investigated whether fundamental differences can be attributed to annotator groups using polarization, instead of standard agreement measures. We discovered as of yet unknown issues regarding the presence of inherent polarization and conflicting polarization directions which we bypass using a new metric, \textit{apunim}. We then applied our proposed metric to four hate-speech and toxicity detection datasets, discovering that (1) race and gender seem to generally drive polarization attribution, and (2) groups that are further apart increasingly drive polarization. Furthermore, we estimated the robustness of our metric w.r.t. the number of annotators, and released a PyPi installable library implementing it.
 
-Our framework has broad applications across \ac{nlp} tasks related to content moderation. In the context of discussions, it allows researchers to identify particularly polarizing discussions (instead of datasets as a whole) and study the underlying sources of disagreement for specific minority groups. Additionally, while we study one group at a time, we can instead turn to iteratively exploring polarized subgroups, to gradually piece together a multidimensional explanation of polarization (see Footnote~\ref{foot:iterative},~\S\ref{sec:inherent:formulation}). Finally, our approach can be used to more reliably evaluate whether \ac{llm}-as-a-judge systems reproduce the polarization patterns observed among different minority groups.
+Our framework has broad applications across \ac{nlp} tasks related to content moderation. In the context of discussions, it allows researchers to identify particularly polarizing discussions (instead of datasets as a whole) and study the underlying sources of disagreement for specific minority groups. Additionally, while we study one group at a time, we can instead turn to iteratively exploring polarized subgroups, to gradually piece together a multidimensional explanation of polarization (see Footnote~\ref{foot:iterative},~\S\ref{sec:inherent:formulation}). Finally, our approach can be used to more reliably evaluate whether LLM-as-a-judge systems reproduce the polarization patterns observed among different minority groups.
 
 
 \section{Limitations}
@@ -523,7 +524,6 @@ Our framework has broad applications across \ac{nlp} tasks related to content mo
 Researchers often release only aggregated single-label annotations or omit annotator sociodemographic characteristics entirely. As a result, both our analysis and the applicability of our framework are limited by the scarcity of suitable datasets. In addition, because datasets with large numbers of annotators per item are rare, our approach operates only at the dataset level. This limitation prevents us from identifying individual comments or examples that could serve as concrete explanations for the observed \textit{apunim} values. 
 
 Finally, although we compare findings across datasets and relate them to prior work, we do not directly compare polarization and agreement metrics, since they rely on fundamentally different assumptions and mechanisms (see \S\ref{sec:related:polarization}). These differences also make it difficult to fully explain certain patterns in our results, such as why some groups show statistically significant effects while others do not.
-
 
 
 \section{Ethical Considerations}
@@ -538,7 +538,6 @@ Additionally, this study uses dichotomies across the two predominant genders, an
 \section {Acronyms}
 
 \begin{acronym}[WWW]
-	\acro{llm}[LLM]{Large Language Model}
 	\acro{ndfu}[nDFU]{normalized Distance From Unimodality}
 	\acro{fwer}[FWER]{Family-Wise Error Rate}
 	\acro{nlp}[NLP]{Natural Language Processing}
@@ -548,7 +547,7 @@ Additionally, this study uses dichotomies across the two predominant genders, an
 
 
 \section{Annotation details}
-\label{app:ann_details}
+\label{sec:app:ann_details}
 
 \begin{figure*}[t]
 	\includegraphics[width=\columnwidth]{sap.png}
@@ -562,7 +561,7 @@ Additionally, this study uses dichotomies across the two predominant genders, an
 	
 \begin{figure}[t]
 	\includegraphics[width=\linewidth]{annotator_count_histogram.png}
-	\caption{We calculate the ratio of comments for each dataset (y-axis) that had $x$ number of annotators (x-axis). We truncate the x-axis to 130 annotators, disregarding very few comments in the Kumar dataset exceeding this threshold (see Table~\ref{tab:num-annot}).}
+	\caption{We calculate the ratio of comments for each dataset (y-axis) that had $x$ number of annotators (x-axis). We truncate the x-axis to 130 annotators, disregarding very few comments in the Kumar dataset exceeding this threshold (see Table~\ref{tab:num-annot}), which is likely caused by a data error.}
 	\label{fig:ann_counts}
 \end{figure}
 
@@ -617,31 +616,12 @@ We use version \texttt{1.0.1} of the \texttt{apunim} library for our experiments
 
 While the library efficiently handles a large number of annotators through vectorized operations, performance degrades significantly when processing a high volume of comments, particularly when annotators belong to multiple distinct groups. For instance, while experiments across all datasets in \S\ref{sec:inherent:datasets} complete within a minute, the Kumar dataset necessitates approximately one hour of computation, even when using a 3\% sample. Furthermore, the annotator variance analysis detailed in \S\ref{sec:apunim:ann-size} required over ten hours. While this latter time investment is anticipated due to the inherently demanding nature and non-standard application of our library, it highlights a scaling bottleneck under specific data structures. We hypothesize that this bottleneck is likely caused by repeated creation of numpy arrays, resulting in repeated memory allocations for each subgroup, in each comment, for each sociodemographic dimension. We plan on profiling and addressing it in the next releases of our software. Until then, we suggest either using multiprocessing for each sociodemographic subgroup, or running the different experiments in parallel (indeed, we use the \texttt{gnu-parallel} linux package~\cite{tange_2025_16944306} for our own experiments).
 
-In Figure~\ref{fig:std_error}, we removed values where there was a lack of items annotated by the specified number of annotators (e.g., only 7\% of comments in DICES-990 were annotated by more than 73 annotators---see App.~\ref{app:ann_details}).
+In Figure~\ref{fig:std_error}, we removed values where there was a lack of items annotated by the specified number of annotators (e.g., only 7\% of comments in DICES-990 were annotated by more than 73 annotators---see App.~\ref{sec:app:ann_details}).
 
 
 \section{Full Results}
 \label{app:full}
 
-\begin{table}[t]
-	\centering
-	\small 
-	\begin{tabularx}{\columnwidth}{X r r}
-		\toprule
-		\textbf{Group} & \textbf{apunim} & \textbf{support} \\
-		\midrule
-		\multicolumn{3}{c}{\textbf{Sap}} \\
-		\midrule
-		Age=GenX+ & $0.0660$ & 271 \\
-		Age=Millennial & $-0.0068$ & 1886 \\
-		\rowcolor{gray!15} Ethnicity=white & $0.0004$ & 1896 \\
-		Gender=Man & $0.0907^{***}$ & 1439 \\
-		\rowcolor{gray!15} Gender=Woman & $-0.2442^{***}$ & 877 \\
-		\bottomrule
-	\end{tabularx}
-	\caption{Aposteriori unimodality results for the Sap Dataset. $^{*}$ denotes $p<0.10$, $^{**}$ denotes $p<0.05$, and $^{***}$ denotes $p<0.01$.  Rows shaded in gray indicate a negative $\text{apunim}$ value. Groups for which no polarized comments among groups not included.}
-	\label{tab:sap-full}
-\end{table}
 
 \begin{table}[t]
 	\centering
@@ -806,6 +786,27 @@ In Figure~\ref{fig:std_error}, we removed values where there was a lack of items
 	\label{tab:dices990-full}
 \end{table}
 
+
+\begin{table}[t]
+	\centering
+	\small 
+	\begin{tabularx}{\columnwidth}{X r r}
+		\toprule
+		\textbf{Group} & \textbf{apunim} & \textbf{support} \\
+		\midrule
+		\multicolumn{3}{c}{\textbf{Sap}} \\
+		\midrule
+		Age=GenX+ & $0.0660$ & 271 \\
+		Age=Millennial & $-0.0068$ & 1886 \\
+		\rowcolor{gray!15} Ethnicity=white & $0.0004$ & 1896 \\
+		Gender=Man & $0.0907^{***}$ & 1439 \\
+		\rowcolor{gray!15} Gender=Woman & $-0.2442^{***}$ & 877 \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Aposteriori unimodality results for the Sap Dataset. $^{*}$ denotes $p<0.10$, $^{**}$ denotes $p<0.05$, and $^{***}$ denotes $p<0.01$.  Rows shaded in gray indicate a negative $\text{apunim}$ value. Groups for which no polarized comments among groups not included.}
+	\label{tab:sap-full}
+\end{table}
+
 \begin{figure*}[t]
 	\includegraphics[width=\columnwidth]{apunim_ordinal_dices-990_Age.png}
 	\includegraphics[width=\columnwidth]{apunim_ordinal_kumar_Age.png}
@@ -815,5 +816,6 @@ In Figure~\ref{fig:std_error}, we removed values where there was a lack of items
 	\caption{Apunim values across ordinal factor levels with at least two statistically significant values, expanded for each ordinal sociodemographic dimension. This figure is complementary to Figure~\ref{fig:ordinal}. The values in the graphs were extracted from the Tables of \ref{app:full}. }
 	\label{fig:ordinal-full}
 \end{figure*}
+
 
 \end{document}

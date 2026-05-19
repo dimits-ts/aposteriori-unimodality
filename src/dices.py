@@ -3,12 +3,14 @@ from pathlib import Path
 
 import pandas as pd
 import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
+from tqdm.auto import tqdm
 
 import tasks.graphs
 import tasks.preprocessing
 import tasks.run_helper
+
+SAMPLE_SIZES = range(5, 51, 2)
+N_RUNS = 10
 
 
 class DicesDataset(tasks.preprocessing.Dataset):
@@ -91,47 +93,58 @@ class DicesDataset(tasks.preprocessing.Dataset):
         return df
 
 
-def plot_annotation_histograms(
-    dataset_path_small: Path, dataset_path_large: Path, output_path: Path
-):
+def subsample_dataset(
+    ds: DicesDataset, size: int, rng: np.random.Generator
+) -> DicesDataset:
     """
-    Create a plot with two seaborn histograms showing the distribution
-    of the number of annotators per comment for DICES-350 and DICES-990.
+    Return a copy of the dataset with each comment subsampled to `size`
+    annotators (with replacement). All columns are sampled with the same
+    indices to preserve per-annotator alignment across columns.
     """
+    df = ds.get_dataset().copy()
+    annotation_col = ds.get_annotation_column()
+    cols = ds.get_sdb_columns() + [annotation_col]
 
-    # Load datasets
-    df_small = pd.read_csv(dataset_path_small)
-    df_large = pd.read_csv(dataset_path_large)
+    # Sample indices once per row so all columns stay aligned
+    row_indices = [
+        rng.choice(len(values), size=size, replace=True)
+        for values in df[annotation_col]
+    ]
 
-    # Compute annotator counts per item_id
-    counts_small = df_small.groupby("item_id").size().reset_index(name="count")
-    counts_large = df_large.groupby("item_id").size().reset_index(name="count")
+    for col in cols:
+        df[col] = [
+            [row[i] for i in indices]
+            for row, indices in zip(df[col], row_indices)
+        ]
 
-    counts_small["dataset"] = "DICES-350"
-    counts_large["dataset"] = "DICES-990"
+    subsampled = object.__new__(DicesDataset)
+    subsampled.df = df
+    subsampled.variant = ds.variant
+    return subsampled
 
-    # Combine for seaborn
-    combined = pd.concat([counts_small, counts_large], ignore_index=True)
 
-    # Plot
-    plt.figure(figsize=(8, 5))
-    sns.histplot(
-        data=combined,
-        x="count",
-        hue="dataset",
-        element="step",
-        stat="count",
-        common_bins=True,
-        alpha=0.5,
-        bins=120,
-    )
-
-    plt.xlabel("Number of annotators per comment")
-    plt.ylabel("Count of comments")
-    plt.title("Annotator Count Distribution")
-    plt.tight_layout()
-    plt.savefig(output_path)
-    plt.close()
+def run_for_dataset(
+    ds: DicesDataset, sample_sizes: range, seed: int = 42
+) -> pd.DataFrame:
+    rng = np.random.default_rng(seed)
+    rows = []
+    for size in tqdm(sample_sizes, desc=f"Sample sizes for {ds.get_name()}"):
+        run_means = []
+        for _ in range(N_RUNS):
+            subsampled_ds = subsample_dataset(ds, size, rng)
+            result = tasks.run_helper.compute_inherent_polarization_random(
+                subsampled_ds
+            )
+            run_means.append(np.mean(result))
+        rows.append(
+            {
+                "dataset": ds.get_name(),
+                "sample_size": size,
+                "mean": np.mean(run_means),
+                "std": np.std(run_means),
+            }
+        )
+    return pd.DataFrame(rows)
 
 
 def main(
@@ -163,11 +176,12 @@ def main(
     res = tasks.run_helper.run_all_results(ds=ds_990)
     res.to_csv(output_dir / "dices-990.csv")
 
-    plot_annotation_histograms(
-        dataset_path_small=dataset_path_small,
-        dataset_path_large=dataset_path_large,
-        output_path=graph_output_dir / "annotator_histograms.png",
-    )
+    df_350 = run_for_dataset(ds_350, SAMPLE_SIZES)
+    df_990 = run_for_dataset(ds_990, SAMPLE_SIZES)
+
+    combined = pd.concat([df_350, df_990], ignore_index=True)
+    output_path = output_dir / "sample_size_polarization.csv"
+    combined.to_csv(output_path, index=False)
 
 
 if __name__ == "__main__":
