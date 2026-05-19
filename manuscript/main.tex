@@ -73,7 +73,7 @@
 
 \begin{abstract}
 	Standard agreement metrics often fail to capture systematic differences in opinion between minority and majority-group annotators, jeopardizing tasks such as hate speech and toxicity detection. Polarization has recently been proposed as a more robust way to distinguish minor disagreements from systematic differences in opinion, but existing approaches do not provide practical tools for attributing it to specific annotator groups. We evaluate current methods and identify two major limitations in realistic settings: (1) the presence of ``inherent'' polarization that cannot be attributed to any known or latent groups, and (2) opposing polarization effects canceling each other out in aggregated annotations.
-	To address these issues, we introduce a new metric that measures and tests the statistical significance of polarization attribution for annotator groups while avoiding these limitations, finding a maximum of 20 annotators per comment for reliable estimation. We apply our method to four subjective NLP datasets and find that gender and race consistently explain polarization patterns, while differences between annotator groups become stronger as the groups are further apart. Finally, we release an open-source Python library implementing our approach.
+	To address these issues, we introduce a new metric that measures and tests the statistical significance of polarization attribution for annotator groups while avoiding these limitations, finding that no more than 20 annotators are needed per comment for reliable estimation. We apply our method to four subjective NLP datasets and find that gender and race consistently explain polarization patterns, while differences between annotator groups become stronger as the groups are further apart. Finally, we release an open-source Python library implementing our approach.
 \end{abstract}
 
 
@@ -104,13 +104,16 @@ Having established our metric, we apply it to four \ac{nlp} datasets focused on 
 
 \noindent\textbf{Warning: This publication includes examples of controversial and potentially harmful speech for the purposes of demonstration. These examples do not represent the views of the authors.}
 
+
 \section{Related Work}
 \label{sec:related}
 
 \subsection{Agreement}
 \label{sec:related:agreement}
 
-There are many popular metrics for measuring inter-annotator agreement such as Cohen's kappa, Krippendorff's alpha and Fleiss's kappa. All of these metrics attempt to distinguish genuine disagreement among annotators from noise (or ``random disagreement'') using statistical methods. However, most cannot be generally used for comparing intergroup annotation agreement without extending them (e.g., computing pairwise Cohen's kappa for all groups), or placing constraints on when they can be used (e.g., no missing labels and same number of annotations per annotator for Fleiss's kappa). They have also been criticized for ignoring fundamental differences that can arise from different social, cultural and demographic backgrounds~\cite{FEINSTEIN1990543, Byrt1993, van_der_Velden, checco_2017}, for their inability to quantify and compare results across experiments~\cite{wong-etal-2021-cross}, and for fundamentally faulty assumptions around the concept of ``chance-correction''~\cite{checco_2017}.
+There are many popular metrics for measuring inter-annotator agreement such as Cohen's kappa, Krippendorff's alpha and Fleiss's kappa. All of these metrics attempt to distinguish genuine disagreement among annotators from noise (or ``random disagreement'') using statistical methods.
+
+However, most cannot be generally used for comparing intergroup annotation agreement without extending them (e.g., computing pairwise Cohen's kappa for all groups), or placing constraints on when they can be used (e.g., no missing labels and same number of annotations per annotator for Fleiss's kappa). They have also been criticized for ignoring fundamental differences that can arise from different social, cultural and demographic backgrounds~\cite{Feinstein1990, Byrt1993, van_der_Velden, checco_2017}, for their inability to quantify and compare results across experiments~\cite{wong-etal-2021-cross}, for sensitivity towards skewed and imbalanced data~\citep{Feinstein1990} (which are common for annotations of minority groups), and for fundamentally faulty assumptions around the concept of ``chance-correction''~\cite{checco_2017}.
 
 Recent work has attempted to work around these limitations by using simpler statistical models~\cite{van_der_Velden}, adapting Cohen's kappa for subgroup agreement~\cite{wong-etal-2021-cross}, or creating a Bayesian model to explicitly differentiate between subgroup disagreement and noise~\cite{ivey-etal-2025-nutmeg}. While these extensions do improve the performance of these metrics, they are typically less explainable and intuitive.
 
@@ -145,7 +148,7 @@ For our work, we use a non-parametric polarization metric, \ac{ndfu}, which has 
 	\end{aligned}
 \end{equation}
 
-\noindent where, $X$ denotes the set of annotations, $f_i$ the relative frequency of the $i$-th annotation, and $m$ the histogram peak. Intuitively, \ac{ndfu} measures how prominent secondary peaks are compared to the main peak.
+\noindent where, $X$ denotes the set of annotations, $f_i$ the relative frequency of the $i$-th annotation (e.g., the frequency of \texttt{2} in a scale of 1--5), and $m$ the histogram peak. Intuitively, \ac{ndfu} measures how prominent secondary peaks are compared to the main peak.
 
 
 \subsection{Attributing polarization to groups}
@@ -159,7 +162,7 @@ While many studies study the effect of subgroups on annotation agreement~\cite{ 
 \subsection{Problem Formulation}
 \label{sec:inherent:formulation}
 
-Let $d = \{c_1, c_2, \ldots\}$ be a dataset composed of multiple annotated comments.\footnote{These items could be of any modality, such as comments in a discussion, images, videos or survey questions, even though we consider comments in this study.} Each comment $c$ is assigned multiple annotators,  which creates the annotation multi-set $A(c)=  \{(a_1, g_1), (a_2, g_2), \ldots \}$, where $a$ is a single annotation. As an example, the annotations for a comment in a sentiment analysis task where we group the annotators by gender, would be formulated as:
+Let $d = \{c_1, c_2, \ldots\}$ be a dataset composed of multiple annotated comments.\footnote{These items could be of any modality, such as comments in a discussion, images, videos or survey questions, even though we consider comments in this study.} Each comment $c$ is assigned multiple annotators,  which creates the annotation multi-set $A(c)=  \{(a_1, g_1), (a_2, g_2), \ldots \}$, where $a_i$ is a single annotation (e.g., \texttt{2} in a LIKERT scale of 1--5). As an example, the annotations for a comment in a sentiment analysis task where we group the annotators by gender, would be formulated as:
 \begin{multline*}
 	A(\text{``Could be better, could be worse''})\\
 	= \left\{\begin{array}{l}
@@ -174,7 +177,7 @@ Let $d = \{c_1, c_2, \ldots\}$ be a dataset composed of multiple annotated comme
 	\label{fig:ndfu_combined}
 \end{figure}
 
-Intuitively, a group partially explains the polarization of a comment $c$ when the annotations of that group $A(c \given g) = \{a(c; g') \in A(c) \given g'=g\}$ exhibit higher polarization compared to the full set of annotations $A(c)$. Consider the (simulated) case where a misogynistic comment is annotated for toxicity by male and female annotators shown in Fig.~\ref{fig:ndfu_combined}. The annotations are generally polarized ($nDFU_{all}=0.62$); but both female ($nDFU_{women}=0.10$) and male ($nDFU_{men}=0.37$) annotators exhibit low polarization between their respective groups. This pattern suggests that the overall polarization is driven by substantive disagreements between male and female annotators.
+Intuitively, a group partially explains the polarization of a comment $c$ when the annotations of that group $A(c \given g) = \{a(c; g') \in A(c) \given g'=g\}$ exhibit higher polarization compared to the full set of annotations $A(c)$. Consider the (simulated) case where a misogynistic comment is annotated for toxicity by male and female annotators shown in Fig.~\ref{fig:ndfu_combined}. The annotations are generally polarized ($nDFU_{all}=0.62$); but both female ($nDFU_{women}=0.10$) and male ($nDFU_{men}=0.37$) annotators exhibit low polarization between their respective groups. This pattern suggests that the overall polarization stems from substantive disagreements between male and female annotators. \footnote{\label{foot:iterative}The continued polarization observed within the male annotators suggests that a specific subgroup of men may also contribute to this polarization.} 
 
 
 \subsection{Datasets}
@@ -231,7 +234,7 @@ Formally, the inherent polarization for a single comment $c$ is given by:
 \subsection{Experimental setup}
 \label{sec:inherent:experimental}
 
-We systematically explore the space of annotator groups by generating random partitions for each comment. When considered exhaustively, these theoretical, random groups include both observed attributes (e.g., men and women) and latent or unobserved factors (e.g., whether annotators had breakfast prior to annotation). Since \ac{ndfu} operates only when a group has at least three annotators, this yields $\sum_{k=3}^{n} \binom{n}{k}$ possible groups, over which we test whether \emph{any} exhibit intra-group polarization:
+We systematically explore the space of annotator groups by generating random partitions for each comment. When considered exhaustively, these theoretical, random groups include both observed attributes (e.g., men and women) and latent or unobserved factors (e.g., annotators may be less strict if they had lunch prior to annotation). Since \ac{ndfu} operates only when a group has at least three annotators, this yields $\sum_{k=3}^{n} \binom{n}{k}$ possible groups, over which we test whether \emph{any} exhibit intra-group polarization:
 
 \begin{equation}
 	\label{eq:exhaustive}
@@ -322,7 +325,7 @@ The former case is unrealistic, especially for most \ac{nlp} datasets due to ann
 \subsection{Expanding to the whole dataset}
 \label{sec:apunim:dataset}
 
-As discussed in \S\ref{sec:apunim:conflicting}, we must not aggregate the annotations themselves before applying the \ac{ndfu} metric. We can however estimate how much polarization is generally present in the dataset, by simply averaging the \textit{a-priori} polarization of its comments. Intuitively, a high apriori polarization score means that much of the polarization in the dataset is likely not driven by any group.  
+As discussed in \S\ref{sec:apunim:conflicting}, we must not aggregate the annotations themselves before applying the \ac{ndfu} metric. We can however estimate how much polarization is generally present in the dataset, by simply averaging the \textit{apriori} polarization of its comments. Intuitively, a high apriori polarization score means that much of the polarization in the dataset is likely not driven by any group.  
 \begin{equation}
 	\label{eq:apriori-dataset}
 	Pol_{apr}^{d} = \frac{1}{\lvert d \rvert} \sum_{c \in d} Pol_{apr}(c)
@@ -366,18 +369,18 @@ Because \textit{apunim} is fundamentally designed to quantify polarization, we e
 Since annotation histograms may be noisy, we additionally assess whether the observed apunim value could arise by chance. To assess statistical significance, we construct a null distribution of apunim values from the randomized partitions and compare the observed apunim against this distribution using a one-sample Student-\(t\) test. Thus, the null hypothesis states that the observed polarization is indistinguishable from polarization induced by random annotator assignments:
 \[
 H_0:\ 
-\textit{apunim}(d,g)
+\bar{\textit{apunim}}_{\mathrm{rand}}(d,g)
 =
-\textit{apunim}_{\mathrm{rand}}(d,g)
+\textit{apunim}(d,g)
 \]
 \[
 H_a:\ 
-\textit{apunim}(d,g)
+\bar{\textit{apunim}}_{\mathrm{rand}}(d,g)
 \neq
-\textit{apunim}_{\mathrm{rand}}(d,g)
+\textit{apunim}(d,g)
 \]
 \noindent where 
-\(\textit{apunim}_{\mathrm{rand}}(d,g)\) denotes the distribution of apunim values obtained from randomized annotator partitions. For a detailed explanation of the p-value computation and the assumptions underlying the test, refer to App.~\ref{app:pvalue}.
+\(\bar{\textit{apunim}}_{\mathrm{rand}}(d,g)\) denotes the average apunim values obtained from $t$ randomized annotator partitions, where $t$ is a hyperparameter. For a detailed explanation of the p-value computation and the assumptions underlying the test, refer to App.~\ref{app:pvalue}.
 
 
 \subsection{How many annotators do we need?}
@@ -404,7 +407,7 @@ Fig.~\ref{fig:std_error} illustrates the impact of annotator count on the reliab
 \subsection{Experimental Setup}
 \label{sec:results:experimental}
 
-Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided sociodemographic dimensions can partially explain polarization in the toxicity / hate speech annotations, as shown in Table~\ref{tab:datasets}.\footnote{We sample 20{,}000 comments from the Kumar dataset due to computational costs arising from the extraordinary amount of distinct participant groups.} Note that some groups are not included, either because the results were not statistically significant, or because there were no polarized items annotated by more than one annotator of these groups. See App.~\ref{app:replication} for details on other parameters and execution times, and App.~\ref{app:full} for the full results.
+Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided sociodemographic dimensions can partially explain polarization in the toxicity / hate speech annotations, as shown in Table~\ref{tab:datasets}.\footnote{We sample 20{,}000 comments from the Kumar dataset due to computational costs arising from the extraordinary amount of distinct participant groups.} Note that some groups are not included because there were no polarized items annotated by more than one annotator of these groups. See App.~\ref{app:replication} for details on other parameters and execution times, and App.~\ref{app:full} for the full results.
 
 
 \subsection{Which factors contribute to polarization?}
@@ -512,7 +515,7 @@ Figure~\ref{fig:ordinal} shows \emph{apunim} trends across ordinal sociodemograp
 
 We investigated whether fundamental differences can be attributed to annotator groups using polarization, instead of standard agreement measures. We discovered as of yet unknown issues regarding the presence of inherent polarization and conflicting polarization directions which we bypass using a new metric, \textit{apunim}. We then applied our proposed metric to four hate-speech and toxicity detection datasets, discovering that (1) race and gender seem to generally drive polarization attribution, and (2) groups that are further apart increasingly drive polarization. Furthermore, we estimated the robustness of our metric w.r.t. the number of annotators, and released a PyPi installable library implementing it.
 
-Our framework has broad applications across \ac{nlp} tasks related to content moderation. Because many of these tasks involve multiple discussions, the framework can also be applied at the discussion level rather than only at the dataset level. This would allow researchers to identify particularly polarizing discussions and study the underlying sources of disagreement for specific minority groups. Discussions could also be analyzed by comment turn, enabling the study of how polarization develops over the course of an interaction. Finally, our approach can be used to more reliably evaluate whether \ac{llm}-as-a-judge systems reproduce the polarization patterns observed among different minority groups.
+Our framework has broad applications across \ac{nlp} tasks related to content moderation. In the context of discussions, it allows researchers to identify particularly polarizing discussions (instead of datasets as a whole) and study the underlying sources of disagreement for specific minority groups. Additionally, while we study one group at a time, we can instead turn to iteratively exploring polarized subgroups, to gradually piece together a multidimensional explanation of polarization (see Footnote~\ref{foot:iterative},~\S\ref{sec:inherent:formulation}). Finally, our approach can be used to more reliably evaluate whether \ac{llm}-as-a-judge systems reproduce the polarization patterns observed among different minority groups.
 
 
 \section{Limitations}
