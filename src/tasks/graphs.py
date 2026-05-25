@@ -27,52 +27,88 @@ COLORBLIND_PALETTE = [
     "#BC80BD",  # plum (dark purple contrast partner)
 ]
 
+MARKERS = ["o", "s", "D", "^", "v", "P", "X"]
+HATCHES = ["..", "\\\\", "++", "oo", "//", "xx", "**", "--"]
+
 
 def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
     df = ds.get_dataset()
     annotation_col = ds.get_annotation_column()
     sdb_columns = ds.get_sdb_columns()
-    bins = len(
-        np.unique(np.concatenate(df[ds.get_annotation_column()].to_list()))
-    )
+
+    # Data Preparation
+    all_annotations = []
+    for annotations_list in df[annotation_col].to_list():
+        if isinstance(annotations_list, (list, np.ndarray)):
+            all_annotations.extend(annotations_list)
+
+    if not all_annotations:
+        print(
+            "Warning: No valid annotations found. Cannot calculate polarization."
+        )
+        return
+
+    bins = len(np.unique(all_annotations))
 
     records = []
-    for sdb_col in sdb_columns:
-        for _, row in df.iterrows():
-            annotations = row[annotation_col]
 
-            if (
-                not isinstance(annotations, (list, np.ndarray))
-                or len(annotations) == 0
-            ):
-                continue
+    # ITERATE THROUGH ALL COMMENTS
+    for _, row in df.iterrows():
+        annotations = row[annotation_col]
 
+        # Check if the comment has any annotations
+        if (
+            not isinstance(annotations, (list, np.ndarray))
+            or len(annotations) == 0
+        ):
+            continue
+
+        # Calculate NDFU for the entire comment (row)
+        try:
             ndfu_value = apunim.dfu(annotations, bins=bins, normalized=True)
-            records.append({"SDB Feature": sdb_col, "nDFU": ndfu_value})
+        except Exception as e:
+            # Handle cases where the apunim function might fail
+            print(f"Error calculating NDFU for an item: {e}")
+            continue
+
+        for sdb_col in sdb_columns:
+            sdb_values = row[
+                sdb_col
+            ] 
+
+            for value in sdb_values:
+                combined_category = f"{sdb_col}: {value}"
+                records.append(
+                    {"PC Dimension": combined_category, "nDFU": ndfu_value}
+                )
 
     plot_df = pd.DataFrame(records)
-    plot_df = plot_df.rename(columns={"SDB Feature": "PC Dimension"})
 
-    # important for proper legend handling
+    # Note: Since the categories are now complex strings (e.g., "Race: Asian"),
+    # setting a strict, predefined order is usually necessary for clean visualization.
     plot_df["PC Dimension"] = pd.Categorical(
-        plot_df["PC Dimension"], categories=sdb_columns
+        plot_df["PC Dimension"], ordered=True
     )
 
-    ax = sns.histplot(
+    fig, ax = plt.subplots(figsize=(15, 8))
+
+    sns.boxplot(
+        x="PC Dimension",
+        y="nDFU",
         data=plot_df,
-        x="nDFU",
-        hue="PC Dimension",
-        multiple="stack",
-        stat="count",
-        palette=COLORBLIND_PALETTE,
-        edgecolor="black",
-        bins=10,
+        ax=ax,
+        # skip black color
+        palette=COLORBLIND_PALETTE[1:],
     )
-    ax.get_legend().set_title(None)
-    ax.set_xlabel("nDFU (Polarization)")
-    ax.set_ylabel("Number of Comments")
+
+    ax.set_xlabel("Group")
+    ax.set_ylabel("nDFU")
     ax.set_title(ds.get_name())
-    ax.set_xlim(0, 1)
+
+    ax.set_ylim(-0.05, 1.05)
+
+    plt.xticks(rotation=90, ha="right")
+    plt.grid(axis="y", alpha=0.5)
 
     save_plot(output_path)
     plt.close()
@@ -92,7 +128,6 @@ def save_plot(path: Path) -> None:
 
 
 def graph_setup() -> None:
-
     sns.set_theme(
         context="paper",
         style="ticks",
@@ -115,14 +150,14 @@ def graph_setup() -> None:
             "savefig.pad_inches": 0.02,
             # Fonts
             "font.family": "serif",
-            "font.serif": ["Times New Roman", "Times", "DejaVu Serif"],
+            "font.serif": ["Liberation Serif", "Nimbus Roman"],
             "font.size": 18,
-            "axes.titlesize": 18,
-            "axes.labelsize": 16,
+            "axes.titlesize": 24,
+            "axes.labelsize": 22,
             "xtick.labelsize": 14,
             "ytick.labelsize": 14,
-            "legend.fontsize": 14,
-            "figure.titlesize": 22,
+            "legend.fontsize": 22,
+            "figure.titlesize": 26,
             "figure.labelsize": 22,
             # Axes
             "axes.linewidth": 0.8,

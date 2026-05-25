@@ -1,23 +1,19 @@
 import argparse
-from os import remove
 from pathlib import Path
 
 import pandas as pd
+import numpy as np
 
-from .tasks import preprocessing, run_helper, graphs
+import tasks.graphs
+import tasks.preprocessing
+import tasks.run_helper
 
-NUM_COMMENTS = 20_000
+NUM_COMMENTS = 60_000
 
 
-class KumarDataset(preprocessing.Dataset):
-    def __init__(
-        self,
-        dataset_path: Path,
-        num_samples: int | None = None
-    ):
-        self.df = KumarDataset._base_df(
-            dataset_path, num_samples
-        )
+class KumarDataset(tasks.preprocessing.Dataset):
+    def __init__(self, dataset_path: Path, num_samples: int | None = None):
+        self.df = KumarDataset._base_df(dataset_path, num_samples)
 
     def get_name(self) -> str:
         return "Kumar et al. 2021"
@@ -49,10 +45,7 @@ class KumarDataset(preprocessing.Dataset):
         return "Toxicity"
 
     @staticmethod
-    def _base_df(
-        dataset_path: Path,
-        num_samples: int | None
-    ) -> pd.DataFrame:
+    def _base_df(dataset_path: Path, num_samples: int | None) -> pd.DataFrame:
         df = pd.read_json(dataset_path, lines=True)
         df = df.explode(column="ratings")
         df = df.dropna()
@@ -229,18 +222,20 @@ def map_age_list(age_map, lst):
 
 
 def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
-    graphs.graph_setup()
+    tasks.graphs.graph_setup()
 
     print("Generating sample polarization plot...")
-    ds = KumarDataset(
-        dataset_path=dataset_path,
-        num_samples=NUM_COMMENTS
-    )
-    graphs.polarization_plot(
+    ds = KumarDataset(dataset_path=dataset_path, num_samples=NUM_COMMENTS)
+    tasks.graphs.polarization_plot(
         ds=ds, output_path=graph_output_dir / "kumar_sample.png"
     )
     print("Running experiment...")
-    res = run_helper.run_all_results(ds)
+    res = tasks.run_helper.compute_inherent_polarization_exhaustive(
+        dataset=ds, max_annotators=6
+    )
+    np.save(output_dir / "kumar-apriori.npy", res)
+
+    res = tasks.run_helper.run_all_results(ds)
     res.to_csv(output_dir / "kumar.csv")
 
 

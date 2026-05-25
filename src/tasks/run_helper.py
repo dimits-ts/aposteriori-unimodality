@@ -1,9 +1,12 @@
 from pathlib import Path
+from itertools import combinations
+from collections.abc import Iterable
 import re
 
-import pandas as pd
-from tqdm.auto import tqdm
 import apunim
+import pandas as pd
+import numpy as np
+from tqdm.auto import tqdm
 
 from . import preprocessing
 
@@ -191,3 +194,208 @@ def significance_superscript(p):
         return r"$^{*}$"
     else:
         return ""
+
+
+def _compute_bins(
+    annotations: np.ndarray,
+    num_bins: int | None,
+) -> int:
+    """
+    Compute global histogram bin count.
+    """
+
+    flat_annotations = np.concatenate(
+        [np.asarray(x, dtype=float) for x in annotations]
+    )
+
+    bins = (
+        num_bins if num_bins is not None else len(np.unique(flat_annotations))
+    )
+
+    return max(bins, 2)
+
+
+def _iter_exhaustive_groups(
+    n: int,
+    min_group_size: int = 3,
+) -> Iterable[tuple[int, ...]]:
+    """
+    Yield ALL possible subsets of indices with size >= min_group_size.
+    """
+
+    for size in range(min_group_size, n + 1):
+        yield from combinations(range(n), size)
+
+
+def _iter_random_groups(
+    n: int,
+    iterations: int,
+    rng: np.random.Generator,
+    min_group_size: int = 3,
+) -> Iterable[np.ndarray]:
+    """
+    Yield random subsets of indices.
+
+    Group sizes are sampled uniformly from:
+        [min_group_size, n]
+    """
+
+    if n < min_group_size:
+        return
+
+    for _ in range(iterations):
+
+        size = rng.integers(min_group_size, n + 1)
+
+        idxs = rng.choice(
+            n,
+            size=size,
+            replace=False,
+        )
+
+        yield idxs
+
+
+def _evaluate_groups(
+    comm_ann: np.ndarray,
+    group_iterator: Iterable,
+    bins: int,
+) -> list[float]:
+    """
+    Compute DFU for a sequence of groups.
+    """
+
+    values = []
+
+    for idxs in group_iterator:
+
+        subset = comm_ann[list(idxs)]
+
+        if len(subset) < 3:
+            continue
+
+        val = apunim.dfu(
+            subset,
+            bins=bins,
+            normalized=True,
+        )
+
+        if np.isnan(val):
+            continue
+
+        values.append(val)
+
+    return values
+
+
+def _compute_comment_polarization(
+    dataset: preprocessing.Dataset,
+    group_generator_fn,
+    max_annotators: int,
+    num_bins: int | None = None,
+) -> np.ndarray:
+    """
+    Shared engine for polarization computation.
+    """
+
+    df = dataset.get_dataset()
+
+    annotation_col = dataset.get_annotation_column()
+    comment_col = dataset.get_comment_key_column()
+
+    df = df[[annotation_col, comment_col]].copy()
+
+    annotations = df[annotation_col].to_numpy()
+    comments = df[comment_col].to_numpy()
+
+    bins = _compute_bins(annotations, num_bins)
+
+    unique_comments = list(dict.fromkeys(comments))
+
+    comment_mins = []
+    all_group_values = {}
+
+    for cid in unique_comments:
+        mask = comments == cid
+
+        comm_ann = np.concatenate(
+            [np.asarray(x, dtype=float) for x in annotations[mask]]
+        )
+
+        n = len(comm_ann)
+
+        if n < 3 or n > max_annotators:
+            comment_mins.append(np.nan)
+            continue
+
+        base_dfu = apunim.dfu(
+            comm_ann,
+            bins=bins,
+            normalized=True,
+        )
+
+        if np.isnan(base_dfu):
+            comment_mins.append(np.nan)
+            continue
+
+        group_iterator = group_generator_fn(n=n)
+
+        values = _evaluate_groups(
+            comm_ann=comm_ann,
+            group_iterator=group_iterator,
+            bins=bins,
+        )
+
+        comment_mins.append(np.min(values) if values else np.nan)
+
+        all_group_values[cid] = values
+
+    return np.array(comment_mins)
+
+
+def compute_inherent_polarization_exhaustive(
+    dataset: preprocessing.Dataset,
+    num_bins: int | None = None,
+    max_annotators: int = 420,
+) -> np.ndarray:
+    """
+    Exhaustively evaluates ALL possible annotator groups.
+
+    Total groups per comment:
+
+    :contentReference[oaicite:0]{index=0}
+    """
+
+    return _compute_comment_polarization(
+        dataset=dataset,
+        group_generator_fn=_iter_exhaustive_groups,
+        num_bins=num_bins,
+        max_annotators=max_annotators,
+    )
+
+
+def compute_inherent_polarization_random(
+    dataset: preprocessing.Dataset,
+    iterations: int = 1_000,
+    num_bins: int | None = None,
+    seed: int | None = 42,
+    max_annotators: int = 420,
+) -> np.ndarray:
+    """
+    Randomly samples annotator groups.
+
+    Group size is sampled uniformly from:
+
+    :contentReference[oaicite:1]{index=1}
+    """
+
+    rng = np.random.default_rng(seed)
+
+    return _compute_comment_polarization(
+        dataset=dataset,
+        group_generator_fn=_iter_random_groups,
+        num_bins=num_bins,
+        max_annotators=max_annotators,
+        iterations=iterations,
+        rng=rng,
+    )

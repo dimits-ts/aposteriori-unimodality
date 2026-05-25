@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Iterable
+from collections.abc import Iterable
 
 import pandas as pd
 import numpy as np
@@ -8,28 +8,115 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
-from .tasks import run_helper
-from .tasks import graphs
+import tasks.graphs
+import tasks.run_helper
+
+
+def main(results_dir: Path, latex_output_dir: Path, graph_output_dir: Path):
+    tasks.graphs.graph_setup()
+    csv_to_latex(results_dir=results_dir, latex_output_dir=latex_output_dir)
+    ordinal_graph(results_dir=results_dir, graph_output_dir=graph_output_dir)
+    ordinal_graph_per_feature(
+        results_dir=results_dir, graph_output_dir=graph_output_dir
+    )
+    plot_dfu_histograms(
+        file_paths=list(results_dir.rglob("*.npy")),
+        graph_output_dir=graph_output_dir,
+    )
+    plot_sample_size_polarization(
+        csv_path=results_dir / "sample_size_polarization.csv",
+        output_path=graph_output_dir / "sample_size_polarization.png",
+    )
+
+
+def plot_dfu_histograms(
+    file_paths: list[str],
+    graph_output_dir: Path,
+    bins: int = 30,
+):
+    """
+    Plot histogram distributions per dataset with colorblind palette
+    and hatch patterns.
+    """
+    all_data = []
+
+    for path in file_paths:
+        path = Path(path)
+        label = " ".join(path.stem.split("-")[:-1]).capitalize()
+
+        arr = np.load(path)
+        arr = np.asarray(arr, dtype=float)
+        arr = arr[~np.isnan(arr)]
+
+        all_data.append(pd.DataFrame({"value": arr, "dataset": label}))
+
+    full_df = pd.concat(all_data, ignore_index=True)
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    datasets = sorted(full_df["dataset"].unique())
+    legend_handles = []
+    for i, (dataset, color, hatch) in enumerate(
+        zip(datasets, tasks.graphs.COLORBLIND_PALETTE, tasks.graphs.HATCHES)
+    ):
+        before = len(ax.patches)
+
+        sns.histplot(
+            data=full_df[full_df["dataset"] == dataset],
+            x="value",
+            bins=bins,
+            stat="density",
+            common_norm=False,
+            alpha=0.7,
+            color=color,
+            ax=ax,
+        )
+
+        # Only newly created bars
+        new_patches = ax.patches[before:]
+
+        for patch in new_patches:
+            patch.set_hatch(hatch)
+            patch.set_edgecolor("black")
+            patch.set_linewidth(0.3)
+
+        legend_handles.append(
+            plt.matplotlib.patches.Patch(
+                facecolor=color,
+                edgecolor="black",
+                hatch=hatch,
+                label=dataset,
+                alpha=0.4,
+            )
+        )
+
+    ax.set_xlabel("Inherent polarization")
+    ax.set_ylabel("Density")
+    ax.set_xlim(0, 1)
+
+    ax.legend(handles=legend_handles)
+
+    tasks.graphs.save_plot(graph_output_dir / "apriori.png")
+    plt.close()
 
 
 def csv_to_latex(results_dir: Path, latex_output_dir: Path) -> None:
     for result_file in results_dir.rglob("*.csv"):
-        dataset_name = result_file.stem
-        df = pd.read_csv(result_file)
-        df = df.loc[df.pvalue.notna()]
-        run_helper.results_to_latex(
-            res_df=df,
-            output_path=latex_output_dir / f"{dataset_name}.tex",
-            dataset_name=dataset_name,
-            table_label=f"tab:{dataset_name}",
-        )
+        if "sample_size" not in result_file.stem:
+            dataset_name = result_file.stem
+            df = pd.read_csv(result_file)
+            df = df.loc[df.pvalue.notna()]
+            tasks.run_helper.results_to_latex(
+                res_df=df,
+                output_path=latex_output_dir / f"{dataset_name}.tex",
+                dataset_name=dataset_name,
+                table_label=f"tab:{dataset_name}",
+            )
 
 
 def ordinal_graph_per_feature(
     results_dir: Path, graph_output_dir: Path
 ) -> None:
-    graphs.graph_setup()
-
     for file in results_dir.rglob("*.csv"):
         df = pd.read_csv(file)
         dataset = file.stem
@@ -82,8 +169,36 @@ def ordinal_graph_per_feature(
                 / f"apunim_ordinal_{dataset}_{safe_feature}.png"
             )
 
-            graphs.save_plot(out_path)
+            tasks.graphs.save_plot(out_path)
             plt.close()
+
+
+def plot_sample_size_polarization(csv_path: Path, output_path: Path):
+    df = pd.read_csv(csv_path)
+
+    _, ax = plt.subplots(figsize=(8, 5))
+
+    for dataset, group in df.groupby("dataset"):
+        color = sns.color_palette()[
+            list(df["dataset"].unique()).index(dataset)
+        ]
+        ax.plot(
+            group["sample_size"], group["mean"], label=dataset, color=color
+        )
+        ax.fill_between(
+            group["sample_size"],
+            group["mean"] - group["std"],
+            group["mean"] + group["std"],
+            alpha=0.2,
+            color=color,
+        )
+
+    ax.set_xlabel("Number of annotators")
+    ax.set_ylabel("Mean polarization")
+    ax.legend(title="Dataset")
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
 
 
 def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
@@ -125,10 +240,6 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
             if g.empty:
                 continue
 
-            # need at least two statistically significant groups
-            if (g.pvalue <= 0.05).sum() < 2:
-                continue
-
             g["ordinal"] = (
                 g[ordinal_col].astype(str).str.extract(r"^(\d+)").astype(int)
             )
@@ -165,17 +276,19 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
     highlight_group_1 = {
         "kumar-Religion Important",
         "dices-990-Age",
+        "kumar-Toxicity Problem",
+        "sap-Age",
     }
 
     highlight_group_2 = {
-        "kumar-Education",
-        "kumar-Toxicity Problem",
+        "kumar-Age",
         "kumar-Technology Impact",
+        "kumar-Education",
     }
 
-    COLOR_GROUP_1 = graphs.COLORBLIND_PALETTE[0]
-    COLOR_GROUP_2 = graphs.COLORBLIND_PALETTE[1]
-    COLOR_OTHER = graphs.COLORBLIND_PALETTE[2]
+    COLOR_GROUP_1 = tasks.graphs.COLORBLIND_PALETTE[0]
+    COLOR_GROUP_2 = tasks.graphs.COLORBLIND_PALETTE[1]
+    COLOR_OTHER = tasks.graphs.COLORBLIND_PALETTE[2]
 
     palette = {}
     for f in data_stretched["feature"].unique():
@@ -187,7 +300,7 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
             palette[f] = COLOR_OTHER
 
     # --- Plot ---
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(16, 8))
     ax = sns.lineplot(
         data=data_stretched,
         x="stretched_ordinal",
@@ -217,14 +330,13 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
         loc="lower center",
     )
 
-    plt.title("Apunim trends in ordinal variables")
     plt.xlabel("Order (low → high)")
-    plt.ylabel("Apunim value")
+    plt.ylabel("Apunim")
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     ax.set_xticks([])  # Remove x-axis ticks
 
-    graphs.save_plot(graph_output_dir / "apunim_ordinal.png")
+    tasks.graphs.save_plot(graph_output_dir / "apunim_ordinal.png")
 
 
 def add_grouped_legend(
@@ -279,6 +391,7 @@ def add_grouped_legend(
         legend_labels,
         frameon=True,
         loc=loc,
+        bbox_to_anchor=(1.3, 0),
     )
 
     # Make section headers bold
@@ -287,15 +400,6 @@ def add_grouped_legend(
             text.set_weight("bold")
 
     return legend
-
-
-def main(results_dir: Path, latex_output_dir: Path, graph_output_dir: Path):
-    graphs.graph_setup()
-    csv_to_latex(results_dir=results_dir, latex_output_dir=latex_output_dir)
-    ordinal_graph(results_dir=results_dir, graph_output_dir=graph_output_dir)
-    ordinal_graph_per_feature(
-        results_dir=results_dir, graph_output_dir=graph_output_dir
-    )
 
 
 if __name__ == "__main__":
