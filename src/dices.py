@@ -5,6 +5,9 @@ import pandas as pd
 import numpy as np
 from tqdm.auto import tqdm
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 import tasks.graphs
 import tasks.preprocessing
 import tasks.run_helper
@@ -133,9 +136,11 @@ def run_for_dataset(
         for _ in range(N_RUNS):
             subsampled_ds = subsample_dataset(ds, size, rng)
             result = tasks.run_helper.compute_inherent_polarization_random(
-                subsampled_ds
+                subsampled_ds, seed=None  # do not produce identical runs
             )
+            print(f"#Annotators: {size}, result: {result}")
             run_means.append(np.mean(result))
+
         rows.append(
             {
                 "dataset": ds.get_name(),
@@ -145,6 +150,34 @@ def run_for_dataset(
             }
         )
     return pd.DataFrame(rows)
+
+
+def plot_sample_size_polarization(csv_path: Path, output_path: Path):
+    df = pd.read_csv(csv_path)
+
+    _, ax = plt.subplots(figsize=(8, 5))
+
+    for dataset, group in df.groupby("dataset"):
+        color = sns.color_palette()[
+            list(df["dataset"].unique()).index(dataset)
+        ]
+        ax.plot(
+            group["sample_size"], group["mean"], label=dataset, color=color
+        )
+        ax.fill_between(
+            group["sample_size"],
+            group["mean"] - group["std"],
+            group["mean"] + group["std"],
+            alpha=0.2,
+            color=color,
+        )
+
+    ax.set_xlabel("Number of annotators")
+    ax.set_ylabel("Mean polarization")
+    ax.legend(title="Dataset")
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
 
 
 def main(
@@ -162,8 +195,8 @@ def main(
     res = tasks.run_helper.compute_inherent_polarization_random(ds_350)
     np.save(output_dir / "dices-350-apriori.npy", res)
 
-    res = tasks.run_helper.run_all_results(ds=ds_350)
-    res.to_csv(output_dir / "dices-350.csv")
+    #res = tasks.run_helper.run_all_results(ds=ds_350)
+    #res.to_csv(output_dir / "dices-350.csv")
 
     ds_990 = DicesDataset(dataset_path=dataset_path_large, variant="990")
     tasks.graphs.polarization_plot(
@@ -173,15 +206,20 @@ def main(
     res = tasks.run_helper.compute_inherent_polarization_random(ds_990)
     np.save(output_dir / "dices-990-apriori.npy", res)
 
-    res = tasks.run_helper.run_all_results(ds=ds_990)
-    res.to_csv(output_dir / "dices-990.csv")
+    #res = tasks.run_helper.run_all_results(ds=ds_990)
+    #res.to_csv(output_dir / "dices-990.csv")
 
     df_350 = run_for_dataset(ds_350, SAMPLE_SIZES)
     df_990 = run_for_dataset(ds_990, SAMPLE_SIZES)
 
     combined = pd.concat([df_350, df_990], ignore_index=True)
-    output_path = output_dir / "sample_size_polarization.csv"
-    combined.to_csv(output_path, index=False)
+    csv_path = output_dir / "sample_size_polarization.csv"
+    combined.to_csv(csv_path, index=False)
+
+    plot_sample_size_polarization(
+        csv_path=csv_path,
+        output_path=graph_output_dir / "sample_size_polarization.png",
+    )
 
 
 if __name__ == "__main__":

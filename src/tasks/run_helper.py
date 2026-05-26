@@ -1,7 +1,8 @@
+import re
 from pathlib import Path
 from itertools import combinations
 from collections.abc import Iterable
-import re
+from functools import partial
 
 import apunim
 import pandas as pd
@@ -380,22 +381,14 @@ def compute_inherent_polarization_random(
     num_bins: int | None = None,
     seed: int | None = 42,
     max_annotators: int = 420,
-) -> np.ndarray:
-    """
-    Randomly samples annotator groups.
-
-    Group size is sampled uniformly from:
-
-    :contentReference[oaicite:1]{index=1}
-    """
-
+):
     rng = np.random.default_rng(seed)
 
     return _compute_comment_polarization(
         dataset=dataset,
-        group_generator_fn=_iter_random_groups,
+        group_generator_fn=partial(
+            _iter_random_groups, iterations=iterations, rng=rng
+        ),
         num_bins=num_bins,
         max_annotators=max_annotators,
-        iterations=iterations,
-        rng=rng,
     )
