@@ -11,6 +11,8 @@ from matplotlib.lines import Line2D
 import tasks.graphs
 import tasks.run_helper
 
+MIN_SUPPORT = 50
+
 
 def main(results_dir: Path, latex_output_dir: Path, graph_output_dir: Path):
     tasks.graphs.graph_setup()
@@ -128,6 +130,7 @@ def ordinal_graph_per_feature(
 
             g = g[g["Unnamed: 1"].astype(str).str.match(r"^\d+\)")]
             g = g[g.apunim.notna()]
+            g = g[g["support"] >= MIN_SUPPORT]
             if g.empty:
                 continue
 
@@ -236,6 +239,7 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
                 df_group[ordinal_col].astype(str).str.match(r"^\d+\)")
             ].copy()
             g = g[g.pvalue.notna()]
+            g = g[g["support"] >= MIN_SUPPORT]
 
             if g.empty:
                 continue
@@ -277,14 +281,11 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
         "kumar-Religion Important",
         "dices-990-Age",
         "kumar-Toxicity Problem",
+        "kumar-Education",
         "sap-Age",
     }
 
-    highlight_group_2 = {
-        "kumar-Age",
-        "kumar-Technology Impact",
-        "kumar-Education",
-    }
+    highlight_group_2 = {}
 
     COLOR_GROUP_1 = tasks.graphs.COLORBLIND_PALETTE[0]
     COLOR_GROUP_2 = tasks.graphs.COLORBLIND_PALETTE[1]
@@ -326,7 +327,7 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
         group_1_title="Monotonic",
         group_2=highlight_group_2,
         group_2_title="Diverging",
-        others_title="Neither",
+        others_title="Other",
         loc="lower center",
     )
 
@@ -380,7 +381,9 @@ def add_grouped_legend(
                 legend_labels.append(f)
 
     add_group(group_1_title, group_1)
-    add_group(group_2_title, group_2)
+
+    if len(group_2) > 0:
+        add_group(group_2_title, group_2)
 
     other_features = [f for f in labels if f not in highlighted]
     if other_features:
