@@ -8,12 +8,12 @@ import tasks.graphs
 import tasks.preprocessing
 import tasks.run_helper
 
-NUM_COMMENTS = 60_000
-
 
 class KumarDataset(tasks.preprocessing.Dataset):
     def __init__(self, dataset_path: Path, num_samples: int | None = None):
-        self.df = KumarDataset._base_df(dataset_path, num_samples)
+        self.df = self._remove_invalid_ann_counts(
+            KumarDataset._base_df(dataset_path, num_samples)
+        )
 
     def get_name(self) -> str:
         return "Kumar et al. 2021"
@@ -199,8 +199,29 @@ class KumarDataset(tasks.preprocessing.Dataset):
         }
         return mapping.get(x, "Other")
 
+    @staticmethod
+    def _remove_invalid_ann_counts(
+        df: pd.DataFrame,
+    ) -> tasks.preprocessing.Dataset:
+        # --- There is a single comment with 650 annotators ---
+        df["annotator_count"] = df["Toxicity"].apply(_safe_len)
 
-def ordinal_to_yn_neutral(lst):
+        over_10_mask = df["annotator_count"] > 10
+
+        if over_10_mask.any():
+            over_10_df = pd.DataFrame(
+                {
+                    "comment": df.index[over_10_mask],
+                    "annotator_count": df.loc[over_10_mask, "annotator_count"],
+                }
+            ).sort_values("annotator_count", ascending=False)
+            print(f"#Comments with >10 annotators:{len(over_10_df)}")
+
+        df = df.loc[~over_10_mask].drop(columns=["annotator_count"])
+        return df
+
+
+def _ordinal_to_yn_neutral(lst):
     new_lst = []
     for x in lst:
         # extract the numeric prefix
@@ -217,15 +238,22 @@ def ordinal_to_yn_neutral(lst):
     return new_lst
 
 
-def map_age_list(age_map, lst):
+def _map_age_list(age_map, lst):
     return [age_map[x] for x in lst]
+
+
+def _safe_len(x):
+    try:
+        return len(x)
+    except Exception:
+        return 0
 
 
 def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
     tasks.graphs.graph_setup()
 
     print("Generating sample polarization plot...")
-    ds = KumarDataset(dataset_path=dataset_path, num_samples=NUM_COMMENTS)
+    ds = KumarDataset(dataset_path=dataset_path, num_samples=30_000)
     tasks.graphs.polarization_plot(
         ds=ds, output_path=graph_output_dir / "kumar_sample.png"
     )

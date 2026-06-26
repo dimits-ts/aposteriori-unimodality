@@ -45,7 +45,7 @@ def main(
     )
     sap_ds = sap.SapDataset(dataset_path=sap_path)
     kumar_ds = kumar.KumarDataset(
-        dataset_path=kumar_path, num_samples=kumar.NUM_COMMENTS
+        dataset_path=kumar_path, num_samples=30_000
     )
     datasets = [dices350_ds, dices990_ds, sap_ds, kumar_ds]
 
@@ -63,7 +63,6 @@ def main(
         escape=True,
     )
 
-    kumar_ds = cull_kumar_ds(kumar_ds)
     plot_annotator_count_histogram_from_datasets(
         datasets=datasets,
         graph_path=graph_dir / "annotator_count_histogram.png",
@@ -81,7 +80,7 @@ def main(
 
     plot_variance_curve(
         variance_df,
-        graph_path=graph_dir / "ndfu_std_error_sample_size.png",
+        graph_path=graph_dir / "pol_obs_subsampling_robustness.png",
     )
 
 
@@ -120,8 +119,6 @@ def sample_se_vs_sample_size_unimodality(
     results: list[dict[str, typing.Any]] = []
 
     for size in tqdm(range(min_size, max_size + 1, step), desc="#Annotators"):
-        iter_sds: list[float] = []
-
         for _ in tqdm(range(iters), desc="#Iterations", leave=False):
             sample_stats: list[float] = []
 
@@ -142,7 +139,7 @@ def sample_se_vs_sample_size_unimodality(
                 annotations = np.array(anns)
                 groups = np.array(grps)
 
-                idx = np.random.choice(n_ann, size=size, replace=False)
+                idx = np.random.choice(n_ann, size=size)
                 sub_ann = annotations[idx]
                 sub_grp = groups[idx]
 
@@ -156,15 +153,12 @@ def sample_se_vs_sample_size_unimodality(
 
             if len(sample_stats) > 1:
                 sd = float(np.std(sample_stats, ddof=1))
-                iter_sds.append(sd)
-
-        if len(iter_sds) > 0:
-            results.append(
-                {
-                    "sample_size": size,
-                    "standard_deviation": float(np.mean(iter_sds)),
-                }
-            )
+                results.append(
+                    {
+                        "sample_size": size,
+                        "standard_deviation": sd,
+                    }
+                )
 
     return pd.DataFrame(results)
 
@@ -178,30 +172,24 @@ def plot_variance_curve(results_df, graph_path: Path):
 
     plt.figure(figsize=(10, 6))
 
-    if "dataset" in results_df.columns:
-        # plot each dataset separately to control markers and colors
-        for ds_name, subdf in results_df.groupby("dataset"):
-            marker = MARKERS[ds_name]
+    for ds_name, subdf in results_df.groupby("dataset"):
+        marker = MARKERS[ds_name]
 
-            # lineplot for dataset
-            sns.lineplot(
-                data=subdf,
-                x="sample_size",
-                y="standard_deviation",
-                marker=marker,
-                label=ds_name,
-            )
-    else:
+        # lineplot for dataset
         sns.lineplot(
-            data=results_df,
+            data=subdf,
             x="sample_size",
             y="standard_deviation",
-            marker="o",
+            errorbar=("ci", 95),
+            marker=marker,
+            label=ds_name,
         )
 
-    plt.xlabel(r"\# Annotators")
-    plt.ylabel("Std deviation of $pol_{obs.}$")
-    plt.title("Robustness of $pol_{obs.}$ depends on the number of annotators")
+    plt.xlabel(r"\# Annotators sampled per comment")
+    plt.ylabel("Mean SD deviation of $pol_{obs.}$ across comments")
+    plt.title(
+        "Effect of annotator sample size on $pol_{obs.}$ estimate variability"
+    )
     plt.grid(True)
     plt.tight_layout()
 
@@ -320,36 +308,13 @@ def get_annotator_counts_df(
         tmp = pd.DataFrame(
             {
                 "dataset": ds_name,
-                "n_annotators": df[ann_col].apply(_safe_len),
+                "n_annotators": df[ann_col].apply(len),
             }
         )
         rows.append(tmp)
 
     all_df = pd.concat(rows, ignore_index=True).dropna(subset=["n_annotators"])
     return all_df
-
-
-def cull_kumar_ds(
-    kumar_ds: tasks.preprocessing.Dataset,
-) -> tasks.preprocessing.Dataset:
-    # --- There is a single comment with 650 annotators ---
-    df = kumar_ds.get_dataset()
-    df["annotator_count"] = df["Toxicity"].apply(_safe_len)
-
-    over_10_mask = df["annotator_count"] > 10
-
-    if over_10_mask.any():
-        over_10_df = pd.DataFrame(
-            {
-                "comment": df.index[over_10_mask],
-                "annotator_count": df.loc[over_10_mask, "annotator_count"],
-            }
-        ).sort_values("annotator_count", ascending=False)
-        print(f"#Comments with >10 annotators:{len(over_10_df)}")
-
-    df = df.loc[~over_10_mask].drop(columns=["annotator_count"])
-    kumar_ds.df = df
-    return kumar_ds
 
 
 def get_statistics_df(all_df: pd.DataFrame) -> pd.DataFrame:
@@ -362,13 +327,6 @@ def get_statistics_df(all_df: pd.DataFrame) -> pd.DataFrame:
         .describe()  # computes count, mean, std, min, 25%, 50%, 75%, max
         .rename_axis(index=None)  # optional: cleaner row index name
     )
-
-
-def _safe_len(x):
-    try:
-        return len(x)
-    except Exception:
-        return 0
 
 
 if __name__ == "__main__":
