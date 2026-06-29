@@ -216,13 +216,14 @@ def plot_annotation_distributions(
 
     # clearer matrix-style labels
     fig.supxlabel(
-        "Low disagreement $\\rightarrow$ High disagreement",
+        "Low $\\rightarrow$ High disagreement",
         fontweight="bold",
         y=0.08,  # avoid legend
+        fontsize=36
     )
 
     fig.supylabel(
-        "Low polarization $\\rightarrow$ High polarization", fontweight="bold"
+        "Low $\\rightarrow$ High polarization", fontweight="bold", fontsize=36
     )
 
     fig.suptitle(
