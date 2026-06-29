@@ -376,9 +376,7 @@ def compute_inherent_polarization_exhaustive(
 
 def compute_inherent_polarization_random(
     dataset: preprocessing.Dataset,
-    iterations: int = 1_000,
     num_bins: int | None = None,
-    seed: int | None = 42,
     max_annotators: int = 420,
 ) -> np.ndarray:
     """
@@ -388,14 +386,9 @@ def compute_inherent_polarization_random(
 
     :contentReference[oaicite:1]{index=1}
     """
-
-    rng = np.random.default_rng(seed)
-
     return _compute_comment_polarization(
         dataset=dataset,
         group_generator_fn=_iter_random_groups,
         num_bins=num_bins,
-        max_annotators=max_annotators,
-        iterations=iterations,
-        rng=rng,
+        max_annotators=max_annotators
     )

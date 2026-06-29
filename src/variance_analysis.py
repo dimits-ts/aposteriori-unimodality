@@ -45,7 +45,7 @@ def main(
     )
     sap_ds = sap.SapDataset(dataset_path=sap_path)
     kumar_ds = kumar.KumarDataset(
-        dataset_path=kumar_path, num_samples=30_000
+        dataset_path=kumar_path, num_samples=10_000
     )
     datasets = [dices350_ds, dices990_ds, sap_ds, kumar_ds]
 
