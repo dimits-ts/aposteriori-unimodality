@@ -165,10 +165,8 @@ def sample_se_vs_sample_size_unimodality(
 
 def plot_variance_curve(results_df, graph_path: Path):
     # ensure proper ordering
-    if "dataset" in results_df.columns:
-        results_df = results_df.sort_values(["dataset", "sample_size"])
-    else:
-        results_df = results_df.sort_values(["sample_size"])
+
+    results_df = results_df.sort_values(["dataset", "sample_size"])
 
     plt.figure(figsize=(10, 6))
 
@@ -180,15 +178,15 @@ def plot_variance_curve(results_df, graph_path: Path):
             data=subdf,
             x="sample_size",
             y="standard_deviation",
-            errorbar=("ci", 95),
+            errorbar=("sd", 2),
             marker=marker,
             label=ds_name,
         )
 
     plt.xlabel(r"\# Annotators sampled per comment")
-    plt.ylabel("Mean SD deviation of $pol_{obs.}$ across comments")
+    plt.ylabel("Mean SD of $pol_{obs.}$ across comments")
     plt.title(
-        "Effect of annotator sample size on $pol_{obs.}$ estimate variability"
+        "Effect of annotator sample size on $pol_{obs.}$ variability"
     )
     plt.grid(True)
     plt.tight_layout()
