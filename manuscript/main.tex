@@ -251,7 +251,7 @@ We systematically explore the space of annotator groups by generating random par
 	\label{fig:apriori}
 \end{figure}
 
-We compute the inherent polarization for each comment across the four datasets. For Sap and Kumar, we use the exhaustive formulation (Eq.~\ref{eq:inherent}), whereas for the two DICES datasets we rely on the Monte Carlo approximation with $k=1000$ (Eq.~\ref{eq:random}). Fig.~\ref{fig:apriori} shows that in all DICES comments there exists at least one group that fully accounts for the observed polarization.\footnote{$Pol_{inh}^{MC}(c)=0 \Rightarrow Pol_{inh}(c)=0$ due to Eq.~\ref{eq:lower-bound}. The same logic applies if we tried to increase the number of random partitions in Eq.~\ref{eq:random}.} Interestingly, this observation does not hold for the Kumar and Sap datasets, despite evaluating all possible annotator groups exhaustively.
+We compute the inherent polarization for each comment across the four datasets. For Sap and Kumar, we use the exhaustive formulation (Eq.~\ref{eq:inherent}), whereas for the two DICES datasets we rely on the Monte Carlo approximation with $k=1000$ (Eq.~\ref{eq:random}). Fig.~\ref{fig:apriori} shows that in all DICES comments there exists at least one group that fully accounts for the observed polarization.\footnote{$Pol_{inh}^{MC}(c)=0 \Rightarrow Pol_{inh}(c)=0$ due to Eq.~\ref{eq:lower-bound}. The same logic applies if we tried to increase the number of random partitions in Eq.~\ref{eq:random}.} Interestingly, this observation does not hold for the Kumar and Sap datasets, despite evaluating all possible annotator groups exhaustively. Table~\ref{tab:inherent-examples}; App.~\ref{app:inherent} shows a few examples of comments with inherent polarization compared to those with none.
 
 \begin{finding}
 	\label{finding:inherent}
@@ -260,10 +260,11 @@ We compute the inherent polarization for each comment across the four datasets. 
 
 
 \subsubsection{Why does it exist?}
+\label{sec:inherent:why}
 
-We first hypothesized that the DICES datasets have no inherent polarization because of their large annotator count per item. However, repeating the experiment for subsets of (5--50) annotators sampled ten times with replacement also leads to zero inherent polarization. Alternatively, it could be attributed to their low overall polarization, although it is exceedingly unlikely that this pattern would hold for all $115{,}153$ comments, given that some do exhibit significant polarization (see Fig.~\ref{fig:dataset-polarization}; App.~\ref{sec:app:ann_details}).\footnote{We note that there may exist a correlation between controversial, ambiguous statements and higher inherent polarization---see the examples in Table~\ref{tab:inherent-examples}; App~\ref{app:examples}.}
+We first hypothesized that the DICES datasets have no inherent polarization because of their large annotator count per item. However, repeating the experiment for subsets of (5--50) annotators sampled ten times with replacement also leads to zero inherent polarization (App.~\ref{app:inherent}). Alternatively, it could be attributed to their low overall polarization, although it is exceedingly unlikely that this pattern would hold for all $115{,}153$ comments, given that some do exhibit significant polarization (see Fig.~\ref{fig:dataset-polarization}; App.~\ref{sec:app:ann_details}).\footnote{We note that there may exist a correlation between controversial, ambiguous statements and higher inherent polarization---see the examples in Table~\ref{tab:inherent-examples}; App~\ref{app:inherent}.}
 
-Thus, we hypothesize that this phenomenon is caused by the existence of groups that are only partially represented i.e., although they could in principle explain the observed polarization, this may \emph{not be detectable when represented by only one or two annotators} in most comments (since these groups are discarded---\S\ref{sec:inherent:inherent}). This finding suggests that current \ac{nlp} datasets may be \emph{lacking fundamental information} for analyzing annotator behavior, especially in very subjective and sensitive tasks. %Even though the Kumar dataset employs an impressive $17{,}280$ annotators in total, the lack of annotations per comment results in a large section of these comments featuring unattributable polarization.
+Thus, we hypothesize that this phenomenon is caused by the existence of groups that are only partially represented. Although these groups explain the observed polarization, we may not be able to detect it \emph{when represented by only one or two annotators} in most comments, since these groups are discarded (\S\ref{sec:inherent:inherent}). This finding suggests that current \ac{nlp} datasets may be \emph{lacking fundamental information} for analyzing annotator behavior, especially in subjective and sensitive tasks. %Even though the Kumar dataset employs an impressive $17{,}280$ annotators in total, the lack of annotations per comment results in a large section of these comments featuring unattributable polarization.
 
 
 \subsection{Polarization is directional}
@@ -479,7 +480,7 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 
 \begin{figure}[t]
 	\includegraphics[width=\linewidth]{apunim_ordinal.png}
-	\caption{Polarization attribution trends in ordinal groups. The left side of the x-axis (low orders) refers to young annotators, low education, low religiousness, and negativity towards the impacts of toxicity and technology. The full ordinal modes for each dimension and their individual labels can be found in App.~\ref{app:full}. We exclude groups with $<50$ comments.}
+	\caption{Polarization attribution trends in ordinal groups. The left side of the x-axis refers to young annotators, low education, low religiousness, and negativity towards the impacts of toxicity and technology. The full ordinal modes for each dimension and their individual labels can be found in App.~\ref{app:full}. We exclude groups with $<50$ comments, since they near-universally result in zero apunim values due to lack of data.}
 	\label{fig:ordinal}
 \end{figure}
 
@@ -595,11 +596,40 @@ Replacing the parametric means test with a non-parametric alternative would rela
 While the test operates on a single group in principle, in practice we often want to test polarization for all subgroups of a specific dimension. Since we are simultaneously considering multiple hypotheses, we apply a multiple comparison correction to the resulting p-values---specifically the Holms method~\cite{holms}. The test is parameterized by the \ac{fwer}, which is used to tune the strength of the correction; we can increase this value to make our test more conservative towards multiple hypotheses~\cite{ChenFengYi2017}). In general, it is safe to set \ac{fwer} equal to the significance level of our test (e.g., $\textit{FWER} = 0.95$ if we are looking for $p < 0.05$).
 
 
-\section{Examples}
-\label{app:examples}
+\section{Software}
+\label{app:software}
+
+\subsection{Installation and usage}
+We release the \texttt{apunim} package, which is a Python library that implements both the \ac{ndfu} and apunim calculations, as well as its statistical test. The software is available on PyPi We also provide high-level documentation in HTML format that includes an introduction, guide, and full low-level documentation for each of the two provided functions (\doclink).
+
+The code is open-source, licensed under the \ac{gpl} and can be found on the project's repository (\explink). The library is cross-platform, works for any Python 3 version, and requires very few dependencies (namely \texttt{numpy, scipy, statsmodels}).
+
+\subsection{Implementation details}
+By default, the computation of the apunim values happens on a single thread. In cases of serious computational cost, we recommend running the apunim calculation on multiple concurrent processes, since all operations are CPU-bound and thread-safe. This may be useful in cases where there are multiple \ac{pc} dimensions, each of which is computationally expensive. 
+
+In order to lower the computational cost required, we re-use the random partitions $\tilde{r}_i$), which are originally calculated to obtain the apriori polarization values (see Eq.~\ref{eq:apriori}), for the p-value calculations (\S\ref{sec:apunim:statistical}). This means that in our current implementation, the number of groups for estimating apriori polarization ($\tilde{r}_i$ in Eq.~\ref{eq:apriori}), and the number of apunim values used in the p-value calculation have to be the same.
+
+
+\subsection{Replication Details}
+\label{app:replication}
+
+We use version \texttt{1.0.2} of the \texttt{apunim} library for our experiments. We use 100 random iterations for the apriori value calculation (Eq.~\ref{eq:apriori}) and the p-value estimation (\S\ref{sec:apunim:statistical}), and set a \ac{fwer} rate of $.95$.
+
+While the library efficiently handles large numbers of annotators through vectorized operations, performance degrades significantly when processing a high volume of comments, particularly when annotators belong to multiple distinct groups. For instance, while experiments across all datasets in \S\ref{sec:inherent:datasets} complete within a minute, the Kumar dataset necessitates approximately one hour of computation using commercial hardware. Furthermore, the annotator variance analysis detailed in \S\ref{sec:apunim:ann-size} required over ten hours. While this latter time requirement is anticipated due to the inherently demanding nature and non-standard application of our library, it demonstrates the existence of a potential scaling bottleneck. The same applies to a lesser extent for the subsampling experiments on the DICES datasets, taking collectively three hours of computation.
+
+We hypothesize that this bottleneck is likely caused by repeated creation of numpy arrays, resulting in repeated memory allocations for each subgroup, in each comment, for each \ac{pc} dimension. We plan on profiling and addressing it in the next releases of our software. Until then, we suggest either using multiprocessing for each \ac{pc} subgroup, or running the different experiments in parallel (indeed, we use the \texttt{gnu-parallel} package~\cite{tange_2025_16944306} for our own experiments). We also note that the Kumar dataset also requires substantial RAM resources, estimated around 42--46GB of dedicated RAM should the whole dataset be considered.
+
+Finally, we note that in Fig.~\ref{fig:std_error}, we removed values where there was a lack of items annotated by the specified number of annotators (e.g., only 7\% of comments in DICES-990 were annotated by more than 73 annotators---see App.~\ref{sec:app:ann_details}).
+
+
+\section{Analyzing inherent polarization further}
+\label{app:inherent}
 
 Table~\ref{tab:inherent-examples} shows a random sample of comments taken from the Sap dataset and their respective inherent polarization values (\S\ref{sec:inherent:inherent}). Note that explicitly toxic or racist comments tend to have inherent polarization values of zero, alongside clearly unproblematic comments. Inversely, more ambiguous and less comprehensible comments tend to have larger inherent polarization values. This pattern may suggest that inherent polarization may be tied to the overall ambiguity of the statements, especially in cases where comments may either be interpreted as very toxic, or non-toxic, which agrees with the overall goal of \ac{ndfu} (\S\ref{sec:related:polarization}).
 We include the inherent polarization values for each individual comment for all four datasets in the supplementary material.
+
+In order to investigate whether the numerous annotators per comments can explain the lack of inherent polarization in the DICES datasets (\S\ref{sec:inherent:why}) we gradually subsample the annotators for each comment randomly with replacement, starting from five annotators per comment, and scaling up to the full complement of annotators in the dataset with a step of two. For each such step, we choose ten annotator samples and compute the mean inherent polarization across all runs. Fig.~\ref{fig:dices-ablation} demonstrates that even with annotator counts similar to the Kumar and DICES datasets, inherent polarization remains zero, suggesting that the absence of inherent polarization can not be attributed to annotator number alone---rather, it must be a pattern attributable to the DICES datasets themselves. 
+
 
 \begin{table*}[t]
 	\begin{tabularx}{\textwidth}{X c}
@@ -630,30 +660,12 @@ We include the inherent polarization values for each individual comment for all 
 \end{table*}
 
 
-\section{Software}
-\label{app:software}
-
-\subsection{Installation and usage}
-We release the \texttt{apunim} package, which is a Python library that implements both the \ac{ndfu} and apunim calculations, as well as its statistical test. The software is available on PyPi We also provide high-level documentation in HTML format that includes an introduction, guide, and full low-level documentation for each of the two provided functions (\doclink).
-
-The code is open-source, licensed under the \ac{gpl} and can be found on the project's repository (\explink). The library is cross-platform, works for any Python 3 version, and requires very few dependencies (namely \texttt{numpy, scipy, statsmodels}).
-
-\subsection{Implementation details}
-By default, the computation of the apunim values happens on a single thread. In cases of serious computational cost, we recommend running the apunim calculation on multiple concurrent processes, since all operations are CPU-bound and thread-safe. This may be useful in cases where there are multiple \ac{pc} dimensions, each of which is computationally expensive. 
-
-In order to lower the computational cost required, we re-use the random partitions $\tilde{r}_i$), which are originally calculated to obtain the apriori polarization values (see Eq.~\ref{eq:apriori}), for the p-value calculations (\S\ref{sec:apunim:statistical}). This means that in our current implementation, the number of groups for estimating apriori polarization ($\tilde{r}_i$ in Eq.~\ref{eq:apriori}), and the number of apunim values used in the p-value calculation have to be the same.
-
-
-\subsection{Replication Details}
-\label{app:replication}
-
-We use version \texttt{1.0.2} of the \texttt{apunim} library for our experiments. We use 100 random iterations for the apriori value calculation (Eq.~\ref{eq:apriori}) and the p-value estimation (\S\ref{sec:apunim:statistical}), and set a \ac{fwer} rate of $.95$.
-
-In ~\ref{fig:std_error}, we removed values where there was a lack of items annotated by the specified number of annotators (e.g., only 7\% of comments in DICES-990 were annotated by more than 73 annotators---see App.~\ref{sec:app:ann_details}).
-
-While the library efficiently handles a large number of annotators through vectorized operations, performance degrades significantly when processing a high volume of comments, particularly when annotators belong to multiple distinct groups. For instance, while experiments across all datasets in \S\ref{sec:inherent:datasets} complete within a minute, the Kumar dataset necessitates approximately one hour of computation using commercial hardware. Furthermore, the annotator variance analysis detailed in \S\ref{sec:apunim:ann-size} required over ten hours. While this latter time requirement is anticipated due to the inherently demanding nature and non-standard application of our library, it demonstrates the existence of a potential scaling bottleneck. We hypothesize that this bottleneck is likely caused by repeated creation of numpy arrays, resulting in repeated memory allocations for each subgroup, in each comment, for each \ac{pc} dimension. We plan on profiling and addressing it in the next releases of our software. Until then, we suggest either using multiprocessing for each \ac{pc} subgroup, or running the different experiments in parallel (indeed, we use the \texttt{gnu-parallel} package~\cite{tange_2025_16944306} for our own experiments). 
-
-We also note that the Kumar dataset also requires substantial RAM resources, estimated around 42--46GB of dedicated RAM. While all other experiments were ran on commercial hardware, we had to use a dedicated server for the former.
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=\linewidth]{sample_size_polarization}
+	\caption{Inherent polarization for both DICES datasets averaged across ten runs, subsampling annotators starting from five to the actual number of annotators with a step of two. Inherent polarization remains zero, no matter how many annotators per comment are considered.}
+	\label{fig:dices-ablation}
+\end{figure}
 
 
 \section{Full Results}

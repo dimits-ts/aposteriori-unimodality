@@ -74,9 +74,9 @@ class DicesDataset(tasks.preprocessing.Dataset):
         # add numbers for proper ordering during export
         df = df.replace(
             {
-                "gen x+": "1) Gen. X+",
+                "gen x+": "3) Gen. X+",
                 "millenial": "2) Millennial",
-                "gen z": "3) Gen. Z",
+                "gen z": "1) Gen. Z",
             }
         )
 

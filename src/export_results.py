@@ -218,7 +218,7 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
     # --- Collect all data first ---
     for file in results_dir.rglob("*.csv"):
         df = pd.read_csv(file)
-        dataset = file.stem
+        dataset = file.stem.replace("-results", "")
 
         if "SDB Feature" not in df.columns:
             continue
@@ -325,14 +325,14 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
     add_grouped_legend(
         ax,
         group_1=highlight_group_1,
-        group_1_title="Monotonic",
+        group_1_title="Directional",
         group_2=highlight_group_2,
         group_2_title="Diverging",
         others_title="Other",
         loc="lower center",
     )
 
-    plt.xlabel("Order (low → high)")
+    plt.xlabel(r"Order (low $\rightarrow$ high)")
     plt.ylabel("Apunim")
     plt.grid(True, alpha=0.3)
     plt.tight_layout()

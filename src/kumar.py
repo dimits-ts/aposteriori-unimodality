@@ -77,6 +77,7 @@ class KumarDataset(tasks.preprocessing.Dataset):
             "High School graduate",
             "No high school",
         ]
+        ranking.reverse()
 
         # create a mapping with ordinal prefix: 1), 2), 3)...
         ordinal_map = {
