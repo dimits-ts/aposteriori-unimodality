@@ -261,7 +261,7 @@ We compute the inherent polarization for each comment across the four datasets. 
 
 \subsubsection{Why does it exist?}
 
-We first hypothesized that the DICES datasets have no inherent polarization because of their large annotator counts. However, repeating the experiment for subsets of (5--50) annotators sampled ten times with replacement also leads to zero inherent polarization. Alternatively, it could be attributed to their low overall polarization, although it is exceedingly unlikely that this pattern would hold for all $115{,}153$ comments, given that some do exhibit significant polarization (see Fig.~\ref{fig:dataset-polarization}; App.~\ref{sec:app:ann_details}).
+We first hypothesized that the DICES datasets have no inherent polarization because of their large annotator count per item. However, repeating the experiment for subsets of (5--50) annotators sampled ten times with replacement also leads to zero inherent polarization. Alternatively, it could be attributed to their low overall polarization, although it is exceedingly unlikely that this pattern would hold for all $115{,}153$ comments, given that some do exhibit significant polarization (see Fig.~\ref{fig:dataset-polarization}; App.~\ref{sec:app:ann_details}).\footnote{We note that there may exist a correlation between controversial, ambiguous statements and higher inherent polarization---see the examples in Table~\ref{tab:inherent-examples}; App~\ref{app:examples}.}
 
 Thus, we hypothesize that this phenomenon is caused by the existence of groups that are only partially represented i.e., although they could in principle explain the observed polarization, this may \emph{not be detectable when represented by only one or two annotators} in most comments (since these groups are discarded---\S\ref{sec:inherent:inherent}). This finding suggests that current \ac{nlp} datasets may be \emph{lacking fundamental information} for analyzing annotator behavior, especially in very subjective and sensitive tasks. %Even though the Kumar dataset employs an impressive $17{,}280$ annotators in total, the lack of annotations per comment results in a large section of these comments featuring unattributable polarization.
 
@@ -595,6 +595,41 @@ Replacing the parametric means test with a non-parametric alternative would rela
 While the test operates on a single group in principle, in practice we often want to test polarization for all subgroups of a specific dimension. Since we are simultaneously considering multiple hypotheses, we apply a multiple comparison correction to the resulting p-values---specifically the Holms method~\cite{holms}. The test is parameterized by the \ac{fwer}, which is used to tune the strength of the correction; we can increase this value to make our test more conservative towards multiple hypotheses~\cite{ChenFengYi2017}). In general, it is safe to set \ac{fwer} equal to the significance level of our test (e.g., $\textit{FWER} = 0.95$ if we are looking for $p < 0.05$).
 
 
+\section{Examples}
+\label{app:examples}
+
+Table~\ref{tab:inherent-examples} shows a random sample of comments taken from the Sap dataset and their respective inherent polarization values (\S\ref{sec:inherent:inherent}). Note that explicitly toxic or racist comments tend to have inherent polarization values of zero, alongside clearly unproblematic comments. Inversely, more ambiguous and less comprehensible comments tend to have larger inherent polarization values. This pattern may suggest that inherent polarization may be tied to the overall ambiguity of the statements, especially in cases where comments may either be interpreted as very toxic, or non-toxic, which agrees with the overall goal of \ac{ndfu} (\S\ref{sec:related:polarization}).
+We include the inherent polarization values for each individual comment for all four datasets in the supplementary material.
+
+\begin{table*}[t]
+	\begin{tabularx}{\textwidth}{X c}
+		\toprule
+		\textbf{Comment}  & \textbf{Inh. Pol.} \\
+		\midrule
+		The minks mentioned in the headline are indeed "rising" from where they were based, but that is due to them being buried in shallow mass graves (Africa) and filling with gas that causes them to rise out.  Rest assured, they're still very much dead, thankfully!. & 1 \\
+		There should be such thing as a bitch resistance for us women  & 1\\
+		There's a big difference between being a bitch and being a woman & 1 \\
+		i just watched a video of @joisnotonfire being an annoying hoe on skype i'm laughing & 1 \\
+		niggas love to commit crime & 1 \\
+		\midrule
+		I swear to God above I love ya and when ya be with this brotha, I swear I love you my bro as long as you not a nigga & 0.5 \\
+		I will become a cold ass bitch because of my treatment & 0.5\\
+		I would happily lay out a nigga & 0.5\\
+		Shoot yourself in the head you hypersensitive fuckin bitch.  & 0.5 \\
+		not all women are bitches, but all bitches are women & 0.5 \\
+		\midrule
+		`` you ugly bitch!!!"- that seems to be my real name these days'' & 0 \\
+		``I am happy to report that drowning does kill this demonic entity. Oh holy are the waters of Chernarus!"" Omg, DED ;)''& 0\\
+		``Let them praise the name of the LORD: for his name alone is excellent; his glory is above the earth and heaven."" ~Psalms 148:13 \#Bible''& 0\\
+		someone plz get this nigger some help. He's playing up like mad & 0\\
+		stop talking you fucking nigger ! & 0 \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Sample of comments from the Sap dataset and their inherent polarization. Note that unambiguously toxic comments can be assigned with zero inherent polarization, while more nuanced cases tend to have higher values.}
+	\label{tab:inherent-examples}
+\end{table*}
+
+
 \section{Software}
 \label{app:software}
 
@@ -817,7 +852,6 @@ We also note that the Kumar dataset also requires substantial RAM resources, est
 	\caption{Apunim results for the DICES-990 Dataset. $^{*}$ denotes $p<0.10$, $^{**}$ denotes $p<0.05$, and $^{***}$ denotes $p<0.01$.  Rows shaded in gray indicate a negative $\text{apunim}$ value. Groups for which no polarized comments among groups not included.}
 	\label{tab:dices990-full}
 \end{table}
-
 
 
 \end{document}

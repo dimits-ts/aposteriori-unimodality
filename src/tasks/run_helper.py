@@ -293,9 +293,15 @@ def _compute_comment_polarization(
     group_generator_fn,
     max_annotators: int,
     num_bins: int | None = None,
-) -> np.ndarray:
+) -> pd.Series:
     """
     Shared engine for polarization computation.
+
+    Returns
+    -------
+    pd.Series
+        Series indexed by the comment text, with the inherent
+        polarization value for that comment.
     """
 
     df = dataset.get_dataset()
@@ -350,16 +356,23 @@ def _compute_comment_polarization(
 
         all_group_values[cid] = values
 
-    return np.array(comment_mins)
+    return pd.Series(
+        comment_mins, index=unique_comments, name="inherent_polarization"
+    )
 
 
 def compute_inherent_polarization_exhaustive(
     dataset: preprocessing.Dataset,
     num_bins: int | None = None,
     max_annotators: int = 420,
-) -> np.ndarray:
+) -> pd.Series:
     """
     Exhaustively evaluates ALL possible annotator groups.
+
+    Returns
+    -------
+    pd.Series
+        Series indexed by comment text, with inherent polarization values.
 
     Total groups per comment:
 
@@ -378,17 +391,27 @@ def compute_inherent_polarization_random(
     dataset: preprocessing.Dataset,
     num_bins: int | None = None,
     max_annotators: int = 420,
-) -> np.ndarray:
+    iterations: int = 1000,
+    seed: int = 42,
+) -> pd.Series:
     """
     Randomly samples annotator groups.
+
+    Returns
+    -------
+    pd.Series
+        Series indexed by comment text, with inherent polarization values.
 
     Group size is sampled uniformly from:
 
     :contentReference[oaicite:1]{index=1}
     """
+    rng = np.random.default_rng(seed)
     return _compute_comment_polarization(
         dataset=dataset,
-        group_generator_fn=_iter_random_groups,
+        group_generator_fn=lambda n: _iter_random_groups(
+            n, iterations=iterations, rng=rng
+        ),
         num_bins=num_bins,
-        max_annotators=max_annotators
+        max_annotators=max_annotators,
     )

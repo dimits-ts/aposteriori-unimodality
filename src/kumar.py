@@ -2,7 +2,6 @@ import argparse
 from pathlib import Path
 
 import pandas as pd
-import numpy as np
 
 import tasks.graphs
 import tasks.preprocessing
@@ -202,7 +201,7 @@ class KumarDataset(tasks.preprocessing.Dataset):
     @staticmethod
     def _remove_invalid_ann_counts(
         df: pd.DataFrame,
-    ) -> tasks.preprocessing.Dataset:
+    ) -> pd.DataFrame:
         # --- There is a single comment with 650 annotators ---
         df["annotator_count"] = df["Toxicity"].apply(_safe_len)
 
@@ -261,10 +260,12 @@ def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
     res = tasks.run_helper.compute_inherent_polarization_exhaustive(
         dataset=ds, max_annotators=6
     )
-    np.save(output_dir / "kumar-apriori.npy", res)
+    res.to_csv(
+        output_dir / "kumar-inherent.csv", header=True, index_label="comment"
+    )
 
     res = tasks.run_helper.run_all_results(ds)
-    res.to_csv(output_dir / "kumar.csv")
+    res.to_csv(output_dir / "kumar-results.csv")
 
 
 if __name__ == "__main__":

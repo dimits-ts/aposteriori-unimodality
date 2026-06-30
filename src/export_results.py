@@ -16,13 +16,16 @@ MIN_SUPPORT = 50
 
 def main(results_dir: Path, latex_output_dir: Path, graph_output_dir: Path):
     tasks.graphs.graph_setup()
-    csv_to_latex(results_dir=results_dir, latex_output_dir=latex_output_dir)
+    csv_to_latex(
+        result_paths=list(results_dir.rglob("*-results.csv")),
+        latex_output_dir=latex_output_dir,
+    )
     ordinal_graph(results_dir=results_dir, graph_output_dir=graph_output_dir)
     ordinal_graph_per_feature(
         results_dir=results_dir, graph_output_dir=graph_output_dir
     )
     plot_dfu_histograms(
-        file_paths=list(results_dir.rglob("*.npy")),
+        file_paths=list(results_dir.rglob("*-inherent.csv")),
         graph_output_dir=graph_output_dir,
     )
     plot_sample_size_polarization(
@@ -32,7 +35,7 @@ def main(results_dir: Path, latex_output_dir: Path, graph_output_dir: Path):
 
 
 def plot_dfu_histograms(
-    file_paths: list[str],
+    file_paths: list[Path],
     graph_output_dir: Path,
     bins: int = 30,
 ):
@@ -46,8 +49,7 @@ def plot_dfu_histograms(
         path = Path(path)
         label = " ".join(path.stem.split("-")[:-1]).capitalize()
 
-        arr = np.load(path)
-        arr = np.asarray(arr, dtype=float)
+        arr = pd.read_csv(path).inherent_polarization
         arr = arr[~np.isnan(arr)]
 
         all_data.append(pd.DataFrame({"value": arr, "dataset": label}))
@@ -102,8 +104,8 @@ def plot_dfu_histograms(
     plt.close()
 
 
-def csv_to_latex(results_dir: Path, latex_output_dir: Path) -> None:
-    for result_file in results_dir.rglob("*.csv"):
+def csv_to_latex(result_paths: list[Path], latex_output_dir: Path) -> None:
+    for result_file in result_paths:
         if "sample_size" not in result_file.stem:
             dataset_name = result_file.stem
             df = pd.read_csv(result_file)
@@ -121,7 +123,7 @@ def ordinal_graph_per_feature(
 ) -> None:
     for file in results_dir.rglob("*.csv"):
         df = pd.read_csv(file)
-        dataset = file.stem
+        dataset = file.stem.replace("-results", "")
 
         if "SDB Feature" not in df.columns or "Unnamed: 1" not in df.columns:
             continue
@@ -199,8 +201,7 @@ def plot_sample_size_polarization(csv_path: Path, output_path: Path):
     ax.set_xlabel("Number of annotators")
     ax.set_ylabel("Mean polarization")
     ax.legend(title="Dataset")
-    plt.tight_layout()
-    plt.savefig(output_path)
+    tasks.graphs.save_plot(output_path)
     plt.close()
 
 

@@ -160,10 +160,14 @@ def main(
     )
 
     res = tasks.run_helper.compute_inherent_polarization_random(ds_350)
-    np.save(output_dir / "dices-350-apriori.npy", res)
+    res.to_csv(
+        output_dir / "dices-350-inherent.csv",
+        header=True,
+        index_label="comment",
+    )
 
     res = tasks.run_helper.run_all_results(ds=ds_350)
-    res.to_csv(output_dir / "dices-350.csv")
+    res.to_csv(output_dir / "dices-350-results.csv")
 
     ds_990 = DicesDataset(dataset_path=dataset_path_large, variant="990")
     tasks.graphs.polarization_plot(
@@ -171,10 +175,14 @@ def main(
     )
 
     res = tasks.run_helper.compute_inherent_polarization_random(ds_990)
-    np.save(output_dir / "dices-990-apriori.npy", res)
+    res.to_csv(
+        output_dir / "dices-990-inherent.csv",
+        header=True,
+        index_label="comment",
+    )
 
     res = tasks.run_helper.run_all_results(ds=ds_990)
-    res.to_csv(output_dir / "dices-990.csv")
+    res.to_csv(output_dir / "dices-990-results.csv")
 
     df_350 = run_for_dataset(ds_350, SAMPLE_SIZES)
     df_990 = run_for_dataset(ds_990, SAMPLE_SIZES)
