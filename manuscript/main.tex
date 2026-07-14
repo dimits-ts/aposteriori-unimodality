@@ -24,19 +24,14 @@
 \setlist[itemize]{noitemsep, nosep}
 
 %  ==================== MY COMMANDS ====================
-\newtheoremstyle{colondef}
-{3pt}   % Space above
-{3pt}   % Space below
-{\itshape}      % Body font
-{}      % Indent amount
-{\bfseries} % Theorem head font
-{.}     % Punctuation after theorem head
-{ }     % Space after theorem head
-{\thmname{#1}\thmnumber{ #2}\thmnote{: #3}}	
+\theoremstyle{definition}
 
-\theoremstyle{colondef}
-\newtheorem{definition}{Definition}%
+\newtheorem{definition}{Definition}
+\newtheorem{hypothesis}{Hypothesis}
+
+\theoremstyle{plain}
 \newtheorem{finding}{Finding}
+
 \newtheorem*{researchquestion}{RQ}
 
 \newcommand{\librarylink}{ \url{https://anonymous.4open.science/r/apunim-5F70}}
@@ -72,11 +67,11 @@ Annotations are essential for subjective tasks, such as content moderation, toxi
 
 One alternative is using \emph{polarization}, which correlates better with human judgments and is much less sensitive to different group sizes \cite{Pavlopoulos2023, pavlopoulos-likas-2024}. While we can detect polarization, there is little work on how to detect whether it is \emph{actually caused by marginalized groups}. Our work thus tries to answer the following Research Question (RQ):
 
-\begin{researchquestion}
+\begin{researchquestion}[]
 	How much polarization can we practically attribute to annotator subgroups given existing datasets?
 \end{researchquestion}
 
-While prior work assumed that all polarization can be explained and attributed to some annotator characteristic, through the exhaustive creation of theoretical annotator groups our study discovers the existence of ``inherent polarization'', which cannot be attributed to \emph{any possible group} of annotators---known or unknown (Finding~\ref{finding:inherent}). %This phenomenon could be attributed to the overall polarization of the data, or the limited number of annotations, establishing a hard limit on how much information we can gain from existing datasets. 
+While prior work assumed that all polarization can be explained and attributed to some annotator characteristic, through the exhaustive creation of theoretical annotator groups our study discovers the existence of ``\ac{ip}'', which cannot be attributed to \emph{any possible group} of annotators---known or unknown (Finding~\ref{finding:inherent}). %This phenomenon could be attributed to the overall polarization of the data, or the limited number of annotations, establishing a hard limit on how much information we can gain from existing datasets. 
 We also discover that polarization across comments has a \emph{direction}, preventing us from aggregating annotations on the dataset level to circumvent annotation sparsity (Finding~\ref{finding:conflicting}). These issues highlight that current subjective \ac{nlp} datasets may lack the necessary number of annotators per comment---estimated empirically to be $\approx 20$ annotators (\S\ref{sec:apunim:ann-size}).
 
 In order to solve these issues we introduce a new metric---``\emph{apunim}''---which attributes polarization to specific annotator sociodemographic and ideological characteristics (referred to as \acp{pc} in this study). Our metric is generalizable across any domain and modality (e.g., video/image classification) and, unlike previous approaches, enables both \emph{quantitative} comparisons across datasets and statistical analysis via p-value estimation. Even in cases where unattributable polarization exists, \emph{apunim} is capable of detecting general patterns of polarization across multiple groups.
@@ -137,7 +132,7 @@ While many studies study the effect of subgroups on annotation agreement~\cite{g
 
 %TODO: Change according to EMNLP results
 
-Another approach~\citep{anonymous} uses polarization as a filter, analyzing polarized comments annotated by LLMs and human groups through traditional agreement metrics. This analysis inherits the issues of agreement metrics for minority groups (\S\ref{sec:related:agreement}), and the authors prioritize comparisons between human and LLM annotators, instead of directly attributing polarization to these  groups.
+%Another approach~\citep{anonymous} uses polarization as a filter, analyzing polarized comments annotated by LLMs and human groups through traditional agreement metrics. This analysis inherits the issues of agreement metrics for minority groups (\S\ref{sec:related:agreement}), and the authors prioritize comparisons between human and LLM annotators, instead of directly attributing polarization to these  groups.
 
 
 \section{Is it possible to attribute all polarization to annotator groups?}
@@ -196,20 +191,20 @@ We use four datasets from current \ac{nlp} research that include \ac{pc} informa
 A brief overview of dataset characteristics is provided in Table~\ref{tab:datasets}. The Kumar dataset stands out for its large size, featuring more than 100{,}000 annotated comments, as well as 10 distinct \ac{pc} dimensions.\footnote{We use 10{,}000 comments in this study due to computational constraints---see App.~\ref{app:replication}.} In contrast, the DICES datasets contain fewer annotated comments but involve more than an order of magnitude more annotators per comment than the other datasets. The Kumar and Sap datasets contain a large number of polarizing items, unlike the DICES datasets, where most items are unpolarized (App.~\ref{sec:app:ann_details}; Fig.~\ref{fig:dataset-polarization}).\footnote{\label{foot:dices-pol}This discrepancy could be attributed to these datasets containing LLM-generated dialogues with models tuned to avoid unsafe speech, making it much easier to distinguish than in human comments.}
 
 
-\subsection{Inherent polarization}
+\subsection{Inherent Polarization}
 \label{sec:inherent:inherent}
 
 \subsubsection{What is it?}
 
-Inherent polarization refers to disagreement that cannot be attributed to \emph{any specific} grouping of annotators; that is, polarization that exists no matter how we split the annotators in any arbitrary group. Prior work~\cite{pavlopoulos-likas-2024} attributed polarization to annotator groups only when the observed polarization for each individual group became exactly zero (e.g. $nDFU(all) > nDFU(men)=nDFU(women) = 0$). The presence of inherent polarization would invalidate this theory, since there would be no possible group or combination of groups $g \textit{ s.t. } nDFU(g) = 0$.
+\acf{ip} refers to disagreement that cannot be attributed to \emph{any specific} grouping of annotators; that is, polarization that exists no matter how we split the annotators in any arbitrary group. Prior work~\cite{pavlopoulos-likas-2024} attributed polarization to annotator groups only when the observed polarization for each individual group became exactly zero (e.g. $nDFU(all) > nDFU(men)=nDFU(women) = 0$). The presence of \ac{ip} would invalidate this theory, since there would be no possible group or combination of groups $g \textit{ s.t. } nDFU(g) = 0$.
 
-\begin{definition}[Inherent polarization]
+\begin{definition}[Inherent Polarization]
 	\label{def:inherent}
 	Polarization that cannot be explained by any known or latent annotator grouping.
 \end{definition}
 
 
-Formally, the inherent polarization for a single comment $c$ is the minimum polarization exhibited by any arbitrary group:
+Formally, the \ac{ip} for a single comment $c$ is the minimum polarization exhibited by any arbitrary group:
 \begin{equation}
 	\label{eq:inherent}
 	Pol_{inh}(c) =
@@ -247,24 +242,34 @@ We systematically explore the space of annotator groups by generating random par
 
 \begin{figure}[t]
 	\includegraphics[width=\columnwidth]{apriori.png}
-	\caption{Inherent polarization across our datasets (\S\ref{sec:inherent:datasets}). Contrary to assumptions made in prior work, inherent polarization is commonly non-zero and can even reach $nDFU = 1$ in datasets with low annotator counts.}
+	\caption{\ac{ip} across our datasets (\S\ref{sec:inherent:datasets}). Contrary to assumptions made in prior work, \ac{ip} is commonly non-zero and can even reach $nDFU = 1$ in datasets with low annotator counts.}
 	\label{fig:apriori}
 \end{figure}
 
-We compute the inherent polarization for each comment across the four datasets. For Sap and Kumar, we use the exhaustive formulation (Eq.~\ref{eq:inherent}), whereas for the two DICES datasets we rely on the Monte Carlo approximation with $k=1000$ (Eq.~\ref{eq:random}). Fig.~\ref{fig:apriori} shows that in all DICES comments there exists at least one group that fully accounts for the observed polarization.\footnote{$Pol_{inh}^{MC}(c)=0 \Rightarrow Pol_{inh}(c)=0$ due to Eq.~\ref{eq:lower-bound}. The same logic applies if we tried to increase the number of random partitions in Eq.~\ref{eq:random}.} Interestingly, this observation does not hold for the Kumar and Sap datasets, despite evaluating all possible annotator groups exhaustively. Table~\ref{tab:inherent-examples}; App.~\ref{app:inherent} shows a few examples of comments with inherent polarization compared to those with none.
+We compute the \ac{ip} for each comment across the four datasets. For Sap and Kumar, we use the exhaustive formulation (Eq.~\ref{eq:inherent}), whereas for the two DICES datasets we rely on the Monte Carlo approximation with $k=1000$ (Eq.~\ref{eq:random}). Fig.~\ref{fig:apriori} shows that in all DICES comments there exists at least one group that fully accounts for the observed polarization.\footnote{$Pol_{inh}^{MC}(c)=0 \Rightarrow Pol_{inh}(c)=0$ due to Eq.~\ref{eq:lower-bound}. The same logic applies if we tried to increase the number of random partitions in Eq.~\ref{eq:random}.} Interestingly, this observation does not hold for the Kumar and Sap datasets, despite evaluating all possible annotator groups exhaustively. Table~\ref{tab:inherent-examples}; App.~\ref{app:inherent} shows a few examples of comments with \ac{ip} compared to those with none.
 
 \begin{finding}
 	\label{finding:inherent}
-	Comments may exhibit a degree of inherent polarization that cannot be attributed to any known or latent annotator grouping given the annotators present in the dataset.
+	Comments may exhibit a degree of \ac{ip} that cannot be attributed to any known or latent annotator grouping given the annotators present in the dataset.
 \end{finding}
 
 
 \subsubsection{Why does it exist?}
 \label{sec:inherent:why}
 
-We first hypothesized that the DICES datasets have no inherent polarization because of their large annotator count per item. However, repeating the experiment for subsets of (5--50) annotators sampled ten times with replacement also leads to zero inherent polarization (App.~\ref{app:inherent}). Alternatively, it could be attributed to their low overall polarization, although it is exceedingly unlikely that this pattern would hold for all $115{,}153$ comments, given that some do exhibit significant polarization (see Fig.~\ref{fig:dataset-polarization}; App.~\ref{sec:app:ann_details}).\footnote{We note that there may exist a correlation between controversial, ambiguous statements and higher inherent polarization---see the examples in Table~\ref{tab:inherent-examples}; App~\ref{app:inherent}.}
+\begin{hypothesis}[Low annotator count]
+	Initially, we hypothesized that the absence of \ac{ip} in the DICES datasets could be attributed to their large sample size (annotator count per item). However, even when repeating the experiment using random annotator subsets (ranging from 5 to 50 annotators) and taking the maximum across ten random samples for each subset size, we still observed zero \ac{ip} (App.~\ref{app:inherent}). Thus, sheer annotator count alone is insufficient to explain the phenomenon of \ac{ip}. 
+\end{hypothesis}
 
-Thus, we hypothesize that this phenomenon is caused by the existence of groups that are only partially represented. Although these groups explain the observed polarization, we may not be able to detect it \emph{when represented by only one or two annotators} in most comments, since these groups are discarded (\S\ref{sec:inherent:inherent}). This finding suggests that current \ac{nlp} datasets may be \emph{lacking fundamental information} for analyzing annotator behavior, especially in subjective and sensitive tasks. %Even though the Kumar dataset employs an impressive $17{,}280$ annotators in total, the lack of annotations per comment results in a large section of these comments featuring unattributable polarization.
+\begin{hypothesis}[Low polarization]
+	We briefly considered the possibility of low overall polarization as an alternative explanation for the absence of \ac{ip} in DICES. Nevertheless, it is statistically improbable that this uniformity would hold across all 115,153 comments, given that a substantial fraction do exhibit clear signs of polarization (as shown in Fig.~\ref{fig:dataset-polarization}; App~\ref{sec:app:ann_details}).
+\end{hypothesis}
+
+\begin{hypothesis}[Inaccessible groups]
+	\ac{ip} may arise from the presence of distinct, partially represented groups within the annotator pool. While these minority groups are responsible for the observed polarization, they may go undetected in our current methodology if they are represented by only one or two annotators, as these comments are discarded during the analysis (\S\ref{sec:inherent:inherent}). This is a plausible explanation for the Kumar and Sap datasets but not for DICES; the former experiment should have yielded some \ac{ip} if that was the case.
+\end{hypothesis}
+
+The existence of such polarization in human-text datasets (where the two former explanations apply) suggests an important limitation: current NLP datasets may fundamentally lack the necessary information required for a comprehensive analysis of annotator behavior, particularly in subjective and sensitive domains. We can not offer a convincing explanation for why the DICES datasets present no \ac{ip}, even when subsampled to a significant degree, other than structural differences between polarization patterns in human and LLM-generated texts.
 
 
 \subsection{Polarization is directional}
@@ -294,7 +299,7 @@ One way of potentially overcoming annotator sparsity, is aggregating annotations
 \subsection{Apriori polarization}
 \label{sec:apunim:group-vs-global}
 
-Instead of using inherent polarization, which represents the minimum possible polarization exhibited by any group, we calculate the \emph{expected} (average). Therefore, we do not test whether the group is polarized against the whole; nor whether the group explains \emph{some polarization} (as would be the case if we used Eq.~\ref{eq:inherent}), but rather whether the group explains polarization \emph{more than other groups}.
+Instead of using \ac{ip}, which represents the minimum possible polarization exhibited by any group, we calculate the \emph{expected} (average). Therefore, we do not test whether the group is polarized against the whole; nor whether the group explains \emph{some polarization} (as would be the case if we used Eq.~\ref{eq:inherent}), but rather whether the group explains polarization \emph{more than other groups}.
 
 \begin{definition}[Apriori polarization]
 	\label{def:apriori}
@@ -328,7 +333,7 @@ We can now compare the polarization that is attributed to a single annotator gro
 
 \begin{equation}
 	\label{eq:apunim}
-	apunim(d, g) = \frac{Pol_{obs}(d, g) - Pol_{apr}(d)}{1 - Pol_{apr}(d)}
+	apunim(d, g) = \frac{Pol_{apr}(d) - Pol_{obs}(d, g)}{1 - Pol_{apr}(d)}
 \end{equation}
 
 \begin{definition}[Apunim]
@@ -336,13 +341,13 @@ We can now compare the polarization that is attributed to a single annotator gro
 	The degree to which an annotator group contributes to overall polarization in a set of comments.
 \end{definition}
 
-Since $nDFU \rightarrow [0,1] \Rightarrow apunim \rightarrow [-1,1]$. The interpretation of this metric boils down to three scenarios:
+Since $nDFU \rightarrow [0,1] \Rightarrow apunim \rightarrow [-1,1]$. Its interpretation boils down to three scenarios:
 \begin{itemize}
-	\item$apunim(\theta) \approx 0$: The examined group does not meaningfully disagree with the other annotators.
+	\item$apunim(g) \approx 0$: The examined group does not meaningfully disagree with the other annotators.
 	
-	\item $apunim(\theta) > 0$: The examined group has fundamental disagreements with the other annotators. 
+	\item $apunim(g) > 0$: The examined group has fundamental disagreements with the other annotators. 
 	
-	\item $apunim(\theta) < 0$: The annotators of that group are polarized between themselves.
+	\item $apunim(g) < 0$: The annotators of that group are polarized between themselves.
 \end{itemize}
 
 
@@ -523,6 +528,7 @@ We have used small, open source LLMs (primarily LLaMa-8b and Qwen-7B) to help in
 \section {Acronyms}
 
 \begin{acronym}[WWW]
+	\acro{ip}[InPol]{Inherent Polarization}
 	\acro{ndfu}[nDFU]{normalized Distance From Unimodality}
 	\acro{fwer}[FWER]{Family-Wise Error Rate}
 	\acro{nlp}[NLP]{Natural Language Processing}
@@ -622,13 +628,13 @@ We hypothesize that this bottleneck is likely caused by repeated creation of num
 Finally, we note that in Fig.~\ref{fig:std_error}, we removed values where there was a lack of items annotated by the specified number of annotators (e.g., only 7\% of comments in DICES-990 were annotated by more than 73 annotators---see App.~\ref{sec:app:ann_details}).
 
 
-\section{Analyzing inherent polarization further}
+\section{Analyzing \ac{ip} further}
 \label{app:inherent}
 
-Table~\ref{tab:inherent-examples} shows a random sample of comments taken from the Sap dataset and their respective inherent polarization values (\S\ref{sec:inherent:inherent}). Note that explicitly toxic or racist comments tend to have inherent polarization values of zero, alongside clearly unproblematic comments. Inversely, more ambiguous and less comprehensible comments tend to have larger inherent polarization values. This pattern may suggest that inherent polarization may be tied to the overall ambiguity of the statements, especially in cases where comments may either be interpreted as very toxic, or non-toxic, which agrees with the overall goal of \ac{ndfu} (\S\ref{sec:related:polarization}).
-We include the inherent polarization values for each individual comment for all four datasets in the supplementary material.
+Table~\ref{tab:inherent-examples} shows a random sample of comments taken from the Sap dataset and their respective \ac{ip} values (\S\ref{sec:inherent:inherent}). Note that explicitly toxic or racist comments tend to have \ac{ip} values of zero, alongside clearly unproblematic comments. Inversely, more ambiguous and less comprehensible comments tend to have larger \ac{ip} values. This pattern may suggest that \ac{ip} may be tied to the overall ambiguity of the statements, especially in cases where comments may either be interpreted as very toxic, or non-toxic, which agrees with the overall goal of \ac{ndfu} (\S\ref{sec:related:polarization}).
+We include the \ac{ip} values for each individual comment for all four datasets in the supplementary material.
 
-In order to investigate whether the numerous annotators per comments can explain the lack of inherent polarization in the DICES datasets (\S\ref{sec:inherent:why}) we gradually subsample the annotators for each comment randomly with replacement, starting from five annotators per comment, and scaling up to the full complement of annotators in the dataset with a step of two. For each such step, we choose ten annotator samples and compute the mean inherent polarization across all runs. Fig.~\ref{fig:dices-ablation} demonstrates that even with annotator counts similar to the Kumar and DICES datasets, inherent polarization remains zero, suggesting that the absence of inherent polarization can not be attributed to annotator number alone---rather, it must be a pattern attributable to the DICES datasets themselves. 
+In order to investigate whether the numerous annotators per comments can explain the lack of \ac{ip} in the DICES datasets (\S\ref{sec:inherent:why}) we gradually subsample the annotators for each comment randomly with replacement, starting from five annotators per comment, and scaling up to the full complement of annotators in the dataset with a step of two. For each such step, we choose ten annotator samples and compute the mean \ac{ip} across all runs. Fig.~\ref{fig:dices-ablation} demonstrates that even with annotator counts similar to the Kumar and DICES datasets, \ac{ip} remains zero, suggesting that the absence of \ac{ip} can not be attributed to annotator number alone---rather, it must be a pattern attributable to the DICES datasets themselves. 
 
 
 \begin{table*}[t]
@@ -655,7 +661,7 @@ In order to investigate whether the numerous annotators per comments can explain
 		stop talking you fucking nigger ! & 0 \\
 		\bottomrule
 	\end{tabularx}
-	\caption{Sample of comments from the Sap dataset and their inherent polarization. Note that unambiguously toxic comments can be assigned with zero inherent polarization, while more nuanced cases tend to have higher values.}
+	\caption{Sample of comments from the Sap dataset and their \ac{ip}. Note that unambiguously toxic comments can be assigned with zero \ac{ip}, while more nuanced cases tend to have higher values.}
 	\label{tab:inherent-examples}
 \end{table*}
 
@@ -663,7 +669,7 @@ In order to investigate whether the numerous annotators per comments can explain
 \begin{figure}[t]
 	\centering
 	\includegraphics[width=\linewidth]{sample_size_polarization}
-	\caption{Inherent polarization for both DICES datasets averaged across ten runs, subsampling annotators starting from five to the actual number of annotators with a step of two. Inherent polarization remains zero, no matter how many annotators per comment are considered.}
+	\caption{\ac{ip} for both DICES datasets averaged across ten runs, subsampling annotators starting from five to the actual number of annotators with a step of two. \ac{ip} remains zero, no matter how many annotators per comment are considered.}
 	\label{fig:dices-ablation}
 \end{figure}
 
