@@ -253,7 +253,7 @@ def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
     tasks.graphs.graph_setup()
 
     print("Generating sample polarization plot...")
-    ds = KumarDataset(dataset_path=dataset_path, num_samples=30_000)
+    ds = KumarDataset(dataset_path=dataset_path, num_samples=10_000)
     tasks.graphs.polarization_plot(
         ds=ds, output_path=graph_output_dir / "kumar_sample.png"
     )
