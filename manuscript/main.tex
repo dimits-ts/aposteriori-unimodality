@@ -447,7 +447,7 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 		\midrule
 		% No rows in Kumar were found to be statistically significant (p<0.05)
 	\end{tabularx}
-	\caption{Statistically significant (p<0.05) apunim results across the four datasets. Gray rows show negative values. Consult App.~\ref{app:full} for the full results.}
+	\caption{Statistically significant ($p \neq 0.05$) apunim results across the four datasets. Gray rows show negative values. Consult App.~\ref{app:full} for the full results.}
 	\label{tab:merged-apunim}
 \end{table}
 
@@ -704,19 +704,19 @@ In order to investigate whether the numerous annotators per comments can explain
 		\multicolumn{4}{c}{\textbf{Kumar}} \\
 		\midrule
 		
-		Age=1) 18-24 & -.037 & 0.994 & 308 \\
-		Age=2) 25-34 & .000 & 0.994 & 8349 \\
+		Age=18-24 & -.037 & 0.994 & 308 \\
+		Age=25-34 & .000 & 0.994 & 8349 \\
 		\rowcolor{gray!15}
-		Age=3) 35-44 & -.001 & 0.994 & 2485 \\
-		Age=4) 45-54 & .013 & 0.994 & 410 \\
+		Age=35-44 & -.001 & 0.994 & 2485 \\
+		Age=45-54 & .013 & 0.994 & 410 \\
 		\rowcolor{gray!15}
-		Age=5) 55-64 & -.057 & 0.994 & 91 \\
-		Education 2) High School graduate & -.005 & 0.952 & 139 \\
-		Education 3) College, no degree & .010 & 0.952 & 1379 \\
-		Education 4) Associate degree & .005 & 0.952 & 310 \\
+		Age=55-64 & -.057 & 0.994 & 91 \\
+		Ed=High School & -.005 & 0.952 & 139 \\
+		Ed=College & .010 & 0.952 & 1379 \\
+		Ed=Associate & .005 & 0.952 & 310 \\
 		\rowcolor{gray!15}
-		Education 5) Bachelor's degree & -.001 & 0.952 & 8856 \\
-		Education 6) Master's degree & .004 & 0.952 & 794 \\
+		Ed=Bachelor's & -.001 & 0.952 & 8856 \\
+		Ed=Master's & .004 & 0.952 & 794 \\
 		Ethnicity=Asian & .011 & 0.996 & 39 \\
 		\rowcolor{gray!15}
 		Ethnicity=Black & -.004 & 0.996 & 431 \\
@@ -727,43 +727,43 @@ In order to investigate whether the numerous annotators per comments can explain
 		Gender=Female & .002 & 0.862 & 14290 \\
 		\rowcolor{gray!15}
 		Gender=Male & -.002 & 0.862 & 11566 \\
-		Has Been Targeted False & -.000 & 1.000 & 25541 \\
+		Targeted=False & -.000 & 1.000 & 25541 \\
 		\rowcolor{gray!15}
-		Has Been Targeted True & -.003 & 1.000 & 3785 \\
-		Is Parent No & .001 & 0.993 & 10627 \\
-		Is Parent Prefer not to say & 1.000 & 0.993 & 3 \\
+		Targeted=True & -.003 & 1.000 & 3785 \\
+		IsParent=No & .001 & 0.993 & 10627 \\
+		IsParent=N/A & 1.000 & 0.993 & 3 \\
 		\rowcolor{gray!15}
-		Is Parent Yes & -.000 & 0.993 & 15749 \\
-		Is Transgender No & .000 & 0.995 & 40079 \\
-		Political Affiliation Conservative & -.003 & 0.944 & 2983 \\
-		Political Affiliation Independent & .001 & 0.944 & 3183 \\
-		Political Affiliation Liberal & .001 & 0.944 & 7765 \\
-		Political Affiliation Other & .000 & 0.944 & 18 \\
-		Political Affiliation Prefer not to say & .000 & 0.944 & 12 \\
-		Religion Important 1) No & .002 & 0.884 & 3957 \\
-		Religion Important 2) Not very & .010 & 0.884 & 286 \\
-		Religion Important 3) Somewhat & .003 & 0.884 & 2450 \\
+		IsParent=Yes & -.000 & 0.993 & 15749 \\
+		Trans=No & .000 & 0.995 & 40079 \\
+		Pol=Conservative & -.003 & 0.944 & 2983 \\
+		Pol=Independent & .001 & 0.944 & 3183 \\
+		Pol=Liberal & .001 & 0.944 & 7765 \\
+		Pol=Other & .000 & 0.944 & 18 \\
+		Pol=N/A & .000 & 0.944 & 12 \\
+		RelImport=No & .002 & 0.884 & 3957 \\
+		RelImport=Not very & .010 & 0.884 & 286 \\
+		RelImport=Somewhat & .003 & 0.884 & 2450 \\
 		\rowcolor{gray!15}
-		Religion Important 4) Very & -.003 & 0.884 & 5292 \\
-		Seen Toxicity False & -.001 & 0.980 & 2384 \\
-		Seen Toxicity True & .001 & 0.980 & 28556 \\
+		RelImport=Very & -.003 & 0.884 & 5292 \\
+		SeenTox=False & -.001 & 0.980 & 2384 \\
+		SeenTox=True & .001 & 0.980 & 28556 \\
 		\rowcolor{gray!15}
-		Sexual Orientation Bisexual & -.040 & 1.000 & 438 \\
-		Sexual Orientation Heterosexual & -.000 & 1.000 & 31922 \\
-		Sexual Orientation Homosexual & .000 & 1.000 & 6 \\
-		Technology Impact 2) Somewhat negative & .000 & 0.999 & 186 \\
+		SexOrient=Bisexual & -.040 & 1.000 & 438 \\
+		SexOrient=Heterosexual & -.000 & 1.000 & 31922 \\
+		SexOrient=Homosexual & .000 & 1.000 & 6 \\
+		TechImport=Somewhat negative & .000 & 0.999 & 186 \\
 		\rowcolor{gray!15}
-		Technology Impact 3) Neutral & -.014 & 0.999 & 392 \\
-		Technology Impact 4) Somewhat positive & -.000 & 0.999 & 13500 \\
+		TechImport=Neutral & -.014 & 0.999 & 392 \\
+		TechImport=Somewhat positive & -.000 & 0.999 & 13500 \\
 		\rowcolor{gray!15}
-		Technology Impact 5) Very positive & -.004 & 0.999 & 2846 \\
-		Toxicity Problem 1) Never & -.037 & 0.982 & 43 \\
-		Toxicity Problem 2) Rarely & .003 & 0.982 & 939 \\
+		TechImport=Very positive & -.004 & 0.999 & 2846 \\
+		ToxProblem=Never & -.037 & 0.982 & 43 \\
+		ToxProblem=Rarely & .003 & 0.982 & 939 \\
 		\rowcolor{gray!15}
-		Toxicity Problem 3) Occasionally & -.003 & 0.982 & 5972 \\
+		ToxProblem=Occasionally & -.003 & 0.982 & 5972 \\
 		\rowcolor{gray!15}
-		Toxicity Problem 4) Frequently & -.001 & 0.982 & 3870 \\
-		Toxicity Problem 5) Very Frequently & .030 & 0.982 & 379 \\
+		ToxProblem=Frequently & -.001 & 0.982 & 3870 \\
+		ToxProblem=Very Frequently & .030 & 0.982 & 379 \\
 		
 		\bottomrule
 	\end{tabularx}
@@ -786,9 +786,9 @@ In order to investigate whether the numerous annotators per comments can explain
 		Age 1) Gen. Z & 0.007 & 0.539 & 17528 \\
 		Age 2) Millennial & 0.006 & 0.539 & 11268 \\
 		Age 3) Gen. X+ & -0.019 & 0.166 & 9703 \\
-		Education College + & -0.012 & 0.234 & 23475 \\
-		Education High school & -0.015 & 0.186 & 12833 \\
-		Education Other & 0.021 & 0.025 & 2191 \\
+		Ed=College + & -0.012 & 0.234 & 23475 \\
+		Ed=High school & -0.015 & 0.186 & 12833 \\
+		Ed=Other & 0.021 & 0.025 & 2191 \\
 		Gender Man & 0.019 & 0.058 & 19093 \\
 		Gender Woman & -0.021 & 0.058 & 19406 \\
 		Race African Am. & 0.043 & 2.41e-05 & 9077 \\
@@ -816,8 +816,8 @@ In order to investigate whether the numerous annotators per comments can explain
 		Age 1) Gen. Z & -0.063 & 3.05e-25 & 13741 \\
 		Age 2) Millennial & 0.004 & 0.495 & 38436 \\
 		Age 3) Gen. X+ & 0.046 & 7.17e-15 & 14384 \\
-		Education College + & -0.009 & 0.163 & 59142 \\
-		Education High school & -0.075 & 5.80e-42 & 7419 \\
+		Ed=College + & -0.009 & 0.163 & 59142 \\
+		Ed=High school & -0.075 & 5.80e-42 & 7419 \\
 		Gender Man & -0.027 & 3.81e-05 & 32494 \\
 		Gender Woman & 0.025 & 0.00015 & 33471 \\
 		Race African Am. & -0.091 & 1.61e-64 & 5810 \\
