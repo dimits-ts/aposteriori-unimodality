@@ -6,50 +6,65 @@
  &  & apunim & support \\
 SDB Feature & Value &  &  \\
 \midrule
-Age & 1) 18 - 24 & -0.0367 & 308 \\
- & 2) 25 - 34 & 0.0004 & 8349 \\
- & 3) 35 - 44 & -0.0007 & 2485 \\
- & 4) 45 - 54 & 0.0131 & 410 \\
- & 5) 55 - 64 & -0.0566 & 91 \\
-Education & 2) High School graduate & -0.0053 & 139 \\
- & 3) College, no degree & 0.0095 & 1379 \\
- & 4) Associate degree & 0.0054 & 310 \\
- & 5) Bachelor's degree & -0.0010 & 8856 \\
- & 6) Master's degree & 0.0037 & 794 \\
-Ethnicity & Asian & 0.0108 & 39 \\
- & Black & -0.0042 & 431 \\
- & Hispanic & 0.0000 & 9 \\
- & White & -0.0001 & 26007 \\
-Gender & Female & 0.0016 & 14290 \\
- & Male & -0.0023 & 11566 \\
-Has Been Targeted & False & -0.0001 & 25541 \\
- & True & -0.0034 & 3785 \\
-Is Parent & No & 0.0008 & 10627 \\
- & Yes & -0.0000 & 15749 \\
-Is Transgender & No & 0.0000 & 40079 \\
-Political Affiliation & Conservative & -0.0027 & 2983 \\
- & Independent & 0.0010 & 3183 \\
- & Liberal & 0.0010 & 7765 \\
- & Other & 0.0000 & 18 \\
- & Prefer not to say & 0.0000 & 12 \\
-Religion Important & 1) No & 0.0023 & 3957 \\
- & 2) Not very & 0.0100 & 286 \\
- & 3) Somewhat & 0.0031 & 2450 \\
- & 4) Very & -0.0030 & 5292 \\
-Seen Toxicity & False & -0.0014 & 2384 \\
- & True & 0.0006 & 28556 \\
-Sexual Orientation & Bisexual & -0.0395 & 438 \\
- & Heterosexual & -0.0003 & 31922 \\
- & Homosexual & 0.0000 & 6 \\
-Technology Impact & 2) Somewhat negative & 0.0000 & 186 \\
- & 3) Neutral & -0.0136 & 392 \\
- & 4) Somewhat positive & -0.0001 & 13500 \\
- & 5) Very positive & -0.0042 & 2846 \\
-Toxicity Problem & 1) Never & -0.0366 & 43 \\
- & 2) Rarely & 0.0032 & 939 \\
- & 3) Occasionally & -0.0026 & 5972 \\
- & 4) Frequently & -0.0014 & 3870 \\
- & 5) Very Frequently & 0.0295 & 379 \\
+Age & 1) 18 - 24 & -0.0118 & 1431 \\
+ & 2) 25 - 34 & 0.0279 & 4888 \\
+ & 3) 35 - 44 & -0.0219 & 3102 \\
+ & 4) 45 - 54 & 0.0088 & 1668 \\
+ & 5) 55 - 64 & -0.0057 & 938 \\
+ & 6) 65 or older & -0.0049 & 409 \\
+Education & 1) No high school & -0.0111 & 60 \\
+ & 2) High School graduate & -0.0133 & 1123 \\
+ & 3) College, no degree & -0.0340$^{*}$ & 2508 \\
+ & 4) Associate degree & -0.0082 & 1362 \\
+ & 5) Bachelor's degree & 0.0249 & 5007 \\
+ & 6) Master's degree & 0.0219 & 1982 \\
+ & 7) Professional degree & -0.0034 & 192 \\
+ & 8) Doctoral degree & 0.0011 & 164 \\
+Ethnicity & Asian & -0.0019 & 720 \\
+ & Black & 0.0143 & 1671 \\
+ & Hispanic & -0.0075 & 352 \\
+ & Multiracial & -0.0026 & 540 \\
+ & Other & -0.0007 & 204 \\
+ & Unknown & -0.0063 & 189 \\
+ & White & -0.0291$^{*}$ & 6619 \\
+Gender & Female & -0.0245 & 6141 \\
+ & Male & 0.0261 & 5479 \\
+ & Nonbinary & -0.0014 & 81 \\
+ & Unknown & -0.0008 & 104 \\
+Has Been Targeted & False & -0.0482$^{***}$ & 6632 \\
+ & True & 0.0146 & 3643 \\
+Is Parent & No & -0.0686$^{***}$ & 5514 \\
+ & Prefer not to say & 0.0017 & 130 \\
+ & Yes & 0.0490$^{***}$ & 6216 \\
+Is Transgender & No & -0.0788$^{***}$ & 1697 \\
+ & Prefer not to say & -0.0007 & 128 \\
+ & Yes & -0.0073 & 340 \\
+Political Affiliation & Conservative & 0.0269 & 3386 \\
+ & Independent & -0.0201 & 3432 \\
+ & Liberal & -0.0278 & 4945 \\
+ & Other & -0.0132 & 271 \\
+ & Prefer not to say & 0.0034 & 511 \\
+Religion Important & 1) No & -0.0620$^{***}$ & 3864 \\
+ & 2) Not very & -0.0183 & 1493 \\
+ & 3) Somewhat & 0.0056 & 3012 \\
+ & 4) Very & 0.0516$^{***}$ & 4062 \\
+ & Prefer not to say & 0.0066 & 194 \\
+Seen Toxicity & False & 0.0350$^{**}$ & 3050 \\
+ & True & -0.0766$^{***}$ & 6360 \\
+Sexual Orientation & Bisexual & 0.0087 & 1481 \\
+ & Heterosexual & -0.0500$^{***}$ & 5721 \\
+ & Homosexual & -0.0048 & 430 \\
+ & Other & 0.0009 & 115 \\
+ & Prefer not to say & -0.0061 & 265 \\
+Technology Impact & 2) Somewhat negative & -0.0085 & 1179 \\
+ & 3) Neutral & 0.0085 & 1603 \\
+ & 4) Somewhat positive & -0.0285 & 6040 \\
+ & 5) Very positive & 0.0105 & 3315 \\
+Toxicity Problem & 1) Never & -0.0027 & 741 \\
+ & 2) Rarely & 0.0108 & 2087 \\
+ & 3) Occasionally & -0.0143 & 4347 \\
+ & 4) Frequently & -0.0293 & 3740 \\
+ & 5) Very Frequently & -0.0202 & 1625 \\
 \bottomrule
 \end{tabular}
 \end{table}

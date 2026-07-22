@@ -20,11 +20,11 @@ JOBS=(
 
 'explanation|python src/explanation.py --graph-output-dir=graphs'
 
-'dices|python src/dices.py --dataset-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dataset-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --graph-output-dir=graphs --output-dir=output'
+'dices|python src/dices.py --dataset-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dataset-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --graph-output-dir=graphs --output-dir=output --ablation-dir=ablation'
 
 'sap|python src/sap.py --dataset-path=data/datasets/sap.csv --output-dir=output --graph-output-dir=graphs'
 
-'kumar|python src/kumar.py --dataset-path=data/datasets/kumar.json --output-dir=output --graph-output-dir=graphs'
+'kumar|python src/kumar.py --dataset-path=data/datasets/kumar.json --output-dir=output --graph-output-dir=graphs --ablation-dir=ablation'
 )
 
 printf "%s\n" "${JOBS[@]}" |

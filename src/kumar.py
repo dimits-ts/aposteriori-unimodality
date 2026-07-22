@@ -238,10 +238,6 @@ def _ordinal_to_yn_neutral(lst):
     return new_lst
 
 
-def _map_age_list(age_map, lst):
-    return [age_map[x] for x in lst]
-
-
 def _safe_len(x):
     try:
         return len(x)
@@ -249,24 +245,61 @@ def _safe_len(x):
         return 0
 
 
-def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
+def run_experiment(
+    dataset_path: Path, output_path: Path, num_samples: int
+) -> None:
+    if output_path.exists():
+        print(f"{output_path} exists, skipping...")
+        return
+
+    print(f"Running experiment {output_path}...")
+    ds = KumarDataset(dataset_path=dataset_path, num_samples=num_samples)
+    res = tasks.run_helper.run_all_results(ds)
+    res.to_csv(output_path)
+
+
+def main(
+    dataset_path: Path,
+    output_dir: Path,
+    graph_output_dir: Path,
+    ablations_dir: Path,
+):
     tasks.graphs.graph_setup()
 
     print("Generating sample polarization plot...")
-    ds = KumarDataset(dataset_path=dataset_path, num_samples=10_000)
     tasks.graphs.polarization_plot(
-        ds=ds, output_path=graph_output_dir / "kumar_sample.png"
+        ds=KumarDataset(dataset_path=dataset_path, num_samples=3_000),
+        output_path=graph_output_dir / "kumar_sample.png",
     )
-    print("Running experiment...")
+    print("Calculating inherent polarization...")
     res = tasks.run_helper.compute_inherent_polarization_exhaustive(
-        dataset=ds, max_annotators=6
+        dataset=KumarDataset(dataset_path=dataset_path, num_samples=3_000),
+        max_annotators=6,
     )
     res.to_csv(
         output_dir / "kumar-inherent.csv", header=True, index_label="comment"
     )
+    run_experiment(
+        dataset_path=dataset_path,
+        output_path=output_dir / "kumar-results.csv",
+        num_samples=3_000,
+    )
 
-    res = tasks.run_helper.run_all_results(ds)
-    res.to_csv(output_dir / "kumar-results.csv")
+    run_experiment(
+        dataset_path=dataset_path,
+        output_path=ablations_dir / "kumar30k-results.csv",
+        num_samples=30_000,
+    )
+    run_experiment(
+        dataset_path=dataset_path,
+        output_path=ablations_dir / "kumar10k-results.csv",
+        num_samples=10_000,
+    )
+    run_experiment(
+        dataset_path=dataset_path,
+        output_path=ablations_dir / "kumar1k-results.csv",
+        num_samples=1_000,
+    )
 
 
 if __name__ == "__main__":
@@ -290,9 +323,19 @@ if __name__ == "__main__":
         required=True,
         help="Directory for graphs.",
     )
+    parser.add_argument(
+        "--ablation-dir",
+        required=True,
+        help=(
+            "Directory for results derived from subsampled ('ablated') "
+            "datasets: the sample-size sweep and the fixed-size resampled "
+            "experiment."
+        ),
+    )
     args = parser.parse_args()
     main(
         dataset_path=Path(args.dataset_path),
         output_dir=Path(args.output_dir),
         graph_output_dir=Path(args.graph_output_dir),
+        ablations_dir=Path(args.ablation_dir),
     )
