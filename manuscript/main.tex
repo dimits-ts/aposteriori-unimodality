@@ -484,14 +484,14 @@ We investigated to what extent polarization can be attributed to annotator group
 While we study one group at a time, we can instead turn to iteratively exploring polarized subgroups in future work, allowing us to gradually piece together a multidimensional explanation of polarization (see Footnote~\ref{foot:iterative},~\S\ref{sec:inherent:formulation}). It would also be interesting to explore to what extent LLM-as-a-judge systems reproduce the polarization patterns observed among different minority groups---which would solve the issues with annotation counts presented in our study.
 
 
-\section{Limitations}
+\section*{Limitations}
 
 Researchers often release only aggregated single-label annotations or omit annotator \ac{pc} characteristics entirely. As a result, both our analysis and the applicability of our framework are limited by the scarcity of suitable datasets. In addition, because datasets with large numbers of annotators per item are rare, our approach operates only at the dataset level. This limitation prevents us from identifying individual comments or examples that could serve as concrete explanations for the observed \textit{apunim} values.
 
 Finally, although we compare findings across datasets and relate them to prior work, we do not directly compare polarization and agreement metrics, since they rely on fundamentally different assumptions and mechanisms (see \S\ref{sec:related:polarization}). These differences also make it difficult to fully explain certain patterns in our results, such as why some groups show statistically significant effects while others do not.
 
 
-\section{Ethical Considerations}
+\section*{Ethical Considerations}
 
 All datasets used in this study were either publicly accessible, or were provided to us by the authors with full disclosure on the purpose of our research. No identifiable, personal information is included in our pipeline. We did not perform any annotation tasks ourselves.
 
@@ -546,13 +546,217 @@ We have used small, open source LLMs (primarily LLaMa-8b and Qwen-7B) to help in
 		\midrule
 		DICES-350 & 350 & 123 & 0 & 123 & 123 & 123 & 123 & 123 \\
 		DICES-990 & 990 & 72.8313 & 1.1652 & 69 & 72 & 73 & 74 & 76 \\
-		Kumar et al. 2021 & 20000 & 5.0925 & 4.8872 & 5 & 5 & 5 & 5 & 650 \\
 		Sap et al. 2022 & 585 & 5.6359 & 0.7713 & 3 & 6 & 6 & 6 & 12 \\
+		Kumar et al. 2021 & 2998 & 5.0233 & 0.3409 & 5 & 5 & 5 & 5 & 10 \\
 		\bottomrule
 	\end{tabular}
 \end{table*}
 
-The number of annotators per comment for all datasets presented in \S\ref{sec:inherent:datasets} can be found in ~\ref{fig:ann_counts}, and descriptive statistics can be found in Table~\ref{tab:num-annot}. The DICES-990 dataset has exactly 123 annotations per comment, while the other datasets exhibit a few variations around the central mean reported in Table~\ref{tab:datasets}. Interestingly, the sample used from the Kumar dataset exhibits a few comments that vastly exceed the promised $5$ number of annotators. We included these comments for the experiment presented in Table~\ref{tab:merged-apunim}, but not for the annotator number experiment in ~\ref{fig:std_error} since they are very likely a data error.
+The number of annotators per comment for all datasets presented in \S\ref{sec:inherent:datasets} can be found in ~\ref{fig:ann_counts}, and descriptive statistics can be found in Table~\ref{tab:num-annot}. The DICES-990 dataset has exactly 123 annotations per comment, while the other datasets exhibit a few variations around the central mean reported in Table~\ref{tab:datasets}. Interestingly, the sample used from the Kumar dataset exhibits a few comments that vastly exceed the promised $5$ number of annotators. We included these comments for the experiment presented in Table~\ref{tab:merged-apunim}, but not for the annotator number experiment in ~\ref{fig:std_error} since they are very likely a data error. Tables~\ref{tab:dices350-stats},\ref{tab:dices990-stats},\ref{tab:sap-stats},\ref{tab:kumar-stats1},\ref{tab:kumar-stats2} show the annotation counts for each \ac{pc} group in each dataset.
+
+\begin{table}[ht]
+	\centering
+	\begin{tabular}{llc}
+		\toprule
+		\textbf{Category} & \textbf{Subgroup}  & \textbf{Support}\\
+		\midrule
+		Gender & Woman & 21700 \\
+		& Man & 21350 \\
+		\midrule
+		Race & White & 10500 \\
+		& African Am. & 10150 \\
+		& Asian & 9100 \\
+		& Latino & 7700 \\
+		& Multiracial & 5600 \\
+		\midrule
+		Age & 1) Gen. Z & 19600 \\
+		& 2) Millennial & 12600 \\
+		& 3) Gen. X+ & 10850 \\
+		\midrule
+		Education & College + & 26250 \\
+		& High school - & 14350 \\
+		& Other & 2450 \\
+		\bottomrule
+	\end{tabular}
+	\caption{Subgroup Counts for DICES-350}
+	\label{tab:dices350-stats}
+\end{table}
+
+\begin{table}[ht]
+	\centering
+	\begin{tabular}{llc}
+		\toprule
+		\textbf{Category} & \textbf{Subgroup} & \textbf{Support} \\
+		\midrule
+		Gender & Woman & 36050 \\
+		& Man & 35392 \\
+		& Nonbinary & 331 \\
+		& Other & 330 \\
+		\midrule
+		Race & Other & 26394 \\
+		& Asian & 19885 \\
+		& White & 12322 \\
+		& Latino & 7170 \\
+		& African Am. & 6332 \\
+		\midrule
+		Age & Gen. Z & 14899 \\
+		& Millennial & 41542 \\
+		& Gen. X+ & 15662 \\
+		\midrule
+		Education & College + & 64054 \\
+		& High school - & 8049 \\
+		\bottomrule
+	\end{tabular}
+		\caption{Subgroup Counts for DICES-990}
+	\label{tab:dices990-stats}
+\end{table}
+
+
+\begin{table}[t]
+	\centering
+	\begin{tabular}{llc}
+		\toprule
+		\textbf{Category} & \textbf{Subgroup} & \textbf{Support}\\
+		\midrule
+		Age& Gen. Z & 252 \\
+		& Millennial & 2259 \\
+		& Gen. X+ & 786 \\
+		\midrule
+		Ethnicity & white & 2168 \\
+		& black & 1091 \\
+		& hisp & 32 \\
+		& other & 5 \\
+		& middleEastern & 1 \\
+		\midrule
+		Gender & man & 1859 \\
+		& woman & 1412 \\
+		& nonBinary & 26 \\
+		\bottomrule
+	\end{tabular}
+		\caption{Subgroup Counts for Sap et al. 2022}
+	\label{tab:sap-stats}
+\end{table}
+
+\begin{table}[t]
+	\centering
+	\begin{tabular}{lc}
+		\toprule
+		\multicolumn{2}{c}{\textbf{Gender}} \\
+		\midrule
+		Female & 8011 \\
+		Male & 6832 \\
+		Unknown & 124 \\
+		Nonbinary & 93 \\
+		\midrule
+		\multicolumn{2}{c}{\textbf{Ethnicity}} \\
+		\midrule
+		White & 10699 \\
+		Black & 1940 \\
+		Asian & 862 \\
+		Multiracial & 664 \\
+		Hispanic & 418 \\
+		Other & 247 \\
+		Unknown & 230 \\
+		\midrule
+		\multicolumn{2}{c}{\textbf{Age}} \\
+		\midrule
+		Under 18 & 3 \\
+		18 - 24 & 1711 \\
+		25 - 34 & 5969 \\
+		35 - 44 & 3785 \\
+		45 - 54 & 1977 \\
+		55 - 64 & 1101 \\
+		65 or older & 471 \\
+		Prefer not to say & 43 \\
+		\midrule
+		\multicolumn{2}{c}{\textbf{Education}} \\
+		\midrule
+		No high school & 71 \\
+		High School graduate & 1353 \\
+		College, no degree & 3090 \\
+		Associate degree & 1676 \\
+		Bachelor's degree & 6071 \\
+		Master's degree & 2261 \\
+		Professional degree & 236 \\
+		Doctoral degree & 198 \\
+		Prefer not to say & 71 \\
+		Other & 32 \\
+		\midrule
+		\multicolumn{2}{c}{\textbf{Sexual Orientation}} \\
+		\midrule
+		Heterosexual & 12391 \\
+		Bisexual & 1665 \\
+		Homosexual & 515 \\
+		Prefer not to say & 302 \\
+		Other & 131 \\
+		\midrule
+		\multicolumn{2}{c}{\textbf{Is Transgender}} \\
+		\midrule
+		No & 14549 \\
+		Yes & 363 \\
+		Prefer not to say & 148 \\
+	\bottomrule
+	\end{tabular}
+	\caption{Subgroup Counts for the Kumar et al. 2021 dataset. Part 1 of 2.}
+	\label{tab:kumar-stats1}
+\end{table}
+
+
+\begin{table}[t]
+	\centering
+	\begin{tabular}{lc}
+		\toprule
+		\multicolumn{2}{c}{\textbf{Political Affiliation}} \\
+		\midrule
+		Liberal & 5997 \\
+		Independent & 4143 \\
+		Conservative & 3981 \\
+		Prefer not to say & 609 \\
+		Other & 330 \\
+		\midrule
+		\multicolumn{2}{c}{\textbf{Is Parent}} \\
+		\midrule
+		Yes & 7889 \\
+		No & 7015 \\
+		Prefer not to say & 156 \\
+		\multicolumn{2}{c}{\textbf{Technology Impact}} \\
+		\midrule
+		Very negative & 149 \\
+		Somewhat negative & 1411 \\
+		Neutral & 1905 \\
+		Somewhat positive & 7690 \\
+		Very positive & 3905 \\
+		\midrule
+		\multicolumn{2}{c}{\textbf{Toxicity Problem}} \\
+		\midrule
+		Never & 869 \\
+		Rarely & 2485 \\
+		Occasionally & 5307 \\
+		Frequently & 4441 \\
+		Very Frequently & 1958 \\
+		\midrule
+		\multicolumn{2}{c}{\textbf{Religion Important}} \\
+		\midrule
+		No & 4735 \\
+		Not very & 1808 \\
+		Somewhat & 3548 \\
+		Very & 4741 \\
+		Prefer not to say & 228 \\
+		\midrule
+		\multicolumn{2}{c}{\textbf{Seen Toxicity}} \\
+		\midrule
+		True & 11505 \\
+		False & 3555 \\
+		\midrule
+		\multicolumn{2}{c}{\textbf{Has Been Targeted}} \\
+		\midrule
+		False & 10741 \\
+		True & 4319 \\
+		\bottomrule
+	\end{tabular}
+	\caption{Subgroup Counts for Kumar et al. 2021 dataset. Part 2 of 2.}
+	\label{tab:kumar-stats2}
+\end{table}
 
 
 \section{Statistical considerations}
@@ -609,6 +813,13 @@ Finally, we note that in Fig.~\ref{fig:std_error}, we removed values where there
 \section{Analyzing \ac{ip} further}
 \label{app:inherent}
 
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=\linewidth]{sample_size_polarization}
+	\caption{\ac{ip} for both DICES datasets averaged across ten runs, subsampling annotators starting from five to the actual number of annotators with a step of two. \ac{ip} remains zero, no matter how many annotators per comment are considered.}
+	\label{fig:dices-ablation}
+\end{figure}
+
 Table~\ref{tab:inherent-examples} shows a random sample of comments taken from the Sap dataset and their respective \ac{ip} values (\S\ref{sec:inherent:inherent}). Note that explicitly toxic or racist comments tend to have \ac{ip} values of zero, alongside clearly unproblematic comments. Inversely, more ambiguous and less comprehensible comments tend to have larger \ac{ip} values. This pattern may suggest that \ac{ip} may be tied to the overall ambiguity of the statements, especially in cases where comments may either be interpreted as very toxic, or non-toxic, which agrees with the overall goal of \ac{ndfu} (\S\ref{sec:related:polarization}).
 We include the \ac{ip} values for each individual comment for all four datasets in the supplementary material.
 
@@ -644,12 +855,139 @@ In order to investigate whether the numerous annotators per comments can explain
 \end{table*}
 
 
-\begin{figure}[t]
+\section{Comment count ablation}
+\label{app:comments}
+
+Since our approach was designed for the small-scale datasets common in \ac{nlp}, we were cautious when testing it on the massive Kumar dataset. Because of the data volume, we analyzed various smaller samples (1,000, 10,000, and 30,000 comments).
+
+As sample size increased, the statistical metrics (apunim values) consistently shrank, and we found no statistically significant effects in the larger samples. This outcome leads to an important finding: the statistical test becomes less effective when applied to very large datasets.
+
+The test is overly conservative, meaning it almost always suggests there is no significant effect, even when an effect likely exists in reality. This inability to detect a real signal is a Type II Error (a false negative). This suggests that our test is statistically weak or ``underpowered'' in massive settings. Since our methodology is built for the small-scale \ac{nlp} datasets that dominate the research field, we deem this limitation acceptable for the scope of our work. 
+
+\begin{table}[ht]
+	\scriptsize
 	\centering
-	\includegraphics[width=\linewidth]{sample_size_polarization}
-	\caption{\ac{ip} for both DICES datasets averaged across ten runs, subsampling annotators starting from five to the actual number of annotators with a step of two. \ac{ip} remains zero, no matter how many annotators per comment are considered.}
-	\label{fig:dices-ablation}
-\end{figure}
+	\begin{tabular}{l c c c}
+		\toprule
+		\textbf{\ac{pc}} & \textbf{1000} & \textbf{10000} & \textbf{30000} \\
+		\midrule
+		% --- Age Features ---
+		\multicolumn{4}{l}{\textbf{Age}} \\
+		\midrule
+		8 - 24 & -0.00235 & -0.03667 & -0.01614 \\
+		25 - 34 & 0.04544 & 0.00036 & 0.00045 \\
+		35 - 44 & -0.04315 & -0.00070 & -0.00070 \\
+		45 - 54 & 0.00144 & 0.01310 & 0.00305 \\
+		55 - 64 & 0.00215 & -0.05660 & 0.00113 \\
+		65 or older & -0.00657 & N/A & 0.94805 \\
+		\midrule
+		
+		% --- Education Features ---
+		\multicolumn{4}{l}{\textbf{Education}} \\
+		\midrule
+		High School graduate & -0.02302 & -0.00531 & 0.01411 \\
+		College, no degree & -0.04546 & 0.00952 & 0.00590 \\
+		Associate degree & 0.00106 & 0.00539 & 0.00888 \\
+		Bachelor's degree & 0.02875 & -0.00104 & -0.00029 \\
+		Master's degree & 0.02418 & 0.00374 & -0.00027 \\
+		\midrule
+		
+		% --- Ethnicity Features ---
+		\multicolumn{4}{l}{\textbf{Ethnicity}} \\
+		\midrule
+		Asian & -0.01177 & 0.01076 & 0.00664 \\
+		Black & 0.03590 & -0.00417 & -0.01162 \\
+		Hispanic & 0.00379 & 0.0 & -0.09910 \\
+		Multiracial & 0.00755 & 0.0 & 0.0 \\
+		Other & -0.00813 & N/A & -0.30556 \\
+		White & -0.02301 & -0.00014 & 0.00013 \\
+		\midrule
+		
+		% --- Gender Features ---
+		\multicolumn{4}{l}{\textbf{Gender}} \\
+		\midrule
+		Female & -0.00620 & 0.00165 & 0.00053 \\
+		Male & 0.04037 & -0.00234 & -0.00132 \\
+		\midrule
+		
+		% --- Has Been Targeted Features ---
+		\multicolumn{4}{l}{\textbf{Has Been Targeted}} \\
+		\midrule
+		False & -0.05945 & -6.35e-05 & 1.44e-05 \\
+		True & 0.01669 & -0.00345 & -0.00200 \\
+		\midrule
+		
+		% --- Is Parent Features ---
+		\multicolumn{4}{l}{\textbf{Is Parent}} \\
+		\midrule
+		No & -0.08405 & 0.00077 & 0.00075 \\
+		Prefer not to say & 0.00442 & 1.0 & 3.89e-16 \\
+		Yes & 0.07057 & -1.02e-05 & 0.00015 \\
+		\midrule
+		
+		% --- Is Transgender Features ---
+		\multicolumn{4}{l}{\textbf{Is Transgender}} \\
+		\midrule
+		No & -0.10182 & 0.0 & 2.24e-16 \\
+		\midrule
+		
+		% --- Political Affiliation Features ---
+		\multicolumn{4}{l}{\textbf{Political Affiliation}} \\
+		\midrule
+		Conservative & 0.05553 & -0.00266 & -0.00239 \\
+		Independent & -0.00321 & 0.00101 & 0.00237 \\
+		Liberal & -0.02626 & 0.00095 & 0.00070 \\
+		Other & -0.00324 & 0.0 & 0.0 \\
+		Prefer not to say & 0.01699 & 0.0 & 0.0220 \\
+		\midrule
+		
+		% --- Religion Important Features ---
+		\multicolumn{4}{l}{\textbf{Religion Important}} \\
+		\midrule
+		No & -0.07148 & 0.00232 & 0.00140 \\
+		Not very & -0.01344 & 0.01005 & 0.00567 \\
+		Somewhat & 0.02157 & 0.00314 & -0.00220 \\
+		Very & 0.04283 & -0.00304 & -0.00165 \\
+		\midrule
+		
+		% --- Seen Toxicity Features ---
+		\multicolumn{4}{l}{\textbf{Seen Toxicity}} \\
+		\midrule
+		False & 0.02454 & -0.00144 & -0.00075 \\
+		True & -0.08237 & 0.00064 & 0.00048 \\
+		\midrule
+		
+		% --- Sexual Orientation Features ---
+		\multicolumn{4}{l}{\textbf{Sexual Orientation}} \\
+		\midrule
+		Bisexual & -0.00272 & -0.03953 & -0.01297 \\
+		Heterosexual & -0.06722 & -0.00032 & 1.87e-06 \\
+		Homosexual & -0.01172 & 0.0 & 0.05263 \\
+		Prefer not to say & -0.00706 & N/A & 0.370 \\
+		\midrule
+		
+		% --- Technology Impact Features ---
+		\multicolumn{4}{l}{\textbf{Technology Impact}} \\
+		\midrule
+		Somewhat negative & -0.00807 & 0.0 & 0.00258 \\
+		Neutral & 0.01699 & -0.01362 & 0.00030 \\
+		Somewhat positive & -0.05332 & -0.00012 & 0.00074 \\
+		Very positive & 0.02712 & -0.00421 & -0.00303 \\
+		\midrule
+		
+		% --- Toxicity Problem Features ---
+		\multicolumn{4}{l}{\textbf{Toxicity Problem}} \\
+		\midrule
+		Never & -0.00769 & -0.03661 & -0.08076 \\
+		Rarely & 0.00410 & 0.00322 & -0.00113 \\
+		Occasionally & -0.01189 & -0.00261 & -0.00118 \\
+		Frequently & -0.03226 & -0.00138 & -0.00012 \\
+		Very Frequently & -0.01684 & 0.02953 & 0.01461 \\
+		\bottomrule
+	\end{tabular}
+	\caption{Comparison of apunim values across different sample sizes (1k, 10k, 30k) for the Kumar dataset. Rows with more than one N/A value removed.}
+	\label{tab:num-comments-apunim}
+\end{table}
 
 
 \section{Full Results}
@@ -682,17 +1020,6 @@ In order to investigate whether the numerous annotators per comments can explain
 	\label{tab:sap-full}
 \end{table}
 
-
-\begin{figure*}[t]
-	\includegraphics[width=\columnwidth]{apunim_ordinal_dices-990_Age.png}
-	\includegraphics[width=\columnwidth]{apunim_ordinal_kumar_Age.png}
-	\includegraphics[width=\columnwidth]{apunim_ordinal_kumar_Education.png}
-	\includegraphics[width=\columnwidth]{apunim_ordinal_kumar_Religion_Important.png}
-	\includegraphics[width=\columnwidth]{apunim_ordinal_kumar_Toxicity_Problem.png}
-	\caption{Apunim values across ordinal factor levels with at least two statistically significant values, expanded for each ordinal \ac{pc} dimension. This figure is complementary to Fig.~\ref{fig:ordinal}. The values in the graphs were extracted from the Tables of \ref{app:full}. }
-	\label{fig:ordinal-full}
-\end{figure*}
-
 \begin{table}[t]
 	\centering
 	\small 
@@ -703,7 +1030,6 @@ In order to investigate whether the numerous annotators per comments can explain
 		
 		\multicolumn{4}{c}{\textbf{Kumar}} \\
 		\midrule
-		
 		Age=18-24 & -.037 & 0.994 & 308 \\
 		Age=25-34 & .000 & 0.994 & 8349 \\
 		\rowcolor{gray!15}
@@ -783,9 +1109,9 @@ In order to investigate whether the numerous annotators per comments can explain
 		\multicolumn{4}{c}{\textbf{DICES-350}} \\
 		\midrule
 		
-		Age 1) Gen. Z & 0.007 & 0.539 & 17528 \\
-		Age 2) Millennial & 0.006 & 0.539 & 11268 \\
-		Age 3) Gen. X+ & -0.019 & 0.166 & 9703 \\
+		Age Gen. Z & 0.007 & 0.539 & 17528 \\
+		Age Millennial & 0.006 & 0.539 & 11268 \\
+		Age Gen. X+ & -0.019 & 0.166 & 9703 \\
 		Ed=College + & -0.012 & 0.234 & 23475 \\
 		Ed=High school & -0.015 & 0.186 & 12833 \\
 		Ed=Other & 0.021 & 0.025 & 2191 \\
@@ -813,9 +1139,9 @@ In order to investigate whether the numerous annotators per comments can explain
 		\multicolumn{4}{c}{\textbf{DICES-990}} \\
 		\midrule
 		
-		Age 1) Gen. Z & -0.063 & 3.05e-25 & 13741 \\
-		Age 2) Millennial & 0.004 & 0.495 & 38436 \\
-		Age 3) Gen. X+ & 0.046 & 7.17e-15 & 14384 \\
+		Age Gen. Z & -0.063 & 3.05e-25 & 13741 \\
+		Age Millennial & 0.004 & 0.495 & 38436 \\
+		Age Gen. X+ & 0.046 & 7.17e-15 & 14384 \\
 		Ed=College + & -0.009 & 0.163 & 59142 \\
 		Ed=High school & -0.075 & 5.80e-42 & 7419 \\
 		Gender Man & -0.027 & 3.81e-05 & 32494 \\
@@ -831,5 +1157,14 @@ In order to investigate whether the numerous annotators per comments can explain
 	\label{tab:dices990-full}
 \end{table}
 
+\begin{figure*}[h!]
+	\includegraphics[width=\columnwidth]{apunim_ordinal_dices-990_Age.png}
+	\includegraphics[width=\columnwidth]{apunim_ordinal_kumar_Age.png}
+	\includegraphics[width=\columnwidth]{apunim_ordinal_kumar_Education.png}
+	\includegraphics[width=\columnwidth]{apunim_ordinal_kumar_Religion_Important.png}
+	\includegraphics[width=\columnwidth]{apunim_ordinal_kumar_Toxicity_Problem.png}
+	\caption{Apunim values across ordinal factor levels with at least two statistically significant values, expanded for each ordinal \ac{pc} dimension. This figure is complementary to Fig.~\ref{fig:ordinal}. The values in the graphs were extracted from the Tables of \ref{app:full}. }
+	\label{fig:ordinal-full}
+\end{figure*}
 
 \end{document}

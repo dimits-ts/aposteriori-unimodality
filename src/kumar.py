@@ -279,27 +279,20 @@ def main(
     res.to_csv(
         output_dir / "kumar-inherent.csv", header=True, index_label="comment"
     )
+
     run_experiment(
         dataset_path=dataset_path,
         output_path=output_dir / "kumar-results.csv",
         num_samples=3_000,
     )
-
-    run_experiment(
-        dataset_path=dataset_path,
-        output_path=ablations_dir / "kumar30k-results.csv",
-        num_samples=30_000,
-    )
-    run_experiment(
-        dataset_path=dataset_path,
-        output_path=ablations_dir / "kumar10k-results.csv",
-        num_samples=10_000,
-    )
-    run_experiment(
-        dataset_path=dataset_path,
-        output_path=ablations_dir / "kumar1k-results.csv",
-        num_samples=1_000,
-    )
+    
+    for sample_size in [30_000, 10_000, 1_000]:
+        ablation_id = str(sample_size).split("_")[0]
+        run_experiment(
+            dataset_path=dataset_path,
+            output_path=ablations_dir / f"kumar{ablation_id}k-results.csv",
+            num_samples=sample_size,
+        )
 
 
 if __name__ == "__main__":

@@ -45,9 +45,11 @@ def main(
     )
     sap_ds = sap.SapDataset(dataset_path=sap_path)
     kumar_ds = kumar.KumarDataset(
-        dataset_path=kumar_path, num_samples=10_000
+        dataset_path=kumar_path, num_samples=3_000
     )
     datasets = [dices350_ds, dices990_ds, sap_ds, kumar_ds]
+    tasks.preprocessing.Dataset.print_descriptive_statistics(datasets)
+    tasks.preprocessing.Dataset.print_annotation_count_table(datasets)
 
     ann_size_df = get_annotator_counts_df(datasets)
     stats_df = get_statistics_df(ann_size_df)
