@@ -186,7 +186,7 @@ Intuitively, a group partially explains the polarization of a comment $c$ when t
 	\label{tab:datasets}
 \end{table}
 
-We use four datasets from current \ac{nlp} research that include \ac{pc} information at the level of individual annotators; specifically, the ``Kumar'' \cite{kumar-et-al-2021} and ``Sap'' \cite{sap-etal-2022-annotators} datasets, which are concerned with Toxicity and \ac{hs} detection respectively, and the DICES-350 and DICES-990 datasets~\cite{dices}, which focus on LLM response safety.\footnote{For the latter, we consider only labels relating to racism (\texttt{Q3\_bias\_overall}), thereby transforming the task to \ac{hs} detection.}
+We use four datasets from current \ac{nlp} research that include \ac{pc} information at the level of individual annotators; specifically, the ``Kumar'' \cite{kumar-et-al-2021} and ``Sap'' (``Breadth of Posts'') \cite{sap-etal-2022-annotators} datasets, which are concerned with Toxicity and \ac{hs} detection respectively, and the DICES-350 and DICES-990 datasets~\cite{dices}, which focus on LLM response safety.\footnote{For the latter, we consider only labels relating to racism (\texttt{Q3\_bias\_overall}), thereby transforming the task to \ac{hs} detection.}
 
 A brief overview of dataset characteristics is provided in Table~\ref{tab:datasets}. The Kumar dataset stands out for its large size, featuring more than 100{,}000 annotated comments, as well as 10 distinct \ac{pc} dimensions.\footnote{We use 10{,}000 comments in this study due to computational constraints---see App.~\ref{app:replication}.} In contrast, the DICES datasets contain fewer annotated comments but involve more than an order of magnitude more annotators per comment than the other datasets. The Kumar and Sap datasets contain a large number of polarizing items, unlike the DICES datasets, where most items are unpolarized (App.~\ref{sec:app:ann_details}; Fig.~\ref{fig:dataset-polarization}).\footnote{\label{foot:dices-pol}This discrepancy could be attributed to these datasets containing LLM-generated dialogues with models tuned to avoid unsafe speech, making it much easier to distinguish than in human comments.}
 
@@ -295,7 +295,6 @@ One way of potentially overcoming annotator sparsity, is aggregating annotations
 \section{How do we attribute the rest?}
 \label{sec:apunim}
 
-
 \subsection{Apriori polarization}
 \label{sec:apunim:group-vs-global}
 
@@ -370,10 +369,9 @@ H_a:\
 \noindent where 
 \(\bar{\textit{apunim}}_{\mathrm{rand}}(d,g)\) denotes the average apunim values obtained from $t$ randomized annotator partitions. For a detailed explanation of the p-value computation and the assumptions underlying the test, refer to App.~\ref{app:stats:pvalue}.
 
-%TODO: change tables
+
 \subsection{How many annotators do we need?}
 \label{sec:apunim:ann-size}
-
 
 \begin{figure}[t]
 	\includegraphics[width=\columnwidth]{pol_obs_subsampling_robustness.png}
@@ -450,7 +448,6 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 	\caption{Statistically significant ($p \neq 0.05$) apunim results across the four datasets. Gray rows show negative values. Consult App.~\ref{app:full} for the full results.}
 	\label{tab:merged-apunim}
 \end{table}
-
 
 \paragraph{Ethnicity} Across all datasets apart from Sap, we observe a consistent pattern in which annotation polarization is linked to annotator ethnicity, and particularly to \ac{aa} annotators. In fact, \emph{ethnicity is the strongest contributor to polarization} in the DICES datasets (\acp{aa}: $-.0428$/Asians: $.0659$ for DICES-350, all ethnicities for DICES-990) and the second strongest for Kumar (\acp{aa}: $.2072$). These results align with prior work suggesting that ethnic background is a systematic source of annotator disagreement in these tasks~\cite{goyal2022your}.
 
@@ -855,14 +852,23 @@ In order to investigate whether the numerous annotators per comments can explain
 \end{table*}
 
 
-\section{Comment count ablation}
-\label{app:comments}
+\section{Ablation experiments}
+\label{app:ablation}
 
-Since our approach was designed for the small-scale datasets common in \ac{nlp}, we were cautious when testing it on the massive Kumar dataset. Because of the data volume, we analyzed various smaller samples (1,000, 10,000, and 30,000 comments).
+\begin{figure}[ht]
+	\includegraphics[width=\columnwidth]{kumar3k_seed_ablation.png}
+	\centering
+	\caption{Apunim values on the Kumar dataset ($n_{samples}=3000$) across ten runs with different subsets.  Black bars indicate two standard deviations. \ac{pc} dimensions with many groups are more volatile, although all dimensions broadly keep the same apunim sign across subsets.}
+	\label{fig:seeds}
+\end{figure}
 
-As sample size increased, the statistical metrics (apunim values) consistently shrank, and we found no statistically significant effects in the larger samples. This outcome leads to an important finding: the statistical test becomes less effective when applied to very large datasets.
+Since our approach was designed for the small-scale datasets common in \ac{nlp}, we were cautious when testing it on the massive Kumar dataset. Because of the data volume, we analyzed various smaller samples (1,000, 10,000, and 30,000 comments), shown in Table~\ref{tab:num-comments-apunim}. As sample size increased, the statistical metrics (apunim values) consistently shrank, and we found no statistically significant effects in the larger samples. This outcome leads to an important finding: the statistical test becomes less effective when applied to very large datasets.
 
 The test is overly conservative, meaning it almost always suggests there is no significant effect, even when an effect likely exists in reality. This inability to detect a real signal is a Type II Error (a false negative). This suggests that our test is statistically weak or ``underpowered'' in massive settings. Since our methodology is built for the small-scale \ac{nlp} datasets that dominate the research field, we deem this limitation acceptable for the scope of our work. 
+
+Astute readers may notice that some variability does exist across differently sized samples for the same examined groups, where for example the sign of the apunim value may switch. In order to verify that this variability is caused by the sample size, and not by different samples being drawn, we execute a further ablation study. Specifically, we execute the apunim study on the $3000$-sized sample of the dataset, using different subsets of the Kumar dataset. 
+
+The results can be found in Fig.~\ref{fig:seeds}, where we note that variability is not an issue, except for a couple of cases. These cases seem to represent sparse annotator groups, where missing a few comments may genuinely change the value of the apunim metric. These groups however are largely not detected by apunim as significant either way (see \S\ref{sec:results}).
 
 \begin{table}[ht]
 	\scriptsize
