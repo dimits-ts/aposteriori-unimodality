@@ -12,6 +12,20 @@ import tasks.graphs
 import tasks.run_helper
 
 MIN_SUPPORT = 50
+SIG_ALPHA = 0.05  # p-value threshold for "statistically significant"
+
+# Explicit marker/linestyle cycles so we can reuse the *same* marker per
+# feature when overlaying filled vs. hollow points. (sns.lineplot's
+# auto-assigned style-index isn't something you can reliably recover
+# after the fact, so we do the cycling ourselves.)
+MARKER_CYCLE = ["o", "X", "P", "^", "D", "s", "v", "*", "d", "p"]
+LINESTYLE_CYCLE = [
+    (0, (1, 1)),  # dotted
+    (0, (5, 2)),  # dashed
+    (0, (5, 1, 1, 1)),  # dash-dot
+    (0, (3, 1, 1, 1, 1, 1)),  # dash-dot-dot
+    "solid",
+]
 
 
 def main(results_dir: Path, latex_output_dir: Path, graph_output_dir: Path):
@@ -209,9 +223,9 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
     """
     For each CSV in results_dir:
     - Identify ordinal-valued rows grouped by the 'SDB Feature' column.
-    - Keep only groups where at least one ordinal factor has pvalue <= 0.5.
     - Extract ordinals and build a stretched x-axis per feature.
     - Plot ordinal vs apunim across all datasets.
+    - Mark non-statistically-significant points with hollow markers.
     """
     records = []
 
@@ -256,6 +270,7 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
                         "feature": f"{dataset}-{feature_name}",
                         "ordinal": row["ordinal"],
                         "apunim": row["apunim"],
+                        "pvalue": row["pvalue"],
                     }
                 )
 
@@ -264,6 +279,7 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
         return
 
     data = pd.DataFrame(records)
+    data["significant"] = data["pvalue"] < SIG_ALPHA
 
     # --- Stretch each feature's ordinal series ---
     max_points = data.groupby("feature")["ordinal"].max().max()
@@ -281,8 +297,6 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
     highlight_group_1 = {
         "kumar-Religion Important",
         "dices-990-Age",
-        "kumar-Toxicity Problem",
-        "kumar-Education",
         "sap-Age",
     }
 
@@ -292,35 +306,101 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
     COLOR_GROUP_2 = tasks.graphs.COLORBLIND_PALETTE[1]
     COLOR_OTHER = tasks.graphs.COLORBLIND_PALETTE[2]
 
+    all_features = list(data_stretched["feature"].unique())
+
+    # Order features so the two highlight groups come first (matches the
+    # legend grouping), keeping cycling deterministic run-to-run.
+    ordered_features = (
+        [f for f in all_features if f in highlight_group_1]
+        + [f for f in all_features if f in highlight_group_2]
+        + [
+            f
+            for f in all_features
+            if f not in highlight_group_1 | set(highlight_group_2)
+        ]
+    )
+
     palette = {}
-    for f in data_stretched["feature"].unique():
+    marker_map = {}
+    linestyle_map = {}
+    for i, f in enumerate(ordered_features):
         if f in highlight_group_1:
             palette[f] = COLOR_GROUP_1
         elif f in highlight_group_2:
             palette[f] = COLOR_GROUP_2
         else:
             palette[f] = COLOR_OTHER
+        marker_map[f] = MARKER_CYCLE[i % len(MARKER_CYCLE)]
+        linestyle_map[f] = LINESTYLE_CYCLE[i % len(LINESTYLE_CYCLE)]
 
-    # --- Plot ---
-    plt.figure(figsize=(16, 8))
-    ax = sns.lineplot(
-        data=data_stretched,
-        x="stretched_ordinal",
-        y="apunim",
-        hue="feature",
-        style="feature",
-        markers=True,
-        dashes=True,
-        markersize=10,
-        legend=True,
-        errorbar=None,
-        palette=palette,
-    )
+    # --- Plot (manual matplotlib instead of sns.lineplot so we control
+    # marker fill per-point for the significance encoding) ---
+    fig, ax = plt.subplots(figsize=(16, 8))
 
-    # De-emphasize non-highlighted lines
-    for line in ax.lines:
-        if line.get_color() == COLOR_OTHER:
-            line.set_alpha(0.6)
+    for f in ordered_features:
+        df_feat = data_stretched[data_stretched["feature"] == f].sort_values(
+            "stretched_ordinal"
+        )
+        color = palette[f]
+        marker = marker_map[f]
+        linestyle = linestyle_map[f]
+        line_alpha = 0.6 if color == COLOR_OTHER else 1.0
+
+        x = df_feat["stretched_ordinal"].to_numpy()
+        y = df_feat["apunim"].to_numpy()
+        sig = df_feat["significant"].to_numpy()
+
+        # Line only (no markers here — markers drawn separately below so
+        # we can vary fill per point).
+        (line,) = ax.plot(
+            x,
+            y,
+            color=color,
+            linestyle=linestyle,
+            linewidth=2,
+            alpha=line_alpha,
+            label=f,
+            zorder=2,
+        )
+
+        # Filled markers: significant points. Full opacity regardless of
+        # line alpha, and a thin black rim so the marker reads crisply
+        # even for pale colors (e.g. the light-blue "Other" series).
+        if sig.any():
+            ax.plot(
+                x[sig],
+                y[sig],
+                linestyle="none",
+                marker=marker,
+                markersize=11,
+                markerfacecolor=color,
+                markeredgecolor="grey",
+                markeredgewidth=0.8,
+                zorder=3,
+            )
+
+        # Hollow markers: non-significant points. Edge is always black
+        # (not the series color) so fill/no-fill contrast doesn't depend
+        # on how light or desaturated that series' color is.
+        if (~sig).any():
+            ax.plot(
+                x[~sig],
+                y[~sig],
+                linestyle="none",
+                marker=marker,
+                markersize=9,
+                markerfacecolor="white",
+                markeredgecolor="grey",
+                markeredgewidth=1.6,
+                zorder=3,
+            )
+
+        # Keep a handle with the *feature's* marker for the legend
+        # (matplotlib's Line2D used below in add_grouped_legend).
+        line.set_marker(marker)
+        line.set_markerfacecolor(color)
+        line.set_markeredgecolor(color)
+        line.set_markersize(9)
 
     add_grouped_legend(
         ax,
@@ -332,11 +412,11 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
         loc="lower center",
     )
 
-    plt.xlabel(r"Order (low $\rightarrow$ high)")
-    plt.ylabel("Apunim")
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
+    ax.set_xlabel(r"Order (low $\rightarrow$ high)")
+    ax.set_ylabel("Apunim")
+    ax.grid(True, alpha=0.3)
     ax.set_xticks([])  # Remove x-axis ticks
+    fig.tight_layout()
 
     tasks.graphs.save_plot(graph_output_dir / "apunim_ordinal.png")
 
@@ -351,7 +431,8 @@ def add_grouped_legend(
     loc: str = "best",
 ):
     """
-    Create a grouped legend on an existing axis.
+    Create a grouped legend on an existing axis, plus a small
+    significance key (filled vs. hollow marker) at the end.
 
     Parameters
     ----------
@@ -390,6 +471,37 @@ def add_grouped_legend(
     if other_features:
         add_group(others_title, other_features)
 
+    # --- Significance key ---
+    legend_handles.append(Line2D([], [], linestyle="none"))
+    legend_labels.append("Significance")
+
+    legend_handles.append(
+        Line2D(
+            [],
+            [],
+            marker="o",
+            linestyle="none",
+            markersize=9,
+            markerfacecolor="black",
+            markeredgecolor="black",
+        )
+    )
+    legend_labels.append(r"significant ($p<0.05$)")
+
+    legend_handles.append(
+        Line2D(
+            [],
+            [],
+            marker="o",
+            linestyle="none",
+            markersize=9,
+            markerfacecolor="white",
+            markeredgecolor="black",
+            markeredgewidth=1.6,
+        )
+    )
+    legend_labels.append("not significant")
+
     legend = ax.legend(
         legend_handles,
         legend_labels,
@@ -400,7 +512,12 @@ def add_grouped_legend(
 
     # Make section headers bold
     for text in legend.get_texts():
-        if text.get_text() in {group_1_title, group_2_title, others_title}:
+        if text.get_text() in {
+            group_1_title,
+            group_2_title,
+            others_title,
+            "Significance",
+        }:
             text.set_weight("bold")
 
     return legend
