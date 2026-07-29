@@ -72,9 +72,7 @@ def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
             continue
 
         for sdb_col in sdb_columns:
-            sdb_values = row[
-                sdb_col
-            ] 
+            sdb_values = row[sdb_col]
 
             for value in sdb_values:
                 combined_category = f"{sdb_col}: {value}"

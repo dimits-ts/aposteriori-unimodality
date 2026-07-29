@@ -57,6 +57,120 @@ def run_all_results(ds: preprocessing.Dataset) -> pd.DataFrame:
     return combined_df
 
 
+def subsample_dataset(
+    ds: preprocessing.Dataset,
+    size: int,
+    rng: np.random.Generator,
+) -> preprocessing.Dataset:
+    """
+    Return a view of `ds` where each comment's annotator lists (for the
+    annotation column and every SDB column) have been subsampled down to
+    `size` annotators, sampled with replacement. All columns use the same
+    per-row indices so annotator alignment is preserved across columns.
+
+    Parameters
+    ----------
+    ds: The dataset to subsample.
+    size: Number of annotators to sample per comment (with replacement).
+    rng: Numpy random generator to use for sampling.
+
+    Returns
+    -------
+    preprocessing.Dataset
+        A view of `ds` with subsampled annotation/SDB columns. All other
+        methods/attributes are delegated to the original dataset.
+    """
+    df = ds.get_dataset().copy()
+    annotation_col = ds.get_annotation_column()
+    cols = ds.get_sdb_columns() + [annotation_col]
+
+    # Sample indices once per row so all columns stay aligned
+    row_indices = [
+        rng.choice(len(values), size=size, replace=True)
+        for values in df[annotation_col]
+    ]
+
+    for col in cols:
+        df[col] = [
+            [row[i] for i in indices]
+            for row, indices in zip(df[col], row_indices)
+        ]
+
+    return preprocessing.SubsampledView(ds, df)
+
+
+def run_all_results_resampled(
+    ds: preprocessing.Dataset,
+    sample_size: int = 5,
+    n_runs: int = 10,
+    seed: int = 42,
+) -> pd.DataFrame:
+    """
+    Like `run_all_results`, but instead of a single kappa/pvalue per
+    SDB factor, this resamples `sample_size` annotators per comment
+    (with replacement), `n_runs` times, and reports the mean apunim
+    value and its standard deviation across runs.
+
+    Parameters
+    ----------
+    ds: The dataset
+    sample_size: Number of annotators to sample per comment, per run.
+    n_runs: Number of resampling runs.
+    seed: RNG seed for reproducibility.
+
+    Returns
+    -------
+    pd.DataFrame
+        Hierarchical DataFrame indexed by (SDB Feature, factor), with
+        columns `mean_apunim`, `std_apunim`, and `n_runs`.
+    """
+    rng = np.random.default_rng(seed)
+    columns = set(ds.get_sdb_columns()).intersection(
+        set(ds.get_dataset().columns)
+    )
+
+    results = []
+    for sdb_column in tqdm(
+        columns, desc="Evaluating SDB dimensions (resampled)"
+    ):
+        # factor -> list of apunim values, one entry per run
+        factor_runs: dict[str, list[float]] = {}
+
+        for _ in range(n_runs):
+            subsampled_ds = subsample_dataset(ds, size=sample_size, rng=rng)
+            res = _run_aposteriori(
+                subsampled_ds.get_dataset(),
+                feature_col=sdb_column,
+                value_col=ds.get_annotation_column(),
+                comment_key_col=ds.get_comment_key_column(),
+            )
+            for factor, result in res.items():
+                factor_runs.setdefault(factor, []).append(result.apunim)
+
+        res_df = pd.DataFrame(
+            {
+                factor: {
+                    "mean_apunim": np.mean(values),
+                    "std_apunim": np.std(values),
+                    "n_runs": len(values),
+                }
+                for factor, values in factor_runs.items()
+            }
+        ).T
+        res_df.index.name = sdb_column
+        res_df["SDB Feature"] = sdb_column
+        results.append(res_df)
+
+    combined_df = pd.concat(results)
+    combined_df.set_index("SDB Feature", append=True, inplace=True)
+    combined_df = combined_df.reorder_levels(
+        ["SDB Feature", combined_df.index.names[0]]
+    )
+    combined_df.sort_index(inplace=True)
+
+    return combined_df
+
+
 def results_to_latex(
     res_df: pd.DataFrame,
     output_path: Path,
@@ -293,9 +407,15 @@ def _compute_comment_polarization(
     group_generator_fn,
     max_annotators: int,
     num_bins: int | None = None,
-) -> np.ndarray:
+) -> pd.Series:
     """
     Shared engine for polarization computation.
+
+    Returns
+    -------
+    pd.Series
+        Series indexed by the comment text, with the inherent
+        polarization value for that comment.
     """
 
     df = dataset.get_dataset()
@@ -350,16 +470,23 @@ def _compute_comment_polarization(
 
         all_group_values[cid] = values
 
-    return np.array(comment_mins)
+    return pd.Series(
+        comment_mins, index=unique_comments, name="inherent_polarization"
+    )
 
 
 def compute_inherent_polarization_exhaustive(
     dataset: preprocessing.Dataset,
     num_bins: int | None = None,
     max_annotators: int = 420,
-) -> np.ndarray:
+) -> pd.Series:
     """
     Exhaustively evaluates ALL possible annotator groups.
+
+    Returns
+    -------
+    pd.Series
+        Series indexed by comment text, with inherent polarization values.
 
     Total groups per comment:
 
@@ -376,26 +503,29 @@ def compute_inherent_polarization_exhaustive(
 
 def compute_inherent_polarization_random(
     dataset: preprocessing.Dataset,
-    iterations: int = 1_000,
     num_bins: int | None = None,
-    seed: int | None = 42,
     max_annotators: int = 420,
-) -> np.ndarray:
+    iterations: int = 1000,
+    seed: int = 42,
+) -> pd.Series:
     """
     Randomly samples annotator groups.
+
+    Returns
+    -------
+    pd.Series
+        Series indexed by comment text, with inherent polarization values.
 
     Group size is sampled uniformly from:
 
     :contentReference[oaicite:1]{index=1}
     """
-
     rng = np.random.default_rng(seed)
-
     return _compute_comment_polarization(
         dataset=dataset,
-        group_generator_fn=_iter_random_groups,
+        group_generator_fn=lambda n: _iter_random_groups(
+            n, iterations=iterations, rng=rng
+        ),
         num_bins=num_bins,
         max_annotators=max_annotators,
-        iterations=iterations,
-        rng=rng,
     )

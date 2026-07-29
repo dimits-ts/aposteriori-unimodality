@@ -96,10 +96,12 @@ def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
     )
 
     res = tasks.run_helper.compute_inherent_polarization_exhaustive(dataset=ds)
-    np.save(output_dir / "sap-apriori.npy", res)
+    res.to_csv(
+        output_dir / "sap-inherent.csv", header=True, index_label="comment"
+    )
 
     res = tasks.run_helper.run_all_results(ds)
-    res.to_csv(output_dir / "sap.csv")
+    res.to_csv(output_dir / "sap-results.csv")
 
 
 if __name__ == "__main__":
