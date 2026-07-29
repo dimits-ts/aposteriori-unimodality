@@ -647,3 +647,48 @@
 	note={Under review.},
 	year={2026}
 }
+
+@inproceedings{chen-yu-and-samuel-r-bowman-2022-clean,
+	title = "Clean or Annotate: How to Spend a Limited Data Collection Budget",
+	author = "Chen, Derek  and
+	Yu, Zhou  and
+	Bowman, Samuel R.",
+	editor = "Cherry, Colin  and
+	Fan, Angela  and
+	Foster, George  and
+	Haffari, Gholamreza (Reza)  and
+	Khadivi, Shahram  and
+	Peng, Nanyun (Violet)  and
+	Ren, Xiang  and
+	Shareghi, Ehsan  and
+	Swayamdipta, Swabha",
+	booktitle = "Proceedings of the Third Workshop on Deep Learning for Low-Resource Natural Language Processing",
+	month = jul,
+	year = "2022",
+	address = "Hybrid",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/2022.deeplo-1.17/",
+	doi = "10.18653/v1/2022.deeplo-1.17",
+	pages = "152--168",
+	abstract = "Crowdsourcing platforms are often used to collect datasets for training machine learning models, despite higher levels of inaccurate labeling compared to expert labeling. There are two common strategies to manage the impact of such noise: The first involves aggregating redundant annotations, but comes at the expense of labeling substantially fewer examples. Secondly, prior works have also considered using the entire annotation budget to label as many examples as possible and subsequently apply denoising algorithms to implicitly clean the dataset. We find a middle ground and propose an approach which reserves a fraction of annotations to explicitly clean up highly probable error samples to optimize the annotation process. In particular, we allocate a large portion of the labeling budget to form an initial dataset used to train a model. This model is then used to identify specific examples that appear most likely to be incorrect, which we spend the remaining budget to relabel. Experiments across three model variations and four natural language processing tasks show our approach outperforms or matches both label aggregation and advanced denoising methods designed to handle noisy labels when allocated the same finite annotation budget."
+}
+
+@inproceedings{golazizian-etal-2024-cost,
+	title = "Cost-Efficient Subjective Task Annotation and Modeling through Few-Shot Annotator Adaptation",
+	author = "Golazizian, Preni  and
+	Salkhordeh Ziabari, Alireza  and
+	Omrani, Ali  and
+	Dehghani, Morteza",
+	editor = "Al-Onaizan, Yaser  and
+	Bansal, Mohit  and
+	Chen, Yun-Nung",
+	booktitle = "Findings of the Association for Computational Linguistics: EMNLP 2024",
+	month = nov,
+	year = "2024",
+	address = "Miami, Florida, USA",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/2024.findings-emnlp.199/",
+	doi = "10.18653/v1/2024.findings-emnlp.199",
+	pages = "3474--3491",
+	abstract = "In subjective NLP tasks, where a single ground truth does not exist, the inclusion of diverse annotators becomes crucial as their unique perspectives significantly influence the annotations. In realistic scenarios, the annotation budget often becomes the main determinant of the number of perspectives (i.e., annotators) included in the data and subsequent modeling. We introduce a novel framework for annotation collection and modeling in subjective tasks that aims to minimize the annotation budget while maximizing the predictive performance for each annotator. Our framework has a two-stage design: first, we rely on a small set of annotators to build a multitask model, and second, we augment the model for a new perspective by strategically annotating a few samples per annotator. To test our framework at scale, we introduce and release a unique dataset, Moral Foundations Subjective Corpus, of 2000 Reddit posts annotated by 24 annotators for moral sentiment. We demonstrate that our framework surpasses the previous SOTA in capturing the annotators' individual perspectives with as little as 25{\%} of the original annotation budget on two datasets. Furthermore, our framework results in more equitable models, reducing the performance disparity among annotators."
+}
