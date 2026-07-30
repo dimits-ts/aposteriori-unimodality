@@ -146,10 +146,10 @@ While many studies study the effect of subgroups on annotation agreement~\cite{g
 		& 585       & 5--6   & 3  & HS \\
 		
 		DICES-350 
-		& 350  & 70--76 & 4  & HS \\
+		& 350   & 123    & 4  & HS \\
 		
 		DICES-990
-		& 990  & 123    & 4  & HS \\
+		& 990  & 70--76 & 4  & HS\\
 		\bottomrule
 	\end{tabular}
 	\caption{Datasets used in this study. \textit{\#Ann} refers to the number of annotations per comment (see App.~\ref{app:ann_details}), and \textit{\#Dims} to \ac{pc} dimensions (e.g., age, gender). Tasks are either Toxicity (Tox) or \ac{hs}.}
@@ -532,7 +532,6 @@ We have used small, open source LLMs (primarily LLaMa-8b and Qwen-7B) to help in
 \begin{acronym}[WWW]
 	\acro{ip}[InPol]{Inherent Polarization}
 	\acro{ndfu}[nDFU]{normalized Distance From Unimodality}
-	\acro{fwer}[FWER]{Family-Wise Error Rate}
 	\acro{nlp}[NLP]{Natural Language Processing}
 	\acro{gpl}[GPLv3]{GNU General Public Licence v3}
 	\acro{aa}[AA]{African American}
@@ -550,7 +549,7 @@ We have used small, open source LLMs (primarily LLaMa-8b and Qwen-7B) to help in
 	\includegraphics[width=\columnwidth]{kumar_sample.png}
 	\includegraphics[width=\columnwidth]{dices-350.png}
 	\includegraphics[width=\columnwidth]{dices-990.png}
-	\caption{Histogram of dataset polarization for the human datasets considered in this paper per \ac{pc} dimension.}
+	\caption{Boxplots of dataset polarization for the human datasets considered in this paper for all groups in each examined \ac{pc} dimension.}
 	\label{fig:dataset-polarization}
 \end{figure*}
 
@@ -809,7 +808,7 @@ Since our test is parametric (\S\ref{sec:apunim:statistical}), it assumes that t
 
 Replacing the parametric means test with a non-parametric alternative would relax assumptions about the underlying distribution but would not resolve the potential dependence between the random apunims. We initially attempted to implement a permutation test on the empirical (random apunim) distribution, but this resulted in excessive computational costs.
 
-While the test operates on a single group in principle, in practice we often want to test polarization for all subgroups of a specific dimension. Since we are simultaneously considering multiple hypotheses, we apply a multiple comparison correction to the resulting p-values---specifically the Holms method~\cite{holms}. The test is parameterized by the \ac{fwer}, which is used to tune the strength of the correction; we can increase this value to make our test more conservative towards multiple hypotheses~\cite{ChenFengYi2017}). In general, it is safe to set \ac{fwer} equal to the significance level of our test (e.g., $\textit{FWER} = 0.95$ if we are looking for $p < 0.05$).
+While the test operates on a single group in principle, in practice we often want to test polarization for all subgroups of a specific dimension. Since we are simultaneously considering multiple hypotheses, we apply a multiple comparison correction to the resulting p-values---specifically the Holms method~\cite{holms}. The test is parameterized by the confidence level of our test, which is used to tune the strength of the correction; we can increase this value to make our test more conservative towards multiple hypotheses~\cite{ChenFengYi2017}).
 
 
 \section{Software}
@@ -829,7 +828,7 @@ In order to lower the computational cost required, we re-use the random partitio
 \section{Replication Details}
 \label{app:replication}
 
-We use version \texttt{1.0.2} of the \texttt{apunim} library for our experiments. We use 100 random iterations for the apriori value calculation (Eq.~\ref{eq:apriori}) and the p-value estimation (\S\ref{sec:apunim:statistical}), and set a \ac{fwer} rate of $.95$.
+We use version \texttt{1.0.5} of the \texttt{apunim} library for our experiments. We use 100 random iterations for the apriori value calculation (Eq.~\ref{eq:apriori}) and the p-value estimation (\S\ref{sec:apunim:statistical}), and set a confidence level of $\alpha=0.05$.
 
 While the library efficiently handles large numbers of annotators through vectorized operations, performance degrades significantly when processing a high volume of comments, particularly when annotators belong to multiple distinct groups. For instance, while experiments across all datasets in \S\ref{sec:datasets} complete within a minute, the Kumar dataset necessitates approximately one hour of computation using commercial hardware. Furthermore, the annotator variance analysis detailed in \S\ref{sec:ideal-dataset} required over ten hours. While this latter time requirement is anticipated due to the inherently demanding nature and non-standard application of our library, it demonstrates the existence of a potential scaling bottleneck. The same applies to a lesser extent for the subsampling experiments on the DICES datasets, taking collectively three hours of computation.
 
