@@ -261,9 +261,7 @@ We compute the \ac{ip} for each comment across the four datasets. For Sap and Ku
 	\ac{ip} may arise from the presence of distinct, partially represented groups within the annotator pool. While these minority groups are responsible for the observed polarization, they may go undetected in our current methodology if they are represented by only one or two annotators, as these groups are discarded (\S\ref{sec:inherent:inherent}). 
 \end{hypothesis}
 
-Both of these explanations are plausible and reflect known limitations of most \ac{nlp} datasets, although we lack such datasets with large annotator counts per item to provide a definitive answer, since the DICES datasets are insufficient:
-
-\paragraph{Why is DICES silent?} Initially, we hypothesized that the absence of \ac{ip} in the DICES datasets could be attributed to their large annotator count per item. However, even when repeating the experiment using random annotator subsets (ranging from 5 to 50 annotators) and taking the maximum across ten random samples for each subset size, we still observed zero \ac{ip} (App.~\ref{app:inherent}). We believe that fundamental differences between human and LLM-generated texts may be the cause. This is a plausible explanation given that LLM texts violating anti-discrimination directives may be relatively unsubtle, as supported by low overall polarization (Fig.~\ref{fig:dataset-polarization}; App~\ref{app:ann_details}).
+Both of these explanations are plausible and reflect known limitations of most \ac{nlp} datasets, although we lack such datasets with large annotator counts per item to provide a definitive answer. The DICES datasets can in principle be used for this purpose. However, even when repeating the experiment using random annotator subsets (ranging from 5 to 50 annotators) and taking the maximum across ten random samples for each subset size, \emph{we still observed zero \ac{ip}} (App.~\ref{app:inherent}). This finding either invalidates both hypotheses, or indicates that the DICES datasets are structurally different. The latter explanation is plausible given that the annotation targets are LLM texts, which may be relatively unsubtle compared to human comments, as supported by low overall polarization (Fig.~\ref{fig:dataset-polarization}; App~\ref{app:ann_details}).
 
 
 \subsection{Polarization is directional}
@@ -370,7 +368,7 @@ Since annotation histograms may be noisy, we additionally assess whether the obs
 \subsection{Experimental Setup}
 \label{sec:results:experimental}
 
-Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can partially explain polarization in the annotations. The statistically significant results are presented in Table~\ref{tab:merged-apunim}. Note that some groups are not included because there were no valid comments (see App.~\ref{app:stats:filtering}). See App.~\ref{app:replication} for details on other parameters and execution times, and App.~\ref{app:full} for the full results.
+Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can partially explain polarization in the annotations. Statistically significant results are presented in Table~\ref{tab:merged-apunim}. See App.~\ref{app:replication} for details on other parameters and execution times, and App.~\ref{app:full} for the full results.
 
 
 \subsection{Which factors contribute to polarization?}
@@ -415,7 +413,7 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 		\multicolumn{3}{c}{\textbf{Sap}} \\
 		\midrule
 		\rowcolor{gray!15}
-		Ethnicity=Black & .042 & 4 \\
+		Ethnicity=AfricanAm & .042 & 4 \\
 		\rowcolor{gray!15}
 		Gender=Man & -.091 & 1439 \\
 		\rowcolor{gray!15}
@@ -451,9 +449,9 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 	\label{tab:merged-apunim}
 \end{table}
 
-\paragraph{Ethnicity} Polarization is consistently attributed to ethnicity across all datasets, confirming prior work suggesting that it is a systematic source of annotator disagreement in these tasks~\cite{goyal2022your}.
+\paragraph{Ethnicity} Polarization is consistently attributed to ethnicity across all datasets, confirming prior work suggesting that it is a systematic source of annotator disagreement in these tasks~\cite{goyal2022your}. We note that polarization attribution does not have a consistent direction across datasets, which we believe to be caused by studies using different ethnic subgroups, allowing polarization detection on the level of \acp{pc}, but distorting subgroup attribution.
 
-\paragraph{Gender} Men and women have statistically significant, consistently opposite effects both in DICES-990 and Sap, consistent with previous findings regarding \ac{hs}~\citep{wojatzki2018women} and toxicity annotation~\cite{binns2017like}. Non-\emph{transgender} annotators also showed the highest degree of polarization in the Kumar dataset in absolute terms ($-.788$) suggesting that transgender annotators are a systematic source of annotator disagreement, although only the inverse effect is detectable due to annotator sparsity (hence the negative sign).
+\paragraph{Gender} In both DICES-990 and Sap, women are a consistent source of polarization (positive values), while men disagree among themselves (negative values). These results are consistent with previous findings regarding \ac{hs}~\citep{wojatzki2018women} and toxicity annotation~\cite{binns2017like}. Non-\emph{transgender} annotators also showed the highest degree of polarization in the Kumar dataset in absolute terms ($-.788$) suggesting that transgender annotators are a systematic source of annotator disagreement, although only the inverse effect is detectable due to annotator sparsity (hence the negative sign).
 
 \begin{finding}
 	\label{finding:categorical}
@@ -504,24 +502,29 @@ We investigated to what extent polarization can be attributed to annotator group
 
 \section*{Limitations}
 
-Researchers often release only aggregated single-label annotations or omit annotator \ac{pc} characteristics entirely. As a result, both our analysis and the applicability of our framework are limited by the scarcity of suitable datasets. In addition, because datasets with large numbers of annotators per item are rare, our approach operates only at the dataset level. This limitation prevents us from identifying individual comments or examples that could serve as concrete explanations for the observed \textit{apunim} values.
+\paragraph{Data limitations} Researchers often release only aggregated single-label annotations or omit annotator \ac{pc} characteristics entirely. As a result, both our analysis and the applicability of our framework are limited by the scarcity of suitable datasets. In addition, because datasets with large numbers of annotators per item are rare, our approach operates only at the dataset level. This limitation prevents us from identifying individual comments or examples that could serve as concrete explanations for the observed \textit{apunim} values.
 
-Additionally, our metric features some important practical limitations. It is computationally expensive when applied to very large datasets with a very large amount of \ac{pc} dimensions each featuring multiple distinct subgroups (App.~\ref{app:replication}). It also tends to underestimate polarization attribution when applied to many tens of thousands of items (App.~\ref{app:ablation}). Furthermore, the p-value estimates may falsely give the impression that zero-attribution effects are genuine, which should be taken into account when interpreting results. These limitations do not render our method insufficient---the first two issues can be solved by subsampling. We nevertheless believe that \ac{nlp} datasets should generally move away from huge annotated corpora, and instead towards smaller datasets with large annotator groups per item that sufficiently represent social subgroups.
+\paragraph{Confounding variables} It should be noted that our analysis does not take into account confounding variables. It is plausible that some annotator groups are correlated with others (e.g., LGBTQ+ annotators may not lean into Conservatism). This is left for future work, as the scope of this analysis is deemed too large for this paper. Additionally, many datasets do not report anonymized IDs for the annotators, but only the annotations themselves, making this kind of analysis impossible. We leave our analysis as proof that our methodology can be used to surface polarization patterns, although future methods should allow for intergroup attribution.
 
-Finally, although we compare findings across datasets and relate them to prior work, we do not directly compare polarization and agreement metrics, since they rely on fundamentally different assumptions and mechanisms (see \S\ref{sec:related:polarization}). These differences also make it difficult to fully explain certain patterns in our results, such as why some groups show statistically significant effects while others do not.
+\paragraph{Computational limitations} Additionally, our metric features some important practical limitations. It is computationally expensive when applied to very large datasets with a very large amount of \ac{pc} dimensions each featuring multiple distinct subgroups (App.~\ref{app:replication}). It also tends to underestimate polarization attribution when applied to many tens of thousands of items (App.~\ref{app:ablation}). Furthermore, the p-value estimates may falsely give the impression that zero-attribution effects are genuine, which should be taken into account when interpreting results. These limitations do not render our method insufficient---the first two issues can be solved by subsampling. We nevertheless believe that \ac{nlp} datasets should generally move away from huge annotated corpora, and instead towards smaller datasets with large annotator groups per item that sufficiently represent social subgroups.
+
+\paragraph{Comparisons with other methods} Finally, although we compare findings across datasets and relate them to prior work, we do not directly compare polarization and agreement metrics, since they rely on fundamentally different assumptions and mechanisms (see \S\ref{sec:related:polarization}). These differences also make it difficult to fully explain certain patterns in our results, such as why some groups show statistically significant effects while others do not.
 
 
 \section*{Ethical Considerations}
 
-All datasets used in this study were either publicly accessible, or were provided to us by the authors with full disclosure on the purpose of our research. For this reason, we do not release the data provided to us by the authors. No identifiable, personal information is included in our pipeline.
+\paragraph{Dual use concerns}The primary objective of this study is to identify systemic sources of polarization in subjective NLP datasets to facilitate the construction of more robust and equitable AI systems. However, given that our methodology allows for the quantitative attribution of specific judgment patterns to sociodemographic and ideological characteristics, we acknowledge three primary risks inherent in this research.
 
-Our study uses examples of comments which may be considered divisive across certain demographics. These examples were created by us for demonstration purposes---their contents and the groups studied can be replaced with any suitable alternative. We do not claim that these examples necessarily reflect the views or behaviors of these groups, nor are they representative of our own opinions.
+First, \emph{Discriminatory Profiling}: If the metric is applied outside of a dataset quality analysis, its ability to correlate specific judgment patterns with annotator groups could be misused for surveillance or unjust profiling. Second, \emph{Automated Bias Amplification}: The diagnostic patterns of polarization we detect are reflections of human systemic biases. Without critical human oversight, training subsequent models on these patterns risks automating and entrenching existing societal prejudices. Finally, the knowledge provided by \emph{apunim} could be \emph{weaponized}, allowing malicious actors to strategically target weak points in moderation systems or intentionally maximize societal conflict.
 
-The purpose of our study is identifying systematic sources of polarization in subjective NLP datasets, in order to build more robust and equitable AI systems. However, as our methodology allows for the quantitative attribution of judgments to specific sociodemographic and ideological characteristics, we acknowledge three primary risks. First, the risk of discriminatory profiling: if the metric is applied outside of dataset quality analysis, its ability to correlate specific judgment patterns with annotator groups could be misused for surveillance or unjust profiling. Second, there is the risk of automated bias amplification: the diagnostic patterns of polarization we detect are reflections of human systemic biases. If subsequent models are trained on these patterns without critical human oversight, the AI risks automating and entrenching societal prejudices. Finally, the structural knowledge provided by \emph{apunim} could be weaponized, allowing malicious actors to strategically target weak points in moderation systems or intentionally maximize societal conflict. 
+We stress that our metric functions strictly as a diagnostic warning signal. Any deployment in a real-world system must mandate a rigorous human-in-the-loop review, ensuring that identified patterns lead to systemic improvements (e.g., policy reform, demographic diversity initiatives) rather than merely justifying an automated system.
 
-We stress that our metric serves as a diagnostic warning signal, requiring that any implementation in a deployed system must mandate a rigorous human-in-the-loop review, ensuring that the identified patterns lead to systemic change (e.g., policy reform, demographic diversity improvements) rather than merely justifying the automated system. We also actively encourage the scientific community to ``red team'' our methodology, helping to proactively identify and neutralize potential adversarial or discriminatory applications.
+\paragraph{Data sourcing and privacy} All datasets employed in this study were either publicly accessible or provided to us by the original authors with full disclosure regarding the purpose of our research. Crucially, no identifiable, personal information was included in our pipeline. We do not release proprietary data provided by the authors.
+2.3 Scope and Illustrative Examples
 
-We have used small, open source LLMs (primarily LLaMa-8b and Qwen-7B) to help in small style changes throughout this document. We also used them in conjunction with a GPT-5 model to generate some of the code for the plots and experiments presented in this paper. All such outputs have been checked by the authors.
+\paragraph{Examples used} Our study utilizes examples of comments that may be considered divisive across certain demographics. These examples were generated by our team solely for demonstration purposes. We explicitly state that the contents of these examples and the groups studied do not necessarily reflect the views or behaviors of the groups they represent, nor do they reflect the opinions of the authors.
+
+\paragraph{Tools used} We used small, open-source LLMs (primarily a local Gemma-4 model) to perform minor stylistic adjustments throughout this document. Furthermore, we utilized open-source and proprietary models to generate portions of the code for the plots and experiments presented. All such AI-generated outputs have been meticulously checked and validated by the authors. 
 
 \bibliography{refs}
 \appendix
@@ -917,9 +920,9 @@ Since our approach was designed for the small-scale datasets common in \ac{nlp},
 
 The test is overly conservative, meaning it almost always suggests there is no significant effect, even when an effect likely exists in reality. This inability to detect a real signal is a Type II Error (a false negative). This suggests that our test is statistically weak or ``underpowered'' in massive settings. Since our methodology is built for the small-scale \ac{nlp} datasets that dominate the research field, we deem this limitation acceptable for the scope of our work. 
 
-Astute readers may notice that some variability does exist across differently sized samples for the same examined groups, where for example the sign of the apunim value may switch. In order to verify that this variability is caused by the sample size, and not by different samples being drawn, we execute a further ablation study. Specifically, we execute the apunim study on the $3000$-sized sample of the dataset, using different subsets of the Kumar dataset. 
+Astute readers may notice that some variability does exist across differently sized samples for the same examined groups, where for example the sign of the apunim value may switch. We note that the statistically significant values (bold rows) change signs only when the apunim value approaches zero in the largest samples. Thus, the results are not inverted, but rather pushed towards zero.
 
-The results can be found in Fig.~\ref{fig:seeds}, where we note that variability is not an issue, except for a couple of cases. These cases seem to represent sparse annotator groups, where missing a few comments may genuinely change the value of the apunim metric. These groups however are largely not detected by apunim as significant either way (see \S\ref{sec:results}).
+In order to verify that this variability is caused by the sample size, and not by different samples being drawn, we execute a further ablation study. Specifically, we execute the apunim study on the $3000$-sized sample of the dataset, using different subsets of the Kumar dataset. The results can be found in Fig.~\ref{fig:seeds}, where we note that variability is not an issue, except for a couple of cases. These cases seem to represent sparse annotator groups, where missing a few comments may genuinely change the value of the apunim metric. These groups however are largely not detected by apunim as significant either way (see \S\ref{sec:results}).
 
 \begin{table}[ht]
 	\scriptsize
@@ -943,7 +946,7 @@ The results can be found in Fig.~\ref{fig:seeds}, where we note that variability
 		\multicolumn{4}{l}{\textbf{Education}} \\
 		\midrule
 		High School graduate & -.02302 & -.00531 & .01411 \\
-		College, no degree & -.04546 & .00952 & .00590 \\
+		\textbf{College, no degree} & -.04546 & .00952 & .00590 \\
 		Associate degree & .00106 & .00539 & .00888 \\
 		Bachelor's degree & .02875 & -.00104 & -.00029 \\
 		Master's degree & .02418 & .00374 & -.00027 \\
@@ -957,7 +960,7 @@ The results can be found in Fig.~\ref{fig:seeds}, where we note that variability
 		Hispanic & .00379 & .0 & -.09910 \\
 		Multiracial & .00755 & .0 & .0 \\
 		Other & -.00813 & N/A & -.30556 \\
-		White & -.02301 & -.00014 & .00013 \\
+		\textbf{White} & -.02301 & -.00014 & .00013 \\
 		\midrule
 		
 		% --- Gender Features ---
@@ -970,22 +973,22 @@ The results can be found in Fig.~\ref{fig:seeds}, where we note that variability
 		% --- Has Been Targeted Features ---
 		\multicolumn{4}{l}{\textbf{Has Been Targeted}} \\
 		\midrule
-		False & -.05945 & -6.35e-05 & 1.44e-05 \\
+		\textbf{False} & -.05945 & -6.35e-05 & 1.44e-05 \\
 		True & .01669 & -.00345 & -.00200 \\
 		\midrule
 		
 		% --- Is Parent Features ---
 		\multicolumn{4}{l}{\textbf{Is Parent}} \\
 		\midrule
-		No & -.08405 & .00077 & .00075 \\
+		\textbf{No} & -.08405 & .00077 & .00075 \\
 		N/A & .00442 & 1.0 & 3.89e-16 \\
-		Yes & .07057 & -1.02e-05 & .00015 \\
+		\textbf{Yes} & .07057 & -1.02e-05 & .00015 \\
 		\midrule
 		
 		% --- Is Transgender Features ---
 		\multicolumn{4}{l}{\textbf{Is Transgender}} \\
 		\midrule
-		No & -.10182 & .0 & 2.24e-16 \\
+		\textbf{No} & -.10182 & .0 & 2.24e-16 \\
 		\midrule
 		
 		% --- Political Affiliation Features ---
@@ -1000,24 +1003,24 @@ The results can be found in Fig.~\ref{fig:seeds}, where we note that variability
 		% --- Religion Important Features ---
 		\multicolumn{4}{l}{\textbf{Religion Important}} \\
 		\midrule
-		No & -.07148 & .00232 & .00140 \\
+		\textbf{No} & -.07148 & .00232 & .00140 \\
 		Not very & -.01344 & .01005 & .00567 \\
 		Somewhat & .02157 & .00314 & -.00220 \\
-		Very & .04283 & -.00304 & -.00165 \\
+		\textbf{Very} & .04283 & -.00304 & -.00165 \\
 		\midrule
 		
 		% --- Seen Toxicity Features ---
 		\multicolumn{4}{l}{\textbf{Seen Toxicity}} \\
 		\midrule
-		False & .02454 & -.00144 & -.00075 \\
-		True & -.08237 & .00064 & .00048 \\
+		\textbf{False} & .02454 & -.00144 & -.00075 \\
+		\textbf{True} & -.08237 & .00064 & .00048 \\
 		\midrule
 		
 		% --- Sexual Orientation Features ---
 		\multicolumn{4}{l}{\textbf{Sexual Orientation}} \\
 		\midrule
 		Bisexual & -.00272 & -.03953 & -.01297 \\
-		Heterosexual & -.06722 & -.00032 & 1.87e-06 \\
+		\textbf{Heterosexual} & -.06722 & -.00032 & 1.87e-06 \\
 		Homosexual & -.01172 & .0 & .05263 \\
 		\midrule
 		
@@ -1040,7 +1043,7 @@ The results can be found in Fig.~\ref{fig:seeds}, where we note that variability
 		Very Frequently & -.01684 & .02953 & .01461 \\
 		\bottomrule
 	\end{tabular}
-	\caption{Comparison of apunim values across different sample sizes (1k, 10k, 30k) for the Kumar dataset. Rows with more than one N/A value removed.}
+	\caption{Comparison of apunim values across different sample sizes (1k, 10k, 30k) for the Kumar dataset. Rows with more than one N/A value removed. Bold rows show statistically significant results in the 3k sample used in the main text.}
 	\label{tab:num-comments-apunim}
 \end{table}
 
