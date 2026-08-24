@@ -20,5 +20,5 @@ dependencies:
       - torch
       - transformers
       - bitsandbytes
-      - apunim
+      - apunim>=1.0.6   # 1.0.6 fixes the DFU bin grid; earlier versions can invert the apunim sign
       - krippendorff  
