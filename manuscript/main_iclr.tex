@@ -11,6 +11,7 @@
 \usepackage{xcolor}%
 \usepackage{textcomp}%
 \usepackage{booktabs}%
+\usepackage{float}%
 
 %  ==================== MY PACKAGES ====================
 \usepackage{acronym}
@@ -368,6 +369,31 @@ Since annotation histograms may be noisy, we additionally assess whether the obs
  We account for the presence of multiple subgroups in each \ac{pc} dimension using a multiple-hypothesis correction. For a detailed explanation of the p-value computation and the assumptions underlying the test, refer to App.~\ref{app:stats:pvalue}.
 
 
+\subsection{Does apunim recover a known effect?}
+\label{sec:apunim:recovery}
+
+Polarization and agreement metrics rest on different assumptions, which is why
+they are rarely compared directly. Fixing the size of a group effect by
+construction makes them commensurable, and we do so on synthetic annotations
+(App.~\ref{app:comparison}). Two outcomes bear on how \S\ref{sec:results}
+should be read. The \emph{sign} of apunim carries information agreement-based
+attribution does not: a group that drives polarization and one that is merely
+noisy internally both depart from agreement, and Krippendorff's $\alpha$ scores
+them alike ($+.03$ vs.\ $+.02$), whereas apunim separates them ($+.32$ vs.\
+$-.27$). Our significance test, however, is anti-conservative---it rejects at
+$\alpha=.05$ for 40--62\% of samples containing no group effect---because the
+null is the \emph{mean} of the reused random partitions
+(App.~\ref{app:stats:pvalue}), which narrows with the iteration count rather
+than with the evidence. A permutation p-value restores calibration.
+
+\begin{finding}
+	\label{finding:comparison}
+	The sign of apunim separates between-group polarization from within-group
+	disagreement, which agreement-based attribution conflates. Its p-values,
+	however, are anti-conservative and should be recomputed by permutation.
+\end{finding}
+
+
 \section{Attributing real-life polarization to human groups}
 \label{sec:results}
 
@@ -500,7 +526,7 @@ We investigated to what extent polarization can be attributed to annotator group
 
 \paragraph{Computational limitations} Additionally, our metric features some important practical limitations. It is computationally expensive when applied to very large datasets with a very large amount of \ac{pc} dimensions each featuring multiple distinct subgroups (App.~\ref{app:replication}). It also tends to underestimate polarization attribution when applied to many tens of thousands of items (App.~\ref{app:ablation}). Furthermore, the p-value estimates may falsely give the impression that zero-attribution effects are genuine, which should be taken into account when interpreting results. These limitations do not render our method insufficient---the first two issues can be solved by subsampling. We nevertheless believe that \ac{nlp} datasets should generally move away from huge annotated corpora, and instead towards smaller datasets with large annotator groups per item that sufficiently represent social subgroups.
 
-\paragraph{Comparisons with other methods} Finally, although we compare findings across datasets and relate them to prior work, we do not directly compare polarization and agreement metrics, since they rely on fundamentally different assumptions and mechanisms (see \S\ref{sec:related:polarization}). These differences also make it difficult to fully explain certain patterns in our results, such as why some groups show statistically significant effects while others do not.
+\paragraph{Comparisons with other methods} Finally, we compare against agreement-based attribution and against the original aposteriori unimodality test only on synthetic data, where the group effect is known by construction (App.~\ref{app:comparison}); on the datasets of \S\ref{sec:datasets} no ground truth exists against which to score them. That comparison also surfaced a calibration problem in our own significance test (Finding~\ref{finding:comparison}), which is the likeliest explanation for a pattern we could not previously account for---why some groups show statistically significant effects while others do not. The p-values in \S\ref{sec:results} should be read as descriptive until recomputed by permutation.
 
 
 \section*{Ethics Statement}
@@ -804,7 +830,7 @@ In order to lower the computational cost required, we re-use the random partitio
 \section{Replication details}
 \label{app:replication}
 
-We use version \texttt{1.0.5} of the \texttt{apunim} library for our experiments. We use 100 random iterations for the apriori value calculation (Eq.~\ref{eq:apriori}) and the p-value estimation (\S\ref{sec:apunim:statistical}), and set a confidence level of $\alpha=0.05$.
+We use version \texttt{1.0.6} of the \texttt{apunim} library for our experiments. We use 100 random iterations for the apriori value calculation (Eq.~\ref{eq:apriori}) and the p-value estimation (\S\ref{sec:apunim:statistical}), and set a confidence level of $\alpha=0.05$.
 
 While the library efficiently handles large numbers of annotators through vectorized operations, performance degrades significantly when processing a high volume of comments, particularly when annotators belong to multiple distinct groups. For instance, while experiments across all datasets in \S\ref{sec:datasets} complete within a minute, the Kumar dataset necessitates approximately one hour of computation using commercial hardware. Furthermore, the annotator variance analysis detailed in App.~\ref{sec:ideal-dataset} required over ten hours. While this latter time requirement is anticipated due to the inherently demanding nature and non-standard application of our library, it demonstrates the existence of a potential scaling bottleneck. The same applies to a lesser extent for the subsampling experiments on the DICES datasets, taking collectively three hours of computation.
 
@@ -1017,6 +1043,106 @@ Astute readers may notice that some variability does exist across differently si
 
 In order to verify that this variability is caused by the sample size, and not by different samples being drawn, we execute a further ablation study. Specifically, we execute the apunim study on the $3000$-sized sample of the dataset, using different subsets of the Kumar dataset. The results can be found in Fig.~\ref{fig:seeds}, where we note that variability is not an issue, except for a couple of cases. These cases seem to represent sparse annotator groups, where missing a few comments may genuinely change the value of the apunim metric. These groups however are largely not detected by apunim as significant either way (see \S\ref{sec:results}).
 
+
+
+\section{Comparison with agreement-based attribution}
+\label{app:comparison}
+
+\paragraph{Setup} We generate annotations on a 1--5 scale for 200 items, with
+the group effect fixed by construction: annotators in group B are shifted by
+$\delta$ relative to group A, so $\delta=0$ means the grouping is irrelevant
+and larger $\delta$ means it explains more of the polarization. Every method
+receives identical data and is asked whether the grouping explains the
+polarization; we report the rate at which each rejects at $\alpha=.05$ over 40
+replications. Annotations use a full crossed design (every annotator rates
+every item), which is the most favourable case for agreement metrics, as no
+cells are missing.
+
+\paragraph{Baselines} Krippendorff's $\alpha$ measures agreement rather than
+attribution, so the agreement baseline is the within-group gain it implies:
+split the annotators on the grouping and test whether $\alpha$ rises,
+calibrated by a label permutation test so that it carries a p-value on the same
+footing as apunim. We write this as $\Delta\alpha$. We also include the original
+aposteriori unimodality test~\cite{pavlopoulos-likas-2024}, which flags a
+comment that is polarized overall while every group is internally unimodal.
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=\textwidth]{metric_comparison.png}
+	\caption{Detection rate for a group effect of known size $\delta$; $\delta=0$
+	is the false-positive rate and the dotted line marks the nominal $\alpha=.05$.
+	Version \texttt{1.0.5} of our library binned each sample over its own range,
+	which inflates the \ac{ndfu} of any group that does not reach both ends of the
+	scale; \texttt{1.0.6} bins every group and partition on one fixed grid.}
+	\label{fig:metric-comparison}
+\end{figure}
+
+\paragraph{Power} All methods recover a large effect (Fig.~\ref{fig:metric-comparison}).
+They separate in the two regimes that matter for real corpora. With 20
+annotators per item, the original test never fires at all ($\le.05$ across every
+$\delta$): it requires a group's \ac{ndfu} to be exactly zero, and with few
+annotations per group that is a knife-edge condition, which is the concrete form
+of the noise problem raised in \S\ref{sec:related:attribution}. With a 20\%
+minority it recovers at most $.40$. Both apunim and $\Delta\alpha$ remain at
+ceiling in both regimes.
+
+\paragraph{Specificity} Power alone does not separate the methods, because a
+metric can fire for the wrong reason. Table~\ref{tab:comparison-specificity}
+scores three cases where the grouping is not the explanation. When group B
+merely has higher variance around a shared mean---disagreement without
+bimodality---$\Delta\alpha$ fires every time, and cannot distinguish that case
+from genuine polarization ($+.024$ vs.\ $+.031$). Apunim also fires, but its
+value is strongly \emph{negative} ($-.268$ vs.\ $+.322$), which is the reading
+given in \S\ref{sec:apunim:dataset}: the group is polarized among itself. This
+signed separation is what a polarization metric buys over an agreement metric,
+and it is the main argument for preferring one.
+
+\begin{table}[H]
+	\centering
+	\small
+	\begin{tabularx}{\textwidth}{Xrrrr}
+		\toprule
+		& \textbf{apunim} & \textbf{$\Delta\alpha$} & \textbf{orig.\ AU} & \textbf{should fire?} \\
+		\midrule
+		Group drives polarization      & $+.322$ & $+.031$ & $+.058$ & yes \\
+		Group is internally noisy only & $-.268$ & $+.024$ & $+.001$ & by sign \\
+		Polarization unrelated to group & $+.002$ & $+.000$ & $+.006$ & no \\
+		Real polarization, labels shuffled & $+.007$ & $-.006$ & $+.003$ & no \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Mean statistic in four scenarios (80 annotators/item, balanced
+	groups, $\delta=2.5$ where applicable). Only apunim separates a group that
+	drives polarization from one that is merely noisy, and it does so by sign.}
+	\label{tab:comparison-specificity}
+\end{table}
+
+\paragraph{Calibration} The last two rows of Table~\ref{tab:comparison-specificity}
+show apunim's statistic behaving correctly---it sits at zero when the grouping
+explains nothing---while its p-value does not: it rejects in 40\% and 53\% of
+those samples. The same is visible at $\delta=0$ in
+Fig.~\ref{fig:metric-comparison}, where the false-positive rate runs from
+$.40$ to $.62$ against a nominal $.05$, while $\Delta\alpha$ ($\le.03$) and the
+original test ($\le.05$) are calibrated. The cause is that the null is the mean
+of the reused random partitions (App.~\ref{app:stats:pvalue}); its standard
+error falls as $1/\sqrt{t}$ in the iteration count $t$, so significance can be
+obtained by computing longer. Holding the data fixed and raising $t$ from 50 to
+1600 leaves the rejection rate at $\approx.45$ while the median p-value falls
+from $.112$ to $.054$. Scoring the same statistic against the permutation
+\emph{distribution} rather than its mean gives a false-positive rate of $.10$
+while retaining power ($.93$ at $\delta=1$).
+
+\paragraph{Effect of the binning fix} Version \texttt{1.0.5} of our library
+passed a bin \emph{count} to \texttt{numpy}, which spreads bins over the range
+of each sample. A group whose annotations do not reach both ends of the scale
+then acquires empty bins between populated ones, which DFU reads as
+multimodality. This is not symmetric: the size-matched random partitions mix
+all groups and so span the scale, while a concentrated group does not, which
+inflates $Pol_{obs}$ relative to $Pol_{apr}$ and drives Eq.~\ref{eq:apunim}
+negative. On the data of Fig.~\ref{fig:metric-comparison} the statistic was
+negative in 88--100\% of replications for $\delta \in [1.5, 2.5]$, where it must
+be positive. Binning every sample on one grid fixed over the annotation scale
+removes the inversion ($+.143$, $+.222$, $+.322$, $+.428$ for
+$\delta = 1.5$ to $3.0$; negative in 0\%).
 
 \section{The ideal subjective dataset}
 \label{sec:ideal-dataset}

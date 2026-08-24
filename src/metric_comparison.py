@@ -206,11 +206,24 @@ def run(out_csv, n_items, n_reps, workers):
 
 # ------------------------------------------------------------------ figure
 
+#: drawn in this order, so the two apunim arms sit next to each other
+METHOD_ORDER = ["apunim (fixed binning)", "apunim (as shipped, 1.0.5)",
+                "Krippendorff delta-alpha", "aposteriori unimodality (2024)"]
+LEGEND_LABEL = {"Krippendorff delta-alpha": r"Krippendorff $\Delta\alpha$",
+                "aposteriori unimodality (2024)": "aposteriori unim.\ (2024)"}
+
+
 def plot(rows, methods, out_path):
     tasks.graphs.graph_setup()
     import matplotlib.pyplot as plt
+    # graph_setup sizes type for full-width figures; this one is a 3-panel strip.
+    plt.rcParams.update({"font.size": 8, "axes.titlesize": 8,
+                         "axes.labelsize": 9, "xtick.labelsize": 7.5,
+                         "ytick.labelsize": 7.5, "legend.fontsize": 7})
+    methods = ([m for m in METHOD_ORDER if m in methods]
+               + [m for m in methods if m not in METHOD_ORDER])
     colors = tasks.graphs.COLORBLIND_PALETTE
-    fig, axes = plt.subplots(1, len(CONDITIONS), figsize=(9.2, 2.9), sharey=True)
+    fig, axes = plt.subplots(1, len(CONDITIONS), figsize=(9.2, 2.6), sharey=True)
     titles = ["80 annotators/item, balanced", "20 annotators/item, balanced",
               "80 annotators/item, 20\\% minority"]
     for ax, (n_ann, minority), title in zip(axes, CONDITIONS, titles):
@@ -220,13 +233,16 @@ def plot(rows, methods, out_path):
                           and r["n_ann"] == n_ann and r["minority"] == minority
                           and r["delta"] == d] or [np.nan]) for d in DELTAS]
             ax.plot(DELTAS, y, marker=tasks.graphs.MARKERS[i % len(tasks.graphs.MARKERS)],
-                    color=colors[i % len(colors)], label=m, lw=1.6, ms=4.5)
+                    color=colors[i % len(colors)],
+                    label=LEGEND_LABEL.get(m, m), lw=1.4, ms=3.8)
         ax.axhline(ALPHA, ls=":", c="0.5", lw=1)
         ax.set_title(title, fontsize=9)
         ax.set_xlabel(r"group effect size $\delta$")
-        ax.set_ylim(-0.04, 1.04)
+        ax.set_ylim(-0.04, 1.08)
     axes[0].set_ylabel("detection rate")
-    axes[0].legend(frameon=False, fontsize=7)
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, frameon=False, ncol=4, loc="lower center",
+               bbox_to_anchor=(0.5, -0.16))
     fig.tight_layout()
     fig.savefig(out_path, dpi=200, bbox_inches="tight")
     print("wrote", out_path)
