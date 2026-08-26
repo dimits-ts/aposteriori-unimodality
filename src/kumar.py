@@ -54,6 +54,9 @@ class KumarDataset(tasks.preprocessing.Dataset):
 
     def get_annotation_column(self) -> str:
         return "Toxicity"
+    
+    def get_text_column(self) -> str:
+        return "comment"
 
     @staticmethod
     def _base_df(
@@ -159,7 +162,7 @@ class KumarDataset(tasks.preprocessing.Dataset):
                 "political_affilation",  # sic
                 "is_parent",
                 "religion_important",
-                "technology_impact",
+                "technology_impact"
             ],
         ]
         df.race = df.race.apply(KumarDataset._simplify_ethnicity)

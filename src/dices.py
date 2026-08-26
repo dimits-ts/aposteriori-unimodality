@@ -34,6 +34,9 @@ class DicesDataset(tasks.preprocessing.Dataset):
     def get_comment_key_column(self) -> str:
         return "item_id"
 
+    def get_text_column(self) -> str:
+        return "text"
+
     def get_annotation_column(self) -> str:
         return "is_harmful"
 
@@ -55,8 +58,16 @@ class DicesDataset(tasks.preprocessing.Dataset):
                 "rater_education",
                 "Q3_bias_overall",
                 "item_id",
+                "context",
+                "response",
             ],
         ]
+        # "context" is the conversation so far and "response" is the final
+        # chatbot turn being rated; concatenate into a single text field.
+        df["text"] = (
+            df["context"].fillna("") + "\n" + df["response"].fillna("")
+        )
+        df = df.drop(columns=["context", "response"])
         df.Q3_bias_overall = df.Q3_bias_overall.map(
             {"No": -1, "Unsure": 0, "Yes": 1}
         ).astype(int)
@@ -84,7 +95,11 @@ class DicesDataset(tasks.preprocessing.Dataset):
             }
         )
 
-        df = df.groupby("item_id").agg(list).reset_index()
+        agg = {
+            col: list for col in df.columns if col not in ("item_id", "text")
+        }
+        agg["text"] = "first"
+        df = df.groupby("item_id").agg(agg).reset_index()
         df = df.rename(
             columns={
                 "rater_gender": "Gender",
@@ -217,9 +232,6 @@ def main(
         combined = pd.concat([df_350, df_990], ignore_index=True)
         combined.to_csv(combined_path, index=False)
 
-    # New, separate experiment: fixed-size (5 annotators) x 10 runs,
-    # reporting mean apunim +/- std instead of kappa/pvalue. Operates on a
-    # subsampled ("ablated") dataset, so it's written to ablation_dir.
     run_resampled_experiment(ds_350, ablation_dir)
     run_resampled_experiment(ds_990, ablation_dir)
 

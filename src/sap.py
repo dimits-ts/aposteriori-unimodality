@@ -31,6 +31,9 @@ class SapDataset(tasks.preprocessing.Dataset):
 
     def get_annotation_column(self) -> str:
         return "Racism"
+    
+    def get_text_column(self) -> str:
+        return "tweet"
 
     @staticmethod
     def _base_df(dataset_path: Path) -> pd.DataFrame:

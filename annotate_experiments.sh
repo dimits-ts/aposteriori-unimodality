@@ -4,23 +4,16 @@ set -uo pipefail
 
 datasets=("dices-350" "dices-990" "sap" "kumar")
 dataset_paths=(
-    "data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv" 
-    "data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv"
-    "data/datasets/sap.csv"
-    "data/datasets/kumar.json"
+"data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv"
+"data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv"
+"data/datasets/sap.csv"
+"data/datasets/kumar.json"
 )
+# Instructions subdirectory to use for each dataset; the dices variants
+# share the same annotation guidelines.
+instruction_keys=("dices" "dices" "sap" "kumar")
 # --------------------------------
 
-if [ ${#datasets[@]} -eq 0 ]; then
-    echo "Error: No datasets defined. Please populate the 'datasets' and 'dataset_paths' arrays."
-    exit 1
-fi
-
-if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 <instructions-dir>"
-    echo "Note: Datasets must be defined within the script."
-    exit 1
-fi
 
 instructions_dir="instructions"
 
@@ -47,7 +40,6 @@ log_file="${log_dir}/annotation.log"
 
 mkdir -p "$output_dir" "$log_dir"
 
-# Modified run_annotation to accept dataset and dataset_path
 run_annotation() {
     local dataset="$1"
     local dataset_path="$2"
@@ -59,7 +51,6 @@ run_annotation() {
     instruction_name="$(basename "$instruction_path")"
     instruction_name="${instruction_name%.*}"
 
-    # Create a unique output path incorporating the dataset name
     local output_path="${output_dir}/${dataset}-${instruction_name}-${pseudo}.csv"
 
     if [ -f "$output_path" ]; then
@@ -75,40 +66,40 @@ run_annotation() {
         --instruction-prompt-path "$instruction_path" \
         --model-name "$model" \
         --output-path "$output_path" \
-        >> "$log_file" 2>&1
+        | tee -a "$log_file" 2>&1
 
     echo "Finished ${dataset} - ${instruction_name} x ${pseudo}." | tee -a "$log_file"
 }
-
-# --- MAIN EXECUTION LOOP ---
 
 # 1. Loop over all defined datasets
 for i in "${!datasets[@]}"; do
     current_dataset="${datasets[$i]}"
     current_dataset_path="${dataset_paths[$i]}"
+    current_instructions_dir="${instructions_dir}/${instruction_keys[$i]}"
 
     echo -e "\n\n=======================================================" >> "$log_file"
     echo "STARTING ANNOTATIONS FOR DATASET: ${current_dataset}" >> "$log_file"
     echo "=======================================================" >> "$log_file"
 
-    # 2. Loop over all instruction files in the specified directory
-    for instruction_path in "$instructions_dir"/*; do
+    if [ ! -d "$current_instructions_dir" ]; then
+        echo "Skipping ${current_dataset}: no instructions directory at ${current_instructions_dir}" | tee -a "$log_file"
+        continue
+    fi
+
+    # 2. Loop over the instruction files specific to this dataset
+    for instruction_path in "$current_instructions_dir"/*; do
         if [ ! -f "$instruction_path" ]; then
-            continue # Skip if it's not a regular file
+            continue
         fi
 
         # 3. Loop over all models
         for j in "${!models[@]}"; do
-            model="${models[$j]}"
-            pseudo="${pseudos[$j]}"
-
-            # Call the annotation function with all required parameters
             run_annotation \
                 "$current_dataset" \
                 "$current_dataset_path" \
                 "$instruction_path" \
-                "$model" \
-                "$pseudo"
+                "${models[$j]}" \
+                "${pseudos[$j]}"
         done
     done
 done

@@ -1,0 +1,6 @@
+You are an annotator with the following characteristics: {{persona}}
+
+In your opinion, how racist is this post? Use a scale ranging from “not at all” (1) to
+“very much so” (5).
+
+Reply with a single number only.

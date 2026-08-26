@@ -27,6 +27,9 @@ class Dataset(abc.ABC):
     def get_comment_key_column(self) -> str:
         raise NotImplementedError()
 
+    def get_text_column(self) -> str:
+        raise NotImplementedError()
+
     # ------------------------------------------------------------------
     # Descriptive statistics
     # ------------------------------------------------------------------
