@@ -259,7 +259,7 @@ Unlike disagreement, \ac{ip} does not provide any information, but rather repres
 	\ac{ip} may arise from the presence of partially represented groups within the annotator pool. While these groups are responsible for the observed polarization, they may go undetected in our current methodology if they are represented by only one or two annotators, as these groups are discarded (\S\ref{sec:inherent:inherent}). 
 \end{hypothesis}
 
-Both of these explanations are plausible and reflect known limitations of most \ac{nlp} datasets. The fact that the DICES datasets (featuring 70+ annotators per item) exhibit zero \ac{ip} in all comments may initially seem to validate either of the above hypotheses. However, even when repeating the experiment using random annotator subsets (ranging from 5 to 50 annotators) and taking the maximum across ten random samples for each subset size, \emph{we still observed zero \ac{ip}} (App.~\ref{app:ablation:dices}). This finding indicates that the DICES datasets may be structurally different. This explanation is plausible given that the annotation targets are LLM texts, which may be relatively unsubtle compared to human comments, as supported by low overall polarization (Fig.~\ref{fig:dataset-polarization}; App~\ref{app:ann_details}). 
+Both of these explanations are plausible and reflect known limitations of most \ac{nlp} datasets. The fact that the DICES datasets (featuring 70+ annotators per item) exhibit zero \ac{ip} in all comments may initially seem to validate either of the above hypotheses. However, even when repeating the experiment using random annotator subsets (ranging from 5 to 50 annotators) and taking the maximum across ten random samples for each subset size, \emph{we still observed zero \ac{ip}} (App.~\ref{app:ideal-dataset}). This finding indicates that the DICES datasets may be structurally different. This explanation is plausible given that the annotation targets are LLM texts, which may be relatively unsubtle compared to human comments, as supported by low overall polarization (Fig.~\ref{fig:dataset-polarization}; App~\ref{app:ann_details}). 
 
 Although a definitive answer to this question eludes us due to the lack of other datasets with high annotator counts per item, the indication that the DICES datasets may not feature similar polarization patterns is noteworthy. We discuss the exploratory use of our methodology for filtering subjective datasets in App.~\ref{app:ideal-dataset}.
 
@@ -324,7 +324,6 @@ Apunim measures the degree to which an annotator group contributes to overall po
 	\item $apunim(g) < 0$: The annotators of group $g$ are polarized between themselves.
 \end{itemize}
 
-% TODO: Mention statistical significance
 
 \subsection{Comparing Apunim to Other Methods}
 \label{sec:apunim:recovery}
@@ -342,7 +341,6 @@ While apunim rests on different assumptions than traditional agreement metrics, 
 To determine whether an observed score is statistically significant, we construct a null distribution for each method. The null hypothesis is that the group labels are unrelated to the observed annotations. We therefore repeatedly shuffle the group labels across annotators, recompute the method's statistic, and use the resulting scores to form the null distribution. The observed score is then compared with this distribution. See App.~\ref{app:stats:pvalue} for the apunim p-value implementation.
 
 Fig.~\ref{fig:metrics} shows the effectiveness of apunim, the aposteriori unimodality framework proposed by \citet{pavlopoulos-likas-2024}, the $\chi^2$ method presented in \citet{akhtar_2019}, GMM clustering used in \citet{checco_2017}, and a baseline using inter-group disagreement ($\Delta \alpha$ Krippendorff). Both the $\chi^2$ and GMM methods generally fail at attributing polarization, which is most likely caused by opposing polarization effects (see Fig.~\ref{fig:ndfu_discussion}) violating their assumptions on fixed mean differences between groups. Inter-group disagreement remains competitive when many annotators are available, but fail at the underperform in cases where the examined group is a minority and when a few annotators are available per item (a common case among \ac{nlp} datasets---see \S\ref{sec:datasets}). Apunim in contrast is robust both to the number of annotators per item, opposing polarization effects, and minority groups, which validates our initial motivation.
-%TODO: Include earlier experiment?
 
 \begin{finding}
 	\label{finding:comparison}
@@ -818,7 +816,7 @@ We examine nDFU scores for three specific textual examples presented in Fig.~\re
 \section{How does InPol look like?}
 \label{app:inherent}
 
-\begin{table}[ht]
+\begin{table}[t]
 	\begin{tabularx}{\textwidth}{X c}
 		\toprule
 		\textbf{Comment}  & \ac{ip} \\
@@ -852,6 +850,18 @@ We include the \ac{ip} values for each individual comment for all four datasets 
 
 \section{Ablation experiments}
 \label{app:ablation}
+
+\subsection{Why do statistical methods fail?}
+\label{app:ablation:comparison}
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=\textwidth]{metric_comparison_simple.png}
+	\caption{Polarization group attribution on randomly generated, synthetic distributions. Bars indicate standard error. For each experiment we assign a number of annotators per item, and split the annotator groups 50-50 or 80-20. The setup is much more simplified, relying on fixed-mean differences instead of the setup used in \S\ref{sec:apunim:recovery}.}
+	\label{fig:metrics-simple}
+\end{figure}
+
+In \S\ref{sec:apunim:recovery} we mentioned that the underperformance of the $\chi^2$ and GMM methodologies is likely caused by opposing polarization effects. An ablation experiment with a much simpler setup, where annotators of the same group just shift their opinions by a range in $[-\frac{\delta}{2}, \frac{\delta}{2}]$ in all comments shows that these methods do indeed show excellent performance. This is expected, since they rely on consistent fixed means effects, which is disrupted in our original formulation of the problem. Thus, while these methods perform admirably in ideal conditions, they may completely fail at realistic annotation datasets. 
 
 
 \subsection{How does dataset size influence apunim?}
@@ -992,7 +1002,7 @@ Since our approach was designed for the small-scale datasets common in \ac{nlp},
 The test is overly conservative, meaning it almost always suggests there is no significant effect, even when an effect likely exists in reality. This inability to detect a real signal is a Type II Error (a false negative). This suggests that our test is statistically weak or ``underpowered'' in massive settings. Since our methodology is built for the small-scale \ac{nlp} datasets that dominate the research field, we deem this limitation acceptable for the scope of our work. 
 
 
-\subsection{How does sample section influence apunim?}
+\subsection{How does sample selection influence apunim?}
 \label{app:ablation:samples}
 
 Astute readers may notice that some variability does exist across differently sized samples for the same examined groups, where for example the sign of the apunim value may switch. We note that the statistically significant values (bold rows) change signs only when the apunim value approaches zero in the largest samples. Thus, the results are not inverted, but rather pushed towards zero.

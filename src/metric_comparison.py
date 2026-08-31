@@ -79,6 +79,33 @@ def _groups(n_ann, minority_frac):
     return np.array(["B"] * n_min + ["A"] * (n_ann - n_min))
 
 
+def simulate_simple(n_items, n_ann, delta, minority_frac, rng, sigma=SIGMA):
+    """Group-driven polarization: the two groups sit `delta` apart."""
+    groups = _groups(n_ann, minority_frac)
+
+    base = rng.uniform(2.5, 3.5, size=n_items)
+
+    shift = np.where(
+        groups == "B",
+        delta / 2,
+        -delta / 2,
+    )
+
+    vals = rng.normal(
+        base[None, :] + shift[:, None],
+        sigma,
+    )
+
+    return (
+        np.clip(
+            np.round(vals),
+            1,
+            N_LEVELS,
+        ),
+        groups,
+    )
+
+
 def simulate(
     n_items,
     n_ann,
@@ -504,11 +531,7 @@ def _seed(
     return zlib.crc32(key)
 
 
-def _one(
-    job,
-    n_items,
-    label,
-):
+def _one(job, n_items, label, use_simple_simulate: bool):
     n_ann, minority, delta, rep = job
 
     rng = np.random.default_rng(
@@ -520,7 +543,9 @@ def _one(
         )
     )
 
-    matrix, groups = simulate(
+    simulation_func = simulate_simple if use_simple_simulate else simulate
+
+    matrix, groups = simulation_func(
         n_items,
         n_ann,
         delta,
@@ -597,6 +622,7 @@ def run(
     n_items: int,
     n_reps: int,
     workers: int,
+    use_simple_simulate: bool,
 ) -> None:
 
     jobs = [
@@ -642,6 +668,7 @@ def run(
             _one,
             n_items=n_items,
             label="apunim",
+            use_simple_simulate=use_simple_simulate,
         )
 
         with ProcessPoolExecutor(max_workers=workers) as executor:
@@ -801,37 +828,39 @@ def plot(
 
 
 def main(
-    cache_dir: Path,
-    graph_output_dir: Path,
+    cache_path: Path,
+    graph_output_path: Path,
     n_items: int,
     n_reps: int,
     workers: int,
+    use_simple_simulate: bool,
 ) -> None:
+    if use_simple_simulate:
+        print("Using simple simulation.")
+    else:
+        print("Using standard simulation.")
 
     tasks.graphs.graph_setup()
 
-    cache_dir = Path(cache_dir)
-
-    cache_dir.mkdir(
+    cache_path.parent.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    cache_csv = cache_dir / "metric-comparison.csv"
-
-    if cache_csv.exists():
-        print(f"loading cached results " f"from {cache_csv}")
+    if cache_path.exists():
+        print(f"loading cached results " f"from {cache_path}")
 
     else:
         run(
-            cache_csv,
+            cache_path,
             n_items,
             n_reps,
             workers,
+            use_simple_simulate=use_simple_simulate,
         )
 
     with open(
-        cache_csv,
+        cache_path,
         newline="",
     ) as fh:
 
@@ -855,7 +884,7 @@ def main(
     plot(
         rows,
         methods,
-        Path(graph_output_dir) / "metric_comparison.png",
+        graph_output_path,
     )
 
 
@@ -873,13 +902,13 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--cache-dir",
+        "--cache-path",
         required=True,
         help=("Directory used to cache " "calculation results as CSV."),
     )
 
     parser.add_argument(
-        "--graph-output-dir",
+        "--graph-output-path",
         required=True,
         help=("Directory for graphs."),
     )
@@ -902,12 +931,19 @@ if __name__ == "__main__":
         default=7,
     )
 
+    parser.add_argument(
+        "--simple-simulation",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+    )
+
     args = parser.parse_args()
 
     main(
-        Path(args.cache_dir),
-        Path(args.graph_output_dir),
+        Path(args.cache_path),
+        Path(args.graph_output_path),
         args.n_items,
         args.n_reps,
         args.workers,
+        args.simple_simulation,
     )
