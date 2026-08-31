@@ -24,7 +24,7 @@ JOBS=(
 
 'sap|python src/sap.py --dataset-path=data/datasets/sap.csv --output-dir=output/main --graph-output-dir=graphs'
 
-'metric_comparison|python src/metric_comparison.py --output-dir=output/main --graph-output-dir=graphs --label="apunim (fixed binning)"'
+'metric_comparison|python src/metric_comparison.py --cache-dir=cache --graph-output-dir=graphs'
 
 'kumar|python src/kumar.py --dataset-path=data/datasets/kumar.json --output-dir=output/main --graph-output-dir=graphs --ablation-dir=ablation'
 )
