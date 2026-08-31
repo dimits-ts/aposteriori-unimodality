@@ -51,8 +51,7 @@ CONDITIONS = [
     (80, 0.2),
     (20, 0.5),
     (20, 0.2),
-    (6, 0.5),
-    (6, 0.2),
+    (6, 0.5)
 ]
 
 PLOT_NUM_COLS = 3
@@ -333,7 +332,7 @@ LEGEND_LABEL = {
 
 def _condition_title(n_ann, minority):
     return (
-        f"{n_ann} annotators/item, " f"{int(round(minority * 100))}% minority"
+        f"{n_ann} ann/item, " f"{int(round(minority * 100))}\\% minority"
     )
 
 
@@ -407,11 +406,10 @@ def plot(rows, methods, out_path):
     fig.legend(
         handles,
         labels,
-        frameon=False,
-        ncol=4,
-        loc="lower center",
+        loc="lower right",
+        title="Attribution Methodology"
     )
-    fig.suptitle("Apunim beats baselines on group polarization detection.")
+    fig.suptitle("Apunim beats baselines on group polarization attribution")
     fig.supylabel("Detection rate")
     fig.supxlabel(r"Group effect size $\delta$")
 

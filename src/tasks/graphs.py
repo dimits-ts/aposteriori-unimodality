@@ -155,6 +155,7 @@ def graph_setup() -> None:
             "xtick.labelsize": 14,
             "ytick.labelsize": 14,
             "legend.fontsize": 22,
+            "legend.title_fontsize": 22,
             "figure.titlesize": 26,
             "figure.labelsize": 22,
             # Axes
