@@ -20,19 +20,19 @@ JOBS=(
 
 'explanation|python src/explanation.py --graph-output-dir=graphs'
 
-'dices|python src/dices.py --dataset-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dataset-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --graph-output-dir=graphs --output-dir=output --ablation-dir=ablation'
+'dices|python src/dices.py --dataset-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dataset-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --graph-output-dir=graphs --output-dir=output/main --ablation-dir=ablation'
 
-'sap|python src/sap.py --dataset-path=data/datasets/sap.csv --output-dir=output --graph-output-dir=graphs'
+'sap|python src/sap.py --dataset-path=data/datasets/sap.csv --output-dir=output/main --graph-output-dir=graphs'
 
-'metric_comparison|python src/metric_comparison.py --output-dir=output --graph-output-dir=graphs --label="apunim (fixed binning)"'
+'metric_comparison|python src/metric_comparison.py --output-dir=output/main --graph-output-dir=graphs --label="apunim (fixed binning)"'
 
-'kumar|python src/kumar.py --dataset-path=data/datasets/kumar.json --output-dir=output --graph-output-dir=graphs --ablation-dir=ablation'
+'kumar|python src/kumar.py --dataset-path=data/datasets/kumar.json --output-dir=output/main --graph-output-dir=graphs --ablation-dir=ablation'
 )
 
 printf "%s\n" "${JOBS[@]}" |
 parallel --colsep '\|' -j8 --delay 0.1 run_and_log {1} {2}
 
 python src/export_results.py \
-    --results-dir=output \
+    --results-dir=output/main \
     --latex-output-dir=manuscript/generated \
     --graph-output-dir=graphs
