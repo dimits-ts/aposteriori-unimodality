@@ -35,7 +35,17 @@
 \theoremstyle{plain}
 \newtheorem{finding}{Finding}
 
-\newtheorem*{researchquestion}{RQ}
+\newtheoremstyle{researchquestionstyle}
+{} % Space above
+{} % Space below
+{\normalfont} % Body font: Use normal/upright font for the main text
+{} % Indent amount
+{\bfseries} % Head font: Use bold font for the title and optional argument
+{?} % Punctuation after head
+{ } % Space after theorem head
+{\thmname{#1}\thmnumber{ #2}:\thmnote{ \textbf{#3}}}
+\theoremstyle{researchquestionstyle}
+\newtheorem{researchquestion}{RQ}
 
 \newcommand{\librarylink}{ \url{https://anonymous.4open.science/r/apunim-5F70}}
 \newcommand{\doclink}{\url{https://anonymous.4open.science/r/apunim-page}}
@@ -45,7 +55,7 @@
 
 \graphicspath{ {../graphs} {graphs}  }
 
-\title{Are We Chasing Shadows? Quantifying Unattributable Polarization\\and Attributing the Rest to Annotator Groups}
+\title{Creating Trustworthy Polarization Representations for Quantifying Group Attribution in Humans and LLMs}
 
 \author{Anonymous}
 \begin{document}
@@ -53,14 +63,12 @@
 \maketitle
 
 \begin{abstract}
-	Polarization has recently been proposed as a robust way of distinguishing minor disagreements from systematic differences in opinion for imbalanced, minority groups but there currently exists no methodology for attributing polarization to these groups. In this study, we discover and investigate two major limitations in realistic settings: (1) the presence of ``inherent'' polarization that cannot be attributed to any known or latent groups, and (2) opposing polarization effects canceling each other out in aggregated annotations. To address these issues, we introduce a new metric that attributes polarization to any annotator group while avoiding these limitations, tailored to smaller datasets common in NLP, and provide an open-source Python library implementation. We apply our method to four content moderation datasets and confirm that gender and ethnicity consistently explain polarization patterns, while ideology and personal experiences may be more important than previously thought. Our work overall indicates that subjective NLP datasets may need fewer items and more annotators per item.
+	Current representations of polarization focus exclusively on distinguishing minor disagreements from systematic differences in opinion between annotator groups. In this study we develop a new framework which not only detects, but also quantifies the degree to which any annotator subgroup causes these systematic differences. We first discover fundamental issues in prior approaches: 1) the presence of ``inherent'' polarization that cannot be attributed to any known or latent groups, and 2) opposing polarization effects canceling each other out in aggregated annotations. We then introduce a new metric that attributes polarization to any annotator group while avoiding these limitations and  release a PyPI-installable implementation. Our metric surpasses both traditional similarity metrics and prior approaches on detecting subgroup polarization, while also uncovering previously latent polarization in overlooked minority and fine-grained ideological groups due to its robustness to group-size imbalances. Finally, we use our framework to build prompts that induce polarizing behavior in LLM annotators, which has not been previously explored.
 \end{abstract}
 
 
 \section{Introduction}
 \label{sec:intro}
-
-
 
 Annotations are essential for subjective tasks, such as content moderation, toxicity, and \acf{hs} detection, which are especially important for protecting minority groups~\cite{un_hate_speech_targets, ucdavis_hate_speech}. However, in practice, analysis rests on inter-annotator agreement or majority-vote~\cite{ivey-etal-2025-nutmeg, petra_2022_handling, van_der_Velden}, which may lead to biased and misconfigured systems (e.g., toxicity models disproportionally marking \ac{aa} speech as ``toxic''~\cite{sap-etal-2019-risk}), or discard \emph{fundamental} disagreements between minority groups and the majority~\cite{quaranto2022dog}, (see the example in Fig.~\ref{fig:disagreement-vs-polarization}).\footnote{The simulated experiments in this study were implemented by generating random annotations following the normal distribution with differing means and \ac{sd}---see App.~\ref{app:experiments}.}
 
@@ -71,20 +79,35 @@ Annotations are essential for subjective tasks, such as content moderation, toxi
 	\label{fig:disagreement-vs-polarization}
 \end{figure}
 
-One alternative is using \emph{polarization}, which correlates better with human judgments and is much less sensitive to different group sizes \cite{Pavlopoulos2023, pavlopoulos-likas-2024}. While we can detect polarization, there is little work on how to detect whether it is \emph{actually caused by marginalized groups}. Our work thus tries to answer the following Research Question (RQ):
+One alternative is using \emph{polarization}, which correlates better with human judgments and is much less sensitive to different group sizes \cite{Pavlopoulos2023, pavlopoulos-likas-2024}. While we can detect polarization, there is little work on how to detect whether it is \emph{actually caused by marginalized groups}. Our work thus tries to answer the following \textbf{Main Research Question (MRQ): How can we build a robust representation of intergroup polarization?} We answer this question through the following sub-questions:
 
-\begin{researchquestion}[]
-	How much polarization can we practically attribute to annotator subgroups given existing datasets?
+\begin{researchquestion}[How much of the observed polarization is attributable to annotator subgroups]
+	\label{rq:inherent}
+	While prior work assumed that all polarization can be explained and attributed to some annotator characteristic, through the exhaustive creation of theoretical annotator groups (\S\ref{sec:inherent}) our study discovers the existence of \ac{ip}, which can not be attributed to \emph{any possible group} of annotators---known or unknown (Finding~\ref{finding:inherent}). We also discover that polarization across comments has a \emph{direction}, preventing us from aggregating annotations on the dataset level to circumvent annotation sparsity (Finding~\ref{finding:conflicting}). 
 \end{researchquestion}
 
-While prior work assumed that all polarization can be explained and attributed to some annotator characteristic, through the exhaustive creation of theoretical annotator groups our study discovers the existence of \ac{ip}, which can not be attributed to \emph{any possible group} of annotators---known or unknown (Finding~\ref{finding:inherent}). %This phenomenon could be attributed to the overall polarization of the data, or the limited number of annotations, establishing a hard limit on how much information we can gain from existing datasets. 
-We also discover that polarization across comments has a \emph{direction}, preventing us from aggregating annotations on the dataset level to circumvent annotation sparsity (Finding~\ref{finding:conflicting}). 
+\begin{researchquestion}[How can we quantify this attribution to each possible subgroup]
+	\label{rq:metric}
+	In order to solve these issues we introduce a new metric---``\emph{apunim}''---which attributes polarization to specific annotator sociodemographic and ideological characteristics (referred to as \acp{pc} in this study). Our metric is generalizable across any domain and modality (e.g., video/image classification) and, unlike previous approaches, enables both \emph{quantitative} comparisons across datasets and statistical analysis via p-value estimation. Even in cases where unattributable polarization exists, \emph{apunim} is capable of detecting general patterns of polarization across multiple groups. 
+\end{researchquestion}
 
-In order to solve these issues we introduce a new metric---``\emph{apunim}''---which attributes polarization to specific annotator sociodemographic and ideological characteristics (referred to as \acp{pc} in this study). Our metric is generalizable across any domain and modality (e.g., video/image classification) and, unlike previous approaches, enables both \emph{quantitative} comparisons across datasets and statistical analysis via p-value estimation. Even in cases where unattributable polarization exists, \emph{apunim} is capable of detecting general patterns of polarization across multiple groups.  Additionally, our metric is designed to be used for existing \ac{nlp} datasets which are usually small w.r.t. both content and annotations due to budget constraints \cite{chen-yu-and-samuel-r-bowman-2022-clean,golazizian-etal-2024-cost}.
+\begin{researchquestion}[Which polarization patterns are detectable using our new representation]
+	\label{rq:human}
+	We then apply our metric to four \ac{nlp} datasets focused on Toxicity and \ac{hs} detection (\S\ref{sec:results}), finding that annotator gender and ethnicity significantly impact annotation (Finding~\ref{finding:categorical}). Our findings also indicate that ideological attributes and the annotators' pesonal experiences may play a major role in explaining polarization (e.g., the more religious the annotators, the more polarized they become---Finding~\ref{finding:ideology}), a possibility not adequately explored by relevant literature. 	
+\end{researchquestion}
 
-We then apply our metric to four \ac{nlp} datasets focused on Toxicity and \ac{hs} detection (\S\ref{sec:results}), finding that annotator gender and ethnicity significantly impact annotation (Finding~\ref{finding:categorical}). Our findings also indicate that ideological attributes and the annotators' pesonal experiences may play a major role in explaining polarization (e.g., the more religious the annotators, the more polarized they become---Finding~\ref{finding:ideology}), a possibility not adequately explored by relevant literature. Finally, we empirically investigate and discuss the applicability of our methodology to the modern \ac{nlp} dataset landscape (App.~\ref{app:ideal-dataset}), and release an open source Python (PyPi) library that implements our metric.\footnote{Library: \librarylink, Webpage: \doclink, Replication code: \explink}
+\begin{researchquestion}[How can we use this representation to automate detection of controversial comments]
+	\label{rq:llm}
+\end{researchquestion}
 
-\noindent\textbf{Warning: This publication includes examples of controversial and potentially harmful speech for the purposes of demonstration. These examples do not represent the views of the authors.}
+%This phenomenon could be attributed to the overall polarization of the data, or the limited number of annotations, establishing a hard limit on how much information we can gain from existing datasets. 
+
+
+% Additionally, our metric is designed to be used for existing \ac{nlp} datasets which are usually small w.r.t. both content and annotations due to budget constraints \cite{chen-yu-and-samuel-r-bowman-2022-clean,golazizian-etal-2024-cost}.
+
+Finally, we empirically investigate and discuss the applicability of our methodology to the modern \ac{nlp} dataset landscape (App.~\ref{sec:ideal-dataset}), and release an open source Python (PyPi) library that implements our metric.\footnote{Library: \librarylink, Webpage: \doclink, Replication code: \explink}
+
+\noindent\textbf{Content Warning: This publication includes examples of controversial and potentially harmful speech for the purposes of demonstration. These examples do not represent the views of the authors.}
 
 
 \section{Background and related work}
