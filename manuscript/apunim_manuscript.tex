@@ -100,11 +100,10 @@ One alternative is using \emph{polarization}, which correlates better with human
 
 \begin{researchquestion}[Which polarization patterns are shared between human and LLM annotators]
 	\label{rq:llm}
-	We conduct an annotation study on the same datasets using seven open-source models (App.~\ref{app:llms}) in order to compare polarization patterns between them and humans, finding that \textbf{TODO} (Finding~\ref{finding:llm}).
+	We conduct an annotation study on the same datasets using seven open-source models (App.~\ref{app:llms}) in order to compare polarization patterns between them and humans.
 \end{researchquestion}
-%TODO
 
-Our work makes the following contributions: (1) The identification of severe issues present in subjective datasets which impact current approaches (2) A new polarization attribution metric that is robust to small annotator counts and minority group splits, with a PyPi-installable implementation (3) The detection of new promising directions for analysis of subjective \ac{nlp} datasets (4) Insight into LLM subjectivity. Our study also underscores the need for datasets with high annotator counts per item, instead of high annotator counts in general---see App.~\ref{app:ideal-dataset} for a more extensive discussion and empirical findings on dataset shape and size.
+Our work thus makes the following contributions: (1) The identification of severe issues present in subjective datasets (2) A new polarization attribution metric that is robust to small annotator counts and minority group splits with a PyPi-installable implementation (3) The detection of new promising directions for analysis of subjective \ac{nlp} datasets (4) Insight into LLM subjectivity. Our study also underscores the need for datasets with high annotator counts per item, instead of high annotator counts in general---see App.~\ref{app:ideal-dataset} for a more extensive discussion and empirical findings.
 
 \noindent\textcolor{red}{\textbf{Content Warning: This publication includes examples of controversial and potentially harmful speech for the purposes of demonstration. These examples do not represent the views of the authors.}}
 
@@ -486,7 +485,6 @@ In this work we used proprietary models such as Claude's Sonnet 5 and OpenAI's G
 
 We analyze software design decisions, limitations and computational details in App.~\ref{app:software} and elaborate on our experimental setup in App.~\ref{app:design}. Information on the synthetic experiments used in \S\ref{sec:inherent},\ref{sec:apunim} is disclosed in App.~\ref{app:experiments}, while ablations around sample sizes and sample selection for the Kumar dataset are detailed in App.~\ref{app:ablation}. Additionally, we include a discussion around the use of current \ac{nlp} datasets, as well as an empirical estimation of the number of required annotators for reproducible results in App.~\ref{app:ideal-dataset}.
 
-Regarding LLM annotation, we choose to use open-source, locally hosted LLMs in order to make the task as reproducible as possible. App.~\ref{app:llms} details the selection and characteristics of the models used, the annotation procedure itself, quantitative comparisons between human and LLM annotations, hardware used, and execution times. The appendix also includes ablation studies showing invariance towards repeated execution with the same or rephrased prompts. The prompts themselves can be found in App.~\ref{app:prompts}. 
 
 In both LLM and non-LLM experiments all relevant seeds are pinned to allow exact reproducibility, although we note that LLMs are by their nature stochastic, which can not be treated using software \citep{bisbee_2023}. All code, data-processing scripts and the library implementing \emph{apunim} are released anonymously: library \librarylink, documentation \doclink, replication code \explink.
 
