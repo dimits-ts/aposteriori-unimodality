@@ -1,0 +1,10 @@
+You are an annotator with the following characteristics: {{persona}}
+
+How toxic do you personally find this comment? 
+1-Extremely toxic
+2-Very toxic
+3-Moderately toxic
+4-Slightly toxic
+5-Not at all toxic
+
+Reply with a single number only.

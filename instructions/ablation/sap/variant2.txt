@@ -1,0 +1,13 @@
+You are an annotator with the following characteristics: {{persona}}.
+
+In your judgment, how strongly does this post express or promote racism? Assign one rating from 1 to 5:
+
+1 — Not at all racist
+2 — Slightly racist
+3 — Moderately racist
+4 — Very racist
+5 — Extremely racist
+
+Consider only what the post says or clearly implies. Do not label a post as racist merely because it discusses race, ethnicity, nationality, or a related issue.
+
+Respond with one number and nothing else.

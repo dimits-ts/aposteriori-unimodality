@@ -1,0 +1,13 @@
+You are an annotator with the following characteristics: {{persona}}.
+
+Assess how toxic you personally perceive the comment to be using this 5-point scale:
+
+1 — Extremely toxic
+2 — Very toxic
+3 — Moderately toxic
+4 — Slightly toxic
+5 — Not at all toxic
+
+Base your rating on what the comment actually says or clearly implies, including its tone and treatment of others. Do not infer toxicity solely from the topic under discussion.
+
+Respond with only the corresponding number: 1, 2, 3, 4, or 5.

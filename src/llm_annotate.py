@@ -2,6 +2,7 @@ import argparse
 import os
 import itertools
 from pathlib import Path
+from typing import Optional
 
 # Toggle to True if VRAM is under durress
 os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:False")
@@ -135,9 +136,6 @@ def generate_annotation(generator, messages: list[dict]) -> str:
             do_sample=True,
         )
 
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-
     reply = output[0]["generated_text"]
 
     # Chat-formatted input makes the pipeline return the full conversation
@@ -202,6 +200,7 @@ def main(
     instruction_prompt_path: Path,
     model_name: str,
     output_path: Path,
+    sample_fraction: Optional[float] = None,
 ):
     transformers.set_seed(SEED)
     rng = np.random.default_rng(SEED)
@@ -211,9 +210,15 @@ def main(
     value_pools = get_subgroup_value_pools(ds)
     generator = load_generator(model_name)
 
+    base_n = SAMPLES_PER_DATASET[dataset_key]
+    if sample_fraction is not None:
+        n_samples = max(1, int(round(base_n * sample_fraction)))
+    else:
+        n_samples = base_n
+
     packets = sample_texts(
         ds,
-        SAMPLES_PER_DATASET[dataset_key],
+        n_samples,
         rng,
     )
 
@@ -298,6 +303,22 @@ if __name__ == "__main__":
         help="Path to write the resulting annotations CSV to.",
     )
 
+    parser.add_argument(
+        "--sample-fraction",
+        type=float,
+        default=None,
+        help=(
+            "If set, sample this fraction of the dataset's normal "
+            "SAMPLES_PER_DATASET count (not the raw dataset size), e.g. "
+            "0.1 on dices-350 (300 samples normally) yields 30 samples. "
+            "Used for sensitivity ablations so repeat / paraphrase runs "
+            "stay cheap. Uses the same SEED as a normal run in all cases, "
+            "so the sampled comments are identical across every repeat "
+            "run and every paraphrase variant for a given dataset, "
+            "keeping their outputs directly comparable."
+        ),
+    )
+
     args = parser.parse_args()
 
     main(
@@ -306,4 +327,5 @@ if __name__ == "__main__":
         instruction_prompt_path=Path(args.instruction_prompt_path),
         model_name=args.model_name,
         output_path=Path(args.output_path),
+        sample_fraction=args.sample_fraction,
     )
