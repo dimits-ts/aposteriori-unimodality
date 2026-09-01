@@ -24,7 +24,9 @@ JOBS=(
 
 'sap|python src/sap.py --dataset-path=data/datasets/sap.csv --output-dir=output/main --graph-output-dir=graphs'
 
-'metric_comparison|python src/metric_comparison.py --cache-dir=cache --graph-output-dir=graphs'
+'metric_comparison | python src/metric_comparison.py --cache-path=cache/metric-comparison.csv --graph-output-path=graphs/metric_comparison.png'
+
+'metric_comparison_simple | python src/metric_comparison.py --cache-path=cache/metric-comparison-simple.csv --graph-output-path=graphs/metric_comparison_simple.png --simple-simulation'
 
 'kumar|python src/kumar.py --dataset-path=data/datasets/kumar.json --output-dir=output/main --graph-output-dir=graphs --ablation-dir=ablation'
 )

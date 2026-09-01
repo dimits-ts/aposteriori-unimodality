@@ -22,9 +22,9 @@
 \usepackage{enumitem}
 \usepackage{colortbl}
 \usepackage{siunitx}
+\usepackage[export]{adjustbox}
+\usepackage{multicol}
 
-\setlist[enumerate]{noitemsep, nosep}
-\setlist[itemize]{noitemsep, nosep}
 
 %  ==================== MY COMMANDS ====================
 \theoremstyle{definition}
@@ -82,7 +82,7 @@ We also discover that polarization across comments has a \emph{direction}, preve
 
 In order to solve these issues we introduce a new metric---``\emph{apunim}''---which attributes polarization to specific annotator sociodemographic and ideological characteristics (referred to as \acp{pc} in this study). Our metric is generalizable across any domain and modality (e.g., video/image classification) and, unlike previous approaches, enables both \emph{quantitative} comparisons across datasets and statistical analysis via p-value estimation. Even in cases where unattributable polarization exists, \emph{apunim} is capable of detecting general patterns of polarization across multiple groups.  Additionally, our metric is designed to be used for existing \ac{nlp} datasets which are usually small w.r.t. both content and annotations due to budget constraints \cite{chen-yu-and-samuel-r-bowman-2022-clean,golazizian-etal-2024-cost}.
 
-We then apply our metric to four \ac{nlp} datasets focused on Toxicity and \ac{hs} detection (\S\ref{sec:results}), finding that annotator gender and ethnicity significantly impact annotation (Finding~\ref{finding:categorical}). Our findings also indicate that ideological attributes and the annotators' pesonal experiences may play a major role in explaining polarization (e.g., the more religious the annotators, the more polarized they become---Finding~\ref{finding:ideology}), a possibility not adequately explored by relevant literature. Finally, we empirically investigate and discuss the applicability of our methodology to the modern \ac{nlp} dataset landscape (App.~\ref{sec:ideal-dataset}), and release an open source Python (PyPi) library that implements our metric.\footnote{Library: \librarylink, Webpage: \doclink, Replication code: \explink}
+We then apply our metric to four \ac{nlp} datasets focused on Toxicity and \ac{hs} detection (\S\ref{sec:results}), finding that annotator gender and ethnicity significantly impact annotation (Finding~\ref{finding:categorical}). Our findings also indicate that ideological attributes and the annotators' pesonal experiences may play a major role in explaining polarization (e.g., the more religious the annotators, the more polarized they become---Finding~\ref{finding:ideology}), a possibility not adequately explored by relevant literature. Finally, we empirically investigate and discuss the applicability of our methodology to the modern \ac{nlp} dataset landscape (App.~\ref{app:ideal-dataset}), and release an open source Python (PyPi) library that implements our metric.\footnote{Library: \librarylink, Webpage: \doclink, Replication code: \explink}
 
 \noindent\textbf{Warning: This publication includes examples of controversial and potentially harmful speech for the purposes of demonstration. These examples do not represent the views of the authors.}
 
@@ -125,7 +125,7 @@ For our work, we use a non-parametric polarization metric, \ac{ndfu}, which has 
 		& m = \arg\max_i f_i
 	\end{aligned}
 \end{equation}
-\noindent where, $X$ denotes the set of annotations, $f_i$ the relative frequency of the $i$-th annotation (e.g., the frequency of \texttt{2} in a scale of 1--5), and $m$ the histogram peak. Intuitively, \ac{ndfu} measures how prominent secondary peaks are compared to the main peak (see Fig.~\ref{fig:ndfu_combined} for an example).
+\noindent where, $X$ denotes the set of annotations, $f_i$ the relative frequency of the $i$-th annotation (e.g., the frequency of \texttt{2} in a scale of 1--5), and $m$ the histogram peak. Intuitively, \ac{ndfu} measures how prominent secondary peaks are compared to the main peak (see Fig.~\ref{fig:inherent}, left for an example).
 
 
 \subsection{Attributing polarization to groups}
@@ -173,21 +173,22 @@ A brief overview of dataset characteristics is provided in Table~\ref{tab:datase
 \label{sec:inherent:formulation}
 
 Let $d = \{c_1, c_2, \ldots\}$ be a dataset composed of multiple annotated comments.\footnote{The annotated items could be of any modality, such images, videos or survey questions, even though we only consider comments in this study.} Each comment $c$ is assigned multiple annotators,  which creates the annotation multi-set $A(c)=  \{(a_1, g_1), (a_2, g_2), \ldots \}$, where $a_i$ is a single annotation (e.g., \texttt{2} in a LIKERT scale of 1--5), and $g_i$ a group (e.g., men). As an example, the annotations for a comment in a sentiment analysis task where we group the annotators by gender, would be formulated as:
-\begin{multline*}
-	A(\text{``Could be better, could be worse''})\\
-	= \left\{\begin{array}{l}
-		(\text{+}, F), (\text{--}, M), (\text{+}, F), \ldots
-	\end{array}\right\}
-\end{multline*}
+\[
+A(\text{``Could be better, could be worse''})\\
+= \left\{\begin{array}{l}
+	(\text{+}, F), (\text{--}, M), (\text{+}, F), \ldots
+\end{array}\right\}
+\]
 
 \begin{figure}[t]
 	\centering
-	\includegraphics[width=0.55\textwidth]{ndfu_combined.png}
-	\caption{Simulated experiment describing a polarizing comment where male and female annotators agree between themselves, but disagree with the opposite gender.}
-	\label{fig:ndfu_combined}
+	\includegraphics[width=0.4\textwidth, valign=t]{ndfu_combined.png}
+	\includegraphics[width=0.55\textwidth, valign=t]{apriori.png}
+	\caption{\textbf{Left:} Simulated experiment describing a polarizing comment where male and female annotators agree between themselves, but disagree with the opposite gender. \textbf{Right:} \ac{ip} across our datasets (\S\ref{sec:datasets}). Contrary to assumptions made in prior work, \ac{ip} is commonly non-zero and can even reach $nDFU = 1$ in datasets with low annotator counts.}
+	\label{fig:inherent}
 \end{figure}
 
-Intuitively, a group partially explains the polarization of a comment $c$ when the annotations of that group $A(c \given g) = \{a(c, g') \in A(c) \given g'=g\}$ exhibit higher polarization compared to the full set of annotations $A(c)$. Consider the case where a misogynistic comment is annotated for toxicity by male and female annotators shown in Fig.~\ref{fig:ndfu_combined}. The annotations are generally polarized ($nDFU_{all}=.62$); but both female ($nDFU_{women}=.10$) and male ($nDFU_{men}=.37$) annotators exhibit low polarization between their respective groups. This pattern suggests that the overall polarization is partially caused by substantive disagreements between male and female annotators.\footnote{\label{foot:iterative}Since polarization persists among male annotators, another subgroup of men may also contribute to it.}
+Intuitively, a group partially explains the polarization of a comment $c$ when the annotations of that group $A(c \given g) = \{a(c, g') \in A(c) \given g'=g\}$ exhibit higher polarization compared to the full set of annotations $A(c)$. Consider the case where a misogynistic comment is annotated for toxicity by male and female annotators shown in Fig.~\ref{fig:inherent}, left. The annotations are generally polarized ($nDFU_{all}=.62$); but both female ($nDFU_{women}=.10$) and male ($nDFU_{men}=.37$) annotators exhibit low polarization between their respective groups. This pattern suggests that the overall polarization is partially caused by substantive disagreements between male and female annotators.\footnote{\label{foot:iterative}Since polarization persists among male annotators, another subgroup of men may also contribute to it.}
 
 
 \subsection{Inherent polarization}
@@ -216,8 +217,8 @@ Formally, the \ac{ip} for a single comment $c$ is the minimum polarization exhib
 When considered exhaustively, these theoretical, random groups include both observed and latent groups (e.g., annotators may be less strict if they had lunch prior to annotation). Since \ac{ndfu} operates only when a group has at least three annotators (Eq.~\ref{eq:ndfu}), this yields $\sum_{k=3}^{n} \binom{n}{k}$ possible groups.
 
 
-\subsubsection{Experimental setup}
-\label{sec:inherent:experimental}
+\subsubsection{Does it exist?}
+\label{sec:inherent:results}
 
 We systematically explore the space of annotator groups by generating random partitions for each comment. Since enumerating all subsets is computationally intractable for large annotator counts, we establish an upper bound via Monte Carlo sampling by drawing $k$ random partitions with random sizes:
 
@@ -235,17 +236,7 @@ We systematically explore the space of annotator groups by generating random par
 	Pol_{inh}^{MC}(c) \ge Pol_{inh}(c) \forall c
 \end{equation}
 
-
-\subsubsection{Does it exist?}
-\label{sec:inherent:results}
-
-\begin{figure}[t]
-	\includegraphics[width=0.55\textwidth]{apriori.png}
-	\caption{\ac{ip} across our datasets (\S\ref{sec:datasets}). Contrary to assumptions made in prior work, \ac{ip} is commonly non-zero and can even reach $nDFU = 1$ in datasets with low annotator counts.}
-	\label{fig:apriori}
-\end{figure}
-
-We compute the \ac{ip} for each comment across the four datasets. For Sap and Kumar, we use the exhaustive formulation (Eq.~\ref{eq:inherent}), whereas for the two DICES datasets we rely on the Monte Carlo approximation with $k=1000$ (Eq.~\ref{eq:random}). Fig.~\ref{fig:apriori} shows that in all DICES comments there exists at least one group that fully accounts for the observed polarization.\footnote{$Pol_{inh}^{MC}(c)=0 \Rightarrow Pol_{inh}(c)=0$ due to Eq.~\ref{eq:lower-bound}. The same logic applies if we tried to increase the number of random partitions in Eq.~\ref{eq:random}.} Interestingly, this observation does not hold for the Kumar and Sap datasets, despite evaluating all possible annotator groups exhaustively. See App.~\ref{app:inherent} for a qualitative look through comments with high InPol.
+We compute the \ac{ip} for each comment across the four datasets. For Sap and Kumar, we use the exhaustive formulation (Eq.~\ref{eq:inherent}), whereas for the two DICES datasets we rely on the Monte Carlo approximation with $k=1000$ (Eq.~\ref{eq:random}). Fig.~\ref{fig:inherent}, right shows that in all DICES comments there exists at least one group that fully accounts for the observed polarization.\footnote{$Pol_{inh}^{MC}(c)=0 \Rightarrow Pol_{inh}(c)=0$ due to Eq.~\ref{eq:lower-bound}. The same logic applies if we tried to increase the number of random partitions in Eq.~\ref{eq:random}.} Interestingly, this observation does not hold for the Kumar and Sap datasets, despite evaluating all possible annotator groups exhaustively. See App.~\ref{app:inherent} for a qualitative look through comments with high InPol.
 
 \begin{finding}
 	\label{finding:inherent}
@@ -253,8 +244,10 @@ We compute the \ac{ip} for each comment across the four datasets. For Sap and Ku
 \end{finding}
 
 
-\subsubsection{Why does it exist?}
+\subsection{Can we remove it?}
 \label{sec:inherent:why}
+
+Unlike disagreement, \ac{ip} does not provide any information, but rather represents noise or uncertainty translated in terms of polarization. In order to minimize it however, we need to find its cause.
 
 \begin{hypothesis}[Low annotator count]
 	\label{hyp:few-annotators}
@@ -266,13 +259,11 @@ We compute the \ac{ip} for each comment across the four datasets. For Sap and Ku
 	\ac{ip} may arise from the presence of partially represented groups within the annotator pool. While these groups are responsible for the observed polarization, they may go undetected in our current methodology if they are represented by only one or two annotators, as these groups are discarded (\S\ref{sec:inherent:inherent}). 
 \end{hypothesis}
 
-Both of these explanations are plausible and reflect known limitations of most \ac{nlp} datasets, although we lack such datasets with large annotator counts per item to provide a definitive answer. The DICES datasets can in principle be used for this purpose. However, even when repeating the experiment using random annotator subsets (ranging from 5 to 50 annotators) and taking the maximum across ten random samples for each subset size, \emph{we still observed zero \ac{ip}} (App.~\ref{app:ablation:dices}). This finding either invalidates both hypotheses, or indicates that the DICES datasets are structurally different. The latter explanation is plausible given that the annotation targets are LLM texts, which may be relatively unsubtle compared to human comments, as supported by low overall polarization (Fig.~\ref{fig:dataset-polarization}; App~\ref{app:ann_details}).
+Both of these explanations are plausible and reflect known limitations of most \ac{nlp} datasets. The fact that the DICES datasets (featuring 70+ annotators per item) exhibit zero \ac{ip} in all comments may initially seem to validate either of the above hypotheses. However, even when repeating the experiment using random annotator subsets (ranging from 5 to 50 annotators) and taking the maximum across ten random samples for each subset size, \emph{we still observed zero \ac{ip}} (App.~\ref{app:ideal-dataset}). This finding indicates that the DICES datasets may be structurally different. This explanation is plausible given that the annotation targets are LLM texts, which may be relatively unsubtle compared to human comments, as supported by low overall polarization (Fig.~\ref{fig:dataset-polarization}; App~\ref{app:ann_details}). 
 
+Although a definitive answer to this question eludes us due to the lack of other datasets with high annotator counts per item, the indication that the DICES datasets may not feature similar polarization patterns is noteworthy. We discuss the exploratory use of our methodology for filtering subjective datasets in App.~\ref{app:ideal-dataset}.
 
-\subsection{Polarization is directional}
-\label{sec:apunim:conflicting}
-
-\begin{figure}[ht]
+\begin{figure}[t]
 	\centering
 	\includegraphics[width=0.32\linewidth]{ndfu_comment1.png}
 	\includegraphics[width=0.32\linewidth]{ndfu_comment2.png}
@@ -281,130 +272,87 @@ Both of these explanations are plausible and reflect known limitations of most \
 	\label{fig:ndfu_discussion}
 \end{figure}
 
-One way of potentially overcoming annotator sparsity, is aggregating annotations between comments. Fig.~\ref{fig:ndfu_discussion} shows an experiment where we combine annotations across two comments. We observe that, should the two comments be polarized for the opposite reason, the opposing polarization effects might balance each other out, leading to a false negative. Therefore, any statistics must be computed on the comment-level; annotations should never be aggregated across comments.\footnote{A similar assumption was followed in early parametric approaches, which assumed different parameters for each comment~\cite{checco_2017}.}
+We can not address Hyp.~\ref{hyp:groups} without more annotations, but we could address Hyp.~\ref{hyp:few-annotators} by aggregating annotations between comments. However, Fig.~\ref{fig:ndfu_discussion} shows that two comments polarized for the opposite reason may lead to a false negative. Therefore, any statistics must be computed on the comment-level; annotations should never be aggregated across comments.\footnote{A similar assumption was followed in early parametric approaches, which assumed different parameters for each comment~\cite{checco_2017}.}
 
 \begin{finding}
 	\label{finding:conflicting}
-	Polarization has a unique direction for each comment which may compromise cross-comment aggregation.
+	Items hold their own pol. direction which may compromise cross-item aggregation.
 \end{finding}
 
 
 \section{How do we attribute the rest?}
 \label{sec:apunim}
 
-\subsection{Apriori polarization}
-\label{sec:apunim:group-vs-global}
+\subsection{Quantifying Attribution to Annotator Groups}
 
-Instead of using \ac{ip}, which represents the minimum possible polarization exhibited by any group, we calculate the \emph{expected} (average). Therefore, we do not test whether the group is polarized against the whole; nor whether the group explains \emph{some polarization} (as would be the case if we used Eq.~\ref{eq:inherent}), but rather whether the group explains polarization \emph{more than other groups}.
+Instead of using \ac{ip}, which represents the minimum possible polarization exhibited by any group, we calculate the \emph{expected} (average). Therefore, we do not test whether the group is polarized against the whole; nor whether the group explains \emph{some polarization} (as would be the case if we used Eq.~\ref{eq:inherent}), but rather whether the group explains polarization \emph{more than other groups}. Specifically, we define apriori polarization for an item $c$ according to Eq.~\ref{eq:apriori}, which is averaged across items for a dataset $d$ (Eq.~\ref{eq:apriori-dataset}). Intuitively, a high apriori polarization score means that much of the polarization in the dataset is likely not driven by any single group.
 
-\begin{definition}[Apriori polarization]
-	\label{def:apriori}
-	The expected polarization of a comment's annotations.
-\end{definition}
+\begin{multicols}{2}
+	\noindent
+	\begin{equation}
+		\label{eq:apriori}
+		Pol_{apr}(c) = \frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{r}_i (A(c)))
+	\end{equation}
+	\begin{equation}
+		\label{eq:apriori-dataset}
+		Pol_{apr}(d) = \frac{1}{\lvert d \rvert} \sum_{c \in d} Pol_{apr}(c)
+	\end{equation}
+\end{multicols}
+\noindent where $\tilde{r}$ is the random partition operator (see Eq.~\ref{eq:inherent}). We explain why defining apriori polarization in this way is preferable to alternatives in App.~\ref{app:stats:comparison}.
 
-Specifically, we define apriori polarization for a comment $c$ as:
-\begin{equation}
-	\label{eq:apriori}
-	Pol_{apr}(c) = \frac{1}{t} \sum_{i=1}^t  \textit{nDFU}(\tilde{r}_i (A(c)))
-\end{equation}
-\noindent where $\tilde{r}$ is the random partition operator (see Eq.~\ref{eq:inherent}). We explain why defining apriori polarization in this way is preferable to simpler alternatives in App.~\ref{app:stats:comparison}.
+We compare this quantity with the average observed polarization of all comments (Eq.~\ref{eq:observed}), which we use to compare the polarization that is attributed to a single annotator group with the expected one (Eq.~\ref{eq:apriori-dataset}), yielding our normalized metric, \emph{apunim} (Eq.~\ref{eq:apunim}).
 
+\begin{multicols}{2}
+	\noindent
+	\begin{equation}
+		\label{eq:observed}
+		Pol_{obs}(d, g) = \frac{1}{\lvert d \rvert} \sum_{c \in d}  \textit{nDFU}(A(c \given g))
+	\end{equation}
+	\begin{equation}
+		\label{eq:apunim}
+		apunim(d, g) = \frac{Pol_{apr}(d) - Pol_{obs}(d, g)}{1 - Pol_{apr}(d)}
+	\end{equation}
+\end{multicols}
 
-\subsection{Expanding to the whole dataset}
-\label{sec:apunim:dataset}
-
-We can estimate how much polarization is generally present in the dataset by simply averaging the \textit{apriori} polarization of its comments. Intuitively, a high apriori polarization score means that much of the polarization in the dataset is likely not driven by any single group.  
-\begin{equation}
-	\label{eq:apriori-dataset}
-	Pol_{apr}(d) = \frac{1}{\lvert d \rvert} \sum_{c \in d} Pol_{apr}(c)
-\end{equation}
-
-We compare this quantity with the average observed polarization of all comments:
-\begin{equation}
-	\label{eq:observed}
-	Pol_{obs}(d, g) = \frac{1}{\lvert d \rvert} \sum_{c \in d}  \textit{nDFU}(A(c \given g))
-\end{equation}
-
-We can now compare the polarization that is attributed to a single annotator group (Eq.~\ref{eq:observed}) to a prior one (Eq.~\ref{eq:apriori-dataset}). We define our normalized metric, \emph{apunim}, as:
-
-\begin{equation}
-	\label{eq:apunim}
-	apunim(d, g) = \frac{Pol_{apr}(d) - Pol_{obs}(d, g)}{1 - Pol_{apr}(d)}
-\end{equation}
-
-\begin{definition}[Apunim]
-	\label{def:apunim}
-	The degree to which an annotator group contributes to overall polarization in a set of comments.
-\end{definition}
+Apunim measures the degree to which an annotator group contributes to overall polarization in a set of comments. The \emph{sign} of apunim carries information agreement-based attribution does not:
 
 \begin{itemize}
-	\item$apunim(g) \approx 0$: The examined group does not meaningfully disagree with the other annotators.
+	\item$apunim(g) \approx 0$: The group $g$ does not meaningfully disagree with the other annotators.
 	
-	\item $apunim(g) > 0$: The examined group has fundamental disagreements with the other annotators. 
+	\item $apunim(g) > 0$: The group $g$ has fundamental disagreements with the other annotators. 
 	
-	\item $apunim(g) < 0$: The annotators of that group are polarized between themselves.
+	\item $apunim(g) < 0$: The annotators of group $g$ are polarized between themselves.
 \end{itemize}
 
 
-\subsection{Statistical significance}
-\label{sec:apunim:statistical}
-
-Since annotation histograms may be noisy, we additionally assess whether the observed apunim value could arise by chance. To assess statistical significance, we construct a null distribution of apunim values from the randomized partitions and compare the observed apunim against this distribution using a one-sample Student-\(t\) test. Thus, the null hypothesis states that the observed polarization is indistinguishable from polarization induced by random annotator assignments:
-
-\begin{equation}
-	\label{eq:pvalue}
-	\begin{split}
-		&H_0:\ 
-		\bar{\textit{apunim}}_{\mathrm{rand}}(d,g)
-		=
-		\textit{apunim}(d,g) \\
-		&H_a:\ 
-		\bar{\textit{apunim}}_{\mathrm{rand}}(d,g)
-		\neq
-		\textit{apunim}(d,g)
-	\end{split}
-\end{equation}
-\noindent where \(\bar{\textit{apunim}}_{\mathrm{rand}}(d,g)\) denotes the average apunim values obtained from $t$ randomized annotator partitions.
-
- We account for the presence of multiple subgroups in each \ac{pc} dimension using a multiple-hypothesis correction. For a detailed explanation of the p-value computation and the assumptions underlying the test, refer to App.~\ref{app:stats:pvalue}.
-
-
-\subsection{Does apunim recover a known effect?}
+\subsection{Comparing Apunim to Other Methods}
 \label{sec:apunim:recovery}
 
-Polarization and agreement metrics rest on different assumptions, which is why
-they are rarely compared directly. Fixing the size of a group effect by
-construction makes them commensurable, and we do so on synthetic annotations
-(App.~\ref{app:comparison}). Two outcomes bear on how \S\ref{sec:results}
-should be read. The \emph{sign} of apunim carries information agreement-based
-attribution does not: a group that drives polarization and one that is merely
-noisy internally both depart from agreement, and Krippendorff's $\alpha$ scores
-them alike ($+.03$ vs.\ $+.02$), whereas apunim separates them ($+.32$ vs.\
-$-.27$). Our significance test, however, is anti-conservative---it rejects at
-$\alpha=.05$ for 40--62\% of samples containing no group effect---because the
-null is the \emph{mean} of the reused random partitions
-(App.~\ref{app:stats:pvalue}), which narrows with the iteration count rather
-than with the evidence. A permutation p-value restores calibration.
+\begin{figure}
+	\centering
+	\includegraphics[width=\textwidth]{metric_comparison.png}
+	\caption{Polarization group attribution on randomly generated, synthetic distributions. Bars indicate standard error. For each experiment we assign a number of annotators per item, and split the annotator groups 50-50 or 80-20. Apunim is adept at attributing polarization to the correct group regardless of number of annotators per item, or how these annotators are split to different groups.}
+	\label{fig:metrics}
+\end{figure}
+
+%TODO: comment -> item
+While apunim rests on different assumptions than traditional agreement metrics, we can devise a set of experiments where the goal of both methodologies is uncovering a known polarization effect. To model polarization more realistically, we use a comment-specific group effect rather than assuming that annotators in one group are uniformly biased toward higher or lower ratings. Specifically, annotations are generated according to \(y_{ij}=b_j+g_i p_j+\epsilon_{ij}\), where \(b_j\) represents the baseline rating for comment \(j\), \(g_i\in\{-\frac{1}{2},+\frac{1}{2}\}\) indicates the annotator's group, and \(p_j\) controls the magnitude and direction of polarization for comment \(j\). We sample \(p_j\) uniformly from \([-\delta,\delta]\), such that different comments can favor different groups while \(\delta\) controls the maximum group-level separation. Thus, rather than modeling a fixed group bias, the simulation captures situations where groups systematically disagree on particular comments, with the direction and strength of disagreement varying across items but being consistent among annotators of the same group.
+
+To determine whether an observed score is statistically significant, we construct a null distribution for each method. The null hypothesis is that the group labels are unrelated to the observed annotations. We therefore repeatedly shuffle the group labels across annotators, recompute the method's statistic, and use the resulting scores to form the null distribution. The observed score is then compared with this distribution. See App.~\ref{app:stats:pvalue} for the apunim p-value implementation.
+
+Fig.~\ref{fig:metrics} shows the effectiveness of apunim, the aposteriori unimodality framework proposed by \citet{pavlopoulos-likas-2024}, the $\chi^2$ method presented in \citet{akhtar_2019}, GMM clustering used in \citet{checco_2017}, and a baseline using inter-group disagreement ($\Delta \alpha$ Krippendorff). Both the $\chi^2$ and GMM methods generally fail at attributing polarization, which is most likely caused by opposing polarization effects (see Fig.~\ref{fig:ndfu_discussion}) violating their assumptions on fixed mean differences between groups. Inter-group disagreement remains competitive when many annotators are available, but fail at the underperform in cases where the examined group is a minority and when a few annotators are available per item (a common case among \ac{nlp} datasets---see \S\ref{sec:datasets}). Apunim in contrast is robust both to the number of annotators per item, opposing polarization effects, and minority groups, which validates our initial motivation.
 
 \begin{finding}
 	\label{finding:comparison}
-	The sign of apunim separates between-group polarization from within-group
-	disagreement, which agreement-based attribution conflates. Its p-values,
-	however, are anti-conservative and should be recomputed by permutation.
+	Apunim beats established and proposed methodologies in realistic conditions.
 \end{finding}
 
 
 \section{Attributing real-life polarization to human groups}
 \label{sec:results}
 
-\subsection{Experimental setup}
-\label{sec:results:experimental}
-
 Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can partially explain polarization in the annotations. Statistically significant results are presented in Table~\ref{tab:merged-apunim}. See App.~\ref{app:replication} for details on other parameters and execution times, and App.~\ref{app:full} for the full results.
 
-
-\subsection{Which factors contribute to polarization?}
-\label{ssec:results:factors}
 
 \begin{table}[t]
 	\small
@@ -511,27 +459,21 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 \section{Conclusion}
 \label{sec:conclusion}
 
-We investigated to what extent polarization can be attributed to annotator groups. We discovered as of yet unknown issues regarding the presence of inherent and conflicting polarization, which we treat using a new metric, \textit{apunim}. By applying this metric to four subjective \ac{nlp} datasets, we discover that (1) ethnicity and gender seem to generally drive polarization attribution, and (2) ideological groups may be more important than reported in the literature. Finally, we empirically investigate and discuss how our methodology interacts with (generally small in both annotations and size) current subjective \ac{nlp} datasets (App.~\ref{sec:ideal-dataset}) and release a PyPi library implementation to support further work.
+We investigated to what extent polarization can be attributed to annotator groups. We discovered as of yet unknown issues regarding the presence of inherent and conflicting polarization, which we treat using a new metric, \textit{apunim}. By applying this metric to four subjective \ac{nlp} datasets, we discover that (1) ethnicity and gender seem to generally drive polarization attribution, and (2) ideological groups may be more important than reported in the literature. Finally, we empirically investigate and discuss how our methodology interacts with (generally small in both annotations and size) current subjective \ac{nlp} datasets (App.~\ref{app:ideal-dataset}) and release a PyPi library implementation to support further work.
 
 %While we study one group at a time, we can instead turn to iteratively exploring polarized subgroups in future work, allowing us to gradually piece together a multidimensional explanation of polarization (see Footnote~\ref{foot:iterative},~\S\ref{sec:inherent:formulation}). It would also be interesting to explore to what extent LLM-as-a-judge systems reproduce the polarization patterns observed among different minority groups---which would solve the issues with annotation counts presented in our study.
 
 
 \section*{Limitations}
 
-\paragraph{Data limitations} Researchers often release only aggregated single-label annotations or omit annotator \ac{pc} characteristics entirely. As a result, both our analysis and the applicability of our framework are limited by the scarcity of suitable datasets. In addition, because datasets with large numbers of annotators per item are rare, our approach operates only at the dataset level. This limitation prevents us from identifying individual comments or examples that could serve as concrete explanations for the observed \textit{apunim} values.
-
-\paragraph{Scope} It must be noted that the datasets utilized in this study are restricted to posts written in English and pertain exclusively to the Western, specifically U.S., cultural context. Consequently, the findings and observed phenomena are not necessarily generalizable to linguistic or cultural contexts outside of this scope, such as non-English languages or other global cultural spheres.
-
-\paragraph{Confounding variables} Our analysis does not take into account confounding variables. It is plausible that some annotator groups are correlated with others (e.g., LGBTQ+ annotators may not lean into Conservatism). This is left for future work, as the scope of this analysis is deemed too large for this paper. Additionally, many datasets do not report anonymized IDs for the annotators, but only the annotations themselves, making this kind of analysis impossible. We leave our analysis as proof that our methodology can be used to surface polarization patterns, although future methods should allow for intergroup attribution.
-
-\paragraph{Computational limitations} Additionally, our metric features some important practical limitations. It is computationally expensive when applied to very large datasets with a very large amount of \ac{pc} dimensions each featuring multiple distinct subgroups (App.~\ref{app:replication}). It also tends to underestimate polarization attribution when applied to many tens of thousands of items (App.~\ref{app:ablation}). Furthermore, the p-value estimates may falsely give the impression that zero-attribution effects are genuine, which should be taken into account when interpreting results. These limitations do not render our method insufficient---the first two issues can be solved by subsampling. We nevertheless believe that \ac{nlp} datasets should generally move away from huge annotated corpora, and instead towards smaller datasets with large annotator groups per item that sufficiently represent social subgroups.
-
-\paragraph{Comparisons with other methods} Finally, we compare against agreement-based attribution and against the original aposteriori unimodality test only on synthetic data, where the group effect is known by construction (App.~\ref{app:comparison}); on the datasets of \S\ref{sec:datasets} no ground truth exists against which to score them. That comparison also surfaced a calibration problem in our own significance test (Finding~\ref{finding:comparison}), which is the likeliest explanation for a pattern we could not previously account for---why some groups show statistically significant effects while others do not. The p-values in \S\ref{sec:results} should be read as descriptive until recomputed by permutation.
+Researchers often release only aggregated single-label annotations or omit annotator \ac{pc} characteristics entirely. As a result, both our analysis and the applicability of our framework are limited by the scarcity of suitable datasets. In addition, because datasets with large numbers of annotators per item are rare, our approach operates only at the dataset level. This limitation prevents us from identifying individual comments or examples that could serve as concrete explanations for the observed \textit{apunim} values. Furthermore, our analysis does not take into account confounding variables. It is plausible that some annotator groups are correlated with others (e.g., LGBTQ+ annotators may not lean into Conservatism). This is left for future work, as the scope of this analysis is deemed too large for this paper.
 
 
 \section*{Ethics Statement}
 
-\paragraph{Dual use concerns}The primary objective of this study is to identify systemic sources of polarization in subjective NLP datasets to facilitate the construction of more robust and equitable AI systems. However, given that our methodology allows for the quantitative attribution of specific judgment patterns to sociodemographic and ideological characteristics, we acknowledge three primary risks inherent in this research.
+\paragraph{Scope} It must be noted that the datasets utilized in this study are restricted to posts written in English and pertain exclusively to the Western, specifically U.S., cultural context. Consequently, the findings and observed phenomena are not necessarily generalizable to linguistic or cultural contexts outside of this scope, such as non-English languages or other global cultural spheres.
+
+\paragraph{Dual use concerns} The primary objective of this study is to identify systemic sources of polarization in subjective NLP datasets to facilitate the construction of more robust and equitable AI systems. However, given that our methodology allows for the quantitative attribution of specific judgment patterns to sociodemographic and ideological characteristics, we acknowledge three primary risks inherent in this research.
 
 First, \emph{Discriminatory Profiling}: If the metric is applied outside of a dataset quality analysis, its ability to correlate specific judgment patterns with annotator groups could be misused for surveillance or unjust profiling. Second, \emph{Automated Bias Amplification}: The diagnostic patterns of polarization we detect are reflections of human systemic biases. Without human oversight, training subsequent models on these patterns risks automating and entrenching existing societal prejudices. Finally, the knowledge provided by \emph{apunim} could be \emph{weaponized}, allowing malicious actors to strategically target weak points in moderation systems or intentionally maximize societal conflict.
 
@@ -548,8 +490,8 @@ All code, data-processing scripts and the library implementing \emph{apunim} are
 
 \bibliographystyle{iclr2026_conference}
 \bibliography{refs}
-\appendix
 
+\appendix
 
 \section {Acronyms}
 
@@ -788,7 +730,7 @@ The number of annotators per comment for all datasets presented in \S\ref{sec:da
 \end{table}
 
 
-\section{Statistical considerations}
+\section{Statistical Considerations}
 \label{app:stats}
 
 \subsection{Defining apriori polarization}
@@ -806,7 +748,24 @@ Because \textit{apunim} is fundamentally designed to quantify polarization, we e
 \subsection{P-value estimation}
 \label{app:stats:pvalue}
 
-Since our test is parametric (\S\ref{sec:apunim:statistical}), it assumes that there exist (1) enough data-points to reliably run the means-test, (2) enough annotations per \ac{pc} group to estimate \acp{ndfu} in Equations~\ref{eq:apriori}-\ref{eq:observed}, (3) the apunims of the random partitions are independent and identically distributed. Condition (1) can be safely assumed for most datasets, because they feature enough items to reliably assume normal residuals (see \S\ref{sec:datasets}). We discuss condition (2) in App.~\ref{sec:ideal-dataset}. Condition (3) is partly fulfilled; the partitions are identically distributed, but may be dependent on the sample distribution. 
+Since annotation histograms may be noisy, we additionally assess whether the observed apunim value could arise by chance. To assess statistical significance, we construct a null distribution of apunim values from the randomized partitions and compare the observed apunim against this distribution using a one-sample Student-\(t\) test. Thus, the null hypothesis states that the observed polarization is indistinguishable from polarization induced by random annotator assignments:
+
+\begin{equation}
+	\label{eq:pvalue}
+	\begin{split}
+		&H_0:\ 
+		\bar{\textit{apunim}}_{\mathrm{rand}}(d,g)
+		=
+		\textit{apunim}(d,g) \\
+		&H_a:\ 
+		\bar{\textit{apunim}}_{\mathrm{rand}}(d,g)
+		\neq
+		\textit{apunim}(d,g)
+	\end{split}
+\end{equation}
+\noindent where \(\bar{\textit{apunim}}_{\mathrm{rand}}(d,g)\) denotes the average apunim values obtained from $t$ randomized annotator partitions.
+
+We account for the presence of multiple subgroups in each \ac{pc} dimension using a multiple-hypothesis correction. Since our test is parametric (\S\ref{sec:apunim:statistical}), it assumes that there exist (1) enough data-points to reliably run the means-test, (2) enough annotations per \ac{pc} group to estimate \acp{ndfu} in Equations~\ref{eq:apriori}-\ref{eq:observed}, (3) the apunims of the random partitions are independent and identically distributed. Condition (1) can be safely assumed for most datasets, because they feature enough items to reliably assume normal residuals (see \S\ref{sec:datasets}). We discuss condition (2) in App.~\ref{sec:ideal-dataset}. Condition (3) is partly fulfilled; the partitions are identically distributed, but may be dependent on the sample distribution. 
 
 Replacing the parametric means test with a non-parametric alternative would relax assumptions about the underlying distribution but would not resolve the potential dependence between the random apunims. We initially attempted to implement a permutation test on the empirical (random apunim) distribution, but this resulted in excessive computational costs.
 
@@ -857,7 +816,7 @@ We examine nDFU scores for three specific textual examples presented in Fig.~\re
 \section{How does InPol look like?}
 \label{app:inherent}
 
-\begin{table}[ht]
+\begin{table}[t]
 	\begin{tabularx}{\textwidth}{X c}
 		\toprule
 		\textbf{Comment}  & \ac{ip} \\
@@ -892,10 +851,17 @@ We include the \ac{ip} values for each individual comment for all four datasets 
 \section{Ablation experiments}
 \label{app:ablation}
 
-\subsection{Can DICES be used for InPol?}
-\label{app:ablation:dices}
+\subsection{Why do statistical methods fail?}
+\label{app:ablation:comparison}
 
-In order to investigate whether the numerous annotators per comments can explain the lack of \ac{ip} in the DICES datasets (\S\ref{sec:inherent:why}) we gradually subsample the annotators for each comment randomly with replacement, starting from five annotators per comment, and scaling up to the full complement of annotators in the dataset with a step of two. For each such step, we choose ten annotator samples and compute the maximum \ac{ip} across all runs. Even with annotator counts similar to the Kumar and DICES datasets, \ac{ip} remains zero, suggesting that the absence of \ac{ip} can not be attributed to annotator number alone---rather, it is plausibly a pattern attributable to the DICES datasets themselves. 
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=\textwidth]{metric_comparison_simple.png}
+	\caption{Polarization group attribution on randomly generated, synthetic distributions. Bars indicate standard error. For each experiment we assign a number of annotators per item, and split the annotator groups 50-50 or 80-20. The setup is much more simplified, relying on fixed-mean differences instead of the setup used in \S\ref{sec:apunim:recovery}.}
+	\label{fig:metrics-simple}
+\end{figure}
+
+In \S\ref{sec:apunim:recovery} we mentioned that the underperformance of the $\chi^2$ and GMM methodologies is likely caused by opposing polarization effects. An ablation experiment with a much simpler setup, where annotators of the same group just shift their opinions by a range in $[-\frac{\delta}{2}, \frac{\delta}{2}]$ in all comments shows that these methods do indeed show excellent performance. This is expected, since they rely on consistent fixed means effects, which is disrupted in our original formulation of the problem. Thus, while these methods perform admirably in ideal conditions, they may completely fail at realistic annotation datasets. 
 
 
 \subsection{How does dataset size influence apunim?}
@@ -1036,7 +1002,7 @@ Since our approach was designed for the small-scale datasets common in \ac{nlp},
 The test is overly conservative, meaning it almost always suggests there is no significant effect, even when an effect likely exists in reality. This inability to detect a real signal is a Type II Error (a false negative). This suggests that our test is statistically weak or ``underpowered'' in massive settings. Since our methodology is built for the small-scale \ac{nlp} datasets that dominate the research field, we deem this limitation acceptable for the scope of our work. 
 
 
-\subsection{How does sample section influence apunim?}
+\subsection{How does sample selection influence apunim?}
 \label{app:ablation:samples}
 
 Astute readers may notice that some variability does exist across differently sized samples for the same examined groups, where for example the sign of the apunim value may switch. We note that the statistically significant values (bold rows) change signs only when the apunim value approaches zero in the largest samples. Thus, the results are not inverted, but rather pushed towards zero.
@@ -1044,113 +1010,12 @@ Astute readers may notice that some variability does exist across differently si
 In order to verify that this variability is caused by the sample size, and not by different samples being drawn, we execute a further ablation study. Specifically, we execute the apunim study on the $3000$-sized sample of the dataset, using different subsets of the Kumar dataset. The results can be found in Fig.~\ref{fig:seeds}, where we note that variability is not an issue, except for a couple of cases. These cases seem to represent sparse annotator groups, where missing a few comments may genuinely change the value of the apunim metric. These groups however are largely not detected by apunim as significant either way (see \S\ref{sec:results}).
 
 
-
-\section{Comparison with agreement-based attribution}
-\label{app:comparison}
-
-\paragraph{Setup} We generate annotations on a 1--5 scale for 200 items, with
-the group effect fixed by construction: annotators in group B are shifted by
-$\delta$ relative to group A, so $\delta=0$ means the grouping is irrelevant
-and larger $\delta$ means it explains more of the polarization. Every method
-receives identical data and is asked whether the grouping explains the
-polarization; we report the rate at which each rejects at $\alpha=.05$ over 40
-replications. Annotations use a full crossed design (every annotator rates
-every item), which is the most favourable case for agreement metrics, as no
-cells are missing.
-
-\paragraph{Baselines} Krippendorff's $\alpha$ measures agreement rather than
-attribution, so the agreement baseline is the within-group gain it implies:
-split the annotators on the grouping and test whether $\alpha$ rises,
-calibrated by a label permutation test so that it carries a p-value on the same
-footing as apunim. We write this as $\Delta\alpha$. We also include the original
-aposteriori unimodality test~\cite{pavlopoulos-likas-2024}, which flags a
-comment that is polarized overall while every group is internally unimodal.
-
-\begin{figure}[t]
-	\centering
-	\includegraphics[width=\textwidth]{metric_comparison.png}
-	\caption{Detection rate for a group effect of known size $\delta$; $\delta=0$
-	is the false-positive rate and the dotted line marks the nominal $\alpha=.05$.
-	Version \texttt{1.0.5} of our library binned each sample over its own range,
-	which inflates the \ac{ndfu} of any group that does not reach both ends of the
-	scale; \texttt{1.0.6} bins every group and partition on one fixed grid.}
-	\label{fig:metric-comparison}
-\end{figure}
-
-\paragraph{Power} All methods recover a large effect (Fig.~\ref{fig:metric-comparison}).
-They separate in the two regimes that matter for real corpora. With 20
-annotators per item, the original test never fires at all ($\le.05$ across every
-$\delta$): it requires a group's \ac{ndfu} to be exactly zero, and with few
-annotations per group that is a knife-edge condition, which is the concrete form
-of the noise problem raised in \S\ref{sec:related:attribution}. With a 20\%
-minority it recovers at most $.40$. Both apunim and $\Delta\alpha$ remain at
-ceiling in both regimes.
-
-\paragraph{Specificity} Power alone does not separate the methods, because a
-metric can fire for the wrong reason. Table~\ref{tab:comparison-specificity}
-scores three cases where the grouping is not the explanation. When group B
-merely has higher variance around a shared mean---disagreement without
-bimodality---$\Delta\alpha$ fires every time, and cannot distinguish that case
-from genuine polarization ($+.024$ vs.\ $+.031$). Apunim also fires, but its
-value is strongly \emph{negative} ($-.268$ vs.\ $+.322$), which is the reading
-given in \S\ref{sec:apunim:dataset}: the group is polarized among itself. This
-signed separation is what a polarization metric buys over an agreement metric,
-and it is the main argument for preferring one.
-
-\begin{table}[H]
-	\centering
-	\small
-	\begin{tabularx}{\textwidth}{Xrrrr}
-		\toprule
-		& \textbf{apunim} & \textbf{$\Delta\alpha$} & \textbf{orig.\ AU} & \textbf{should fire?} \\
-		\midrule
-		Group drives polarization      & $+.322$ & $+.031$ & $+.058$ & yes \\
-		Group is internally noisy only & $-.268$ & $+.024$ & $+.001$ & by sign \\
-		Polarization unrelated to group & $+.002$ & $+.000$ & $+.006$ & no \\
-		Real polarization, labels shuffled & $+.007$ & $-.006$ & $+.003$ & no \\
-		\bottomrule
-	\end{tabularx}
-	\caption{Mean statistic in four scenarios (80 annotators/item, balanced
-	groups, $\delta=2.5$ where applicable). Only apunim separates a group that
-	drives polarization from one that is merely noisy, and it does so by sign.}
-	\label{tab:comparison-specificity}
-\end{table}
-
-\paragraph{Calibration} The last two rows of Table~\ref{tab:comparison-specificity}
-show apunim's statistic behaving correctly---it sits at zero when the grouping
-explains nothing---while its p-value does not: it rejects in 40\% and 53\% of
-those samples. The same is visible at $\delta=0$ in
-Fig.~\ref{fig:metric-comparison}, where the false-positive rate runs from
-$.40$ to $.62$ against a nominal $.05$, while $\Delta\alpha$ ($\le.03$) and the
-original test ($\le.05$) are calibrated. The cause is that the null is the mean
-of the reused random partitions (App.~\ref{app:stats:pvalue}); its standard
-error falls as $1/\sqrt{t}$ in the iteration count $t$, so significance can be
-obtained by computing longer. Holding the data fixed and raising $t$ from 50 to
-1600 leaves the rejection rate at $\approx.45$ while the median p-value falls
-from $.112$ to $.054$. Scoring the same statistic against the permutation
-\emph{distribution} rather than its mean gives a false-positive rate of $.10$
-while retaining power ($.93$ at $\delta=1$).
-
-\paragraph{Effect of the binning fix} Version \texttt{1.0.5} of our library
-passed a bin \emph{count} to \texttt{numpy}, which spreads bins over the range
-of each sample. A group whose annotations do not reach both ends of the scale
-then acquires empty bins between populated ones, which DFU reads as
-multimodality. This is not symmetric: the size-matched random partitions mix
-all groups and so span the scale, while a concentrated group does not, which
-inflates $Pol_{obs}$ relative to $Pol_{apr}$ and drives Eq.~\ref{eq:apunim}
-negative. On the data of Fig.~\ref{fig:metric-comparison} the statistic was
-negative in 88--100\% of replications for $\delta \in [1.5, 2.5]$, where it must
-be positive. Binning every sample on one grid fixed over the annotation scale
-removes the inversion ($+.143$, $+.222$, $+.322$, $+.428$ for
-$\delta = 1.5$ to $3.0$; negative in 0\%).
-
 \section{The ideal subjective dataset}
-\label{sec:ideal-dataset}
+\label{app:ideal-dataset}
 
 We briefly discuss the type of data most suited for our proposed methodology, and connect it with current \ac{nlp} datasets.
 
 \paragraph{How many annotators?} Our methodology does not directly require numerous annotators overall, only a sufficient number per item---indeed, statistically significant results can be obtained with as little as four annotations (see Sap-\ac{aa}; Table~\ref{tab:sdb-features}). A large annotator pool however is required to get sufficient coverage on the examined groups. More annotators allow both higher fidelity of each \ac{pc} dimension, and more such dimensions.
-
 
 \begin{figure}[t]
 	\includegraphics[width=0.55\textwidth]{pol_obs_subsampling_robustness.png}
@@ -1161,6 +1026,9 @@ We briefly discuss the type of data most suited for our proposed methodology, an
 \paragraph{How many annotators per item?} We investigate observed polarization against varying numbers of annotators. Specifically, for every comment, we repeatedly sampled $n$ annotators with replacement, calculated $pol_{obs}$ for each sample and measured \ac{sd}, averaging it across 1000 same-sized samples. As shown in Fig.~\ref{fig:std_error}, $pol_{obs}$ exhibits a clear, inverse relationship with the number of annotators, attributed to better histogram estimation provided by \ac{ndfu} (\S\ref{sec:apunim:group-vs-global}), though the rate of gain substantially diminishes after 20 annotators. Interestingly, some variability persists even with a very high annotator count.
 
 \paragraph{How many items?} Our methodology is designed to work with smaller datasets common in \ac{nlp}. Three of the four datasets in the study feature low (300--600) item counts, while the Kumar dataset has been subsampled to 3\% of its original size. Large datasets should be used only to provide larger coverage on the target domain, since a much better representation of individual groups can be achieved with more annotators per item, rather than more items. Smaller datasets may also be more practical for social science analysis~\cite{rossi_2024}.
+
+\paragraph{Filtering datasets with desirable levels of subjectivity} In order to investigate whether the numerous annotators per comments can explain the lack of \ac{ip} in the DICES datasets (\S\ref{sec:inherent:why}) we gradually subsample the annotators for each comment randomly with replacement, starting from five annotators per comment, and scaling up to the full complement of annotators in the dataset with a step of two. For each such step, we choose ten annotator samples and compute the maximum \ac{ip} across all runs. Even with annotator counts similar to the Kumar and DICES datasets, \ac{ip} remains zero, suggesting that the absence of \ac{ip} can not be attributed to annotator number alone---rather, it is plausibly a pattern attributable to the DICES datasets themselves. This kind of analysis may be used in the exploratory phase of dataset selection in order to filter out datasets without enough group-specific subjectivity.
+
 
 \section{Full results}
 \label{app:full}
