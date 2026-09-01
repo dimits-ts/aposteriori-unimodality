@@ -65,9 +65,9 @@
 \maketitle
 
 \begin{abstract}
-	Current representations of polarization focus exclusively on distinguishing minor disagreements from systematic differences in opinion between annotator groups. In this study we develop a new framework which not only detects, but also quantifies the degree to which any annotator subgroup causes these systematic differences. We first discover fundamental issues which we show limit prior approaches: 1) the presence of ``inherent'' polarization that cannot be attributed to any known or latent groups, and 2) opposing polarization effects canceling each other out in aggregated annotations. We then introduce a new metric that attributes polarization to any annotator group while avoiding these limitations and  release a PyPi-installable implementation. Our metric surpasses both traditional similarity metrics and prior approaches on detecting subgroup polarization, while also uncovering previously latent polarization in overlooked minority and fine-grained ideological groups due to its robustness to group-size imbalances. Finally, we use our framework to build prompts that induce polarizing behavior in LLM annotators, which has not been previously explored.
+	Current representations of polarization focus exclusively on distinguishing minor disagreements from systematic differences in opinion between annotator groups. In this study we develop a new framework which not only detects, but also quantifies the degree to which any annotator subgroup causes these systematic differences. We first discover fundamental issues which we show limit prior approaches: 1) the presence of ``inherent'' polarization that cannot be attributed to any known or latent groups, and 2) opposing polarization effects canceling each other out in aggregated annotations. We then introduce a new metric that attributes polarization to any annotator group while avoiding these limitations and  release a PyPi-installable implementation. Our metric surpasses both traditional similarity metrics and prior approaches on detecting subgroup polarization, while also uncovering previously latent polarization in overlooked minority and fine-grained ideological groups due to its robustness to group-size imbalances. Finally, in regard to LLM annotation, we find that LLMs \textbf{TODO}.
 \end{abstract}
-
+%TODO
 
 \section{Introduction}
 \label{sec:intro}
@@ -100,10 +100,11 @@ One alternative is using \emph{polarization}, which correlates better with human
 
 \begin{researchquestion}[Which polarization patterns are shared between human and LLM annotators]
 	\label{rq:llm}
-	We conduct an annotation study on the same datasets using seven open-source models (App.~\ref{app:llms}) in order to compare polarization patterns between them and humans.
+	We conduct an annotation study on the same datasets using seven open-source models (App.~\ref{app:llms}) in order to compare polarization patterns between them and humans, finding that \textbf{TODO} (Finding~\ref{finding:llm}).
 \end{researchquestion}
+%TODO
 
-Our work thus makes the following contributions: (1) The identification of severe issues present in subjective datasets (2) A new polarization attribution metric that is robust to small annotator counts and minority group splits with a PyPi-installable implementation (3) The detection of new promising directions for analysis of subjective \ac{nlp} datasets (4) Insight into LLM subjectivity. Our study also underscores the need for datasets with high annotator counts per item, instead of high annotator counts in general---see App.~\ref{app:ideal-dataset} for a more extensive discussion and empirical findings.
+Our work makes the following contributions: (1) The identification of severe issues present in subjective datasets which impact current approaches (2) A new polarization attribution metric that is robust to small annotator counts and minority group splits, with a PyPi-installable implementation (3) The detection of new promising directions for analysis of subjective \ac{nlp} datasets (4) Insight into LLM subjectivity. Our study also underscores the need for datasets with high annotator counts per item, instead of high annotator counts in general---see App.~\ref{app:ideal-dataset} for a more extensive discussion and empirical findings on dataset shape and size.
 
 \noindent\textcolor{red}{\textbf{Content Warning: This publication includes examples of controversial and potentially harmful speech for the purposes of demonstration. These examples do not represent the views of the authors.}}
 
@@ -264,20 +265,6 @@ We compute the \ac{ip} for each item across the four datasets. For Sap and Kumar
 \subsection{Can We Remove It?}
 \label{sec:inherent:why}
 
-Unlike disagreement, \ac{ip} does not provide any information, but rather represents noise or uncertainty translated in terms of polarization. In order to minimize it however, we need to find its cause.
-
-\begin{hypothesis}[Low annotator count]
-	\label{hyp:few-annotators}
-	A low number of annotators per item may provide our model with insufficient information.
-\end{hypothesis}
-
-\begin{hypothesis}[Inaccessible groups]
-	\label{hyp:groups}
-	\ac{ip} may arise from the presence of partially represented groups within the annotator pool. While these groups are responsible for the observed polarization, they may go undetected in our current methodology if they are represented by only one or two annotators, as these groups are discarded (\S\ref{sec:inherent:inherent}). 
-\end{hypothesis}
-
-Both of these explanations are plausible and reflect known limitations of most \ac{nlp} datasets. The fact that the DICES datasets (featuring 70+ annotators per item) exhibit zero \ac{ip} in all items may initially seem to validate either of the above hypotheses. However, even when repeating the experiment using random annotator subsets (ranging from 5 to 50 annotators) and taking the maximum across ten random samples for each subset size, \emph{we still observed zero \ac{ip}} (App.~\ref{app:ideal-dataset}). This finding indicates that the DICES datasets may be structurally different. This explanation is plausible given that the annotation targets are LLM texts, which may be relatively unsubtle compared to human items, as supported by low overall polarization (Fig.~\ref{fig:dataset-polarization}; App~\ref{app:ann_details}). \footnote{Although a definitive answer to this question eludes us due to the lack of other datasets with high annotator counts per item, the indication that the DICES datasets may not feature similar polarization patterns is noteworthy. We discuss the exploratory use of our methodology for filtering subjective datasets in App.~\ref{app:ideal-dataset}.}
-
 \begin{figure}[t]
 	\centering
 	\includegraphics[width=0.32\linewidth]{ndfu_comment1.png}
@@ -287,7 +274,19 @@ Both of these explanations are plausible and reflect known limitations of most \
 	\label{fig:ndfu_discussion}
 \end{figure}
 
-We can not address Hyp.~\ref{hyp:groups} without more annotations, but we could address Hyp.~\ref{hyp:few-annotators} by aggregating annotations between items. However, Fig.~\ref{fig:ndfu_discussion} shows that two items polarized for the opposite reason may lead to a false negative. Therefore, any statistics must be computed on the item-level; annotations should never be aggregated across items.\footnote{A similar assumption was followed in early parametric approaches, which assumed different parameters for each item~\cite{checco_2017}.}
+Unlike disagreement, \ac{ip} does not provide any information, but rather represents noise or uncertainty translated in terms of polarization. In order to minimize it, we need to find its cause. Since the DICES datasets are the only ones without \emph{any} items with \ac{ip} leads us to two hypotheses:
+
+\begin{hypothesis}[Low annotator count]
+	\label{hyp:few-annotators}
+	A low number of annotators per item may provide our model with insufficient information.
+\end{hypothesis}
+
+\begin{hypothesis}[Inaccessible groups]
+	\label{hyp:groups}
+	\ac{ip} may arise from the presence of partially represented groups within the annotator pool which may go undetected if they are represented by only one or two annotators, as \ac{ndfu} is undefined for these groups. 
+\end{hypothesis}
+
+Both of these explanations are plausible and reflect known limitations of most \ac{nlp} datasets. Unfortunately, we can not confirm any of these hypotheses, as explained in App.~\ref{app:experiments}. While we can not address Hyp.~\ref{hyp:groups} without more annotations, we could address Hyp.~\ref{hyp:few-annotators} by aggregating annotations between items. However, Fig.~\ref{fig:ndfu_discussion} shows that two items polarized for the opposite reason may lead to a false negative. Therefore, any statistics must be computed on the item-level; annotations should never be aggregated across items.\footnote{A similar assumption was followed in early parametric approaches, which assumed different parameters for each item~\cite{checco_2017}.}
 
 \begin{finding}
 	\label{finding:conflicting}
@@ -362,8 +361,11 @@ Fig.~\ref{fig:metrics} shows the effectiveness of apunim, the aposteriori unimod
 \end{finding}
 
 
-\section{Attributing Real-life Polarization to Human Groups}
+\section{Attributing Real-life Polarization}
 \label{sec:results}
+
+\subsection{Human Annotators}
+\label{sec:results:humans}
 
 Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can explain observed polarization. Statistically significant results are presented in Table~\ref{tab:merged-apunim}. See App.~\ref{app:software} for details on other parameters and execution times, and App.~\ref{app:full} for the full results.
 
@@ -461,10 +463,17 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 \end{finding}
 
 
+\subsection{LLM Annotators}
+\label{sec:results:llms}
+
+%TODO
+
+
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
 
-We discovered issues regarding the presence of inherent and conflicting polarization which render current methods around subgroup disagreement attribution suboptimal in realistic circumstances. We created a new metric (\textit{apunim}) that overcomes these issues and outperforms alternatives methodologies in realistic annotation settings, while also quantifying the attribution of each group.  By applying this metric to four subjective \ac{nlp} datasets, we discover that (1) ethnicity and gender seem to generally drive polarization attribution, and (2) ideological groups may be more important than reported in the literature. Finally, we ...[LLMs]%TODO
+We discovered issues regarding the presence of inherent and conflicting polarization which render current methods around subgroup disagreement attribution suboptimal in realistic circumstances. We created a new metric (\textit{apunim}) that overcomes these issues and outperforms alternatives methodologies in realistic annotation settings, while also quantifying the attribution of each group.  By applying this metric to four subjective \ac{nlp} datasets, we discover that (1) ethnicity and gender seem to generally drive polarization attribution, and (2) ideological groups may be more important than reported in the literature. Finally, we ...\textbf{TODO}.
+%TODO
 
 Our study shows that future research needs to focus on ``wide'' datasets---those with many annotators per item, rather than just having many items with few annotators. Because these datasets are rare, we cannot pinpoint specific examples or individual items to explain the observed apunim values. Furthermore, the lack of rich annotation data prevents us from analyzing how different annotator groups interact (e.g., the relationship between LGBTQ+ and Conservative annotators). Finally, our data is limited to English posts from a U.S. cultural context. Future work should focus on building these wider datasets with detailed annotator profiles to enable deeper, multidimensional analysis.
 
@@ -477,7 +486,7 @@ In this work we used proprietary models such as Claude's Sonnet 5 and OpenAI's G
 
 We analyze software design decisions, limitations and computational details in App.~\ref{app:software} and elaborate on our experimental setup in App.~\ref{app:design}. Information on the synthetic experiments used in \S\ref{sec:inherent},\ref{sec:apunim} is disclosed in App.~\ref{app:experiments}, while ablations around sample sizes and sample selection for the Kumar dataset are detailed in App.~\ref{app:ablation}. Additionally, we include a discussion around the use of current \ac{nlp} datasets, as well as an empirical estimation of the number of required annotators for reproducible results in App.~\ref{app:ideal-dataset}.
 
-Regarding LLM annotation, we choose to use open-source, locally hosted LLMs in order to make the task as reproducible as possible. App.~\ref{app:llms} details the selection and characteristics of the models used, the annotation procedure itself, hardware used and execution times. The appendix also includes ablation studies showing invariance towards repeated execution with the same or rephrased prompts. The prompts themselves can be found in App.~\ref{app:prompts}. 
+Regarding LLM annotation, we choose to use open-source, locally hosted LLMs in order to make the task as reproducible as possible. App.~\ref{app:llms} details the selection and characteristics of the models used, the annotation procedure itself, quantitative comparisons between human and LLM annotations, hardware used, and execution times. The appendix also includes ablation studies showing invariance towards repeated execution with the same or rephrased prompts. The prompts themselves can be found in App.~\ref{app:prompts}. 
 
 In both LLM and non-LLM experiments all relevant seeds are pinned to allow exact reproducibility, although we note that LLMs are by their nature stochastic, which can not be treated using software \citep{bisbee_2023}. All code, data-processing scripts and the library implementing \emph{apunim} are released anonymously: library \librarylink, documentation \doclink, replication code \explink.
 
@@ -852,6 +861,11 @@ To determine whether an observed score is statistically significant, we construc
 \section{Experiment Ablations}
 \label{app:ablation}
 
+\subsection{Why Does InPol Exist?}
+
+The fact that the DICES datasets (featuring 70+ annotators per item) exhibit zero \ac{ip} in all items may initially seem to validate either of the above hypotheses. However, even when repeating the experiment using random annotator subsets (ranging from 5 to 50 annotators) and taking the maximum across ten random samples for each subset size, \emph{we still observed zero \ac{ip}} (App.~\ref{app:ideal-dataset}). This finding indicates that the DICES datasets may be structurally different. This explanation is plausible given that the annotation targets are LLM texts, which may be relatively unsubtle compared to human items, as supported by low overall polarization (Fig.~\ref{fig:dataset-polarization}; App~\ref{app:ann_details}). Although a definitive answer to this question eludes us due to the lack of other datasets with high annotator counts per item, the indication that the DICES datasets may not feature similar polarization patterns is noteworthy. We discuss the exploratory use of our methodology for filtering subjective datasets in App.~\ref{app:ideal-dataset}.
+
+
 \subsection{Why Do Statistical Methods Fail?}
 \label{app:ablation:comparison}
 
@@ -1060,6 +1074,9 @@ We use only open-source models, as proprietary models such as OpenAI's GPT-5 yie
 \subsection{Experimental Setup}
 Since each of the datasets in \S\ref{sec:datasets} was annotated using different annotation guidelines and targets we use different instruction prompts for each dataset. The ``default'' annotation prompt is directly extracted from the studies in the case of Sap and Kumar, and inferred from the instruction guidelines used in the DICES datasets with minor modifications. The prompts used in the ablation study (see next section) were provided by a GPT-5 model by providing the original prompt and instructing it to produce three variants. The full main and ablation annotation prompts can be found in App.~\ref{app:prompts}. We use a single Quadro RTX 6000 GPU for tasks requiring small (7-8B) models and two such GPUs for the rest. The annotation task, including ablations, requires approximately 98 hours of computation to complete.
 
+
+\subsection{Exploratory Analysis}
+%TODO
 
 \subsection{Annotation Ablations}
 %TODO
