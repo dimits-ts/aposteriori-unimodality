@@ -705,7 +705,7 @@ LEGEND_LABEL = {
 
 def _condition_title(
     n_ann,
-    minority,
+    minority
 ):
     return f"{n_ann} ann/item, " f"{int(round(minority * 100))}\\% minority"
 
@@ -713,7 +713,7 @@ def _condition_title(
 def plot(
     rows,
     methods,
-    out_path,
+    out_path
 ):
     methods = [m for m in METHOD_ORDER if m in methods] + [
         m for m in methods if m not in METHOD_ORDER
@@ -814,7 +814,7 @@ def plot(
     )
 
     fig.suptitle(
-        "Apunim vs. baselines on " "comment-specific group polarization"
+        "Apunim vs. prior approaches on polarization subgroup attribution"
     )
 
     fig.supylabel("Detection rate")

@@ -29,6 +29,17 @@ JOBS=(
 'metric_comparison_simple | python src/metric_comparison.py --cache-path=cache/metric-comparison-simple.csv --graph-output-path=graphs/metric_comparison_simple.png --simple-simulation'
 
 'kumar|python src/kumar.py --dataset-path=data/datasets/kumar.json --output-dir=output/main --graph-output-dir=graphs --ablation-dir=ablation'
+
+'llm | python src/llm_analysis.py \
+  --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv \
+  --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv \
+  --sap-path=data/datasets/sap.csv \
+  --kumar-path=data/datasets/kumar.json \
+  --annotations-dir=output/annotations \
+  --paraphrase-dir=output/ablations/paraphrase \
+  --graph-output-dir=graphs \
+  --latex-output-dir=manuscript/generated \
+  --apunim-output-dir=output/llm'
 )
 
 printf "%s\n" "${JOBS[@]}" |
