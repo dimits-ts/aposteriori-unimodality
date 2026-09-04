@@ -39,7 +39,8 @@ JOBS=(
   --paraphrase-dir=output/ablations/paraphrase \
   --graph-output-dir=graphs \
   --latex-output-dir=manuscript/generated \
-  --apunim-output-dir=output/llm'
+  --apunim-output-dir=output/llm \
+  --exclude-models olmo7b llama8b'
 )
 
 printf "%s\n" "${JOBS[@]}" |

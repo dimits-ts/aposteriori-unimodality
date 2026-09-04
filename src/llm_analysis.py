@@ -48,6 +48,7 @@ from dices import DicesDataset
 from kumar import KumarDataset
 from sap import SapDataset
 
+
 DATASET_KEYS = ["dices-350", "dices-990", "sap", "kumar"]
 
 DATASET_LOADERS = {
@@ -74,6 +75,49 @@ VARIANT_NAMES = ["variant1", "variant2", "variant3"]
 # personas sampled per comment, i.e. the max number of "annotators" any
 # single comment has in the LLM-annotation CSVs.
 MAX_ANNOTATORS_PER_ITEM = 6
+
+
+class LLMAnnotationDataset(tasks.preprocessing.Dataset):
+    """
+    Adapts a single (dataset, prompt, model) llm_annotate.py output CSV --
+    one row per (comment, persona) -- into the per-comment,
+    list-of-annotators shape that tasks.run_helper / tasks.graphs expect,
+    treating the sampled persona attributes as the SDB columns.
+    """
+
+    def __init__(
+        self,
+        df: pd.DataFrame,
+        dataset_key: str,
+        model_pseudo: str,
+        prompt_name: str,
+    ):
+        self._name = f"{dataset_key}-{prompt_name}-{model_pseudo}"
+        persona_cols = _persona_columns(df)
+
+        df = df.dropna(subset=["annotation_clean"]).copy()
+        agg = {col: list for col in persona_cols}
+        agg["annotation_clean"] = list
+        self.df = df.groupby("text_id").agg(agg).reset_index()
+        self.sdb_columns = persona_cols
+
+    def get_name(self) -> str:
+        return self._name
+
+    def get_dataset(self) -> pd.DataFrame:
+        return self.df
+
+    def get_sdb_columns(self) -> list[str]:
+        return self.sdb_columns
+
+    def get_comment_key_column(self) -> str:
+        return "text_id"
+
+    def get_annotation_column(self) -> str:
+        return "annotation_clean"
+
+    def get_text_column(self) -> str:
+        return "text_id"
 
 
 # ---------------------------------------------------------------------------
@@ -193,7 +237,7 @@ def collect_llm_annotations(
 
 
 def plot_annotation_histograms(
-    human_datasets: dict[str, tasks.preprocessing.Dataset],
+    human_datasets: tasks.preprocessing.LazyDatasetLoader,
     annotations_dir: Path,
     output_path: Path,
     prompt_name: str = "default",
@@ -240,9 +284,6 @@ def plot_annotation_histograms(
             discrete=True,
             stat="probability",
             common_norm=False,
-            element="step",
-            fill=False,
-            linewidth=2,
             palette=palette,
             ax=ax,
         )
@@ -317,19 +358,29 @@ def krippendorff_alpha_safe(matrix: np.ndarray) -> float:
 
 
 def cross_model_consistency_table(
-    human_datasets: dict[str, tasks.preprocessing.Dataset],
+    human_datasets: tasks.preprocessing.LazyDatasetLoader,
     annotations_dir: Path,
     prompt_name: str = "default",
+    exclude_models: list[str] | None = None,
 ) -> pd.DataFrame:
     """
     For each dataset: how consistent are the different LLMs with each
     other, when all of them are given the same (default) prompt?
+
+    `exclude_models`, if given, drops those model pseudos (e.g. "olmo7b")
+    from the comparison entirely.
     """
+    exclude_models = set(exclude_models or [])
     rows = []
     for key in DATASET_KEYS:
         if key not in human_datasets:
             continue
         files = find_annotation_files(annotations_dir, key, prompt_name)
+        files = {
+            pseudo: path
+            for pseudo, path in files.items()
+            if pseudo not in exclude_models
+        }
         if len(files) < 2:
             continue
 
@@ -351,7 +402,7 @@ def cross_model_consistency_table(
 
 
 def per_model_variant_consistency_table(
-    human_datasets: dict[str, tasks.preprocessing.Dataset],
+    human_datasets: tasks.preprocessing.LazyDatasetLoader,
     paraphrase_dir: Path,
     variant_names: list[str] = VARIANT_NAMES,
 ) -> pd.DataFrame:
@@ -404,7 +455,7 @@ def per_model_variant_consistency_table(
 
 
 def per_model_repeat_consistency_table(
-    human_datasets: dict[str, tasks.preprocessing.Dataset],
+    human_datasets: tasks.preprocessing.LazyDatasetLoader,
     repeat_dir: Path,
     prompt_name: str = "default",
 ) -> pd.DataFrame:
@@ -470,56 +521,8 @@ def export_latex_table(
     print(f"Table exported to {output_path.resolve()}")
 
 
-# ---------------------------------------------------------------------------
-# 3. Apunim on LLM annotations (mirrors sap.py / dices.py / kumar.py)
-# ---------------------------------------------------------------------------
-
-
-class LLMAnnotationDataset(tasks.preprocessing.Dataset):
-    """
-    Adapts a single (dataset, prompt, model) llm_annotate.py output CSV --
-    one row per (comment, persona) -- into the per-comment,
-    list-of-annotators shape that tasks.run_helper / tasks.graphs expect,
-    treating the sampled persona attributes as the SDB columns.
-    """
-
-    def __init__(
-        self,
-        df: pd.DataFrame,
-        dataset_key: str,
-        model_pseudo: str,
-        prompt_name: str,
-    ):
-        self._name = f"{dataset_key}-{prompt_name}-{model_pseudo}"
-        persona_cols = _persona_columns(df)
-
-        df = df.dropna(subset=["annotation_clean"]).copy()
-        agg = {col: list for col in persona_cols}
-        agg["annotation_clean"] = list
-        self.df = df.groupby("text_id").agg(agg).reset_index()
-        self.sdb_columns = persona_cols
-
-    def get_name(self) -> str:
-        return self._name
-
-    def get_dataset(self) -> pd.DataFrame:
-        return self.df
-
-    def get_sdb_columns(self) -> list[str]:
-        return self.sdb_columns
-
-    def get_comment_key_column(self) -> str:
-        return "text_id"
-
-    def get_annotation_column(self) -> str:
-        return "annotation_clean"
-
-    def get_text_column(self) -> str:
-        return "text_id"
-
-
 def run_llm_apunim(
-    human_datasets: dict[str, tasks.preprocessing.Dataset],
+    human_datasets: tasks.preprocessing.LazyDatasetLoader,
     annotations_dir: Path,
     output_dir: Path,
     graph_output_dir: Path,
@@ -593,19 +596,17 @@ def load_human_datasets(
     dices_large_path: Path,
     sap_path: Path,
     kumar_path: Path,
-) -> dict[str, tasks.preprocessing.Dataset]:
-    paths = {
-        "dices-350": dices_small_path,
-        "dices-990": dices_large_path,
-        "sap": sap_path,
-        "kumar": kumar_path,
-    }
-    datasets = {}
-    for key, path in paths.items():
-        if path is None:
-            continue
-        datasets[key] = DATASET_LOADERS[key](path)
-    return datasets
+) -> tasks.preprocessing.LazyDatasetLoader:
+    return tasks.preprocessing.LazyDatasetLoader(
+        {
+            "dices-350": dices_small_path,
+            "dices-990": dices_large_path,
+            "sap": sap_path,
+            "kumar": kumar_path,
+        },
+        dataset_keys=DATASET_KEYS,
+        dataset_loaders=DATASET_LOADERS,
+    )
 
 
 def main(
@@ -620,6 +621,7 @@ def main(
     latex_output_dir: Path,
     apunim_output_dir: Path,
     prompt_name: str = "default",
+    exclude_models: list[str] | None = None,
 ):
     tasks.graphs.graph_setup()
     graph_output_dir.mkdir(parents=True, exist_ok=True)
@@ -663,6 +665,32 @@ def main(
             ),
             label="tab:llm-consistency-cross-model",
         )
+
+    if exclude_models:
+        cross_model_excl_path = (
+            latex_output_dir / "llm-consistency-cross-model-excluding.tex"
+        )
+        if _skip_if_exists(cross_model_excl_path):
+            pass
+        else:
+            cross_model_excl_df = cross_model_consistency_table(
+                human_datasets=human_datasets,
+                annotations_dir=annotations_dir,
+                prompt_name=prompt_name,
+                exclude_models=exclude_models,
+            )
+            excluded_str = ", ".join(sorted(exclude_models))
+            export_latex_table(
+                cross_model_excl_df,
+                output_path=cross_model_excl_path,
+                caption=(
+                    "Consistency (Krippendorff's $\\alpha$, ordinal) "
+                    f"between LLMs given the same ({prompt_name}) prompt, "
+                    "per dataset, excluding the following models: "
+                    f"{excluded_str}."
+                ),
+                label="tab:llm-consistency-cross-model-excluding",
+            )
 
     variant_path = latex_output_dir / "llm-consistency-variants.tex"
     if _skip_if_exists(variant_path):
@@ -793,6 +821,16 @@ if __name__ == "__main__":
             "cross-model consistency table."
         ),
     )
+    parser.add_argument(
+        "--exclude-models",
+        nargs="+",
+        default=[],
+        help=(
+            "Model pseudo names (e.g. olmo7b llama8b) to leave out of an "
+            "additional cross-model consistency table, exported alongside "
+            "the normal one."
+        ),
+    )
     args = parser.parse_args()
 
     main(
@@ -811,4 +849,5 @@ if __name__ == "__main__":
         latex_output_dir=Path(args.latex_output_dir),
         apunim_output_dir=Path(args.apunim_output_dir),
         prompt_name=args.prompt_name,
+        exclude_models=args.exclude_models,
     )

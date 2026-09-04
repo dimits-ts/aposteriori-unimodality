@@ -1,4 +1,5 @@
 import abc
+from pathlib import Path
 
 import pandas as pd
 
@@ -154,3 +155,36 @@ class SubsampledView:
 
     def __getattr__(self, name):
         return getattr(self._base, name)
+
+
+class LazyDatasetLoader:
+    """
+    Dict-like wrapper over the human datasets (DicesDataset/KumarDataset/
+    SapDataset) that only loads a given dataset the first time some
+    function actually asks for it (`loader[key]`), then caches it. This
+    keeps datasets whose stage was entirely skipped (--> outputs already
+    exist) from being parsed at all.
+
+    Supports the same `key in loader`, `loader[key]`, `loader.keys()`
+    usage as a plain dict.
+    """
+
+    def __init__(
+        self, paths: dict[str, Path | None], dataset_loaders, dataset_keys
+    ):
+        self._paths = paths
+        self._cache: dict[str, Dataset] = {}
+        self.loaders = dataset_loaders
+        self.keys = dataset_keys
+
+    def __contains__(self, key: str) -> bool:
+        return self._paths.get(key) is not None
+
+    def __getitem__(self, key: str) -> Dataset:
+        if key not in self._cache:
+            print(f"Loading {key} dataset...")
+            self._cache[key] = self.loaders[key](self._paths[key])
+        return self._cache[key]
+
+    def keys(self):
+        return [k for k in self.keys if k in self]
