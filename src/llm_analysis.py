@@ -8,13 +8,16 @@ Three things are produced:
    human annotation distribution with each LLM's annotation distribution,
    for the "default" prompt.
 
-2. Two LaTeX tables built on Krippendorff's alpha (ordinal):
+2. Three LaTeX tables built on Krippendorff's alpha (ordinal):
      - Cross-model consistency: for each dataset, how consistent the six
        LLMs are with each other when given the *same* (default) prompt.
      - Cross-variant consistency: for each (dataset, model), how consistent
        that model is with itself across the three paraphrased prompt
        variants used in the paraphrase ablation
        (instructions/ablation/<dataset>/variant{1,2,3}.txt).
+     - Repeat consistency: for each (dataset, model), how consistent that
+       model is with itself across repeated runs of the *same* prompt (the
+       "-run0".."-runN" repeat ablation in output/ablations/repeat).
 
 3. Aposteriori-unimodality (apunim) results for every (dataset, model) pair,
    using the same pipeline as sap.py / dices.py / kumar.py (a polarization
@@ -116,10 +119,47 @@ def find_annotation_files(
     return out
 
 
+def find_repeat_files(
+    directory: Path, dataset_key: str, prompt_name: str
+) -> dict[str, dict[str, Path]]:
+    """
+    Returns {model_pseudo: {run_label: path}} for every file in `directory`
+    matching f"{dataset_key}-{prompt_name}-<pseudo>-run<N>.csv" (e.g. as
+    written by the repeat ablation in annotate_experiments.sh: the same
+    prompt run N times over the same 10% sub-sample).
+    """
+    pattern = re.compile(
+        rf"^{re.escape(dataset_key)}-{re.escape(prompt_name)}-"
+        rf"([^-.]+)-(run\d+)\.csv$"
+    )
+    out: dict[str, dict[str, Path]] = {}
+    if not directory.exists():
+        return out
+    for path in sorted(
+        directory.glob(f"{dataset_key}-{prompt_name}-*-run*.csv")
+    ):
+        m = pattern.match(path.name)
+        if m:
+            pseudo, run_label = m.group(1), m.group(2)
+            out.setdefault(pseudo, {})[run_label] = path
+    return out
+
+
 def load_llm_df(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path)
     df["annotation_clean"] = _clean_annotation(df["annotation"])
     return df
+
+
+def _skip_if_exists(path: Path) -> bool:
+    """
+    Returns True (and prints a message) if `path` already exists, so the
+    caller can skip recomputing it. Mirrors the same helper in dices.py.
+    """
+    if path.exists():
+        print(f"Skipping (already exists): {path}")
+        return True
+    return False
 
 
 # ---------------------------------------------------------------------------
@@ -363,9 +403,55 @@ def per_model_variant_consistency_table(
     return pd.DataFrame(rows)
 
 
+def per_model_repeat_consistency_table(
+    human_datasets: dict[str, tasks.preprocessing.Dataset],
+    repeat_dir: Path,
+    prompt_name: str = "default",
+) -> pd.DataFrame:
+    """
+    For each (dataset, model): how consistent is that model with itself
+    across repeated runs of the *same* prompt (the "-run0" .. "-runN"
+    repeat ablation in output/ablations/repeat)?
+    """
+    rows = []
+    for key in DATASET_KEYS:
+        if key not in human_datasets:
+            continue
+
+        files_by_model = find_repeat_files(repeat_dir, key, prompt_name)
+        if not files_by_model:
+            continue
+
+        for pseudo, run_files in sorted(files_by_model.items()):
+            dfs = {
+                run_label: load_llm_df(path)
+                for run_label, path in sorted(run_files.items())
+            }
+            if len(dfs) < 2:
+                continue
+
+            key_cols = ["text_id"] + _persona_columns(next(iter(dfs.values())))
+            matrix, n_items = _build_reliability_matrix(dfs, key_cols)
+            alpha = krippendorff_alpha_safe(matrix)
+
+            rows.append(
+                {
+                    "Dataset": human_datasets[key].get_name(),
+                    "Model": pseudo,
+                    "Runs": matrix.shape[0],
+                    "Items": n_items,
+                    "Krippendorff's alpha": alpha,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
 def export_latex_table(
     df: pd.DataFrame, output_path: Path, caption: str, label: str
 ) -> None:
+    if _skip_if_exists(output_path):
+        return
+
     df = df.copy()
     if "Krippendorff's alpha" in df.columns:
         df["Krippendorff's alpha"] = df["Krippendorff's alpha"].map(
@@ -529,6 +615,7 @@ def main(
     kumar_path: Path,
     annotations_dir: Path,
     paraphrase_dir: Path,
+    repeat_dir: Path,
     graph_output_dir: Path,
     latex_output_dir: Path,
     apunim_output_dir: Path,
@@ -546,42 +633,75 @@ def main(
     )
 
     # 1. Histograms: human vs. LLM annotation frequencies, per dataset.
-    plot_annotation_histograms(
-        human_datasets=human_datasets,
-        annotations_dir=annotations_dir,
-        output_path=graph_output_dir / "human_vs_llm_histograms.png",
-        prompt_name=prompt_name,
-    )
+    histogram_path = graph_output_dir / "human_vs_llm_histograms.png"
+    if _skip_if_exists(histogram_path):
+        pass
+    else:
+        plot_annotation_histograms(
+            human_datasets=human_datasets,
+            annotations_dir=annotations_dir,
+            output_path=histogram_path,
+            prompt_name=prompt_name,
+        )
 
     # 2. Consistency tables.
-    cross_model_df = cross_model_consistency_table(
-        human_datasets=human_datasets,
-        annotations_dir=annotations_dir,
-        prompt_name=prompt_name,
-    )
-    export_latex_table(
-        cross_model_df,
-        output_path=latex_output_dir / "llm-consistency-cross-model.tex",
-        caption=(
-            "Consistency (Krippendorff's $\\alpha$, ordinal) between LLMs "
-            f"given the same ({prompt_name}) prompt, per dataset."
-        ),
-        label="tab:llm-consistency-cross-model",
-    )
+    cross_model_path = latex_output_dir / "llm-consistency-cross-model.tex"
+    if _skip_if_exists(cross_model_path):
+        pass
+    else:
+        cross_model_df = cross_model_consistency_table(
+            human_datasets=human_datasets,
+            annotations_dir=annotations_dir,
+            prompt_name=prompt_name,
+        )
+        export_latex_table(
+            cross_model_df,
+            output_path=cross_model_path,
+            caption=(
+                "Consistency (Krippendorff's $\\alpha$, ordinal) between "
+                f"LLMs given the same ({prompt_name}) prompt, per dataset."
+            ),
+            label="tab:llm-consistency-cross-model",
+        )
 
-    variant_df = per_model_variant_consistency_table(
-        human_datasets=human_datasets,
-        paraphrase_dir=paraphrase_dir,
-    )
-    export_latex_table(
-        variant_df,
-        output_path=latex_output_dir / "llm-consistency-variants.tex",
-        caption=(
-            "Consistency (Krippendorff's $\\alpha$, ordinal) of each model "
-            "with itself across the three paraphrased prompt variants."
-        ),
-        label="tab:llm-consistency-variants",
-    )
+    variant_path = latex_output_dir / "llm-consistency-variants.tex"
+    if _skip_if_exists(variant_path):
+        pass
+    else:
+        variant_df = per_model_variant_consistency_table(
+            human_datasets=human_datasets,
+            paraphrase_dir=paraphrase_dir,
+        )
+        export_latex_table(
+            variant_df,
+            output_path=variant_path,
+            caption=(
+                "Consistency (Krippendorff's $\\alpha$, ordinal) of each "
+                "model with itself across the three paraphrased prompt "
+                "variants."
+            ),
+            label="tab:llm-consistency-variants",
+        )
+
+    repeat_path = latex_output_dir / "llm-consistency-repeats.tex"
+    if _skip_if_exists(repeat_path):
+        pass
+    else:
+        repeat_df = per_model_repeat_consistency_table(
+            human_datasets=human_datasets,
+            repeat_dir=repeat_dir,
+            prompt_name=prompt_name,
+        )
+        export_latex_table(
+            repeat_df,
+            output_path=repeat_path,
+            caption=(
+                "Consistency (Krippendorff's $\\alpha$, ordinal) of each "
+                f"model with itself across repeated runs of the same "
+                f"({prompt_name}) prompt."
+            ),
+            label="tab:llm-consistency-repeats",
+        )
 
     # 3. Apunim on LLM annotations.
     run_llm_apunim(
@@ -597,8 +717,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=(
             "Compare human vs. LLM annotations: normalized histograms, "
-            "cross-model / cross-variant consistency tables, and apunim "
-            "results for the LLM annotations."
+            "cross-model / cross-variant / repeat consistency tables, and "
+            "apunim results for the LLM annotations."
         )
     )
     parser.add_argument(
@@ -637,6 +757,15 @@ if __name__ == "__main__":
         ),
     )
     parser.add_argument(
+        "--repeat-dir",
+        default="output/ablations/repeat",
+        help=(
+            "Directory containing the repeat-ablation llm_annotate.py "
+            "outputs (same prompt, run N times: '-run0', '-run1', ...), "
+            "e.g. output/ablations/repeat."
+        ),
+    )
+    parser.add_argument(
         "--graph-output-dir",
         default="graphs",
         help="Directory for the histogram and apunim polarization plots.",
@@ -667,12 +796,17 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(
-        dices_small_path=(Path(args.dices_small_path)),
-        dices_large_path=(Path(args.dices_large_path)),
-        sap_path=Path(args.sap_path),
-        kumar_path=Path(args.kumar_path),
+        dices_small_path=(
+            Path(args.dices_small_path) if args.dices_small_path else None
+        ),
+        dices_large_path=(
+            Path(args.dices_large_path) if args.dices_large_path else None
+        ),
+        sap_path=Path(args.sap_path) if args.sap_path else None,
+        kumar_path=Path(args.kumar_path) if args.kumar_path else None,
         annotations_dir=Path(args.annotations_dir),
         paraphrase_dir=Path(args.paraphrase_dir),
+        repeat_dir=Path(args.repeat_dir),
         graph_output_dir=Path(args.graph_output_dir),
         latex_output_dir=Path(args.latex_output_dir),
         apunim_output_dir=Path(args.apunim_output_dir),
