@@ -31,7 +31,9 @@ MARKERS = ["o", "s", "D", "^", "v", "P", "X"]
 HATCHES = ["..", "\\\\", "++", "oo", "//", "xx", "**", "--"]
 
 
-def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
+def polarization_plot(
+    ds: preprocessing.Dataset, output_path: Path, dpi: int = 300
+) -> None:
     df = ds.get_dataset()
     annotation_col = ds.get_annotation_column()
     sdb_columns = ds.get_sdb_columns()
@@ -108,11 +110,11 @@ def polarization_plot(ds: preprocessing.Dataset, output_path: Path) -> None:
     plt.xticks(rotation=90, ha="right")
     plt.grid(axis="y", alpha=0.5)
 
-    save_plot(output_path)
+    save_plot(output_path, dpi)
     plt.close()
 
 
-def save_plot(path: Path) -> None:
+def save_plot(path: Path, dpi: int = 300) -> None:
     """
     Saves a plot to the specified filepath.
 
@@ -121,7 +123,7 @@ def save_plot(path: Path) -> None:
     :type path: pathlib.Path
     """
     path.parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(path, bbox_inches="tight", dpi=300)
+    plt.savefig(path, bbox_inches="tight", dpi=dpi)
     print(f"Figure saved to {path.resolve()}")
 
 

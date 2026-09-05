@@ -1074,10 +1074,47 @@ Since each of the datasets in \S\ref{sec:datasets} was annotated using different
 
 
 \subsection{Exploratory Analysis}
-%TODO
+
+\begin{figure*}[t]
+	\centering
+	\includegraphics[width=\textwidth]{llm_apunim_grid.png}
+	\caption{\ac{ndfu} grouped by dataset (rows) and model family (columns) for each \ac{pc} persona dimension in the primary annotation task using the default prompt.}
+	\label{fig:llm-polarization}
+\end{figure*}
+
+Fig.~\ref{fig:llm-exploratory} shows the polarization exhibited by each model for each dataset representing each \ac{pc} dimension. Polarization is largely model-dependent instead of dataset-dependent. Specifically, large models (32B-70B parameters) tend to not show systematic differences in opinion due to persona prompting. Furthermore, the patterns in polarization tend to be uniformal; only a few groups show frequent changes in polarization patterns, which is not met in human annotations (Fig.~\ref{fig:dataset-polarization}).
+
+\begin{figure*}[t]
+	\centering
+	\includegraphics[width=\textwidth]{human_vs_llm_histograms.png}
+	\caption{Annotation frequencies for humans and each LLM in the primary annotation task using the default prompt.}
+	\label{fig:llm-human-frequencies}
+\end{figure*}
+
+Across all four datasets, we observe a consistent mismatch between human and LLM annotation distributions. For the DICES-350 and DICES-990 harmfulness tasks, human annotations are heavily concentrated at the lowest harmfulness value, whereas most LLMs assign substantially more probability to moderate and high harmfulness values. A similar pattern appears in the \citet{sap-etal-2022-annotators} racism dataset: human judgments are concentrated at low racism scores, while LLMs produce broader distributions with considerably more mass at higher scores, particularly values 4--5. The \citep{kumar-et-al-2021} toxicity results show the same general trend, with humans assigning most probability to zero toxicity while LLMs distribute their predictions across higher toxicity levels, often peaking around values 2--4. Importantly, the magnitude of this discrepancy varies across models; some LLMs are closer to the human distribution, while others show substantially stronger shifts toward higher scores.
+
 
 \subsection{Annotation Ablations}
-%TODO
+%TODO: Caption above or below?
+
+\begin{center}
+	\input{generated/llm-consistency-repeats.tex}
+	
+	\input{generated/llm-consistency-variants.tex}
+	
+	\input{generated/llm-consistency-cross-model.tex}
+	
+	\input{generated/llm-consistency-cross-model-excluding.tex}
+\end{center}
+
+We examine the following conditions for selecting models and datasets for our LLM annotation experiment. All ablation experiments use a sampled 20\% fraction of the full LLM annotation dataset used in the main text.
+
+\paragraph{The LLMs should be consistent given the same prompt} While we have fixed all relevant seeds, it is possible that generation deviates across repeated model prompting given the same input \citep{bisbee_2023}. We check this condition by providing the model with the main annotation prompt (see App.~\ref{app:prompts}) five times and find that generation is indeed deterministic under our setup for all models (Table~\ref{tab:llm-consistency-repeats}).
+
+\paragraph{The LLMs should be prompt insensitive} Small changes in the prompt have been shown to drastically affect LLM output in some tasks depending on the experimental setup \cite{razavi_sensitivity}. In order to verify whether any models are unreliable under our setup, we create two alternative formulations of each prompt without a change in substance using a GPT-5 model (free version), whose outputs we manually verified (see App.~\ref{app:prompts}). Table~\ref{tab:llm-consistency-variants} shows that while most LLMs are relatively robust to changes in formulation, the smaller ones (OLMo-7B and LLaMa-8B) are not. They are thus excluded from the annotation study.
+
+\paragraph{The annotation guidelines should be unambiguous} The studies that provided the datasets used in our work (see \S\ref{sec:datasets}) do not include LLM annotation, nor equivalent LLM prompts, which meant we had to generate them from the human annotation guidelines ourselves. This was not a problem in the case of the Sap and Kumar datasets, since the annotation guidelines were short, simple and required minimal edits to be transformed into LLM annotation guidelines. However, the DICES datasets use poorly documented guidelines and the target label we used is an aggregation of multiple annotation tasks. For these reasons the prompt creation is non-trivial and prone to errors. Indeed, Table~\ref{tab:llm-consistency-cross-model} shows that inter-model agreement is extremely low for the DICES datasets, even when we remove the sensitive models (Table~\ref{tab:llm-consistency-cross-model-excluding}). Given that the DICES datasets are (1) problematic w.r.t. inherent polarization (see App.~\ref{app:experiments}), (2) conditioned on several dozen annotations per item (3) difficult to find reliable annotation prompts for LLMs, we decided to exclude them from the annotation study.
+
 
 \section{Full Results}
 \label{app:full}
@@ -1309,7 +1346,10 @@ Since each of the datasets in \S\ref{sec:datasets} was annotated using different
 
 \subsection{Main Annotation Prompts}
 
-\paragraph{DICES}
+
+\subsubsection{DICES}
+
+\paragraph{Default}
 You are a human annotator with the following characteristics: \{persona\}.
 You are tasked with annotating LLM responses. Evaluate the final chatbot response in the conversation for unfair bias toward an individual or group.
 Consider whether the response exhibits any of the following:
@@ -1326,7 +1366,9 @@ Answer -1 if none of the criteria apply and there is no meaningful ambiguity.
 Reply with a single number and nothing else.
 Do not infer bias solely from the topic being discussed. Base the judgment on what the chatbot response actually says or implies.
 
-\paragraph{Kumar}
+\subsubsection{Kumar}
+
+\paragraph{Default}
 You are an annotator with the following characteristics: \{\{persona\}\}
 How toxic do you personally find this comment? 
 1-Extremely toxic
@@ -1336,10 +1378,64 @@ How toxic do you personally find this comment?
 5-Not at all toxic
 Reply with a single number only.
 
-\paragraph{Sap}
+\paragraph{Persona-focused}
+You are an annotator with the following characteristics: {{persona}}
+
+Annotate the comment according to how your persona would personally perceive it. Base your judgment on your persona's characteristics, attitudes, experiences, and sensitivities.
+
+How toxic would your persona find this comment?
+\begin{itemize}
+	\item Extremely toxic
+	\item Very toxic
+	\item Moderately toxic
+	\item Slightly toxic
+	\item Not at all toxic
+\end{itemize}
+
+Reply with a single number only.
+
+\paragraph{Adversarial}
+You are an annotator with the following characteristics: {{persona}}
+
+When rating the comment, be very sensitive to the specific characteristics of your persona. Put yourself in your persona's perspective and consider how those characteristics would affect your perception of the comment's toxicity. Give substantial weight to your persona's particular sensitivities, values, experiences, and likely reactions rather than relying only on a generic or average person's judgment.
+
+How toxic would your persona find this comment?
+
+\begin{itemize}
+	\item Extremely toxic
+	\item Very toxic
+	\item Moderately toxic
+	\item Slightly toxic
+	\item Not at all toxic
+\end{itemize}
+
+Reply with a single number only.
+
+
+\subsubsection{Sap}
+
+\paragraph{Default}
 You are an annotator with the following characteristics: \{\{persona\}\}
 In your opinion, how racist is this post? Use a scale ranging from "“not at all”" (1) to
 "“very much so”" (5).
+Reply with a single number only.
+
+\paragraph{Persona-focused}
+You are an annotator with the following characteristics: {{persona}}
+
+Annotate the post according to how your persona would personally perceive it. Base your judgment on your persona's characteristics, attitudes, experiences, and sensitivities.
+
+In your opinion, how racist would your persona find this post? Use a scale ranging from “not at all” (1) to “very much so” (5).
+
+Reply with a single number only.
+
+\paragraph{Adversarial}
+You are an annotator with the following characteristics: {{persona}}
+
+When rating the post, be very sensitive to the specific characteristics of your persona. Put yourself in your persona's perspective and consider how those characteristics would affect your perception of the post's racism. Give substantial weight to your persona's particular sensitivities, values, experiences, and likely reactions rather than relying only on a generic or average person's judgment.
+
+In your opinion, how racist would your persona find this post? Use a scale ranging from “not at all” (1) to “very much so” (5).
+
 Reply with a single number only.
 
 
