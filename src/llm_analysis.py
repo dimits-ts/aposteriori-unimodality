@@ -2,11 +2,17 @@
 Compares human annotations against LLM-generated annotations produced by
 llm_annotate.py / annotate_experiments.sh.
 
-Three things are produced:
+The following are produced:
 
 1. A grid of normalized histograms (one subplot per dataset) overlaying the
    human annotation distribution with each LLM's annotation distribution,
    for the "default" prompt.
+
+1b. A grid of bar charts (one subplot per dataset) showing, per model, the
+    mean difference (+/- standard error) between that model's annotations
+    under the "stereotype"/"persona" prompts and under the "default"
+    prompt, computed item-by-item on matched (comment, persona) pairs
+    (see plot_prompt_mean_diff).
 
 2. Three LaTeX tables built on Krippendorff's alpha (ordinal):
      - Cross-model consistency: for each dataset, how consistent the six
@@ -19,11 +25,21 @@ Three things are produced:
        model is with itself across repeated runs of the *same* prompt (the
        "-run0".."-runN" repeat ablation in output/ablations/repeat).
 
-3. Aposteriori-unimodality (apunim) results for every (dataset, model) pair,
-   using the same pipeline as sap.py / dices.py / kumar.py (a polarization
-   boxplot, an "-inherent.csv" and a "-results.csv"). The "-results.csv"
-   files are named so that export_results.py's `*-results.csv` glob picks
-   them up directly if pointed at the output directory used here.
+3. Aposteriori-unimodality (apunim) results for the LLM annotations, using
+   the same underlying analysis as sap.py / dices.py / kumar.py
+   (tasks.run_helper.run_all_results), but exported as a single LaTeX
+   table per dataset -- one row per (SDB Feature, Value, Model), one
+   column per prompt (default/stereotype/persona) -- rather than
+   per-(dataset, model) "-results.csv"/"-inherent.csv" files. Restricted
+   to the datasets the stereotype/persona prompts were actually run on
+   (kumar, sap) and to the models run on all three prompts (see
+   PROMPT_COMPARISON_DATASET_KEYS / APUNIM_TABLE_EXCLUDE_MODELS).
+
+4. A single composite figure (llm_apunim_grid.png) with one subplot per
+   (dataset, model) -- an nDFU-by-SDB-group boxplot for the "default"
+   prompt -- assembled into one grid instead of many separate images, and
+   sized/fonted so it stays readable once placed in a paper (see
+   plot_apunim_grid's docstring for how that sizing works).
 
 Rows are matched across files (models, or prompt variants) using the
 comment id ("text_id") together with the sampled persona's characteristics,
@@ -76,6 +92,32 @@ VARIANT_NAMES = ["variant1", "variant2", "variant3"]
 # single comment has in the LLM-annotation CSVs.
 MAX_ANNOTATORS_PER_ITEM = 6
 
+# Preferred left-to-right column order for the composite apunim grid (models
+# not in this list are appended alphabetically after it).
+MODEL_DISPLAY_ORDER = [
+    "llama70b",
+    "llama8b",
+    "olmo32b",
+    "olmo7b",
+    "qwen32b",
+    "qwen7b",
+]
+
+# The three main instruction prompts compared throughout this module (mean-
+# diff plots, apunim prompt table). "default" is treated as the baseline
+# that "stereotype"/"persona" are compared against.
+MAIN_PROMPT_NAMES = ["default", "stereotype", "persona"]
+
+# Datasets for which all three MAIN_PROMPT_NAMES were actually run (the
+# DICES datasets only have the "default" prompt) -- used for both the
+# prompt mean-diff plot and the apunim-by-prompt LaTeX table.
+PROMPT_COMPARISON_DATASET_KEYS = ["kumar", "sap"]
+
+# Models excluded from the apunim-by-prompt LaTeX table (they were never
+# run on the stereotype/persona prompts to begin with; listed explicitly
+# so the table is correct even if that changes).
+APUNIM_TABLE_EXCLUDE_MODELS = {"olmo7b", "llama8b"}
+
 
 class LLMAnnotationDataset(tasks.preprocessing.Dataset):
     """
@@ -118,6 +160,59 @@ class LLMAnnotationDataset(tasks.preprocessing.Dataset):
 
     def get_text_column(self) -> str:
         return "text_id"
+
+
+def _compute_ndfu_records(ds: tasks.preprocessing.Dataset) -> pd.DataFrame:
+    """
+    Per-comment nDFU (apunim.dfu over that comment's annotator list),
+    broadcast onto every SDB group any of its annotators belonged to --
+    the same computation tasks.graphs.polarization_plot does internally,
+    factored out here so it can be drawn onto an arbitrary subplot axis
+    instead of always producing its own standalone figure.
+    """
+    import apunim  # local import: heavy-ish, only needed here and in graphs.py
+
+    df = ds.get_dataset()
+    annotation_col = ds.get_annotation_column()
+    sdb_columns = ds.get_sdb_columns()
+
+    all_annotations = []
+    for annotations_list in df[annotation_col].to_list():
+        if isinstance(annotations_list, (list, np.ndarray)):
+            all_annotations.extend(annotations_list)
+
+    if not all_annotations:
+        return pd.DataFrame(columns=["PC Dimension", "nDFU"])
+
+    bins = len(np.unique(all_annotations))
+
+    records = []
+    for _, row in df.iterrows():
+        annotations = row[annotation_col]
+        if (
+            not isinstance(annotations, (list, np.ndarray))
+            or len(annotations) == 0
+        ):
+            continue
+        try:
+            ndfu_value = apunim.dfu(annotations, bins=bins, normalized=True)
+        except Exception as e:
+            print(f"Error calculating NDFU for an item: {e}")
+            continue
+
+        for sdb_col in sdb_columns:
+            for value in row[sdb_col]:
+                records.append(
+                    {"PC Dimension": f"{sdb_col}: {value}", "nDFU": ndfu_value}
+                )
+
+    return pd.DataFrame(records)
+
+
+def _order_models(models: set[str] | list[str]) -> list[str]:
+    known = [m for m in MODEL_DISPLAY_ORDER if m in models]
+    unknown = sorted(m for m in models if m not in MODEL_DISPLAY_ORDER)
+    return known + unknown
 
 
 # ---------------------------------------------------------------------------
@@ -303,6 +398,163 @@ def plot_annotation_histograms(
 
     fig.suptitle(
         f"Human vs. LLM annotation distributions ({prompt_name} prompt)",
+        y=1.02,
+    )
+    fig.tight_layout()
+    tasks.graphs.save_plot(output_path)
+    plt.close(fig)
+
+
+# ---------------------------------------------------------------------------
+# 1b. Mean-difference-between-prompts bar charts (per model, per dataset)
+# ---------------------------------------------------------------------------
+
+
+def _paired_prompt_annotations(
+    annotations_dir: Path,
+    dataset_key: str,
+    model: str,
+    prompt_names: list[str],
+) -> pd.DataFrame | None:
+    """
+    For a single (dataset, model), loads the annotation CSV for each of
+    `prompt_names` and aligns them on (text_id + persona attributes) -- the
+    key llm_annotate.py's seeding guarantees is shared across every prompt
+    variant of a given dataset (see module docstring). Returns None if the
+    model is missing any of the requested prompts, or if no items survive
+    the alignment; otherwise returns one row per matched (comment, persona)
+    item, with one column per prompt holding that prompt's cleaned
+    annotation value.
+    """
+    dfs = {}
+    for prompt_name in prompt_names:
+        path = find_annotation_files(
+            annotations_dir, dataset_key, prompt_name
+        ).get(model)
+        if path is None:
+            return None
+        dfs[prompt_name] = load_llm_df(path)
+
+    key_cols = ["text_id"] + _persona_columns(next(iter(dfs.values())))
+    series_list = []
+    for prompt_name, df in dfs.items():
+        d = df.dropna(subset=["annotation_clean"]).copy()
+        d["_key"] = list(zip(*[d[c] for c in key_cols]))
+        d = d.drop_duplicates(subset="_key")
+        s = d.set_index("_key")["annotation_clean"]
+        s.name = prompt_name
+        series_list.append(s)
+
+    wide = pd.concat(series_list, axis=1).dropna()
+    return wide if not wide.empty else None
+
+
+def plot_prompt_mean_diff(
+    human_datasets: tasks.preprocessing.LazyDatasetLoader,
+    annotations_dir: Path,
+    output_path: Path,
+    prompt_names: list[str] = MAIN_PROMPT_NAMES,
+    baseline_prompt: str = "default",
+) -> None:
+    """
+    One subplot per dataset (skipping any dataset for which fewer than two
+    of `prompt_names` were run): for each model, the mean difference --
+    with standard-error bars -- between that model's annotations under
+    each non-baseline prompt (e.g. "stereotype", "persona") and its
+    annotations under `baseline_prompt` ("default"), computed item-by-item
+    on the *same* (comment, persona) pairs via `_paired_prompt_annotations`
+    so the comparison is apples-to-apples rather than comparing marginal
+    distributions.
+    """
+    dataset_keys: list[str] | None = None
+    exclude_models: list[str] | None = None
+    ncols: int = 2
+
+    exclude_models = set(exclude_models)
+    other_prompts = [p for p in prompt_names if p != baseline_prompt]
+    if dataset_keys is None:
+        dataset_keys = DATASET_KEYS
+    dataset_keys = [k for k in dataset_keys if k in human_datasets]
+
+    records_by_dataset: dict[str, pd.DataFrame] = {}
+    for key in dataset_keys:
+        models = _order_models(
+            set(find_annotation_files(annotations_dir, key, baseline_prompt))
+            - exclude_models
+        )
+        records = []
+        for model in models:
+            wide = _paired_prompt_annotations(
+                annotations_dir, key, model, prompt_names
+            )
+            if wide is None:
+                continue
+            for other in other_prompts:
+                diff_label = f"{other} - {baseline_prompt}"
+                for value in wide[other] - wide[baseline_prompt]:
+                    records.append(
+                        {"Model": model, "Diff": diff_label, "value": value}
+                    )
+        if records:
+            records_by_dataset[key] = pd.DataFrame(records)
+
+    if not records_by_dataset:
+        print(
+            "No datasets with >=2 matched prompts found; skipping prompt "
+            "mean-diff plot."
+        )
+        return
+
+    keys_with_data = [k for k in dataset_keys if k in records_by_dataset]
+    n = len(keys_with_data)
+    nrows = -(-n // ncols)  # ceil division
+
+    fig, axes = plt.subplots(
+        nrows, ncols, figsize=(8 * ncols, 5 * nrows), squeeze=False
+    )
+
+    for i, key in enumerate(keys_with_data):
+        ax = axes[i // ncols][i % ncols]
+        plot_df = records_by_dataset[key]
+
+        diff_order = [
+            f"{other} - {baseline_prompt}"
+            for other in other_prompts
+            if f"{other} - {baseline_prompt}" in set(plot_df["Diff"])
+        ]
+        model_order = _order_models(set(plot_df["Model"]))
+        palette = dict(zip(diff_order, tasks.graphs.COLORBLIND_PALETTE[1:]))
+
+        sns.barplot(
+            data=plot_df,
+            x="Model",
+            y="value",
+            hue="Diff",
+            hue_order=diff_order,
+            order=model_order,
+            errorbar="se",
+            capsize=0.15,
+            palette=palette,
+            ax=ax,
+        )
+        ax.axhline(0, color="black", linewidth=0.8, linestyle="--")
+        ax.set_title(human_datasets[key].get_name())
+        ax.set_xlabel("")
+        ax.set_ylabel(f"Mean annotation diff vs. {baseline_prompt}")
+        ax.tick_params(axis="x", rotation=30)
+
+        legend = ax.get_legend()
+        if legend is not None:
+            legend.set_title(None)
+            for text in legend.get_texts():
+                text.set_fontsize(10)
+
+    for j in range(n, nrows * ncols):
+        axes[j // ncols][j % ncols].set_visible(False)
+
+    fig.suptitle(
+        "Mean difference (\u00b1 SE) in LLM annotations across prompt "
+        "variants",
         y=1.02,
     )
     fig.tight_layout()
@@ -516,74 +768,278 @@ def export_latex_table(
         position="ht",
         escape=True,
     )
+    latex_str = latex_str.replace(
+        r"\begin{table}[ht]", r"\begin{table}[ht]\centering"
+    )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(latex_str)
     print(f"Table exported to {output_path.resolve()}")
 
 
-def run_llm_apunim(
+def plot_apunim_grid(
     human_datasets: tasks.preprocessing.LazyDatasetLoader,
     annotations_dir: Path,
-    output_dir: Path,
-    graph_output_dir: Path,
+    output_path: Path,
     prompt_name: str = "default",
+    models: list[str] | None = None,
+    target_width_in: float = 7.0,
+    panel_height_in: float = 2.2,
+    sdb_columns_limit: int | None = 6,
 ) -> None:
-    output_dir.mkdir(parents=True, exist_ok=True)
-    graph_output_dir.mkdir(parents=True, exist_ok=True)
+    """
+    One figure, one subplot per (dataset, model): the same nDFU-by-SDB-group
+    boxplot as tasks.graphs.polarization_plot, but drawn into a single grid
+    (datasets = rows, models = columns) instead of many separate PNGs.
 
-    for dataset_key in DATASET_KEYS:
-        if dataset_key not in human_datasets:
-            continue
+    Font sizes are set locally (via plt.rc_context) rather than inherited
+    from graph_setup()'s large, full-page defaults, and the figure is saved
+    at `target_width_in` -- the width it's meant to be included at in the
+    paper (e.g. \\textwidth in inches) -- so there's no extra shrink factor
+    once it's placed with \\includegraphics[width=\\textwidth]: the point
+    sizes below are (approximately) the point sizes readers will see.
 
+    `sdb_columns_limit` caps how many SDB dimensions are drawn per panel
+    (keeping the first N as returned by get_sdb_columns()). Datasets with
+    many SDB dimensions (e.g. Kumar's 13) produce far too many x-tick
+    categories to stay legible at this size otherwise; this only affects
+    this overview figure -- the apunim-by-prompt LaTeX tables (see
+    compute_llm_apunim_by_prompt) are unaffected. Pass None to disable
+    the cap.
+    """
+    dataset_keys = [k for k in DATASET_KEYS if k in human_datasets]
+    if not dataset_keys:
+        print("No datasets available; skipping composite apunim grid.")
+        return
+
+    if models is None:
+        found: set[str] = set()
+        for key in dataset_keys:
+            found |= set(
+                find_annotation_files(annotations_dir, key, prompt_name)
+            )
+        models = _order_models(found)
+    if not models:
+        print("No LLM annotation files found; skipping composite apunim grid.")
+        return
+
+    nrows, ncols = len(dataset_keys), len(models)
+
+    # Sized for a grid, not graph_setup()'s full-page 12-24pt defaults.
+    # Because the figure is saved at its final display size (no later
+    # shrinking in LaTeX), these are ~the point sizes on the page.
+    grid_font_overrides = {
+        "font.size": 7,
+        "axes.titlesize": 8,
+        "axes.labelsize": 7,
+        "xtick.labelsize": 6,
+        "ytick.labelsize": 6.5,
+        "legend.fontsize": 6.5,
+    }
+
+    with plt.rc_context(grid_font_overrides):
+        fig, axes = plt.subplots(
+            nrows,
+            ncols,
+            figsize=(target_width_in, panel_height_in * nrows),
+            squeeze=False,
+        )
+
+        for r, dataset_key in enumerate(dataset_keys):
+            ds_human = human_datasets[dataset_key]
+            files = find_annotation_files(
+                annotations_dir, dataset_key, prompt_name
+            )
+
+            for c, pseudo in enumerate(models):
+                ax = axes[r][c]
+                path = files.get(pseudo)
+                if path is None:
+                    ax.axis("off")
+                    continue
+
+                df = load_llm_df(path)
+                ds = LLMAnnotationDataset(df, dataset_key, pseudo, prompt_name)
+                if sdb_columns_limit is not None:
+                    ds.sdb_columns = ds.sdb_columns[:sdb_columns_limit]
+                plot_df = _compute_ndfu_records(ds)
+                if plot_df.empty:
+                    ax.axis("off")
+                    continue
+
+                sns.boxplot(
+                    x="PC Dimension",
+                    y="nDFU",
+                    data=plot_df,
+                    ax=ax,
+                    palette=tasks.graphs.COLORBLIND_PALETTE[1:],
+                    fliersize=1,
+                    linewidth=0.6,
+                )
+                ax.set_ylim(-0.05, 1.05)
+                ax.set_xlabel("")
+                # The leftmost column's ylabel carries the dataset name;
+                # matplotlib places ylabels outside the tick numbers
+                # automatically, so (unlike a manually-positioned
+                # annotation) this can't collide with the y-axis ticks.
+                ax.set_ylabel(f"{ds_human.get_name()}\nnDFU" if c == 0 else "")
+                if c != 0:
+                    ax.set_yticklabels([])
+                ax.tick_params(axis="x", rotation=90, pad=1)
+                ax.grid(axis="y", alpha=0.3, linewidth=0.4)
+
+                if r == 0:
+                    ax.set_title(pseudo)
+
+        fig.tight_layout()
+        tasks.graphs.save_plot(output_path)
+    plt.close(fig)
+
+
+# ---------------------------------------------------------------------------
+# 3. Apunim-by-prompt LaTeX table (default / stereotype / persona columns)
+# ---------------------------------------------------------------------------
+
+
+def compute_llm_apunim_by_prompt(
+    annotations_dir: Path,
+    dataset_key: str,
+    prompt_names: list[str] = MAIN_PROMPT_NAMES,
+    exclude_models: set[str] | None = None,
+) -> pd.DataFrame:
+    """
+    Runs the same apunim analysis as tasks.run_helper.run_all_results (the
+    pipeline sap.py/dices.py/kumar.py use to produce their "-results.csv"
+    files), but over the LLM annotation CSVs, once per (prompt, model)
+    available for `dataset_key`. Returns a long-format DataFrame with one
+    row per (SDB Feature, Value, Model, Prompt) combination and columns
+    'apunim', 'pvalue', 'support', ready to be pivoted into a table.
+    """
+    exclude_models = set(exclude_models or ())
+    rows = []
+    for prompt_name in prompt_names:
         files = find_annotation_files(
             annotations_dir, dataset_key, prompt_name
         )
-        for pseudo, path in files.items():
-            tag = f"{dataset_key}-{prompt_name}-{pseudo}"
-
-            results_path = output_dir / f"{tag}-results.csv"
-            inherent_path = output_dir / f"{tag}-inherent.csv"
-            graph_path = graph_output_dir / f"llm_apunim_{tag}.png"
-
-            df = load_llm_df(path)
+        models = _order_models(set(files) - exclude_models)
+        for pseudo in models:
+            df = load_llm_df(files[pseudo])
             ds = LLMAnnotationDataset(df, dataset_key, pseudo, prompt_name)
+            try:
+                res_df = tasks.run_helper.run_all_results(ds).reset_index()
+            except ValueError as e:
+                # E.g. "No polarized comments found." -- can happen for a
+                # small/sparse (dataset, prompt, model) sample. Skip just
+                # this combination rather than failing the whole table.
+                print(
+                    f"Skipping apunim for {dataset_key}/{prompt_name}/"
+                    f"{pseudo}: {e}"
+                )
+                continue
+            # The 2nd column is the (unnamed) per-SDB-column factor level,
+            # e.g. "Age" -> "1) Gen. X+"; rename positionally since its
+            # actual column label depends on pandas' index-naming, not on
+            # anything we control here (see run_all_results).
+            res_df = res_df.rename(columns={res_df.columns[1]: "Value"})
+            res_df["Model"] = pseudo
+            res_df["Prompt"] = prompt_name
+            rows.append(res_df)
 
-            if results_path.exists():
-                print(f"Skipping (already exists): {results_path}")
-            else:
-                print(f"Running apunim for {tag}...")
-                try:
-                    res = tasks.run_helper.run_all_results(ds)
-                    res.to_csv(results_path)
-                except ValueError as e:
-                    # apunim raises when a whole SDB dimension has no
-                    # eligible/polarized comments to test (e.g. a model
-                    # whose outputs are too degenerate/uniform). Skip that
-                    # (dataset, model) pair rather than aborting the run.
-                    print(f"  Skipping apunim results for {tag}: {e}")
+    if not rows:
+        return pd.DataFrame(
+            columns=[
+                "SDB Feature",
+                "Value",
+                "Model",
+                "Prompt",
+                "apunim",
+                "pvalue",
+                "support",
+            ]
+        )
+    return pd.concat(rows, ignore_index=True)
 
-            if inherent_path.exists():
-                print(f"Skipping (already exists): {inherent_path}")
-            else:
-                try:
-                    inherent = tasks.run_helper.compute_inherent_polarization_exhaustive(
-                        dataset=ds, max_annotators=MAX_ANNOTATORS_PER_ITEM
-                    )
-                    inherent.to_csv(
-                        inherent_path, header=True, index_label="comment"
-                    )
-                except ValueError as e:
-                    print(f"  Skipping inherent polarization for {tag}: {e}")
 
-            if graph_path.exists():
-                print(f"Skipping (already exists): {graph_path}")
-            else:
-                try:
-                    tasks.graphs.polarization_plot(
-                        ds=ds, output_path=graph_path
-                    )
-                except ValueError as e:
-                    print(f"  Skipping polarization plot for {tag}: {e}")
+def build_llm_apunim_prompt_table(
+    long_df: pd.DataFrame, prompt_names: list[str] = MAIN_PROMPT_NAMES
+) -> pd.DataFrame:
+    """
+    Pivots `compute_llm_apunim_by_prompt`'s long-format output into one row
+    per (SDB Feature, Value, Model) and one column per prompt, so a given
+    (dataset, model, SDB group)'s apunim value can be compared across the
+    default/stereotype/persona prompts directly. Cells combine the apunim
+    value with its significance stars (matching
+    tasks.run_helper.results_to_latex); missing (prompt, model) results
+    show as "---".
+    """
+    if long_df.empty:
+        return pd.DataFrame()
+
+    long_df = long_df.copy()
+    long_df["cell"] = long_df.apply(
+        lambda r: (
+            "---"
+            if pd.isna(r["apunim"])
+            else (
+                f"{r['apunim']:.4f}"
+                f"{tasks.run_helper.significance_superscript(r['pvalue'])}"
+            )
+        ),
+        axis=1,
+    )
+
+    wide = long_df.pivot_table(
+        index=["SDB Feature", "Value", "Model"],
+        columns="Prompt",
+        values="cell",
+        aggfunc="first",
+    )
+    prompt_cols = [p for p in prompt_names if p in wide.columns]
+    wide = wide.reindex(columns=prompt_cols)
+    wide.columns = [c.capitalize() for c in wide.columns]
+    wide = wide.fillna("---").reset_index()
+
+    model_order = _order_models(set(wide["Model"]))
+    wide["Model"] = pd.Categorical(
+        wide["Model"], categories=model_order, ordered=True
+    )
+    wide = wide.sort_values(["SDB Feature", "Value", "Model"]).reset_index(
+        drop=True
+    )
+    return wide
+
+
+def export_llm_apunim_prompt_table(
+    df: pd.DataFrame, output_path: Path, dataset_name: str, label: str
+) -> None:
+    if _skip_if_exists(output_path):
+        return
+    if df.empty:
+        print(
+            f"No LLM apunim-by-prompt results for {dataset_name}; "
+            f"skipping {output_path}."
+        )
+        return
+
+    df = df.replace("_", r"\_", regex=True).set_index(
+        ["SDB Feature", "Value", "Model"]
+    )
+
+    latex_str = df.to_latex(
+        caption=(
+            "Aposteriori unimodality results for the LLM annotations of "
+            f"the {dataset_name} dataset, across the default, stereotype "
+            "and persona prompts."
+        ),
+        label=label,
+        escape=False,  # allow LaTeX math ($^{*}$) already in the cells
+        position="ht",
+        index=True,
+        multirow=True,
+        longtable=True,
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(latex_str)
+    print(f"Table exported to {output_path.resolve()}")
 
 
 # ---------------------------------------------------------------------------
@@ -644,6 +1100,19 @@ def main(
             annotations_dir=annotations_dir,
             output_path=histogram_path,
             prompt_name=prompt_name,
+        )
+
+    # 1b. Mean difference (+/- SE) between the default/stereotype/persona
+    #     prompts, per model, per dataset.
+    prompt_diff_path = graph_output_dir / "llm_prompt_mean_diff.png"
+    if _skip_if_exists(prompt_diff_path):
+        pass
+    else:
+        plot_prompt_mean_diff(
+            human_datasets=human_datasets,
+            annotations_dir=annotations_dir,
+            output_path=prompt_diff_path,
+            prompt_names=MAIN_PROMPT_NAMES,
         )
 
     # 2. Consistency tables.
@@ -731,14 +1200,50 @@ def main(
             label="tab:llm-consistency-repeats",
         )
 
-    # 3. Apunim on LLM annotations.
-    run_llm_apunim(
-        human_datasets=human_datasets,
-        annotations_dir=annotations_dir,
-        output_dir=apunim_output_dir,
-        graph_output_dir=graph_output_dir,
-        prompt_name=prompt_name,
-    )
+    # 3. Apunim results for the LLM annotations, as a LaTeX table (one per
+    #    dataset) with a column per prompt (default/stereotype/persona)
+    #    instead of per-(dataset, model) "-results.csv" files. Restricted
+    #    to the datasets the paraphrase/stereotype/persona prompts were
+    #    actually run on (kumar, sap), excluding models that were only
+    #    ever run on the default prompt.
+    for key in PROMPT_COMPARISON_DATASET_KEYS:
+        if key not in human_datasets:
+            continue
+        apunim_table_path = (
+            latex_output_dir / f"llm-apunim-by-prompt-{key}.tex"
+        )
+        if _skip_if_exists(apunim_table_path):
+            continue
+        long_df = compute_llm_apunim_by_prompt(
+            annotations_dir=annotations_dir,
+            dataset_key=key,
+            prompt_names=MAIN_PROMPT_NAMES,
+            exclude_models=APUNIM_TABLE_EXCLUDE_MODELS,
+        )
+        wide_df = build_llm_apunim_prompt_table(
+            long_df, prompt_names=MAIN_PROMPT_NAMES
+        )
+        export_llm_apunim_prompt_table(
+            wide_df,
+            output_path=apunim_table_path,
+            dataset_name=human_datasets[key].get_name(),
+            label=f"tab:llm-apunim-by-prompt-{key}",
+        )
+
+    # Single composite apunim grid figure (datasets x models).
+    apunim_grid_path = graph_output_dir / "llm_apunim_grid.png"
+    if _skip_if_exists(apunim_grid_path):
+        pass
+    else:
+        plot_apunim_grid(
+            human_datasets=human_datasets,
+            annotations_dir=annotations_dir,
+            output_path=apunim_grid_path,
+            prompt_name=prompt_name,
+            models=composite_models,
+            target_width_in=composite_width_in,
+            sdb_columns_limit=composite_sdb_limit,
+        )
 
 
 if __name__ == "__main__":
@@ -807,9 +1312,11 @@ if __name__ == "__main__":
         "--apunim-output-dir",
         default="output/llm",
         help=(
-            "Directory for the per-(dataset, model) apunim '-results.csv' "
-            "and '-inherent.csv' files. Named so export_results.py's "
-            "'*-results.csv' glob picks them up if pointed here."
+            "Unused. Kept only for backward compatibility with existing "
+            "callers (e.g. run_experiments.sh) -- apunim results for the "
+            "LLM annotations are now written as LaTeX tables to "
+            "--latex-output-dir (see llm-apunim-by-prompt-<dataset>.tex) "
+            "instead of per-(dataset, model) CSV files."
         ),
     )
     parser.add_argument(
@@ -850,4 +1357,9 @@ if __name__ == "__main__":
         apunim_output_dir=Path(args.apunim_output_dir),
         prompt_name=args.prompt_name,
         exclude_models=args.exclude_models,
+        composite_models=args.composite_models,
+        composite_width_in=args.composite_width_in,
+        composite_sdb_limit=(
+            args.composite_sdb_limit if args.composite_sdb_limit >= 0 else None
+        ),
     )
