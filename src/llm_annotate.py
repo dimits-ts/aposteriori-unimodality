@@ -4,9 +4,6 @@ import itertools
 from pathlib import Path
 from typing import Optional
 
-# Toggle to True if VRAM is under durress
-os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:False")
-
 import numpy as np
 import pandas as pd
 import torch
@@ -202,6 +199,9 @@ def main(
     output_path: Path,
     sample_fraction: Optional[float] = None,
 ):
+    # Toggle to True if VRAM is under durress
+    os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:False")
+
     transformers.set_seed(SEED)
     rng = np.random.default_rng(SEED)
 

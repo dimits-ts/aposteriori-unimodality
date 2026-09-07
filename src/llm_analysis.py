@@ -453,8 +453,9 @@ def plot_prompt_mean_diff(
     human_datasets: tasks.preprocessing.LazyDatasetLoader,
     annotations_dir: Path,
     output_path: Path,
+    exclude_models: list[str],
     prompt_names: list[str] = MAIN_PROMPT_NAMES,
-    baseline_prompt: str = "default",
+    baseline_prompt: str = "default"
 ) -> None:
     """
     One subplot per dataset (skipping any dataset for which fewer than two
@@ -467,7 +468,6 @@ def plot_prompt_mean_diff(
     distributions.
     """
     dataset_keys: list[str] | None = None
-    exclude_models: list[str] | None = None
     ncols: int = 2
 
     exclude_models = set(exclude_models)
@@ -1075,9 +1075,8 @@ def main(
     repeat_dir: Path,
     graph_output_dir: Path,
     latex_output_dir: Path,
-    apunim_output_dir: Path,
-    prompt_name: str = "default",
-    exclude_models: list[str] | None = None,
+    exclude_models: list[str],
+    prompt_name: str = "default"
 ):
     tasks.graphs.graph_setup()
     graph_output_dir.mkdir(parents=True, exist_ok=True)
@@ -1113,6 +1112,7 @@ def main(
             annotations_dir=annotations_dir,
             output_path=prompt_diff_path,
             prompt_names=MAIN_PROMPT_NAMES,
+            exclude_models=exclude_models
         )
 
     # 2. Consistency tables.
@@ -1239,10 +1239,7 @@ def main(
             human_datasets=human_datasets,
             annotations_dir=annotations_dir,
             output_path=apunim_grid_path,
-            prompt_name=prompt_name,
-            models=composite_models,
-            target_width_in=composite_width_in,
-            sdb_columns_limit=composite_sdb_limit,
+            prompt_name=prompt_name
         )
 
 
@@ -1309,17 +1306,6 @@ if __name__ == "__main__":
         help="Directory for the consistency LaTeX tables.",
     )
     parser.add_argument(
-        "--apunim-output-dir",
-        default="output/llm",
-        help=(
-            "Unused. Kept only for backward compatibility with existing "
-            "callers (e.g. run_experiments.sh) -- apunim results for the "
-            "LLM annotations are now written as LaTeX tables to "
-            "--latex-output-dir (see llm-apunim-by-prompt-<dataset>.tex) "
-            "instead of per-(dataset, model) CSV files."
-        ),
-    )
-    parser.add_argument(
         "--prompt-name",
         default="default",
         help=(
@@ -1354,12 +1340,6 @@ if __name__ == "__main__":
         repeat_dir=Path(args.repeat_dir),
         graph_output_dir=Path(args.graph_output_dir),
         latex_output_dir=Path(args.latex_output_dir),
-        apunim_output_dir=Path(args.apunim_output_dir),
         prompt_name=args.prompt_name,
         exclude_models=args.exclude_models,
-        composite_models=args.composite_models,
-        composite_width_in=args.composite_width_in,
-        composite_sdb_limit=(
-            args.composite_sdb_limit if args.composite_sdb_limit >= 0 else None
-        ),
     )
