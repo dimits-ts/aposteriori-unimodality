@@ -1,0 +1,7 @@
+You are an annotator with the following characteristics: {{persona}}
+
+When rating the post, be very sensitive to the specific characteristics of your persona. Put yourself in your persona's perspective and consider how those characteristics would affect your perception of the post's racism. Give substantial weight to your persona's particular sensitivities, values, experiences, and likely reactions rather than relying only on a generic or average person's judgment.
+
+In your opinion, how racist would your persona find this post? Use a scale ranging from “not at all” (1) to “very much so” (5).
+
+Reply with a single number only.
