@@ -116,6 +116,7 @@ PROMPT_COMPARISON_DATASET_KEYS = ["kumar", "sap"]
 # Models excluded from the apunim-by-prompt LaTeX table (they were never
 # run on the stereotype/persona prompts to begin with; listed explicitly
 # so the table is correct even if that changes).
+# Also used for LLM polarization grid.
 APUNIM_TABLE_EXCLUDE_MODELS = {"olmo7b", "llama8b"}
 
 
@@ -162,19 +163,25 @@ class LLMAnnotationDataset(tasks.preprocessing.Dataset):
         return "text_id"
 
 
-def _compute_ndfu_records(ds: tasks.preprocessing.Dataset) -> pd.DataFrame:
+def _compute_ndfu_records(
+    ds: tasks.preprocessing.Dataset, sdb_columns: list[str] | None = None
+) -> pd.DataFrame:
     """
     Per-comment nDFU (apunim.dfu over that comment's annotator list),
     broadcast onto every SDB group any of its annotators belonged to --
     the same computation tasks.graphs.polarization_plot does internally,
     factored out here so it can be drawn onto an arbitrary subplot axis
     instead of always producing its own standalone figure.
+
+    `sdb_columns`, if given, overrides `ds.get_sdb_columns()` (e.g. to cap
+    how many SDB dimensions are included) without needing to mutate `ds`.
     """
     import apunim  # local import: heavy-ish, only needed here and in graphs.py
 
     df = ds.get_dataset()
     annotation_col = ds.get_annotation_column()
-    sdb_columns = ds.get_sdb_columns()
+    if sdb_columns is None:
+        sdb_columns = ds.get_sdb_columns()
 
     all_annotations = []
     for annotations_list in df[annotation_col].to_list():
@@ -455,7 +462,7 @@ def plot_prompt_mean_diff(
     output_path: Path,
     exclude_models: list[str],
     prompt_names: list[str] = MAIN_PROMPT_NAMES,
-    baseline_prompt: str = "default"
+    baseline_prompt: str = "default",
 ) -> None:
     """
     One subplot per dataset (skipping any dataset for which fewer than two
@@ -776,122 +783,198 @@ def export_latex_table(
     print(f"Table exported to {output_path.resolve()}")
 
 
+def _human_sample_dataset(
+    ds_human: tasks.preprocessing.Dataset,
+    annotations_dir: Path,
+    dataset_key: str,
+    prompt_name: str,
+) -> tasks.preprocessing.Dataset | None:
+    """
+    Restricts `ds_human` down to just the comments actually sampled by
+    llm_annotate.py for (dataset_key, prompt_name) -- i.e. the same
+    "text_id"s that appear in the LLM annotation CSVs, since
+    llm_annotate.py's text_id *is* the human dataset's own comment-key
+    column value (see sample_texts() in llm_annotate.py). This is what
+    lets a "Human" column show the human annotations for the exact same
+    sample the LLM columns use, rather than the full dataset the way
+    sap.png/kumar.png/etc. do. Reuses tasks.preprocessing.SubsampledView
+    (rather than a new Dataset subclass) since it already does exactly
+    this -- wrap a filtered DataFrame while delegating every other
+    Dataset method to the original.
+
+    Returns None if no LLM annotation files exist for this (dataset,
+    prompt), since there's then no sample to restrict to.
+    """
+    files = find_annotation_files(annotations_dir, dataset_key, prompt_name)
+    if not files:
+        return None
+
+    sample_ids: set = set()
+    for path in files.values():
+        sample_ids.update(pd.read_csv(path, usecols=["text_id"])["text_id"])
+
+    comment_col = ds_human.get_comment_key_column()
+    df = ds_human.get_dataset()
+    restricted = df[df[comment_col].isin(sample_ids)]
+    return tasks.preprocessing.SubsampledView(ds_human, restricted)
+
+
+def _limited_sdb_columns(
+    ds: tasks.preprocessing.Dataset, limit: int | None
+) -> list[str]:
+    """Caps ds.get_sdb_columns() to the first `limit` entries (or returns
+    them unchanged if `limit` is None), without needing to mutate `ds`."""
+    cols = ds.get_sdb_columns()
+    return cols if limit is None else cols[:limit]
+
+
 def plot_apunim_grid(
     human_datasets: tasks.preprocessing.LazyDatasetLoader,
     annotations_dir: Path,
     output_path: Path,
     prompt_name: str = "default",
     models: list[str] | None = None,
-    target_width_in: float = 7.0,
-    panel_height_in: float = 2.2,
     sdb_columns_limit: int | None = 6,
 ) -> None:
-    """
-    One figure, one subplot per (dataset, model): the same nDFU-by-SDB-group
-    boxplot as tasks.graphs.polarization_plot, but drawn into a single grid
-    (datasets = rows, models = columns) instead of many separate PNGs.
+    """Plot all datasets and models in a single 2x5 grid using subfigures.
 
-    Font sizes are set locally (via plt.rc_context) rather than inherited
-    from graph_setup()'s large, full-page defaults, and the figure is saved
-    at `target_width_in` -- the width it's meant to be included at in the
-    paper (e.g. \\textwidth in inches) -- so there's no extra shrink factor
-    once it's placed with \\includegraphics[width=\\textwidth]: the point
-    sizes below are (approximately) the point sizes readers will see.
-
-    `sdb_columns_limit` caps how many SDB dimensions are drawn per panel
-    (keeping the first N as returned by get_sdb_columns()). Datasets with
-    many SDB dimensions (e.g. Kumar's 13) produce far too many x-tick
-    categories to stay legible at this size otherwise; this only affects
-    this overview figure -- the apunim-by-prompt LaTeX tables (see
-    compute_llm_apunim_by_prompt) are unaffected. Pass None to disable
-    the cap.
+    Each dataset occupies one subfigure (row), with one subplot per
+    Human/model column. A single title is placed above each dataset row.
     """
-    dataset_keys = [k for k in DATASET_KEYS if k in human_datasets]
+    dataset_keys = [
+        k for k in PROMPT_COMPARISON_DATASET_KEYS if k in human_datasets
+    ]
+
     if not dataset_keys:
-        print("No datasets available; skipping composite apunim grid.")
+        print(
+            "No non-DICES datasets available; skipping composite apunim grid."
+        )
         return
 
     if models is None:
-        found: set[str] = set()
+        found = set()
         for key in dataset_keys:
             found |= set(
                 find_annotation_files(annotations_dir, key, prompt_name)
             )
         models = _order_models(found)
+
     if not models:
         print("No LLM annotation files found; skipping composite apunim grid.")
         return
 
-    nrows, ncols = len(dataset_keys), len(models)
+    # One column for Human + one for each model.
+    columns = ["Human"] + models
 
-    # Sized for a grid, not graph_setup()'s full-page 12-24pt defaults.
-    # Because the figure is saved at its final display size (no later
-    # shrinking in LaTeX), these are ~the point sizes on the page.
-    grid_font_overrides = {
-        "font.size": 7,
-        "axes.titlesize": 8,
-        "axes.labelsize": 7,
-        "xtick.labelsize": 6,
-        "ytick.labelsize": 6.5,
-        "legend.fontsize": 6.5,
-    }
+    # This is the overall figure. Each dataset gets its own subfigure,
+    # corresponding to one row of the 2x5 grid.
+    fig = plt.figure(figsize=(14, 6), constrained_layout=True)
 
-    with plt.rc_context(grid_font_overrides):
-        fig, axes = plt.subplots(
-            nrows,
-            ncols,
-            figsize=(target_width_in, panel_height_in * nrows),
+    subfigures = fig.subfigures(
+        nrows=len(dataset_keys),
+        ncols=1,
+        height_ratios=[1] * len(dataset_keys),
+    )
+
+    # When there is only one dataset, matplotlib returns a single SubFigure
+    # rather than an array.
+    if len(dataset_keys) == 1:
+        subfigures = [subfigures]
+
+    for r, dataset_key in enumerate(dataset_keys):
+        subfig = subfigures[r]
+
+        # Single title for the entire dataset row.
+        subfig.suptitle(human_datasets[dataset_key].get_name())
+
+        # 1 row x N columns within this subfigure.
+        axes = subfig.subplots(
+            nrows=1,
+            ncols=len(columns),
             squeeze=False,
+        )[0]
+
+        ds_human = human_datasets[dataset_key]
+        human_ds = _human_sample_dataset(
+            ds_human,
+            annotations_dir,
+            dataset_key,
+            prompt_name,
+        )
+        files = find_annotation_files(
+            annotations_dir,
+            dataset_key,
+            prompt_name,
         )
 
-        for r, dataset_key in enumerate(dataset_keys):
-            ds_human = human_datasets[dataset_key]
-            files = find_annotation_files(
-                annotations_dir, dataset_key, prompt_name
-            )
+        for c, column in enumerate(columns):
+            if c == 0:
+                color = tasks.graphs.COLORBLIND_PALETTE[1]
+            else:
+                color = tasks.graphs.COLORBLIND_PALETTE[2]
 
-            for c, pseudo in enumerate(models):
-                ax = axes[r][c]
-                path = files.get(pseudo)
+            ax = axes[c]
+
+            if column == "Human":
+                if human_ds is None:
+                    ax.axis("off")
+                    continue
+                ds = human_ds
+            else:
+                path = files.get(column)
                 if path is None:
                     ax.axis("off")
                     continue
 
                 df = load_llm_df(path)
-                ds = LLMAnnotationDataset(df, dataset_key, pseudo, prompt_name)
-                if sdb_columns_limit is not None:
-                    ds.sdb_columns = ds.sdb_columns[:sdb_columns_limit]
-                plot_df = _compute_ndfu_records(ds)
-                if plot_df.empty:
-                    ax.axis("off")
-                    continue
-
-                sns.boxplot(
-                    x="PC Dimension",
-                    y="nDFU",
-                    data=plot_df,
-                    ax=ax,
-                    palette=tasks.graphs.COLORBLIND_PALETTE[1:],
-                    fliersize=1,
-                    linewidth=0.6,
+                ds = LLMAnnotationDataset(
+                    df,
+                    dataset_key,
+                    column,
+                    prompt_name,
                 )
-                ax.set_ylim(-0.05, 1.05)
-                ax.set_xlabel("")
-                # The leftmost column's ylabel carries the dataset name;
-                # matplotlib places ylabels outside the tick numbers
-                # automatically, so (unlike a manually-positioned
-                # annotation) this can't collide with the y-axis ticks.
-                ax.set_ylabel(f"{ds_human.get_name()}\nnDFU" if c == 0 else "")
-                if c != 0:
-                    ax.set_yticklabels([])
-                ax.tick_params(axis="x", rotation=90, pad=1)
-                ax.grid(axis="y", alpha=0.3, linewidth=0.4)
 
-                if r == 0:
-                    ax.set_title(pseudo)
+            plot_df = _compute_ndfu_records(
+                ds,
+                sdb_columns=_limited_sdb_columns(
+                    ds,
+                    sdb_columns_limit,
+                ),
+            )
 
-        fig.tight_layout()
-        tasks.graphs.save_plot(output_path)
+            if plot_df.empty:
+                ax.axis("off")
+                continue
+
+            sns.boxplot(
+                x="PC Dimension",
+                y="nDFU",
+                data=plot_df,
+                ax=ax,
+                fliersize=1,
+                linewidth=0.6,
+                color=color,
+            )
+
+            ax.set_ylim(-0.05, 1.05)
+            ax.set_xlabel("")
+            ax.set_ylabel("")
+            ax.set_xticks([])
+            ax.grid(axis="y", alpha=0.3, linewidth=0.4)
+
+            # Column titles only on the first dataset row.
+            if r == 0:
+                ax.set_title(column)
+
+            # Only the first column gets the y-axis labels.
+            if c != 0:
+                ax.set_yticklabels([])
+
+    # One shared y-axis label for the whole figure.
+    fig.supylabel("nDFU")
+    fig.suptitle("LLM Polarization is Disconnected From Humans")
+
+    tasks.graphs.save_plot(output_path)
     plt.close(fig)
 
 
@@ -1076,7 +1159,7 @@ def main(
     graph_output_dir: Path,
     latex_output_dir: Path,
     exclude_models: list[str],
-    prompt_name: str = "default"
+    prompt_name: str = "default",
 ):
     tasks.graphs.graph_setup()
     graph_output_dir.mkdir(parents=True, exist_ok=True)
@@ -1112,7 +1195,7 @@ def main(
             annotations_dir=annotations_dir,
             output_path=prompt_diff_path,
             prompt_names=MAIN_PROMPT_NAMES,
-            exclude_models=exclude_models
+            exclude_models=exclude_models,
         )
 
     # 2. Consistency tables.
@@ -1239,7 +1322,10 @@ def main(
             human_datasets=human_datasets,
             annotations_dir=annotations_dir,
             output_path=apunim_grid_path,
-            prompt_name=prompt_name
+            prompt_name=prompt_name,
+            models=list(
+                set(MODEL_DISPLAY_ORDER) - APUNIM_TABLE_EXCLUDE_MODELS
+            ),
         )
 
 
