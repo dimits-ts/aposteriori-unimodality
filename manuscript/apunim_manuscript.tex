@@ -76,7 +76,7 @@ Annotations are essential for subjective tasks, such as content moderation, toxi
 
 \begin{figure}[t]
 	\centering
-	\includegraphics[width=0.8\textwidth]{disagreement_vs_polarization.png}
+	\includegraphics[width=0.6\textwidth]{disagreement_vs_polarization.png}
 	\caption{Simulated experiment exploring four scenarios of a \ac{hs} detection task applied to a controversial statement by D. Trump (Jan. 2019). The variance in annotations across different annotators may cause traditional agreement metrics to ignore minority opinions, especially when opinions are mixed (top-right).}
 	\label{fig:disagreement-vs-polarization}
 \end{figure}
@@ -360,7 +360,7 @@ Fig.~\ref{fig:metrics} shows the effectiveness of apunim, the aposteriori unimod
 \end{finding}
 
 
-\section{Attributing Real-life Polarization}
+\section{Attributing Real-Life Polarization}
 \label{sec:results}
 
 \subsection{Human Annotators}
@@ -462,10 +462,24 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 \end{finding}
 
 
-\subsection{LLM Annotators}
+\subsection{Can LLM Annotators Exhibit Polarization Patterns?}
 \label{sec:results:llms}
 
-%TODO
+\begin{figure*}[t]
+	\centering
+	\includegraphics[width=0.8\textwidth]{llm_apunim_grid.png}
+	\caption{\ac{ndfu} grouped by dataset (rows) and model family (columns) for each \ac{pc} persona dimension in the primary annotation task (blue) using the default prompt, compared with human annotations on the same sample (yellow).}
+	\label{fig:llm-polarization}
+\end{figure*}
+
+No. We investigated polarization attribution patterns for LLM annotators  across seven open-source models.\footnote{We exclude OLMo-7B and LLaMa-8B due to prompt sensitivity and do not include the DICES datasets due to the need for hundreds of simulated annotators per item.} Specifically, we used six annotators per item supplied with personas sampled from our human dataset for a random sample of 300 comments for the Sap dataset and 1000 items for Kumar. We find no statistically significant attribution effects and very small \emph{apunim} values for any of the groups in all models and datasets (see App.~\ref{app:llms};  Table~\ref{tab:llm-apunim-by-prompt-kumar},~\ref{tab:llm-apunim-by-prompt-sap}). 
+
+We also attempted to use two adversarial prompts emphasizing the importance of the LLMs' personas (App.~\ref{app:prompts}) without success. Indeed, the adversarial prompts did not seem to push the \emph{apunim} values to any particular direction, suggesting that instructing the model is an ineffective way of eliciting \emph{any} polarizing behavior. This pattern can be explained both by the lack of overall polarization exhibited by these models and the homogeneous distribution of polarization across groups, which are not observable to this extent in human annotations (Fig.~\ref{fig:llm-polarization}). See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations.
+
+\begin{finding}
+	\label{finding:llms}
+	LLMs with persona-prompting do not produce annotations with attributable polarization across any group, which may be explained by the even distribution of (fewer) polarization across simulated groups.
+\end{finding}
 
 
 \section{Conclusion and Future Work}
@@ -1077,15 +1091,6 @@ Since each of the datasets in \S\ref{sec:datasets} was annotated using different
 
 \begin{figure*}[t]
 	\centering
-	\includegraphics[width=\textwidth]{llm_apunim_grid.png}
-	\caption{\ac{ndfu} grouped by dataset (rows) and model family (columns) for each \ac{pc} persona dimension in the primary annotation task using the default prompt.}
-	\label{fig:llm-polarization}
-\end{figure*}
-
-Fig.~\ref{fig:llm-exploratory} shows the polarization exhibited by each model for each dataset representing each \ac{pc} dimension. Polarization is largely model-dependent instead of dataset-dependent. Specifically, large models (32B-70B parameters) tend to not show systematic differences in opinion due to persona prompting. Furthermore, the patterns in polarization tend to be uniformal; only a few groups show frequent changes in polarization patterns, which is not met in human annotations (Fig.~\ref{fig:dataset-polarization}).
-
-\begin{figure*}[t]
-	\centering
 	\includegraphics[width=\textwidth]{human_vs_llm_histograms.png}
 	\caption{Annotation frequencies for humans and each LLM in the primary annotation task using the default prompt.}
 	\label{fig:llm-human-frequencies}
@@ -1114,6 +1119,14 @@ We examine the following conditions for selecting models and datasets for our LL
 \paragraph{The LLMs should be prompt insensitive} Small changes in the prompt have been shown to drastically affect LLM output in some tasks depending on the experimental setup \cite{razavi_sensitivity}. In order to verify whether any models are unreliable under our setup, we create two alternative formulations of each prompt without a change in substance using a GPT-5 model (free version), whose outputs we manually verified (see App.~\ref{app:prompts}). Table~\ref{tab:llm-consistency-variants} shows that while most LLMs are relatively robust to changes in formulation, the smaller ones (OLMo-7B and LLaMa-8B) are not. They are thus excluded from the annotation study.
 
 \paragraph{The annotation guidelines should be unambiguous} The studies that provided the datasets used in our work (see \S\ref{sec:datasets}) do not include LLM annotation, nor equivalent LLM prompts, which meant we had to generate them from the human annotation guidelines ourselves. This was not a problem in the case of the Sap and Kumar datasets, since the annotation guidelines were short, simple and required minimal edits to be transformed into LLM annotation guidelines. However, the DICES datasets use poorly documented guidelines and the target label we used is an aggregation of multiple annotation tasks. For these reasons the prompt creation is non-trivial and prone to errors. Indeed, Table~\ref{tab:llm-consistency-cross-model} shows that inter-model agreement is extremely low for the DICES datasets, even when we remove the sensitive models (Table~\ref{tab:llm-consistency-cross-model-excluding}). Given that the DICES datasets are (1) problematic w.r.t. inherent polarization (see App.~\ref{app:experiments}), (2) conditioned on several dozen annotations per item (3) difficult to find reliable annotation prompts for LLMs, we decided to exclude them from the annotation study.
+
+
+\subsection{LLM Annotation Results}
+
+Tables~\ref{tab:llm-apunim-by-prompt-kumar} and~\ref{tab:llm-apunim-by-prompt-sap} show the apunim results for the LLM annotation task on the Kumar and Sap datasets respectively.
+
+\input{generated/llm-apunim-by-prompt-kumar.tex}
+\input{generated/llm-apunim-by-prompt-sap.tex}
 
 
 \section{Full Results}
