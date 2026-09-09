@@ -70,7 +70,7 @@ def plot_dfu_histograms(
 
     full_df = pd.concat(all_data, ignore_index=True)
 
-    fig, ax = plt.subplots(figsize=(8, 5))
+    fig, ax = plt.subplots()
 
     datasets = sorted(full_df["dataset"].unique())
     legend_handles = []
@@ -158,7 +158,7 @@ def ordinal_graph_per_feature(
             # Drop duplicates so each label appears once
             g_unique = g.drop_duplicates(subset="ordinal_label")
 
-            plt.figure(figsize=(8, 5))
+            plt.figure()
             ax = sns.lineplot(
                 data=g,
                 x="ordinal_num",  # use numeric x-axis
@@ -195,7 +195,7 @@ def ordinal_graph_per_feature(
 def plot_sample_size_polarization(csv_path: Path, output_path: Path):
     df = pd.read_csv(csv_path)
 
-    _, ax = plt.subplots(figsize=(8, 5))
+    _, ax = plt.subplots()
 
     for dataset, group in df.groupby("dataset"):
         color = sns.color_palette()[
@@ -335,7 +335,7 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
 
     # --- Plot (manual matplotlib instead of sns.lineplot so we control
     # marker fill per-point for the significance encoding) ---
-    fig, ax = plt.subplots(figsize=(16, 8))
+    fig, ax = plt.subplots()
 
     for f in ordered_features:
         df_feat = data_stretched[data_stretched["feature"] == f].sort_values(
@@ -470,37 +470,6 @@ def add_grouped_legend(
     other_features = [f for f in labels if f not in highlighted]
     if other_features:
         add_group(others_title, other_features)
-
-    # --- Significance key ---
-    legend_handles.append(Line2D([], [], linestyle="none"))
-    legend_labels.append("Significance")
-
-    legend_handles.append(
-        Line2D(
-            [],
-            [],
-            marker="o",
-            linestyle="none",
-            markersize=9,
-            markerfacecolor="black",
-            markeredgecolor="black",
-        )
-    )
-    legend_labels.append(r"significant ($p<0.05$)")
-
-    legend_handles.append(
-        Line2D(
-            [],
-            [],
-            marker="o",
-            linestyle="none",
-            markersize=9,
-            markerfacecolor="white",
-            markeredgecolor="black",
-            markeredgewidth=1.6,
-        )
-    )
-    legend_labels.append("not significant")
 
     legend = ax.legend(
         legend_handles,

@@ -167,7 +167,6 @@ def plot_annotation_distributions(
     fig, axs = plt.subplots(
         2,
         2,
-        figsize=(13, 10),
         sharex=True,
         sharey=True,
     )
@@ -290,7 +289,6 @@ def _combined_dfu_plot(
     colors: list[str],
     graph_path: Path,
 ) -> None:
-    plt.figure(figsize=(8, 5))
     ax = plt.gca()
 
     legend_handles = []
@@ -403,7 +401,7 @@ def _plot_example_individual(
         np.hstack([ndfu_man, ndfu_woman]), bins=NUM_BINS, normalized=True
     )
 
-    fig, ax = plt.subplots(figsize=(6, 4))
+    fig, ax = plt.subplots()
 
     sns.histplot(
         men_annot,

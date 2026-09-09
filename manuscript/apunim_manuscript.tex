@@ -74,9 +74,10 @@
 
 Annotations are essential for subjective tasks, such as content moderation, toxicity, and \acf{hs} detection, which are especially important for protecting minority groups~\cite{un_hate_speech_targets, ucdavis_hate_speech}. However, in practice, analysis rests on inter-annotator agreement or majority-vote~\cite{ivey-etal-2025-nutmeg, petra_2022_handling, van_der_Velden}, which may lead to biased and misconfigured systems (e.g., toxicity models disproportionally marking \ac{aa} speech as ``toxic''~\cite{sap-etal-2019-risk}), or discard \emph{fundamental} disagreements between minority groups and the majority~\cite{quaranto2022dog}, (see the example in Fig.~\ref{fig:disagreement-vs-polarization}).\footnote{The simulated experiments in this study were implemented by generating random annotations following the normal distribution with differing means and \ac{sd}---see App.~\ref{app:experiments}.}
 
+\FloatBarrier
 \begin{figure}[t]
 	\centering
-	\includegraphics[width=0.6\textwidth]{disagreement_vs_polarization.png}
+	\includegraphics[width=\textwidth]{disagreement_vs_polarization.png}
 	\caption{Simulated experiment exploring four scenarios of a \ac{hs} detection task applied to a controversial statement by D. Trump (Jan. 2019). The variance in annotations across different annotators may cause traditional agreement metrics to ignore minority opinions, especially when opinions are mixed (top-right).}
 	\label{fig:disagreement-vs-polarization}
 \end{figure}
@@ -180,7 +181,7 @@ We use four datasets from current \ac{nlp} research that include \ac{pc} informa
 A brief overview of dataset characteristics is provided in Table~\ref{tab:datasets}. The Kumar dataset stands out for its large size, featuring more than 100{,}000 annotated items, as well as 10 distinct \ac{pc} dimensions.\footnote{We sample 3{,}000 items in this study due to computational constraints (App.~\ref{app:software}). We run ablations for both different and differently sized-samples. Our results remain consistent, although large samples (10{,}000+) tend to produce null results (App.~\ref{app:ablation}).} In contrast, the DICES datasets contain fewer annotated items but involve more than an order of magnitude more annotators per item than the other datasets. More details on the annotations, including overall levels of observed polarization, can be found in App.~\ref{app:ann_details}.
 
 
-\section{Is it Possible to Attribute All Polarization to Annotator Groups?}
+\section{Can We Attribute All Polarization to Annotator Groups?}
 \label{sec:inherent}
 
 \subsection{Problem formulation}
@@ -196,8 +197,8 @@ A(\text{``Could be better, could be worse''})\\
 
 \begin{figure}[t]
 	\centering
-	\includegraphics[width=0.4\textwidth, valign=t]{ndfu_combined.png}
-	\includegraphics[width=0.55\textwidth, valign=t]{apriori.png}
+	\includegraphics[width=0.45\textwidth, valign=t]{ndfu_combined.png}
+	\includegraphics[width=0.45\textwidth, valign=t]{apriori.png}
 	\caption{\textbf{Left:} Simulated experiment describing a polarizing comment where male and female annotators agree between themselves, but disagree with the opposite gender. \textbf{Right:} \ac{ip} across our datasets (\S\ref{sec:datasets}). Contrary to assumptions made in prior work, \ac{ip} is commonly non-zero and can even reach $nDFU = 1$ in datasets with low annotator counts.}
 	\label{fig:inherent}
 \end{figure}
@@ -449,8 +450,8 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 
 \begin{figure}[t]
 	\centering
-	\includegraphics[width=0.8\textwidth]{apunim_ordinal.png}
-	\caption{Polarization attribution trends in ordinal groups. The left side of the x-axis refers to young annotators, low education, low religiousness, and negativity towards the impacts of toxicity and technology. The full ordinal modes for each dimension and their individual labels can be found in App.~\ref{app:full}. We exclude groups with $<50$ annotations, since they near-universally result in zero apunim values due to lack of data.}
+	\includegraphics[width=\textwidth]{apunim_ordinal.png}
+	\caption{Polarization attribution trends in ordinal groups. The left side of the x-axis refers to young annotators, low education, low religiousness, and negativity towards the impacts of toxicity and technology. The full ordinal modes for each dimension and their individual labels can be found in App.~\ref{app:full}. We exclude groups with $<50$ annotations, since they near-universally result in zero apunim values due to lack of data. Filled points represent statistical significant ($p<0.05$) values.}
 	\label{fig:ordinal}
 \end{figure}
 
@@ -467,7 +468,7 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 
 \begin{figure*}[t]
 	\centering
-	\includegraphics[width=0.8\textwidth]{llm_apunim_grid.png}
+	\includegraphics[width=\textwidth]{llm_apunim_grid.png}
 	\caption{\ac{ndfu} grouped by dataset (rows) and model family (columns) for each \ac{pc} persona dimension in the primary annotation task (blue) using the default prompt, compared with human annotations on the same sample (yellow).}
 	\label{fig:llm-polarization}
 \end{figure*}
@@ -1017,7 +1018,7 @@ The experiment, whose results are shown in Fig.~\ref{fig:metrics-simple} shows t
 \end{longtable}
 
 \begin{figure}[t]
-	\includegraphics[width=0.8\textwidth]{kumar3k_seed_ablation.png}
+	\includegraphics[width=\textwidth]{kumar3k_seed_ablation.png}
 	\centering
 	\caption{Apunim values on the Kumar dataset ($n_{samples}=3000$) across ten runs with different subsets.  Black bars indicate two \acp{sd}. \ac{pc} dimensions with many groups are more volatile, although all dimensions broadly keep the same apunim sign across subsets.}
 	\label{fig:seeds}
@@ -1041,7 +1042,7 @@ In order to verify that this variability is caused by the sample size, and not b
 
 \begin{figure}[t]
 	\centering
-	\includegraphics[width=0.8\textwidth]{pol_obs_subsampling_robustness.png}
+	\includegraphics[width=\textwidth]{pol_obs_subsampling_robustness.png}
 	\caption{\ac{sd} of $pol_{obs}$ across items, averaged across $1000$ runs (Eq.~\ref{eq:observed}). Shaded areas represent two \acp{sd}. Pol. estimates benefit from more annotators up to $n=20$, at which point they begin to plateau.}
 	\label{fig:std_error}
 \end{figure}

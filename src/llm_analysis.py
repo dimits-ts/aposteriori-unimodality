@@ -352,7 +352,7 @@ def plot_annotation_histograms(
     nrows = -(-n // ncols)  # ceil division
 
     fig, axes = plt.subplots(
-        nrows, ncols, figsize=(8 * ncols, 5 * nrows), squeeze=False
+        nrows, ncols, squeeze=False
     )
 
     for i, key in enumerate(dataset_keys):
@@ -517,7 +517,7 @@ def plot_prompt_mean_diff(
     nrows = -(-n // ncols)  # ceil division
 
     fig, axes = plt.subplots(
-        nrows, ncols, figsize=(8 * ncols, 5 * nrows), squeeze=False
+        nrows, ncols, squeeze=False
     )
 
     for i, key in enumerate(keys_with_data):
@@ -866,9 +866,7 @@ def plot_apunim_grid(
     # One column for Human + one for each model.
     columns = ["Human"] + models
 
-    # This is the overall figure. Each dataset gets its own subfigure,
-    # corresponding to one row of the 2x5 grid.
-    fig = plt.figure(figsize=(14, 6), constrained_layout=True)
+    fig = plt.figure(constrained_layout=True)
 
     subfigures = fig.subfigures(
         nrows=len(dataset_keys),

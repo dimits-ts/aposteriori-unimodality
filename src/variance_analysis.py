@@ -170,8 +170,6 @@ def plot_variance_curve(results_df, graph_path: Path):
 
     results_df = results_df.sort_values(["dataset", "sample_size"])
 
-    plt.figure(figsize=(10, 6))
-
     for ds_name, subdf in results_df.groupby("dataset"):
         marker = MARKERS[ds_name]
 
@@ -248,8 +246,6 @@ def plot_annotator_count_histogram_from_datasets(
     all_df = get_annotator_counts_df(datasets)
 
     dataset_names = all_df["dataset"].unique().tolist()
-
-    fig, ax = plt.subplots(figsize=(10, 6))
 
     # Determine bin boundaries
     min_val = all_df["n_annotators"].min()

@@ -8,27 +8,43 @@ import apunim
 
 from . import preprocessing
 
-COLORBLIND_PALETTE = [
-    "#000000",  # black
-    "#E69F00",  # orange
-    "#56B4E9",  # sky blue
-    "#009E73",  # bluish green
-    "#F0E442",  # yellow
-    "#0072B2",  # blue
-    "#D55E00",  # vermillion
-    "#CC79A7",  # reddish purple
-    "#999999",  # mid gray (neutral, high legibility)
-    "#8DD3C7",  # light teal (tone-safe extension)
-    "#FDB462",  # light orange (paired but distinct in luminance)
-    "#B3DE69",  # light yellow-green (safe vs. green due to brightness)
-    "#80B1D3",  # soft blue (lightened blue variant)
-    "#FB8072",  # soft coral (distinct from vermillion)
-    "#CAB2D6",  # lavender (low-saturation purple)
-    "#BC80BD",  # plum (dark purple contrast partner)
+# Okabe–Ito palette
+COLORBLIND_24 = [
+    # --- Core ---
+    "#000000",  #  1 black
+    "#E69F00",  #  2 orange
+    "#56B4E9",  #  3 sky blue
+    "#009E73",  #  4 bluish green
+    "#F0E442",  #  5 yellow
+    "#0072B2",  #  6 blue
+    "#D55E00",  #  7 vermillion
+    "#CC79A7",  #  8 reddish purple
+
+    # --- Neutral / light extensions ---
+    "#999999",  #  9 mid gray
+    "#8DD3C7",  # 10 light teal
+    "#FDB462",  # 11 light orange
+    "#B3DE69",  # 12 light yellow-green
+    "#80B1D3",  # 13 soft blue
+    "#FB8072",  # 14 soft coral
+    "#CAB2D6",  # 15 lavender
+    "#BC80BD",  # 16 plum
+
+    # --- Additional medium/dark colors ---
+    "#4D4D4D",  # 17 dark gray
+    "#1B9E77",  # 18 deep teal
+    "#7570B3",  # 19 indigo
+    "#A6761D",  # 20 ochre/brown
+    "#66A61E",  # 21 olive green
+    "#E7298A",  # 22 magenta
+    "#A6CEE3",  # 23 pale blue
+    "#FFB000",  # 24 amber
 ]
 
 MARKERS = ["o", "s", "D", "^", "v", "P", "X"]
 HATCHES = ["..", "\\\\", "++", "oo", "//", "xx", "**", "--"]
+
+DEFAULT_FIGSIZE = (14, 6)
 
 
 def polarization_plot(
@@ -90,7 +106,7 @@ def polarization_plot(
         plot_df["PC Dimension"], ordered=True
     )
 
-    fig, ax = plt.subplots(figsize=(15, 8))
+    fig, ax = plt.subplots()
 
     sns.boxplot(
         x="PC Dimension",
@@ -143,7 +159,7 @@ def graph_setup() -> None:
         {
             "text.usetex": True,
             # Figure
-            "figure.figsize": (12, 8),
+            "figure.figsize": DEFAULT_FIGSIZE,
             "figure.dpi": 300,
             "savefig.dpi": 300,
             "savefig.bbox": "tight",

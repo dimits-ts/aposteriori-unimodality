@@ -728,10 +728,6 @@ def plot(
     fig, axes = plt.subplots(
         n_rows,
         PLOT_NUM_COLS,
-        figsize=(
-            PLOT_NUM_COLS * 5.0,
-            n_rows * 2.8,
-        ),
         sharey=True,
         squeeze=False,
     )
