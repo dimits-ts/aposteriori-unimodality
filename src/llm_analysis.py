@@ -39,7 +39,11 @@ The following are produced:
    (dataset, model) -- an nDFU-by-SDB-group boxplot for the "default"
    prompt -- assembled into one grid instead of many separate images, and
    sized/fonted so it stays readable once placed in a paper (see
-   plot_apunim_grid's docstring for how that sizing works).
+   plot_apunim_grid's docstring for how that sizing works). The same grid
+   is also produced separately for each adversarial prompt (currently
+   "stereotype" and "persona", see ADVERSARIAL_PROMPT_NAMES), as
+   llm_apunim_grid_<prompt>.png, with a title that just names the prompt
+   instead of the main figure's title.
 
 Rows are matched across files (models, or prompt variants) using the
 comment id ("text_id") together with the sampled persona's characteristics,
@@ -112,6 +116,12 @@ MAIN_PROMPT_NAMES = ["default", "stereotype", "persona"]
 # DICES datasets only have the "default" prompt) -- used for both the
 # prompt mean-diff plot and the apunim-by-prompt LaTeX table.
 PROMPT_COMPARISON_DATASET_KEYS = ["kumar", "sap"]
+
+# The "adversarial" instruction prompts (instructions/adversarial/<dataset>/,
+# run by annotate_adversarial.sh) -- every MAIN_PROMPT_NAMES entry besides
+# the "default" baseline. Each gets its own composite apunim grid (see
+# plot_apunim_grid / main()).
+ADVERSARIAL_PROMPT_NAMES = [p for p in MAIN_PROMPT_NAMES if p != "default"]
 
 # Models excluded from the apunim-by-prompt LaTeX table (they were never
 # run on the stereotype/persona prompts to begin with; listed explicitly
@@ -351,9 +361,7 @@ def plot_annotation_histograms(
     n = len(dataset_keys)
     nrows = -(-n // ncols)  # ceil division
 
-    fig, axes = plt.subplots(
-        nrows, ncols, squeeze=False
-    )
+    fig, axes = plt.subplots(nrows, ncols, squeeze=False)
 
     for i, key in enumerate(dataset_keys):
         ax = axes[i // ncols][i % ncols]
@@ -516,9 +524,7 @@ def plot_prompt_mean_diff(
     n = len(keys_with_data)
     nrows = -(-n // ncols)  # ceil division
 
-    fig, axes = plt.subplots(
-        nrows, ncols, squeeze=False
-    )
+    fig, axes = plt.subplots(nrows, ncols, squeeze=False)
 
     for i, key in enumerate(keys_with_data):
         ax = axes[i // ncols][i % ncols]
@@ -835,11 +841,17 @@ def plot_apunim_grid(
     prompt_name: str = "default",
     models: list[str] | None = None,
     sdb_columns_limit: int | None = 6,
+    title: str = "LLM Polarization is Disconnected From Humans",
 ) -> None:
     """Plot all datasets and models in a single 2x5 grid using subfigures.
 
     Each dataset occupies one subfigure (row), with one subplot per
     Human/model column. A single title is placed above each dataset row.
+
+    `title` is the figure-level suptitle. It defaults to the main
+    ("default" prompt) plot's title; callers producing a separate grid per
+    adversarial prompt (see main()) pass something that just names the
+    instruction instead, e.g. "Stereotype Prompt".
     """
     dataset_keys = [
         k for k in PROMPT_COMPARISON_DATASET_KEYS if k in human_datasets
@@ -970,7 +982,7 @@ def plot_apunim_grid(
 
     # One shared y-axis label for the whole figure.
     fig.supylabel("nDFU")
-    fig.suptitle("LLM Polarization is Disconnected From Humans")
+    fig.suptitle(title)
 
     tasks.graphs.save_plot(output_path)
     plt.close(fig)
@@ -1326,6 +1338,26 @@ def main(
             ),
         )
 
+    # The same composite apunim grid, but one per adversarial prompt
+    # (stereotype/persona) instead of the default prompt, with a title
+    # that just names the instruction rather than the main plot's title.
+    for adv_prompt_name in ADVERSARIAL_PROMPT_NAMES:
+        adv_grid_path = (
+            graph_output_dir / f"llm_apunim_grid_{adv_prompt_name}.png"
+        )
+        if _skip_if_exists(adv_grid_path):
+            continue
+        plot_apunim_grid(
+            human_datasets=human_datasets,
+            annotations_dir=annotations_dir,
+            output_path=adv_grid_path,
+            prompt_name=adv_prompt_name,
+            models=list(
+                set(MODEL_DISPLAY_ORDER) - APUNIM_TABLE_EXCLUDE_MODELS
+            ),
+            title=f"{adv_prompt_name.capitalize()} Prompt",
+        )
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -1411,14 +1443,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(
-        dices_small_path=(
-            Path(args.dices_small_path) if args.dices_small_path else None
-        ),
-        dices_large_path=(
-            Path(args.dices_large_path) if args.dices_large_path else None
-        ),
-        sap_path=Path(args.sap_path) if args.sap_path else None,
-        kumar_path=Path(args.kumar_path) if args.kumar_path else None,
+        dices_small_path=(Path(args.dices_small_path)),
+        dices_large_path=(Path(args.dices_large_path)),
+        sap_path=Path(args.sap_path),
+        kumar_path=Path(args.kumar_path),
         annotations_dir=Path(args.annotations_dir),
         paraphrase_dir=Path(args.paraphrase_dir),
         repeat_dir=Path(args.repeat_dir),

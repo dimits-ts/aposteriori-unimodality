@@ -787,3 +787,169 @@
 	abstract="Large language Models (LLMs) are highly sensitive to variations in prompt formulation, which can significantly impact their ability to generate accurate responses. In this paper, we introduce a new task, Prompt Sensitivity Prediction, and a dataset PromptSET designed to investigate the effects of slight prompt variations on LLM performance. Using TriviaQA and HotpotQA datasets as the foundation of our work, we generate prompt variations and evaluate their effectiveness across multiple LLMs. We benchmark the prompt sensitivity prediction task employing state-of-the-art methods from related tasks, including LLM-based self-evaluation, text classification, and query performance prediction techniques. Our findings reveal that existing methods struggle to effectively address prompt sensitivity prediction, underscoring the need to understand how information needs should be phrased for accurate LLM responses.",
 	isbn="978-3-031-88714-7"
 }
+
+@inproceedings{lutz-etal-2025-prompt,
+	title = "The Prompt Makes the Person(a): A Systematic Evaluation of Sociodemographic Persona Prompting for Large Language Models",
+	author = "Lutz, Marlene  and
+	Sen, Indira  and
+	Ahnert, Georg  and
+	Rogers, Elisa  and
+	Strohmaier, Markus",
+	editor = "Christodoulopoulos, Christos  and
+	Chakraborty, Tanmoy  and
+	Rose, Carolyn  and
+	Peng, Violet",
+	booktitle = "Findings of the Association for Computational Linguistics: EMNLP 2025",
+	month = nov,
+	year = "2025",
+	address = "Suzhou, China",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/2025.findings-emnlp.1261/",
+	doi = "10.18653/v1/2025.findings-emnlp.1261",
+	pages = "23212--23237",
+	ISBN = "979-8-89176-335-7",
+	abstract = "Persona prompting is increasingly used in large language models (LLMs) to simulate views of various sociodemographic groups. However, how a persona prompt is formulated can significantly affect outcomes, raising concerns about the fidelity of such simulations. Using five open-source LLMs, we systematically examine how different persona prompt strategies, specifically role adoption formats and demographic priming strategies, influence LLM simulations across 15 intersectional demographic groups in both open- and closed-ended tasks. Our findings show that LLMs struggle to simulate marginalized groups but that the choice of demographic priming and role adoption strategy significantly impacts their portrayal. Specifically, we find that prompting in an interview-style format and name-based priming can help reduce stereotyping and improve alignment. Surprisingly, smaller models like OLMo-2-7B outperform larger ones such as Llama-3.3-70B.Our findings offer actionable guidance for designing sociodemographic persona prompts in LLM-based simulation studies."
+}
+
+@inproceedings{gupta2024bias,
+	title={Bias runs deep: Implicit reasoning biases in persona-assigned llms},
+	author={Gupta, Shashank and Shrivastava, Vaishnavi and Deshpande, Ameet and Kalyan, Ashwin and Clark, Peter and Sabharwal, Ashish and Khot, Tushar},
+	booktitle={International Conference on Learning Representations},
+	volume={2024},
+	pages={21849--21874},
+	year={2024}
+}
+
+@inproceedings{shu-etal-2024-dont,
+	title = "You don{'}t need a personality test to know these models are unreliable: Assessing the Reliability of Large Language Models on Psychometric Instruments",
+	author = "Shu, Bangzhao  and
+	Zhang, Lechen  and
+	Choi, Minje  and
+	Dunagan, Lavinia  and
+	Logeswaran, Lajanugen  and
+	Lee, Moontae  and
+	Card, Dallas  and
+	Jurgens, David",
+	editor = "Duh, Kevin  and
+	Gomez, Helena  and
+	Bethard, Steven",
+	booktitle = "Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers)",
+	month = jun,
+	year = "2024",
+	address = "Mexico City, Mexico",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/2024.naacl-long.295/",
+	doi = "10.18653/v1/2024.naacl-long.295",
+	pages = "5263--5281",
+	abstract = "The versatility of Large Language Models (LLMs) on natural language understanding tasks has made them popular for research in social sciences. To properly understand the properties and innate personas of LLMs, researchers have performed studies that involve using prompts in the form of questions that ask LLMs about particular opinions. In this study, we take a cautionary step back and examine whether the current format of prompting LLMs elicits responses in a consistent and robust manner. We first construct a dataset that contains 693 questions encompassing 39 different instruments of persona measurement on 115 persona axes. Additionally, we design a set of prompts containing minor variations and examine LLMs' capabilities to generate answers, as well as prompt variations to examine their consistency with respect to content-level variations such as switching the order of response options or negating the statement. Our experiments on 17 different LLMs reveal that even simple perturbations significantly downgrade a model{'}s question-answering ability, and that most LLMs have low negation consistency. Our results suggest that the currently widespread practice of prompting is insufficient to accurately and reliably capture model perceptions, and we therefore discuss potential alternatives to improve these issues."
+}
+
+@article{kovavc2024stick,
+	title={Stick to your role! stability of personal values expressed in large language models},
+	author={Kova{\v{c}}, Grgur and Portelas, R{\'e}my and Sawayama, Masataka and Dominey, Peter Ford and Oudeyer, Pierre-Yves},
+	journal={Plos one},
+	volume={19},
+	number={8},
+	pages={e0309114},
+	year={2024},
+	publisher={Public Library of Science San Francisco, CA USA}
+}
+
+@inproceedings{liu-etal-2024-evaluating-large,
+	title = "Evaluating Large Language Model Biases in Persona-Steered Generation",
+	author = "Liu, Andy  and
+	Diab, Mona  and
+	Fried, Daniel",
+	editor = "Ku, Lun-Wei  and
+	Martins, Andre  and
+	Srikumar, Vivek",
+	booktitle = "Findings of the Association for Computational Linguistics: ACL 2024",
+	month = aug,
+	year = "2024",
+	address = "Bangkok, Thailand",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/2024.findings-acl.586/",
+	doi = "10.18653/v1/2024.findings-acl.586",
+	pages = "9832--9850",
+	abstract = "The task of persona-steered text generation requires large language models (LLMs) to generate text that reflects the distribution of views that an individual fitting a persona could have. People have multifaceted personas, but prior work on bias in LLM-generated opinions has only explored multiple-choice settings or one-dimensional personas. We define an incongruous persona as a persona with multiple traits where one trait makes its other traits less likely in human survey data, e.g. political liberals who support increased military spending. We find that LLMs are 9.7{\%} less steerable towards incongruous personas than congruous ones, sometimes generating the stereotypical stance associated with its demographic rather than the target stance. Models that we evaluate that are fine-tuned with Reinforcement Learning from Human Feedback (RLHF) are more steerable, especially towards stances associated with political liberals and women, but present significantly less diverse views of personas. We also find variance in LLM steerability that cannot be predicted from multiple-choice opinion evaluation. Our results show the importance of evaluating models in open-ended text generation, as it can surface new LLM opinion biases. Moreover, such a setup can shed light on our ability to steer models toward a richer and more diverse range of viewpoints."
+}
+
+@inproceedings{dong-etal-2024-llm,
+	title = "Can {LLM} be a Personalized Judge?",
+	author = "Dong, Yijiang River  and
+	Hu, Tiancheng  and
+	Collier, Nigel",
+	editor = "Al-Onaizan, Yaser  and
+	Bansal, Mohit  and
+	Chen, Yun-Nung",
+	booktitle = "Findings of the Association for Computational Linguistics: EMNLP 2024",
+	month = nov,
+	year = "2024",
+	address = "Miami, Florida, USA",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/2024.findings-emnlp.592/",
+	doi = "10.18653/v1/2024.findings-emnlp.592",
+	pages = "10126--10141",
+	abstract = "As large language models (LLMs) gain widespread adoption, ensuring they cater to diverse user needs has become increasingly important. While many researchers have studied LLM personalization and role-playing, they primarily use LLM-as-a-Judge for evaluation without thoroughly examining its validity. This paper investigates the reliability of LLM-as-a-Personalized-Judge{---}asking LLMs to judge user preferences based on persona. Our results suggest that LLM-as-a-Personalized-Judge is less reliable for personalization than previously believed, showing low agreement with human ground truth. We observed that the personas provided to the LLM often have limited predictive power for the tasks, leading us to introduce verbal uncertainty estimation. We find that powerful LLMs are aware of the certainty of their prediction and can achieve high agreement with ground truth on high-certainty samples, indicating a promising approach for building reliable and scalable proxies for evaluating LLM personalization. Our human annotation reveals that third-person crowd worker evaluations of personalized preferences are even worse than LLM predictions, highlighting the challenges of evaluating LLM personalization."
+}
+
+@inproceedings{gomez-etal-2024-algorithmic,
+	author = {Gomez, Juan Felipe and Machado, Caio and Paes, Lucas Monteiro and Calmon, Flavio},
+	title = {Algorithmic Arbitrariness in Content Moderation},
+	year = {2024},
+	isbn = {9798400704505},
+	publisher = {Association for Computing Machinery},
+	address = {New York, NY, USA},
+	url = {https://doi.org/10.1145/3630106.3659036},
+	doi = {10.1145/3630106.3659036},
+	abstract = {Machine learning (ML) is widely used to moderate online content. Despite its scalability relative to human moderation, the use of ML introduces unique challenges to content moderation. One such challenge is predictive multiplicity: multiple competing models for content classification may perform equally well on average, yet assign conflicting predictions to the same content. This multiplicity can result from seemingly innocuous choices made during training, which do not meaningfully change the accuracy of the ML model, but can nevertheless change what the model gets wrong. We experimentally demonstrate how content moderation tools can arbitrarily classify samples as “toxic,” leading to arbitrary restrictions on speech. We use the principles set by the International Covenant on Civil and Political Rights (ICCPR), namely freedom of expression, non-discrimination, and procedural justice to interpret the effects of these findings in terms of Human Rights. We analyze (i) the extent of predictive multiplicity among popular state-of-the-art LLMs used for detecting “toxic” content; (ii) the disparate impact of this arbitrariness across social groups; and (iii) the magnitude of model multiplicity on content that is unanimously recognized as toxic by human annotators. Our findings indicate that the up-scaled algorithmic moderation risks legitimizing an “algorithmic leviathan”, where an algorithm disproportionately manages human rights. To mitigate such risks, our study underscores the need to identify and increase the transparency of arbitrariness in content moderation applications. Our findings have implications to content moderation and intermediary liability laws being discussed and passed in many countries, such as the Digital Services Act in the European Union, the Online Safety Act in the United Kingdom, and the recent TSE resolutions in Brazil.},
+	booktitle = {Proceedings of the 2024 ACM Conference on Fairness, Accountability, and Transparency},
+	pages = {2234–2253},
+	numpages = {20},
+	keywords = {Rashomon effect, content moderation, predictive multiplicity},
+	location = {Rio de Janeiro, Brazil},
+	series = {FAccT '24}
+}
+
+@inproceedings{masud-etal-2024-hate,
+	title = "Hate Personified: Investigating the role of {LLM}s in content moderation",
+	author = "Masud, Sarah  and
+	Singh, Sahajpreet  and
+	Hangya, Viktor  and
+	Fraser, Alexander  and
+	Chakraborty, Tanmoy",
+	editor = "Al-Onaizan, Yaser  and
+	Bansal, Mohit  and
+	Chen, Yun-Nung",
+	booktitle = "Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing",
+	month = nov,
+	year = "2024",
+	address = "Miami, Florida, USA",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/2024.emnlp-main.886/",
+	doi = "10.18653/v1/2024.emnlp-main.886",
+	pages = "15847--15863",
+	abstract = "For subjective tasks such as hate detection, where people perceive hate differently, the Large Language Model{'}s (LLM) ability to represent diverse groups is unclear. By including additional context in prompts, we comprehensively analyze LLM{'}s sensitivity to geographical priming, persona attributes, and numerical information to assess how well the needs of various groups are reflected. Our findings on two LLMs, five languages, and six datasets reveal that mimicking persona-based attributes leads to annotation variability. Meanwhile, incorporating geographical signals leads to better regional alignment. We also find that the LLMs are sensitive to numerical anchors, indicating the ability to leverage community-based flagging efforts and exposure to adversaries. Our work provides preliminary guidelines and highlights the nuances of applying LLMs in culturally sensitive cases."
+}
+
+@inproceedings{weeber-etal-2026-one,
+	title = "\textit{One} Persona, \textit{Many} Cues, \textit{Different} Results: How Sociodemographic Cues Impact {LLM} Personalization",
+	author = "Weeber, Franziska  and
+	Neplenbroek, Vera  and
+	Batzner, Jan  and
+	Pad{\'o}, Sebastian",
+	editor = "Liakata, Maria  and
+	Moreira, Viviane P.  and
+	Zhang, Jiajun  and
+	Jurgens, David",
+	booktitle = "Proceedings of the 64th Annual Meeting of the {A}ssociation for {C}omputational {L}inguistics (Volume 1: Long Papers)",
+	month = jul,
+	year = "2026",
+	address = "San Diego, California, United States",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/2026.acl-long.2079/",
+	doi = "10.18653/v1/2026.acl-long.2079",
+	pages = "44892--44921",
+	ISBN = "979-8-89176-390-6",
+	abstract = "Personalization of LLMs by sociodemographic subgroup often improves user experience, but can also introduce or amplify biases and unfair outcomes across groups. Prior work has employed so-called personas, sociodemographic user attributes conveyed to a model, to study bias in LLMs by relying on a single cue to prompt a persona, such as user names or explicit attribute mentions. This disregards LLM sensitivity to prompt variation and the rarity of some cues in real interactions (external validity). We compare six commonly used persona cues across seven open and proprietary LLMs on four writing and advice tasks. While cues are overall highly correlated, they produce substantial variance in responses across personas that can change findings on persona-induced differences and bias. We therefore caution against claims based on single persona cues, especially when they are overly explicit and have low external validity."
+}

@@ -57,7 +57,7 @@
 
 \graphicspath{ {../graphs} {graphs}  }
 
-\title{Reliable Polarization Representations for Quantifying the Influence of Subgroups on Systematic Opinion Differences}
+\title{Diagnosing and Fixing Polarization Attribution to Groups in Subjective Annotations}
 
 \author{Anonymous}
 
@@ -65,7 +65,7 @@
 \maketitle
 
 \begin{abstract}
-	Current representations of polarization focus exclusively on distinguishing minor disagreements from systematic differences in opinion between annotator groups. In this study we develop a new framework which not only detects, but also quantifies the degree to which any annotator subgroup causes these systematic differences. We first discover fundamental issues which we show limit prior approaches: 1) the presence of ``inherent'' polarization that cannot be attributed to any known or latent groups, and 2) opposing polarization effects canceling each other out in aggregated annotations. We then introduce a new metric that attributes polarization to any annotator group while avoiding these limitations and  release a PyPi-installable implementation. Our metric surpasses both traditional similarity metrics and prior approaches on detecting subgroup polarization, while also uncovering previously latent polarization in overlooked minority and fine-grained ideological groups due to its robustness to group-size imbalances. Finally, in regard to LLM annotation, we find that LLMs \textbf{TODO}.
+	Current representations of polarization focus exclusively on distinguishing minor disagreements from systematic differences in opinion between annotator groups. In this study we develop a new framework which not only detects, but also quantifies the degree to which any annotator subgroup causes these systematic differences. We first discover fundamental issues which we show limit prior approaches: 1) the presence of ``inherent'' polarization that cannot be attributed to any known or latent groups, and 2) opposing polarization effects canceling each other out in aggregated annotations. We then introduce a new metric that attributes polarization to any annotator group while avoiding these limitations and  release a PyPi-installable implementation. Our metric surpasses both traditional similarity metrics and prior approaches on detecting subgroup polarization, while also uncovering previously latent polarization in overlooked minority and fine-grained ideological groups due to its robustness to group-size imbalances. Finally, we explore the polarization patterns of persona-prompted LLM-as-a-judge models, finding that they are disconected from human polarization patterns, even when using explicit instructions to condition answers to persona characteristics.
 \end{abstract}
 %TODO
 
@@ -101,10 +101,10 @@ One alternative is using \emph{polarization}, which correlates better with human
 
 \begin{researchquestion}[Which polarization patterns are shared between human and LLM annotators]
 	\label{rq:llm}
-	We conduct an annotation study on the same datasets using seven open-source models (App.~\ref{app:llms}) in order to compare polarization patterns between them and humans.
+	We conduct an annotation study on the same datasets using seven open-source models in order to compare polarization patterns between them and humans (\S\ref{sec:results:llms}). We find that persona-prompted LLMs consistently fail to produce any subgroup polarization patterns, confirming that persona prompting does not consistently influence LLM outputs (Finding~\ref{finding:llms}).
 \end{researchquestion}
 
-Our work thus makes the following contributions: (1) The identification of severe issues present in subjective datasets (2) A new polarization attribution metric that is robust to small annotator counts and minority group splits with a PyPi-installable implementation (3) The detection of new promising directions for analysis of subjective \ac{nlp} datasets (4) Insight into LLM subjectivity. Our study also underscores the need for datasets with high annotator counts per item, instead of high annotator counts in general---see App.~\ref{app:ideal-dataset} for a more extensive discussion and empirical findings.
+Our work thus makes the following contributions: (1) The identification of severe issues present in subjective datasets and prior methodologies (2) A new polarization attribution metric that is robust to small annotator counts and minority group splits with a PyPi-installable implementation (3) The detection of new promising directions (ideological and ordinal groups) for analysis of subjective \ac{nlp} datasets (4) An exploration of LLM polarization patterns when using persona prompting. Our study also underscores the need for datasets with high annotator counts per item, instead of high annotator counts in general---see App.~\ref{app:ideal-dataset} for a more extensive discussion and empirical findings.
 
 \noindent\textcolor{red}{\textbf{Content Warning: This publication includes examples of controversial and potentially harmful speech for the purposes of demonstration. These examples do not represent the views of the authors.}}
 
@@ -124,7 +124,7 @@ Popular inter-annotator agreement metrics such as Cohen's kappa, Krippendorff's 
 There are multiple competing formulations for polarization. One of these approaches~\cite{akhtar_2019} utilizes $\chi^2$ to estimate in-group vs out-group variance, but still requires traditional agreement metrics for analysis.
 Others attempt to solve this problem by framing disagreement as a cluster identification problem, applying either parametric~\cite{checco_2017}, or non-parametric~\cite{pavlopoulos-likas-2024, Mignemi2024} approaches to the annotation histograms. 
 
-For our work, we use a non-parametric polarization metric, \ac{ndfu}, which has been shown to correlate better with human judgment of disagreement than established metrics \citep{pavlopoulos-likas-2024}. \ac{ndfu} takes values in the range $[0,1]$, where values close to $0$ indicate no polarization (i.e., opinions are concentrated around a single mode). The metric is defined as follows:
+For our work, we use a non-parametric polarization metric, \ac{ndfu}, which has been shown to correlate better with human judgment of disagreement than established metrics \citep{pavlopoulos-likas-2024}. \ac{ndfu} (Eq.~\ref{eq:ndfu}) takes values in the range $[0,1]$, where values close to $0$ indicate no polarization (i.e., opinions are concentrated around a single mode). Intuitively, \ac{ndfu} measures how prominent secondary peaks are compared to the main peak (see Fig.~\ref{fig:inherent}, left for an example).
 
 \begin{equation}
 	\label{eq:ndfu}
@@ -141,7 +141,7 @@ For our work, we use a non-parametric polarization metric, \ac{ndfu}, which has 
 			\right)
 		}{f_m},m = \arg\max_i f_i
 \end{equation}
-\noindent where, $X$ denotes the set of annotations, $f_i$ the relative frequency of the $i$-th annotation (e.g., the frequency of \texttt{2} in a scale of 1--5), and $m$ the histogram peak. Intuitively, \ac{ndfu} measures how prominent secondary peaks are compared to the main peak (see Fig.~\ref{fig:inherent}, left for an example).
+\noindent where, $X$ denotes the set of annotations, $f_i$ the relative frequency of the $i$-th annotation (e.g., the frequency of \texttt{2} in a scale of 1--5), and $m$ the histogram peak. 
 
 
 \subsection{Attributing Polarization to Groups}
@@ -176,9 +176,9 @@ While many studies study the effect of subgroups on annotation agreement~\cite{g
 	\label{tab:datasets}
 \end{table}
 
-We use four datasets from current \ac{nlp} research that include \ac{pc} information at the level of individual annotators; specifically, the ``Kumar'' \cite{kumar-et-al-2021} and ``Sap'' (``Breadth of Posts'') \cite{sap-etal-2022-annotators} datasets, which are concerned with Toxicity and \ac{hs} detection respectively, and the DICES-350 and DICES-990 datasets~\cite{dices}, which focus on LLM response safety.\footnote{For the latter, we consider only labels relating to racism (\texttt{Q3\_bias\_overall}), thereby transforming the task to \ac{hs} detection.}
+We use four datasets from current \ac{nlp} research that include \ac{pc} information at the level of individual annotators; specifically, the ``Kumar'' \cite{kumar-et-al-2021} and ``Sap'' (``Breadth of Posts'') \cite{sap-etal-2022-annotators} datasets, which are concerned with Toxicity and \ac{hs} detection respectively, and the DICES-350 and DICES-990 datasets~\cite{dices}, which focus on LLM response safety.\footnote{We specifically look into overall bias (\texttt{Q3\_bias\_overall}).}
 
-A brief overview of dataset characteristics is provided in Table~\ref{tab:datasets}. The Kumar dataset stands out for its large size, featuring more than 100{,}000 annotated items, as well as 10 distinct \ac{pc} dimensions.\footnote{We sample 3{,}000 items in this study due to computational constraints (App.~\ref{app:software}). We run ablations for both different and differently sized-samples. Our results remain consistent, although large samples (10{,}000+) tend to produce null results (App.~\ref{app:ablation}).} In contrast, the DICES datasets contain fewer annotated items but involve more than an order of magnitude more annotators per item than the other datasets. More details on the annotations, including overall levels of observed polarization, can be found in App.~\ref{app:ann_details}.
+A brief overview of dataset characteristics is provided in Table~\ref{tab:datasets}. The Kumar dataset stands out for its large size, featuring more than 100{,}000 annotated items, as well as 10 distinct \ac{pc} dimensions.\footnote{We sample 3{,}000 items in this study due to computational constraints (App.~\ref{app:software}). Our results remain consistent, for both different and differently sized-samples (App.~\ref{app:ablation}).} In contrast, the DICES datasets contain fewer annotated items but involve more than an order of magnitude more annotators per item than the other datasets. More details on the annotations, including overall levels of observed polarization, can be found in App.~\ref{app:ann_details}.
 
 
 \section{Can We Attribute All Polarization to Annotator Groups?}
@@ -187,7 +187,7 @@ A brief overview of dataset characteristics is provided in Table~\ref{tab:datase
 \subsection{Problem formulation}
 \label{sec:inherent:formulation}
 
-Let $d = \{c_1, c_2, \ldots\}$ be a dataset composed of multiple annotated items.\footnote{The annotated items could be of any modality, such images, videos or survey questions, even though we only consider items in this study.} Each item $c$ is assigned multiple annotators,  which creates the annotation multi-set $A(c)=  \{(a_1, g_1), (a_2, g_2), \ldots \}$, where $a_i$ is a single annotation (e.g., \texttt{2} in a LIKERT scale of 1--5), and $g_i$ a group (e.g., men). As an example, the annotations for a item in a sentiment analysis task where we group the annotators by gender, would be formulated as:
+Let $d = \{c_1, c_2, \ldots\}$ be a dataset composed of multiple annotated items.\footnote{The items could be of any modality (e.g., images, videos, survey questions).} Each item $c$ is assigned multiple annotators,  which creates the annotation multi-set $A(c)=  \{(a_1, g_1), (a_2, g_2), \ldots \}$, where $a_i$ is a single annotation (e.g., \texttt{2} in a LIKERT scale of 1--5), and $g_i$ a group (e.g., men). As an example, the annotations for a item in a sentiment analysis task where we group the annotators by gender, would be formulated as:
 \[
 A(\text{``Could be better, could be worse''})\\
 = \left\{\begin{array}{l}
@@ -254,11 +254,11 @@ We systematically explore the space of annotator groups by generating random par
 \end{multicols}
 \noindent where $\tilde{r}$ is an operator that selects a randomly sized, randomly selected subset.
 
-We compute the \ac{ip} for each item across the four datasets. For Sap and Kumar, we use the exhaustive formulation (Eq.~\ref{eq:inherent}), whereas for the two DICES datasets we rely on the Monte Carlo approximation with $k=1000$ (Eq.~\ref{eq:random}). Fig.~\ref{fig:inherent}, right shows that in all DICES items there exists at least one group that fully accounts for the observed polarization.\footnote{$Pol_{inh}^{MC}(c)=0 \Rightarrow Pol_{inh}(c)=0$ due to Eq.~\ref{eq:lower-bound}. The same logic applies if we tried to increase the number of random partitions in Eq.~\ref{eq:random}.} Interestingly, this observation does not hold for the Kumar and Sap datasets, despite evaluating all possible annotator groups exhaustively. See Table~\ref{tab:inherent-examples}; App.~\ref{app:ann_details} for a qualitative look through items with high InPol.
+We compute the \ac{ip} for each item across the four datasets. For Sap and Kumar, we use the exhaustive formulation (Eq.~\ref{eq:inherent}), whereas for the two DICES datasets we rely on the Monte Carlo approximation with $k=1000$ (Eq.~\ref{eq:random}). Fig.~\ref{fig:inherent}, right shows that in all DICES items there exists at least one group that fully accounts for the observed polarization.\footnote{$Pol_{inh}^{MC}(c)=0 \Rightarrow Pol_{inh}(c)=0$ due to Eq.~\ref{eq:lower-bound}, as is the case of increased $k$ in Eq.~\ref{eq:random}.} Interestingly, this observation does not hold for the Kumar and Sap datasets, despite evaluating all possible annotator groups exhaustively. See Table~\ref{tab:inherent-examples}; App.~\ref{app:ann_details} for a qualitative look through items with high InPol.
 
 \begin{finding}
 	\label{finding:inherent}
-	items may exhibit a degree of \ac{ip} that cannot be attributed to any known or latent annotator grouping given the annotators present in the dataset.
+	Items may exhibit a degree of \ac{ip} that cannot be attributed to any known or latent annotator grouping given the annotators present in the dataset.
 \end{finding}
 
 
@@ -473,9 +473,11 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 	\label{fig:llm-polarization}
 \end{figure*}
 
-No. We investigated polarization attribution patterns for LLM annotators  across seven open-source models.\footnote{We exclude OLMo-7B and LLaMa-8B due to prompt sensitivity and do not include the DICES datasets due to the need for hundreds of simulated annotators per item.} Specifically, we used six annotators per item supplied with personas sampled from our human dataset for a random sample of 300 comments for the Sap dataset and 1000 items for Kumar. We find no statistically significant attribution effects and very small \emph{apunim} values for any of the groups in all models and datasets (see App.~\ref{app:llms};  Table~\ref{tab:llm-apunim-by-prompt-kumar},~\ref{tab:llm-apunim-by-prompt-sap}). 
+Prior literature has shown that LLMs are not reliable annotators when using persona prompting; they tend to reproduce stereotypes \citep{lutz-etal-2025-prompt, liu-etal-2024-evaluating-large}, are unreliable for minority groups \citep{lutz-etal-2025-prompt} and persona adherence has been shown to be volatile \citep{shu-etal-2024-dont, kovavc2024stick}. Unlike prior work that investigated model performance \citep{gupta2024bias} or human--LLM agreement \citep{dong-etal-2024-llm, gomez-etal-2024-algorithmic, masud-etal-2024-hate}, we aim to discover whether attributable polarization exists regardless of faithfulness to the actual groups.
 
-We also attempted to use two adversarial prompts emphasizing the importance of the LLMs' personas (App.~\ref{app:prompts}) without success. Indeed, the adversarial prompts did not seem to push the \emph{apunim} values to any particular direction, suggesting that instructing the model is an ineffective way of eliciting \emph{any} polarizing behavior. This pattern can be explained both by the lack of overall polarization exhibited by these models and the homogeneous distribution of polarization across groups, which are not observable to this extent in human annotations (Fig.~\ref{fig:llm-polarization}). See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations.
+We investigate six open-source LLMs with six annotators per item supplied with personas sampled from our human dataset. We annotate a random sample of 300 comments for the Sap dataset and 1000 items for Kumar. Our results show \emph{no statistically significant attribution effects} and very small \emph{apunim} values for any of the groups in all models and datasets (see App.~\ref{app:llms}; Table~\ref{tab:llm-apunim-by-prompt-kumar},~\ref{tab:llm-apunim-by-prompt-sap}). Using four adversarial prompts progressively emphasizing the importance of the LLMs' personas (App.~\ref{app:prompts}), since instruction prompts are known to influence the effect of personas \citep{weeber-et-al-2026-one}, also yields no results. Indeed, the adversarial prompts did not seem to push the \emph{apunim} values to any particular direction, suggesting that instructing the model is an ineffective way of eliciting \emph{any} polarizing behavior. 
+
+This pattern can be explained both by the lack of overall polarization exhibited by these models and the homogeneous distribution of polarization across groups, which are not observable to this extent in human annotations (Fig.~\ref{fig:llm-polarization}). See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations.
 
 \begin{finding}
 	\label{finding:llms}
@@ -1085,7 +1087,11 @@ We use only open-source models, as proprietary models such as OpenAI's GPT-5 yie
 
 
 \subsection{Experimental Setup}
-Since each of the datasets in \S\ref{sec:datasets} was annotated using different annotation guidelines and targets we use different instruction prompts for each dataset. The ``default'' annotation prompt is directly extracted from the studies in the case of Sap and Kumar, and inferred from the instruction guidelines used in the DICES datasets with minor modifications. The prompts used in the ablation study (see next section) were provided by a GPT-5 model by providing the original prompt and instructing it to produce three variants. The full main and ablation annotation prompts can be found in App.~\ref{app:prompts}. We use a single Quadro RTX 6000 GPU for tasks requiring small (7-8B) models and two such GPUs for the rest. The annotation task, including ablations, requires approximately 98 hours of computation to complete.
+Since each of the datasets in \S\ref{sec:datasets} was annotated using different annotation guidelines and targets we use different instruction prompts for each dataset. The ``default'' annotation prompt is directly extracted from the studies in the case of Sap and Kumar, and inferred from the instruction guidelines used in the DICES datasets with minor modifications. We use standard persona prompting procedures sampled randomly from the available \ac{pc} dimensions in each respective dataset. Six LLM annotators are selected for each item and model.
+
+The prompts used in the ablation study were provided by a GPT-5 and a local Gemma-4 (quantized) model by providing the original prompt and instructing it to produce four variants. The tested prompts use different methods to restrict the model's behavior. The initial prompts  (``\textit{Persona}''require the model to adopt a persona's viewpoint to judge the comment. Other prompts (``\textit{direct}'') treat the persona's characteristics as an absolute, non-negotiable rule that overrides standard moderation guidelines. Another approach (``single'') compels the model to perform a persona-based check before submitting its final rating. The most aggressive prompts (``stereotype'') force the model into extreme decision spaces. The full main and ablation annotation prompts can be found in App.~\ref{app:prompts}. 
+
+We use a single Quadro RTX 6000 GPU for tasks requiring small (7-8B) models and two such GPUs for the rest. The annotation task, including ablations, requires approximately 300 hours of computation to complete. We use the \texttt{transformers} library to load and manage the LLMs. We release the relevant code in the supplementary material. Our codebase is platform-independent except for three high-level bash scripts and a full environment file is included for reproduction.
 
 
 \subsection{Exploratory Analysis}
@@ -1097,7 +1103,7 @@ Since each of the datasets in \S\ref{sec:datasets} was annotated using different
 	\label{fig:llm-human-frequencies}
 \end{figure*}
 
-Across all four datasets, we observe a consistent mismatch between human and LLM annotation distributions. For the DICES-350 and DICES-990 harmfulness tasks, human annotations are heavily concentrated at the lowest harmfulness value, whereas most LLMs assign substantially more probability to moderate and high harmfulness values. A similar pattern appears in the \citet{sap-etal-2022-annotators} racism dataset: human judgments are concentrated at low racism scores, while LLMs produce broader distributions with considerably more mass at higher scores, particularly values 4--5. The \citep{kumar-et-al-2021} toxicity results show the same general trend, with humans assigning most probability to zero toxicity while LLMs distribute their predictions across higher toxicity levels, often peaking around values 2--4. Importantly, the magnitude of this discrepancy varies across models; some LLMs are closer to the human distribution, while others show substantially stronger shifts toward higher scores.
+Fig.~\ref{fig:llm-human-frequencies} shows the different annotation frequencies of LLMs and human annotators in the same dataset split. Across all four datasets, we observe a consistent mismatch between human and LLM annotation distributions. For the DICES-350 and DICES-990 harmfulness tasks, human annotations are heavily concentrated at the lowest harmfulness value, whereas most LLMs assign substantially more probability to moderate and high harmfulness values. A similar pattern appears in the \citet{sap-etal-2022-annotators} racism dataset: human judgments are concentrated at low racism scores, while LLMs produce broader distributions with considerably more mass at higher scores, particularly values 4--5. The \citep{kumar-et-al-2021} toxicity results show the same general trend, with humans assigning most probability to zero toxicity while LLMs distribute their predictions across higher toxicity levels, often peaking around values 2--4. Importantly, the magnitude of this discrepancy varies across models; some LLMs are closer to the human distribution, while others show substantially stronger shifts toward higher scores.
 
 
 \subsection{Annotation Ablations}
@@ -1124,7 +1130,14 @@ We examine the following conditions for selecting models and datasets for our LL
 
 \subsection{LLM Annotation Results}
 
-Tables~\ref{tab:llm-apunim-by-prompt-kumar} and~\ref{tab:llm-apunim-by-prompt-sap} show the apunim results for the LLM annotation task on the Kumar and Sap datasets respectively.
+\begin{figure}[t]
+	\includegraphics[width=\textwidth]{llm_apunim_grid_persona.png}
+	\includegraphics[width=\textwidth]{llm_apunim_grid_stereotype.png}
+	\caption{LLM polarization patterns for the adversarial prompts.}
+	\label{fig:llm-polarization-adversarial}
+\end{figure}
+
+Tables~\ref{tab:llm-apunim-by-prompt-kumar} and~\ref{tab:llm-apunim-by-prompt-sap} show the apunim results for the LLM annotation task on the Kumar and Sap datasets respectively. Apunim values are largely model-dependent, but no other concrete pattern can be discerned. Fig.~\ref{fig:llm-polarization-adversarial} shows the overall polarization patterns when using the different adversarial instructions. The Qwen-23B and LLaMa-70B models consistently produce no polarization, while the persona-focused prompt seems to elicit some varied polarization, even though it does not translate to higher apunim values. This pattern would indicate that the persona-focused prompt likely adds more overall variance to the persona-conditioned annotations, even though that variance is not consistent.
 
 \input{generated/llm-apunim-by-prompt-kumar.tex}
 \input{generated/llm-apunim-by-prompt-sap.tex}
@@ -1358,8 +1371,10 @@ Tables~\ref{tab:llm-apunim-by-prompt-kumar} and~\ref{tab:llm-apunim-by-prompt-sa
 \section{Prompts Used}
 \label{app:prompts}
 
-\subsection{Main Annotation Prompts}
+This section only involves the full contents of the prompts. See App.~\ref{app:llms} for a high-level description of the prompt variants and what each aims to accomplish.
 
+
+\subsection{Main Annotation Prompts}
 
 \subsubsection{DICES}
 
