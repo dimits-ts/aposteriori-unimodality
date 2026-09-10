@@ -7,6 +7,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+import matplotlib.patches as mpatches
 
 import tasks.graphs
 import tasks.run_helper
@@ -70,7 +71,7 @@ def plot_dfu_histograms(
 
     full_df = pd.concat(all_data, ignore_index=True)
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(6, 7))
 
     datasets = sorted(full_df["dataset"].unique())
     legend_handles = []
@@ -99,7 +100,7 @@ def plot_dfu_histograms(
             patch.set_linewidth(0.3)
 
         legend_handles.append(
-            plt.matplotlib.patches.Patch(
+            mpatches.Patch(
                 facecolor=color,
                 edgecolor="black",
                 hatch=hatch,
