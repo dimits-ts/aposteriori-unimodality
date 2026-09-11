@@ -67,7 +67,7 @@
 \begin{abstract}
 	Current representations of polarization focus exclusively on distinguishing minor disagreements from systematic differences in opinion between annotator groups. In this study we develop a new framework which not only detects, but also quantifies the degree to which any annotator subgroup causes these systematic differences. We first discover fundamental issues which we show limit prior approaches: 1) the presence of ``inherent'' polarization that cannot be attributed to any known or latent groups, and 2) opposing polarization effects canceling each other out in aggregated annotations. We then introduce a new metric that attributes polarization to any annotator group while avoiding these limitations and  release a PyPi-installable implementation. Our metric surpasses both traditional similarity metrics and prior approaches on detecting subgroup polarization, while also uncovering previously latent polarization in overlooked minority and fine-grained ideological groups due to its robustness to group-size imbalances. Finally, we explore the polarization patterns of persona-prompted LLM-as-a-judge models, finding that they are disconected from human polarization patterns, even when using explicit instructions to condition answers to persona characteristics.
 \end{abstract}
-%TODO
+
 
 \section{Introduction}
 \label{sec:intro}
@@ -104,7 +104,7 @@ One alternative is using \emph{polarization}, which correlates better with human
 	We conduct an annotation study on the same datasets using seven open-source models in order to compare polarization patterns between them and humans (\S\ref{sec:results:llms}). We find that persona-prompted LLMs consistently fail to produce any subgroup polarization patterns, confirming that persona prompting does not consistently influence LLM outputs (Finding~\ref{finding:llms}).
 \end{researchquestion}
 
-Our work thus makes the following contributions: (1) The identification of severe issues present in subjective datasets and prior methodologies (2) A new polarization attribution metric that is robust to small annotator counts and minority group splits with a PyPi-installable implementation (3) The detection of new promising directions (ideological and ordinal groups) for analysis of subjective \ac{nlp} datasets (4) An exploration of LLM polarization patterns when using persona prompting. Our study also underscores the need for datasets with high annotator counts per item, instead of high annotator counts in general---see App.~\ref{app:ideal-dataset} for a more extensive discussion and empirical findings.
+Our work thus makes the following contributions: (1) The identification of severe issues present in subjective datasets and prior methodologies (2) A new polarization attribution metric that is robust to small annotator counts and minority group splits with a PyPi-installable implementation (3) The detection of new promising directions (ideological and ordinal groups) for analysis of subjective \ac{nlp} datasets (4) An exploration of LLM polarization patterns when using persona prompting. Our study also underscores the need for datasets with high annotator counts per item, instead of high annotator counts in general---see App.~\ref{app:ideal-dataset} for a more extensive discussion, empirical findings, and an intuition on how polarization attribution could be used for filtering subjective datasets.
 
 \noindent\textcolor{red}{\textbf{Content Warning: This publication includes examples of controversial and potentially harmful speech for the purposes of demonstration. These examples do not represent the views of the authors.}}
 
@@ -209,8 +209,7 @@ Intuitively, a group partially explains the polarization of a item $c$ when the 
 \subsection{Inherent polarization}
 \label{sec:inherent:inherent}
 
-\subsubsection{What Is It?}
-
+\paragraph{What Is It?}
 \acf{ip} refers to disagreement that cannot be attributed to \emph{any specific} grouping of annotators; that is, polarization that exists no matter how we split the annotators in any arbitrary group. Prior work~\cite{pavlopoulos-likas-2024} attributed polarization to annotator groups only when the observed polarization for each individual group became exactly zero (e.g. $nDFU(all) > nDFU(men)=nDFU(women) = 0$). The presence of \ac{ip} would invalidate this theory, since there would be no possible group or combination of groups $g \textit{ s.t. } nDFU(g) = 0$.
 
 \begin{definition}[Inherent Polarization]
@@ -232,9 +231,7 @@ Formally, the \ac{ip} for a single item $c$ is the minimum polarization exhibite
 When considered exhaustively, these theoretical, random groups include both observed and latent groups (e.g., annotators may be less strict if they had lunch prior to annotation). Since \ac{ndfu} operates only when a group has at least three annotators (Eq.~\ref{eq:ndfu}), this yields $\sum_{k=3}^{n} \binom{n}{k}$ possible groups.
 
 
-\subsubsection{Does It Exist?}
-\label{sec:inherent:results}
-
+\paragraph{Does It Exist?}
 We systematically explore the space of annotator groups by generating random partitions for each item. Since enumerating all subsets is computationally intractable for large annotator counts, we establish an upper bound via Monte Carlo sampling by drawing $k$ random partitions with random sizes (Eq.~\ref{eq:inherent}).  Since Eq.~\ref{eq:random} considers a strict subset of Eq.~\ref{eq:inherent}, it provides an upper bound for it:
 
 \begin{multicols}{2}
@@ -262,9 +259,7 @@ We compute the \ac{ip} for each item across the four datasets. For Sap and Kumar
 \end{finding}
 
 
-\subsection{Can We Remove It?}
-\label{sec:inherent:why}
-
+\paragraph{Can We Remove It?}
 \begin{figure}[t]
 	\centering
 	\includegraphics[width=0.32\linewidth]{ndfu_comment1.png}
@@ -274,19 +269,7 @@ We compute the \ac{ip} for each item across the four datasets. For Sap and Kumar
 	\label{fig:ndfu_discussion}
 \end{figure}
 
-Unlike disagreement, \ac{ip} does not provide any information, but rather represents noise or uncertainty translated in terms of polarization. In order to minimize it, we need to find its cause. Since the DICES datasets are the only ones without \emph{any} items with \ac{ip} leads us to two hypotheses:
-
-\begin{hypothesis}[Low annotator count]
-	\label{hyp:few-annotators}
-	A low number of annotators per item may provide our model with insufficient information.
-\end{hypothesis}
-
-\begin{hypothesis}[Inaccessible groups]
-	\label{hyp:groups}
-	\ac{ip} may arise from the presence of partially represented groups within the annotator pool which may go undetected if they are represented by only one or two annotators, as \ac{ndfu} is undefined for these groups. 
-\end{hypothesis}
-
-Both of these explanations are plausible and reflect known limitations of most \ac{nlp} datasets. Unfortunately, we can not confirm any of these hypotheses, as explained in App.~\ref{app:experiments}. While we can not address Hyp.~\ref{hyp:groups} without more annotations, we could address Hyp.~\ref{hyp:few-annotators} by aggregating annotations between items. However, Fig.~\ref{fig:ndfu_discussion} shows that two items polarized for the opposite reason may lead to a false negative. Therefore, any statistics must be computed on the item-level; annotations should never be aggregated across items.\footnote{A similar assumption was followed in early parametric approaches, which assumed different parameters for each item~\cite{checco_2017}.}
+Finding the reason behind \ac{ip} is difficult given the lack of datasets (see App.~\ref{app:inpol} for some hypotheses and further analysis). If we assume that \ac{ip} is caused by a lack of annotations per item, we could address the issue by aggregating annotations between items. However, Fig.~\ref{fig:ndfu_discussion} shows that two items polarized for the opposite reason may lead to a false negative. Therefore, any statistics must be computed on the item-level; annotations should never be aggregated across items.\footnote{A similar assumption was followed in early parametric approaches, which assumed different parameters for each item~\cite{checco_2017}.}
 
 \begin{finding}
 	\label{finding:conflicting}
@@ -543,7 +526,6 @@ We stress that our metric functions strictly as a diagnostic warning signal. Any
 
 The number of annotators per item for all datasets presented in \S\ref{sec:datasets} can be found in ~\ref{fig:ann_counts}, and descriptive statistics can be found in Table~\ref{tab:num-annot}. The DICES-990 dataset has exactly 123 annotations per item, while the other datasets exhibit a few variations around the central mean reported in Table~\ref{tab:datasets}. Interestingly, the sample used from the Kumar dataset exhibits a few items that vastly exceed the promised $5$ number of annotators. We do not include these items, since they are very likely a data error. Tables~\ref{tab:dices350-stats},\ref{tab:dices990-stats},\ref{tab:sap-stats},\ref{tab:kumar-stats1},\ref{tab:kumar-stats2} show the annotation counts for each \ac{pc} group in each dataset.
 
-Additionally, Table~\ref{tab:inherent-examples} shows a random sample of items taken from the Sap dataset and their respective \ac{ip} values (\S\ref{sec:inherent:inherent}). Note that explicitly toxic or racist items tend to have \ac{ip} values of zero, alongside clearly unproblematic items. Inversely, more ambiguous and less comprehensible items tend to have larger \ac{ip} values. This pattern may suggest that \ac{ip} may be tied to the overall ambiguity of the statements, especially in cases where items may either be interpreted as very toxic, or non-toxic, which agrees with the overall goal of \ac{ndfu} (\S\ref{sec:related:polarization}). We include the \ac{ip} values for each individual item for all four datasets in the supplementary material.
 
 \begin{figure}[t]
 	\includegraphics[width=0.48\textwidth]{sap.png}
@@ -761,34 +743,6 @@ Additionally, Table~\ref{tab:inherent-examples} shows a random sample of items t
 	\label{tab:kumar-stats2}
 \end{table}
 
-\begin{table}[t]
-	\begin{tabularx}{\textwidth}{X c}
-		\toprule
-		\textbf{Comment}  & \ac{ip} \\
-		\midrule
-		The minks mentioned in the headline are indeed "rising" from where they were based, but that is due to them being buried in shallow mass graves (Africa) and filling with gas that causes them to rise out.  Rest assured, they're still very much dead, thankfully!. & 1 \\
-		There should be such thing as a bitch resistance for us women  & 1\\
-		There's a big difference between being a bitch and being a woman & 1 \\
-		i just watched a video of @joisnotonfire being an annoying hoe on skype i'm laughing & 1 \\
-		niggas love to commit crime & 1 \\
-		\midrule
-		I swear to God above I love ya and when ya be with this brotha, I swear I love you my bro as long as you not a nigga & 0.5 \\
-		I will become a cold ass bitch because of my treatment & 0.5\\
-		I would happily lay out a nigga & 0.5\\
-		Shoot yourself in the head you hypersensitive fuckin bitch.  & 0.5 \\
-		not all women are bitches, but all bitches are women & 0.5 \\
-		\midrule
-		`` you ugly bitch!!!"- that seems to be my real name these days'' & 0 \\
-		``I am happy to report that drowning does kill this demonic entity. Oh holy are the waters of Chernarus!"" Omg, DED ;)''& 0\\
-		``Let them praise the name of the LORD: for his name alone is excellent; his glory is above the earth and heaven."" ~Psalms 148:13 \#Bible''& 0\\
-		someone plz get this nigger some help. He's playing up like mad & 0\\
-		stop talking you fucking nigger ! & 0 \\
-		\bottomrule
-	\end{tabularx}
-	\caption{Sample of comments from the Sap dataset and their \ac{ip}. Note that unambiguously toxic comments can be assigned with zero \ac{ip}, while more nuanced cases tend to have higher values.}
-	\label{tab:inherent-examples}
-\end{table}
-
 
 \section{Statistical Estimation}
 \label{app:pvalue}
@@ -853,6 +807,58 @@ In \S\ref{sec:inherent:formulation}, we explained how our methodology needs to c
 Because \textit{apunim} is fundamentally designed to quantify polarization, we exclude items that exhibit no measurable polarization ($nDFU(c)=0$). Furthermore, we also exclude items annotated exclusively by a single group (i.e., items where there are no two groups with at least three annotators each), since we require valid histograms for the non-parametric estimation of \ac{ndfu} (see Eq.~\ref{eq:ndfu}). This is an unfortunately common scenario, since many \ac{nlp} datasets feature only $5-6$ annotations per item. In a best-case scenario of 5 annotators split evenly between two groups, we would get a 3-2 split.
 
 
+\section{What is InPol?}
+\label{app:inpol}
+
+\paragraph{Why Does it Exist?}
+Unlike disagreement, \ac{ip} does not provide any information, but rather represents noise or uncertainty translated in terms of polarization. In order to minimize it, we need to find its cause. Since the DICES datasets are the only ones without \emph{any} items with \ac{ip} leads us to two hypotheses:
+
+\begin{hypothesis}[Low annotator count]
+	\label{hyp:few-annotators}
+	A low number of annotators per item may provide our model with insufficient information.
+\end{hypothesis}
+
+\begin{hypothesis}[Inaccessible groups]
+	\label{hyp:groups}
+	\ac{ip} may arise from the presence of partially represented groups within the annotator pool which may go undetected if they are represented by only one or two annotators, as \ac{ndfu} is undefined for these groups. 
+\end{hypothesis}
+
+Both of these explanations are plausible and reflect known limitations of most \ac{nlp} datasets. Unfortunately, we can not confirm any of these hypotheses
+
+The fact that the DICES datasets (featuring 70+ annotators per item) exhibit zero \ac{ip} in all items may initially seem to validate either of the above hypotheses. However, even when repeating the experiment using random annotator subsets (ranging from 5 to 50 annotators) and taking the maximum across ten random samples for each subset size, \emph{we still observed zero \ac{ip}} (App.~\ref{app:ideal-dataset}). This finding indicates that the DICES datasets may be structurally different. This explanation is plausible given that the annotation targets are LLM texts, which may be relatively unsubtle compared to human items, as supported by low overall polarization (Fig.~\ref{fig:dataset-polarization}; App~\ref{app:ann_details}). Although a definitive answer to this question eludes us due to the lack of other datasets with high annotator counts per item, the indication that the DICES datasets may not feature similar polarization patterns is noteworthy. 
+
+\begin{table}[t]
+	\begin{tabularx}{\textwidth}{X c}
+		\toprule
+		\textbf{Comment}  & \ac{ip} \\
+		\midrule
+		The minks mentioned in the headline are indeed "rising" from where they were based, but that is due to them being buried in shallow mass graves (Africa) and filling with gas that causes them to rise out.  Rest assured, they're still very much dead, thankfully!. & 1 \\
+		There should be such thing as a bitch resistance for us women  & 1\\
+		There's a big difference between being a bitch and being a woman & 1 \\
+		i just watched a video of @joisnotonfire being an annoying hoe on skype i'm laughing & 1 \\
+		niggas love to commit crime & 1 \\
+		\midrule
+		I swear to God above I love ya and when ya be with this brotha, I swear I love you my bro as long as you not a nigga & 0.5 \\
+		I will become a cold ass bitch because of my treatment & 0.5\\
+		I would happily lay out a nigga & 0.5\\
+		Shoot yourself in the head you hypersensitive fuckin bitch.  & 0.5 \\
+		not all women are bitches, but all bitches are women & 0.5 \\
+		\midrule
+		`` you ugly bitch!!!"- that seems to be my real name these days'' & 0 \\
+		``I am happy to report that drowning does kill this demonic entity. Oh holy are the waters of Chernarus!"" Omg, DED ;)''& 0\\
+		``Let them praise the name of the LORD: for his name alone is excellent; his glory is above the earth and heaven."" ~Psalms 148:13 \#Bible''& 0\\
+		someone plz get this nigger some help. He's playing up like mad & 0\\
+		stop talking you fucking nigger ! & 0 \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Sample of comments from the Sap dataset and their \ac{ip}. Note that unambiguously toxic comments can be assigned with zero \ac{ip}, while more nuanced cases tend to have higher values.}
+	\label{tab:inherent-examples}
+\end{table}
+
+\paragraph{How Does it Look Like?}
+Table~\ref{tab:inherent-examples} shows a random sample of items taken from the Sap dataset and their respective \ac{ip} values (\S\ref{sec:inherent:inherent}). Note that explicitly toxic or racist items tend to have \ac{ip} values of zero, alongside clearly unproblematic items. Inversely, more ambiguous and less comprehensible items tend to have larger \ac{ip} values. This pattern may suggest that \ac{ip} may be tied to the overall ambiguity of the statements, especially in cases where items may either be interpreted as very toxic, or non-toxic, which agrees with the overall goal of \ac{ndfu} (\S\ref{sec:related:polarization}). We include the \ac{ip} values for each individual item for all four datasets in the supplementary material.
+ 
+
 \section{Synthetic Experiments}
 \label{app:experiments}
 
@@ -875,10 +881,6 @@ To determine whether an observed score is statistically significant, we construc
 
 \section{Experiment Ablations}
 \label{app:ablation}
-
-\subsection{Why Does InPol Exist?}
-
-The fact that the DICES datasets (featuring 70+ annotators per item) exhibit zero \ac{ip} in all items may initially seem to validate either of the above hypotheses. However, even when repeating the experiment using random annotator subsets (ranging from 5 to 50 annotators) and taking the maximum across ten random samples for each subset size, \emph{we still observed zero \ac{ip}} (App.~\ref{app:ideal-dataset}). This finding indicates that the DICES datasets may be structurally different. This explanation is plausible given that the annotation targets are LLM texts, which may be relatively unsubtle compared to human items, as supported by low overall polarization (Fig.~\ref{fig:dataset-polarization}; App~\ref{app:ann_details}). Although a definitive answer to this question eludes us due to the lack of other datasets with high annotator counts per item, the indication that the DICES datasets may not feature similar polarization patterns is noteworthy. We discuss the exploratory use of our methodology for filtering subjective datasets in App.~\ref{app:ideal-dataset}.
 
 
 \subsection{Why Do Statistical Methods Fail?}
