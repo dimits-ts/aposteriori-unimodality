@@ -24,26 +24,17 @@ JOBS=(
 
 'sap|python src/sap.py --dataset-path=data/datasets/sap.csv --output-dir=output/main --graph-output-dir=graphs'
 
-'metric_comparison | python src/metric_comparison.py --cache-path=cache/metric-comparison.csv --graph-output-path=graphs/metric_comparison.png'
+'metric_comparison|python src/metric_comparison.py --cache-path=cache/metric-comparison.csv --graph-output-path=graphs/metric_comparison.png'
 
-'metric_comparison_simple | python src/metric_comparison.py --cache-path=cache/metric-comparison-simple.csv --graph-output-path=graphs/metric_comparison_simple.png --simple-simulation'
+'metric_comparison_simple|python src/metric_comparison.py --cache-path=cache/metric-comparison-simple.csv --graph-output-path=graphs/metric_comparison_simple.png --simple-simulation'
 
 'kumar|python src/kumar.py --dataset-path=data/datasets/kumar.json --output-dir=output/main --graph-output-dir=graphs --ablation-dir=ablation'
 
-'llm | python src/llm_analysis.py \
-  --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv \
-  --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv \
-  --sap-path=data/datasets/sap.csv \
-  --kumar-path=data/datasets/kumar.json \
-  --annotations-dir=output/annotations \
-  --paraphrase-dir=output/ablations/paraphrase \
-  --graph-output-dir=graphs \
-  --latex-output-dir=manuscript/generated \
-  --exclude-models olmo7b llama8b'
+'llm|python src/llm_analysis.py --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --sap-path=data/datasets/sap.csv --kumar-path=data/datasets/kumar.json --annotations-dir=output/annotations --paraphrase-dir=output/ablations/paraphrase --graph-output-dir=graphs --latex-output-dir=manuscript/generated --exclude-models olmo7b llama8b'
 )
 
 printf "%s\n" "${JOBS[@]}" |
-parallel --colsep '\|' -j8 --delay 0.1 run_and_log {1} {2}
+  parallel --colsep '\|' -j8 --delay 0.1 run_and_log "{1}" "{2}"
 
 python src/export_results.py \
     --results-dir=output/main \

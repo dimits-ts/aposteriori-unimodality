@@ -345,26 +345,29 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 			\multicolumn{3}{c}{\textbf{DICES-350}} \\
 			\midrule
 			\rowcolor{gray!15}
-			Ethnicity=Asian & -0.066 & 8138 \\
-			Education=Other & 0.021 & 2191 \\
+			Ethnicity=AfricanAm & -0.037 & 7627 \\
+			\rowcolor{gray!15}
+			Ethnicity=Asian & 0.045 & 6838 \\
+			Education=Other & -0.023 & 1841 \\
 			\midrule
 			\multicolumn{3}{c}{\textbf{DICES-990}} \\
 			\midrule
 			\rowcolor{gray!15}
-			Ethnicity=AfricanAm & -0.091 & 5810 \\
+			Ethnicity=AfricanAm & 0.099 & 5148 \\
+			Ethnicity=Latino & -0.063 & 5877 \\
 			\rowcolor{gray!15}
-			Ethnicity=Latino & 0.133 & 6610 \\
+			Ethnicity=Other & 0.034 & 21669 \\
 			\rowcolor{gray!15}
-			Ethnicity=Other & -0.074 & 24321 \\
+			Ethnicity=White & -0.065 & 10166 \\
+			Age=GenZ & 0.047 & 12214 \\
+			Age=Millennial & -0.007 & 34433 \\
+			Age=GenX+ & -0.028 & 12699 \\
+			Education=College & 0.006 & 52727 \\
+			Education=High school & -0.050 & 6619 \\
 			\rowcolor{gray!15}
-			Ethnicity=White & 0.120 & 11392 \\
-			Age=GenZ & -0.063 & 13741 \\
-			Age=GenX+ & 0.046 & 14384 \\
-			Education=High school & -0.075 & 7419 \\
+			Gender=Man & 0.036 & 28817 \\
 			\rowcolor{gray!15}
-			Gender=Man & -0.027 & 32494 \\
-			\rowcolor{gray!15}
-			Gender=Woman & 0.024 & 33471 \\
+			Gender=Woman & -0.027 & 29990 \\
 			\midrule
 			\multicolumn{3}{c}{\textbf{Sap}} \\
 			\midrule
@@ -1292,28 +1295,31 @@ Tables~\ref{tab:llm-apunim-by-prompt-kumar} and~\ref{tab:llm-apunim-by-prompt-sa
 		\multicolumn{4}{c}{\textbf{DICES-350}} \\
 		\midrule
 		
-		Age Gen. Z & .007 & .539 & 17528 \\
-		Age Millennial & .006 & .539 & 11268 \\
+		Age Gen. Z & -0.004 & .648 & 14728 \\
+		Age Millennial & -0.009 & .512 & 9468 \\
+		Age Gen. X+ & 0.015 & .312 & 8153 \\
+		Ed=College + & 0.010 & .263 & 19725 \\
 		\rowcolor{gray!15}
-		Age Gen. X+ & -0.019 & .166 & 9703 \\
+		Ed=High school & -0.015 & .175 & 10783 \\
 		\rowcolor{gray!15}
-		Ed=College + & -0.012 & .234 & 23475 \\
+		Ed=Other & -0.023 & .013 & 1841 \\
 		\rowcolor{gray!15}
-		Ed=High school & -0.015 & .186 & 12833 \\
-		Ed=Other & .021 & .025 & 2191 \\
-		Gender Man & .019 & .058 & 19093 \\
+		Gender Man & -0.017 & .073 & 16043 \\
+		Gender Woman & 0.018 & .073 & 16306 \\
 		\rowcolor{gray!15}
-		Gender Woman & -0.021 & .058 & 19406 \\
-		Race African Am. & .043 & 2.41e-05 & 9077 \\
+		Race African Am. & -0.037 & 1.77e-04 & 7627 \\
+		Race Asian & 0.045 & 5.81e-06 & 6838 \\
+		Race Latino & 0.006 & .495 & 5786 \\
 		\rowcolor{gray!15}
-		Race Asian & -0.066 & 1.16e-10 & 8138 \\
-		Race Latino & .003 & .920 & 6886 \\
-		Race Multiracial & .000 & .980 & 5008 \\
-		Race White & .020 & .067 & 9390 \\
+		Race Multiracial & -0.006 & .495 & 4208 \\
+		\rowcolor{gray!15}
+		Race White & -0.011 & .377 & 7890 \\
 		\bottomrule
 	\end{tabularx}
-	\caption{Apunim results for the DICES-350 Dataset. $^{*}$ denotes $p<0.10$, $^{**}$ denotes $p<0.05$, and $^{***}$ denotes $p<0.01$.  Rows shaded in gray indicate a negative $\text{apunim}$ value. Groups for which no polarized items among groups not included.}
+	\caption{Apunim results for the DICES-350 Dataset. $^{*}$ denotes $p<0.10$, $^{**}$ denotes $p<0.05$, and $^{***}$ denotes $p<0.01$. Rows shaded in gray indicate a negative $\text{apunim}$ value. Groups for which no polarized items among groups not included.}
 	\label{tab:dices350-full}
+	
+	
 \end{table}
 
 \begin{table}[t]
@@ -1326,28 +1332,31 @@ Tables~\ref{tab:llm-apunim-by-prompt-kumar} and~\ref{tab:llm-apunim-by-prompt-sa
 		\multicolumn{4}{c}{\textbf{DICES-990}} \\
 		\midrule
 		\rowcolor{gray!15}
-		Age Gen. Z & -0.063 & 3.05e-25 & 13741 \\
-		Age Millennial & .004 & .495 & 38436 \\
-		Age Gen. X+ & .046 & 7.17e-15 & 14384 \\
+		Age Gen. Z & 0.047 & 3.81e-46 & 12214 \\
 		\rowcolor{gray!15}
-		Ed=College + & -0.009 & .163 & 59142 \\
+		Age Millennial & -0.007 & .027 & 34433 \\
 		\rowcolor{gray!15}
-		Ed=High school & -0.075 & 5.80e-42 & 7419 \\
+		Age Gen. X+ & -0.028 & 5.62e-19 & 12699 \\
+		Ed=College + & 0.006 & .040 & 52727 \\
 		\rowcolor{gray!15}
-		Gender Man & -0.027 & 3.81e-05 & 32494 \\
-		Gender Woman & .025 & .00015 & 33471 \\
+		Ed=High school & -0.050 & 1.95e-47 & 6619 \\
+		Gender Man & 0.036 & 4.28e-29 & 28817 \\
 		\rowcolor{gray!15}
-		Race African Am. & -0.091 & 1.61e-64 & 5810 \\
+		Gender Woman & -0.027 & 2.98e-18 & 29990 \\
+		Race African Am. & 0.099 & 3.41e-140 & 5148 \\
 		\rowcolor{gray!15}
-		Race Asian & -0.011 & .080 & 18428 \\
-		Race Latino & .133 & 7.57e-112 & 6610 \\
+		Race Asian & -0.006 & .057 & 16486 \\
 		\rowcolor{gray!15}
-		Race Other & -0.075 & 1.51e-30 & 24321 \\
-		Race White & .120 & 6.03e-81 & 11392 \\
+		Race Latino & -0.063 & 3.06e-70 & 5877 \\
+		Race Other & 0.034 & 8.61e-27 & 21669 \\
+		\rowcolor{gray!15}
+		Race White & -0.065 & 3.39e-77 & 10166 \\
 		\bottomrule
 	\end{tabularx}
-	\caption{Apunim results for the DICES-990 Dataset. $^{*}$ denotes $p<0.10$, $^{**}$ denotes $p<0.05$, and $^{***}$ denotes $p<0.01$.  Rows shaded in gray indicate a negative $\text{apunim}$ value. Groups for which no polarized items among groups not included.}
+	\caption{Apunim results for the DICES-990 Dataset. $^{*}$ denotes $p<0.10$, $^{**}$ denotes $p<0.05$, and $^{***}$ denotes $p<0.01$. Rows shaded in gray indicate a negative $\text{apunim}$ value. Groups for which no polarized items among groups not included.}
 	\label{tab:dices990-full}
+	
+	
 \end{table}
 
 

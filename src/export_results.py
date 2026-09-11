@@ -179,8 +179,6 @@ def ordinal_graph_per_feature(
                 g_unique["ordinal_label"], rotation=45, ha="right"
             )
 
-            plt.tight_layout()
-
             safe_feature = (
                 str(feature_name).replace(" ", "_").replace("/", "-")
             )
@@ -420,6 +418,7 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
     fig.tight_layout()
 
     tasks.graphs.save_plot(graph_output_dir / "apunim_ordinal.png")
+    plt.close()
 
 
 def add_grouped_legend(

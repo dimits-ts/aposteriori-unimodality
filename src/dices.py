@@ -19,8 +19,8 @@ RESAMPLED_RUNS = 10
 
 class DicesDataset(tasks.preprocessing.Dataset):
     def __init__(self, dataset_path: Path, variant: str):
-        self.df = DicesDataset._base_df(dataset_path)
         self.variant = variant
+        self.df = self._base_df(dataset_path)
 
     def get_name(self) -> str:
         return "DICES-" + self.variant
@@ -40,14 +40,15 @@ class DicesDataset(tasks.preprocessing.Dataset):
     def get_annotation_column(self) -> str:
         return "is_harmful"
 
-    @staticmethod
-    def _base_df(dataset_path: Path) -> pd.DataFrame:
+    def _base_df(self, dataset_path: Path) -> pd.DataFrame:
         df = pd.read_csv(dataset_path)
 
-        if "Q3_bias_overall" not in df.columns:
-            df = df.rename(
-                {"Q3_unfair_bias_overall": "Q3_bias_overall"}, axis=1
-            )
+        if self.variant == "350":
+            target_label = "Q3_bias_targeting_inherited_attributes"
+        elif self.variant == "990":
+            target_label = "Q3_bias_incites_hatred"
+        else:
+            raise ValueError(f"Variant must be 990 and 350 not {self.variant}")
 
         df = df.loc[
             :,
@@ -56,7 +57,7 @@ class DicesDataset(tasks.preprocessing.Dataset):
                 "rater_age",
                 "rater_race",
                 "rater_education",
-                "Q3_bias_overall",
+                target_label,
                 "item_id",
                 "context",
                 "response",
@@ -68,7 +69,7 @@ class DicesDataset(tasks.preprocessing.Dataset):
             df["context"].fillna("") + "\n" + df["response"].fillna("")
         )
         df = df.drop(columns=["context", "response"])
-        df.Q3_bias_overall = df.Q3_bias_overall.map(
+        df[target_label] = df[target_label].map(
             {"No": -1, "Unsure": 0, "Yes": 1}
         ).astype(int)
 
@@ -106,7 +107,7 @@ class DicesDataset(tasks.preprocessing.Dataset):
                 "rater_age": "Age",
                 "rater_race": "Race",
                 "rater_education": "Education",
-                "Q3_bias_overall": "is_harmful",
+                target_label: "is_harmful",
             }
         )
         return df
