@@ -1,25 +1,23 @@
-\documentclass{article} % ICLR 2026
+% !TeX program = pdflatex
 
-\usepackage{iclr2026_conference,times}
+\documentclass{article} % For LaTeX2e
+\usepackage{iclr2027_conference,times}
+\input{math_commands.tex}
+
+%  ==================== MY PACKAGES ====================
 \usepackage[T1]{fontenc}
 
 \usepackage{graphicx}%
 \usepackage{multirow}%
 \usepackage{amsmath,amssymb,amsfonts}%
 \usepackage{amsthm}%
-\usepackage[title]{appendix}%
 \usepackage{xcolor}%
-\usepackage{textcomp}%
 \usepackage{booktabs}%
 \usepackage{float}%
-
-%  ==================== MY PACKAGES ====================
 \usepackage{acronym}
 \usepackage{tabularx}
-\usepackage{fancyvrb}
 \usepackage{hyperref}
 \usepackage{url}
-\usepackage{enumitem}
 \usepackage{colortbl}
 \usepackage{siunitx}
 \usepackage[export]{adjustbox}
@@ -77,7 +75,7 @@ Annotations are essential for subjective tasks, such as content moderation, toxi
 \FloatBarrier
 \begin{figure}[t]
 	\centering
-	\includegraphics[width=\textwidth]{disagreement_vs_polarization.png}
+	\includegraphics[width=\linewidth]{disagreement_vs_polarization.png}
 	\caption{Simulated experiment exploring four scenarios of a \ac{hs} detection task applied to a controversial statement by D. Trump (Jan. 2019). The variance in annotations across different annotators may cause traditional agreement metrics to ignore minority opinions, especially when opinions are mixed (top-right).}
 	\label{fig:disagreement-vs-polarization}
 \end{figure}
@@ -197,8 +195,8 @@ A(\text{``Could be better, could be worse''})\\
 
 \begin{figure}[t]
 	\centering
-	\includegraphics[width=0.65\textwidth, valign=t]{ndfu_combined.png}
-	\includegraphics[width=0.3\textwidth, valign=t]{apriori.png}
+	\includegraphics[width=0.65\linewidth, valign=t]{ndfu_combined.png}
+	\includegraphics[width=0.3\linewidth, valign=t]{apriori.png}
 	\caption{\textbf{Left:} Simulated experiment describing a polarizing comment where male and female annotators agree between themselves, but disagree with the opposite gender. \textbf{Right:} \ac{ip} across our datasets (\S\ref{sec:datasets}). Contrary to assumptions made in prior work, \ac{ip} is commonly non-zero and can even reach $nDFU = 1$ in datasets with low annotator counts.}
 	\label{fig:inherent}
 \end{figure}
@@ -312,7 +310,7 @@ We also include a perturbation-based p-value estimation, which tests whether the
 
 \begin{figure}
 	\centering
-	\includegraphics[width=\textwidth]{metric_comparison.png}
+	\includegraphics[width=\linewidth]{metric_comparison.png}
 	\caption{Polarization group attribution on randomly generated, synthetic distributions. Bars indicate standard error. For each experiment we assign a number of annotators per item, and split the annotator groups 50-50 or 80-20. Higher $\delta$ represents higher polarization between groups. Apunim is adept at attributing polarization to the correct group regardless of number of annotators per item, or how these annotators are split to different groups.}
 	\label{fig:metrics}
 \end{figure}
@@ -339,7 +337,7 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 	\small
 	\centering
 	\setlength{\tabcolsep}{4pt}
-	\begin{minipage}[t]{0.485\textwidth}
+	\begin{minipage}[t]{0.485\linewidth}
 		\begin{tabularx}{\linewidth}{X r r}
 			\toprule
 			\textbf{Group} & \textbf{Apunim} & \textbf{Support} \\
@@ -380,7 +378,7 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 		\end{tabularx}
 	\end{minipage}
 	\hfill
-	\begin{minipage}[t]{0.485\textwidth}
+	\begin{minipage}[t]{0.485\linewidth}
 		\begin{tabularx}{\linewidth}{X r r}
 			\toprule
 			\textbf{Group} & \textbf{Apunim} & \textbf{Support} \\
@@ -416,7 +414,7 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 
 \begin{figure}[t]
 	\centering
-	\includegraphics[width=\textwidth]{apunim_ordinal.png}
+	\includegraphics[width=\linewidth]{apunim_ordinal.png}
 	\caption{Polarization attribution trends in ordinal groups. The left side of the x-axis refers to young annotators, low education, low religiousness, and negativity towards the impacts of toxicity and technology. The full ordinal modes for each dimension and their individual labels can be found in App.~\ref{app:full}. We exclude groups with $<50$ annotations, since they near-universally result in zero apunim values due to lack of data. Filled points represent statistical significant ($p<0.05$) values.}
 	\label{fig:ordinal}
 \end{figure}
@@ -434,7 +432,7 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 
 \begin{figure*}[t]
 	\centering
-	\includegraphics[width=\textwidth]{llm_apunim_grid.png}
+	\includegraphics[width=\linewidth]{llm_apunim_grid.png}
 	\caption{\ac{ndfu} grouped by dataset (rows) and model family (columns) for each \ac{pc} persona dimension in the primary annotation task (blue) using the default prompt, compared with human annotations on the same sample (yellow).}
 	\label{fig:llm-polarization}
 \end{figure*}
@@ -507,10 +505,10 @@ The number of annotators per item for all datasets presented in \S\ref{sec:datas
 
 
 \begin{figure}[t]
-	\includegraphics[width=0.48\textwidth]{sap.png}
-	\includegraphics[width=0.48\textwidth]{kumar_sample.png}
-	\includegraphics[width=0.48\textwidth]{dices-350.png}
-	\includegraphics[width=0.48\textwidth]{dices-990.png}
+	\includegraphics[width=0.48\linewidth]{sap.png}
+	\includegraphics[width=0.48\linewidth]{kumar_sample.png}
+	\includegraphics[width=0.48\linewidth]{dices-350.png}
+	\includegraphics[width=0.48\linewidth]{dices-990.png}
 	\caption{Boxplots of dataset polarization for the human datasets considered in this paper for all groups in each examined \ac{pc} dimension.}
 	\label{fig:dataset-polarization}
 \end{figure}
@@ -518,7 +516,7 @@ The number of annotators per item for all datasets presented in \S\ref{sec:datas
 
 \begin{figure}[t]
 	\centering
-	\includegraphics[width=0.8\textwidth]{annotator_count_histogram.png}
+	\includegraphics[width=0.8\linewidth]{annotator_count_histogram.png}
 	\caption{We calculate the ratio of items for each dataset (y-axis) that had $x$ number of annotators (x-axis). We truncate the x-axis to 130 annotators, disregarding very few items in the Kumar dataset exceeding this threshold (see Table~\ref{tab:num-annot}), which is likely caused by a data error.}
 	\label{fig:ann_counts}
 \end{figure}
@@ -807,7 +805,7 @@ Both of these explanations are plausible and reflect known limitations of most \
 The fact that the DICES datasets (featuring 70+ annotators per item) exhibit zero \ac{ip} in all items may initially seem to validate either of the above hypotheses. However, even when repeating the experiment using random annotator subsets (ranging from 5 to 50 annotators) and taking the maximum across ten random samples for each subset size, \emph{we still observed zero \ac{ip}} (App.~\ref{app:ideal-dataset}). This finding indicates that the DICES datasets may be structurally different. This explanation is plausible given that the annotation targets are LLM texts, which may be relatively unsubtle compared to human items, as supported by low overall polarization (Fig.~\ref{fig:dataset-polarization}; App~\ref{app:ann_details}). Although a definitive answer to this question eludes us due to the lack of other datasets with high annotator counts per item, the indication that the DICES datasets may not feature similar polarization patterns is noteworthy. 
 
 \begin{table}[t]
-	\begin{tabularx}{\textwidth}{X c}
+	\begin{tabularx}{\linewidth}{X c}
 		\toprule
 		\textbf{Comment}  & \ac{ip} \\
 		\midrule
@@ -867,7 +865,7 @@ To determine whether an observed score is statistically significant, we construc
 
 \begin{figure}[t]
 	\centering
-	\includegraphics[width=\textwidth]{metric_comparison_simple.png}
+	\includegraphics[width=\linewidth]{metric_comparison_simple.png}
 	\caption{Polarization group attribution on randomly generated, synthetic distributions. Bars indicate standard error. For each experiment we assign a number of annotators per item, and split the annotator groups 50-50 or 80-20. The setup is much more simplified, relying on fixed-mean differences instead of the setup used in \S\ref{sec:apunim:recovery}.}
 	\label{fig:metrics-simple}
 \end{figure}
@@ -1001,7 +999,7 @@ The experiment, whose results are shown in Fig.~\ref{fig:metrics-simple} shows t
 \end{longtable}
 
 \begin{figure}[t]
-	\includegraphics[width=\textwidth]{kumar3k_seed_ablation.png}
+	\includegraphics[width=\linewidth]{kumar3k_seed_ablation.png}
 	\centering
 	\caption{Apunim values on the Kumar dataset ($n_{samples}=3000$) across ten runs with different subsets.  Black bars indicate two \acp{sd}. \ac{pc} dimensions with many groups are more volatile, although all dimensions broadly keep the same apunim sign across subsets.}
 	\label{fig:seeds}
@@ -1025,7 +1023,7 @@ In order to verify that this variability is caused by the sample size, and not b
 
 \begin{figure}[t]
 	\centering
-	\includegraphics[width=\textwidth]{pol_obs_subsampling_robustness.png}
+	\includegraphics[width=\linewidth]{pol_obs_subsampling_robustness.png}
 	\caption{\ac{sd} of $pol_{obs}$ across items, averaged across $1000$ runs (Eq.~\ref{eq:observed}). Shaded areas represent two \acp{sd}. Pol. estimates benefit from more annotators up to $n=20$, at which point they begin to plateau.}
 	\label{fig:std_error}
 \end{figure}
@@ -1079,7 +1077,7 @@ We use a single Quadro RTX 6000 GPU for tasks requiring small (7-8B) models and 
 
 \begin{figure*}[t]
 	\centering
-	\includegraphics[width=\textwidth]{human_vs_llm_histograms.png}
+	\includegraphics[width=\linewidth]{human_vs_llm_histograms.png}
 	\caption{Annotation frequencies for humans and each LLM in the primary annotation task using the default prompt.}
 	\label{fig:llm-human-frequencies}
 \end{figure*}
@@ -1116,8 +1114,8 @@ We examine the following conditions for selecting models and datasets for our LL
 \subsection{LLM Annotation Results}
 
 \begin{figure}[t]
-	\includegraphics[width=\textwidth]{llm_apunim_grid_persona.png}
-	\includegraphics[width=\textwidth]{llm_apunim_grid_stereotype.png}
+	\includegraphics[width=\linewidth]{llm_apunim_grid_persona.png}
+	\includegraphics[width=\linewidth]{llm_apunim_grid_stereotype.png}
 	\caption{LLM polarization patterns for the adversarial prompts.}
 	\label{fig:llm-polarization-adversarial}
 \end{figure}
@@ -1132,11 +1130,11 @@ Tables~\ref{tab:llm-apunim-by-prompt-kumar} and~\ref{tab:llm-apunim-by-prompt-sa
 \label{app:full}
 
 \begin{figure}[ht]
-	\includegraphics[width=0.48\textwidth]{apunim_ordinal_dices-990_Age.png}
-	\includegraphics[width=0.48\textwidth]{apunim_ordinal_kumar_Age.png}
-	\includegraphics[width=0.48\textwidth]{apunim_ordinal_kumar_Education.png}
-	\includegraphics[width=0.48\textwidth]{apunim_ordinal_kumar_Religion_Important.png}
-	\includegraphics[width=0.48\textwidth]{apunim_ordinal_kumar_Toxicity_Problem.png}
+	\includegraphics[width=0.48\linewidth]{apunim_ordinal_dices-990_Age.png}
+	\includegraphics[width=0.48\linewidth]{apunim_ordinal_kumar_Age.png}
+	\includegraphics[width=0.48\linewidth]{apunim_ordinal_kumar_Education.png}
+	\includegraphics[width=0.48\linewidth]{apunim_ordinal_kumar_Religion_Important.png}
+	\includegraphics[width=0.48\linewidth]{apunim_ordinal_kumar_Toxicity_Problem.png}
 	\caption{Apunim values expanded for each ordinal \ac{pc} dimension. This figure is complementary to Fig.~\ref{fig:ordinal}. The values in the graphs were extracted from the Tables of App.~\ref{app:full}. }
 	\label{fig:ordinal-full}
 \end{figure}
@@ -1261,7 +1259,7 @@ Tables~\ref{tab:llm-apunim-by-prompt-kumar} and~\ref{tab:llm-apunim-by-prompt-sa
 
 \begin{table}[t]
 	\centering
-	\begin{tabularx}{\columnwidth}{X r r r}
+	\begin{tabularx}{\linewidth}{X r r r}
 		\toprule
 		\textbf{Group} & \textbf{apunim} & \textbf{pvalue} & \textbf{support} \\
 		\midrule
@@ -1286,7 +1284,7 @@ Tables~\ref{tab:llm-apunim-by-prompt-kumar} and~\ref{tab:llm-apunim-by-prompt-sa
 
 \begin{table}[t]
 	\centering
-	\begin{tabularx}{\columnwidth}{X r r r}
+	\begin{tabularx}{\linewidth}{X r r r}
 		\toprule
 		\textbf{Group} & \textbf{apunim} & \textbf{pvalue} & \textbf{support} \\
 		\midrule
@@ -1320,7 +1318,7 @@ Tables~\ref{tab:llm-apunim-by-prompt-kumar} and~\ref{tab:llm-apunim-by-prompt-sa
 
 \begin{table}[t]
 	\centering
-	\begin{tabularx}{\columnwidth}{X r r r}
+	\begin{tabularx}{\linewidth}{X r r r}
 		\toprule
 		\textbf{Group} & \textbf{apunim} & \textbf{pvalue} & \textbf{support} \\
 		\midrule
