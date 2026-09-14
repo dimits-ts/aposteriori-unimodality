@@ -91,6 +91,11 @@ NON_PERSONA_COLS = {
 
 VARIANT_NAMES = ["variant1", "variant2", "variant3"]
 
+# N_PERSONAS_PER_COMMENT in llm_annotate.py: number of distinct annotator
+# personas sampled per comment, i.e. the max number of "annotators" any
+# single comment has in the LLM-annotation CSVs.
+MAX_ANNOTATORS_PER_ITEM = 6
+
 # Preferred left-to-right column order for the composite apunim grid (models
 # not in this list are appended alphabetically after it).
 MODEL_DISPLAY_ORDER = [
@@ -105,7 +110,7 @@ MODEL_DISPLAY_ORDER = [
 # The three main instruction prompts compared throughout this module (mean-
 # diff plots, apunim prompt table). "default" is treated as the baseline
 # that "stereotype"/"persona" are compared against.
-MAIN_PROMPT_NAMES = ["default", "stereotype", "persona", "direct", "single"]
+MAIN_PROMPT_NAMES = ["default", "stereotype", "persona", "single", "direct"]
 
 # Datasets for which all three MAIN_PROMPT_NAMES were actually run (the
 # DICES datasets only have the "default" prompt) -- used for both the
@@ -254,22 +259,6 @@ def load_llm_df(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path)
     df["annotation_clean"] = _clean_annotation(df["annotation"])
     return df
-
-
-def _skip_if_exists(path: Path) -> bool:
-    """
-    Returns True (and prints a message) if `path` already exists, so the
-    caller can skip recomputing it. Mirrors the same helper in dices.py.
-    """
-    if path.exists():
-        print(f"Skipping (already exists): {path}")
-        return True
-    return False
-
-
-def _run_if_missing(output_path: Path, compute_and_export) -> None:
-    if not _skip_if_exists(output_path):
-        compute_and_export()
 
 
 def _key_columns(dfs: dict[str, pd.DataFrame]) -> list[str]:
@@ -885,9 +874,6 @@ def per_model_repeat_consistency_table(
 def export_latex_table(
     df: pd.DataFrame, output_path: Path, caption: str, label: str
 ) -> None:
-    if _skip_if_exists(output_path):
-        return
-
     df = df.copy()
     if "Krippendorff's alpha" in df.columns:
         df["Krippendorff's alpha"] = df["Krippendorff's alpha"].map(
@@ -1300,27 +1286,36 @@ def compute_llm_apunim_by_prompt(
     return pd.concat(rows, ignore_index=True)
 
 
+def _trim_numeric_col(col):
+    return pd.to_numeric(
+        col,
+        errors="coerce",
+    ).map(lambda x: "---" if pd.isna(x) else f"{x:.2f}")
+
+
 def export_llm_apunim_prompt_table(
     df: pd.DataFrame, output_path: Path, dataset_name: str, label: str
 ) -> None:
-    if _skip_if_exists(output_path):
-        return
     if df.empty:
         print(
             f"No LLM apunim-by-prompt results for {dataset_name}; "
             f"skipping {output_path}."
         )
         return
+    df = df.rename(columns={"SDB Feature": r"\ac{pc}"})
+
+    for number_col in MAIN_PROMPT_NAMES:
+        number_col = number_col.capitalize()
+        df[number_col] = _trim_numeric_col(df[number_col])
 
     df = df.replace("_", r"\_", regex=True).set_index(
-        ["SDB Feature", "Value", "Model"]
+        [r"\ac{pc}", "Value", "Model"]
     )
 
     latex_str = df.to_latex(
         caption=(
             "Aposteriori unimodality results for the LLM annotations of "
-            f"the {dataset_name} dataset, across the default, stereotype "
-            "and persona prompts."
+            f"the {dataset_name} dataset, across instruction prompts."
         ),
         label=label,
         escape=False,  # allow LaTeX math ($^{*}$) already in the cells
@@ -1328,7 +1323,7 @@ def export_llm_apunim_prompt_table(
         index=True,
         multirow=True,
         longtable=True,
-        float_format="%.3f"
+        float_format="%.2f",
     )
     latex_str = latex_str.replace(
         r"\begin{table}[ht]", r"\begin{table}[ht]\centering"
@@ -1631,8 +1626,6 @@ def export_inherent_polarization_table(
     label: str = "tab:inherent-polarization",
     longtable: bool = True,
 ) -> None:
-    if _skip_if_exists(output_path):
-        return
     if df.empty:
         print(f"No inherent-polarization results; skipping {output_path}.")
         return
@@ -1651,6 +1644,7 @@ def export_inherent_polarization_table(
         index=True,
         multirow=True,
         longtable=longtable,
+        float_format="%.2f",
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(latex_str)
@@ -1684,14 +1678,11 @@ def _run_histogram_step(
     human_datasets, annotations_dir, graph_output_dir, prompt_name
 ):
     output_path = graph_output_dir / "human_vs_llm_histograms.png"
-    _run_if_missing(
-        output_path,
-        lambda: plot_annotation_histograms(
-            human_datasets=human_datasets,
-            annotations_dir=annotations_dir,
-            output_path=output_path,
-            prompt_name=prompt_name,
-        ),
+    plot_annotation_histograms(
+        human_datasets=human_datasets,
+        annotations_dir=annotations_dir,
+        output_path=output_path,
+        prompt_name=prompt_name,
     )
 
 
@@ -1699,15 +1690,12 @@ def _run_prompt_diff_step(
     human_datasets, annotations_dir, graph_output_dir, exclude_models
 ):
     output_path = graph_output_dir / "llm_prompt_mean_diff.png"
-    _run_if_missing(
-        output_path,
-        lambda: plot_prompt_mean_diff(
-            human_datasets=human_datasets,
-            annotations_dir=annotations_dir,
-            output_path=output_path,
-            prompt_names=MAIN_PROMPT_NAMES,
-            exclude_models=exclude_models,
-        ),
+    plot_prompt_mean_diff(
+        human_datasets=human_datasets,
+        annotations_dir=annotations_dir,
+        output_path=output_path,
+        prompt_names=MAIN_PROMPT_NAMES,
+        exclude_models=exclude_models,
     )
 
 
@@ -1715,21 +1703,18 @@ def _run_cross_model_consistency_step(
     human_datasets, annotations_dir, latex_output_dir, prompt_name
 ):
     output_path = latex_output_dir / "llm-consistency-cross-model.tex"
-    _run_if_missing(
-        output_path,
-        lambda: export_latex_table(
-            cross_model_consistency_table(
-                human_datasets=human_datasets,
-                annotations_dir=annotations_dir,
-                prompt_name=prompt_name,
-            ),
-            output_path=output_path,
-            caption=(
-                "Consistency (Krippendorff's $\\alpha$, ordinal) between "
-                f"LLMs given the same ({prompt_name}) prompt, per dataset."
-            ),
-            label="tab:llm-consistency-cross-model",
+    export_latex_table(
+        cross_model_consistency_table(
+            human_datasets=human_datasets,
+            annotations_dir=annotations_dir,
+            prompt_name=prompt_name,
         ),
+        output_path=output_path,
+        caption=(
+            "Consistency (Krippendorff's $\\alpha$, ordinal) between "
+            f"LLMs given the same ({prompt_name}) prompt, per dataset."
+        ),
+        label="tab:llm-consistency-cross-model",
     )
 
 
@@ -1746,23 +1731,20 @@ def _run_cross_model_consistency_excluding_step(
         latex_output_dir / "llm-consistency-cross-model-excluding.tex"
     )
     excluded_str = ", ".join(sorted(exclude_models))
-    _run_if_missing(
-        output_path,
-        lambda: export_latex_table(
-            cross_model_consistency_table(
-                human_datasets=human_datasets,
-                annotations_dir=annotations_dir,
-                prompt_name=prompt_name,
-                exclude_models=exclude_models,
-            ),
-            output_path=output_path,
-            caption=(
-                "Consistency (Krippendorff's $\\alpha$, ordinal) between LLMs "
-                f"given the same ({prompt_name}) prompt, per dataset,  "
-                f"excluding the following models: {excluded_str}."
-            ),
-            label="tab:llm-consistency-cross-model-excluding",
+    export_latex_table(
+        cross_model_consistency_table(
+            human_datasets=human_datasets,
+            annotations_dir=annotations_dir,
+            prompt_name=prompt_name,
+            exclude_models=exclude_models,
         ),
+        output_path=output_path,
+        caption=(
+            "Consistency (Krippendorff's $\\alpha$, ordinal) between LLMs "
+            f"given the same ({prompt_name}) prompt, per dataset, excluding "
+            f"the following models: {excluded_str}."
+        ),
+        label="tab:llm-consistency-cross-model-excluding",
     )
 
 
@@ -1770,20 +1752,16 @@ def _run_variant_consistency_step(
     human_datasets, paraphrase_dir, latex_output_dir
 ):
     output_path = latex_output_dir / "llm-consistency-variants.tex"
-    _run_if_missing(
-        output_path,
-        lambda: export_latex_table(
-            per_model_variant_consistency_table(
-                human_datasets=human_datasets, paraphrase_dir=paraphrase_dir
-            ),
-            output_path=output_path,
-            caption=(
-                "Consistency (Krippendorff's $\\alpha$, ordinal) of each "
-                "model with itself across the three paraphrased prompt "
-                "variants."
-            ),
-            label="tab:llm-consistency-variants",
+    export_latex_table(
+        per_model_variant_consistency_table(
+            human_datasets=human_datasets, paraphrase_dir=paraphrase_dir
         ),
+        output_path=output_path,
+        caption=(
+            "Consistency (Krippendorff's $\\alpha$, ordinal) of each model "
+            "with itself across the three paraphrased prompt variants."
+        ),
+        label="tab:llm-consistency-variants",
     )
 
 
@@ -1791,41 +1769,46 @@ def _run_repeat_consistency_step(
     human_datasets, repeat_dir, latex_output_dir, prompt_name
 ):
     output_path = latex_output_dir / "llm-consistency-repeats.tex"
-    _run_if_missing(
-        output_path,
-        lambda: export_latex_table(
-            per_model_repeat_consistency_table(
-                human_datasets=human_datasets,
-                repeat_dir=repeat_dir,
-                prompt_name=prompt_name,
-            ),
-            output_path=output_path,
-            caption=(
-                "Consistency (Krippendorff's $\\alpha$, ordinal) of each "
-                f"model with itself across repeated runs of the same "
-                f"prompt ({prompt_name})."
-            ),
-            label="tab:llm-consistency-repeats",
+    export_latex_table(
+        per_model_repeat_consistency_table(
+            human_datasets=human_datasets,
+            repeat_dir=repeat_dir,
+            prompt_name=prompt_name,
         ),
+        output_path=output_path,
+        caption=(
+            "Consistency (Krippendorff's $\\alpha$, ordinal) of each model "
+            f"with itself across repeated runs of the same ({prompt_name}) "
+            "prompt."
+        ),
+        label="tab:llm-consistency-repeats",
     )
 
 
 def _run_apunim_prompt_table_for_dataset(
-    human_datasets, annotations_dir, latex_output_dir, key
+    human_datasets: list[str],
+    annotations_dir: Path,
+    latex_output_dir: Path,
+    cache_dir: Path,
+    key: str,
 ):
-    output_path = latex_output_dir / f"llm-apunim-by-prompt-{key}.tex"
-    if _skip_if_exists(output_path):
-        return
+    cache_path = cache_dir / f"apunim_{key}.csv"
+    if cache_path.exists():
+        long_df = pd.read_csv(cache_path)
+    else:
+        long_df = compute_llm_apunim_by_prompt(
+            annotations_dir=annotations_dir,
+            dataset_key=key,
+            prompt_names=MAIN_PROMPT_NAMES,
+            exclude_models=APUNIM_TABLE_EXCLUDE_MODELS,
+        )
+        long_df.to_csv(cache_path)
 
-    long_df = compute_llm_apunim_by_prompt(
-        annotations_dir=annotations_dir,
-        dataset_key=key,
-        prompt_names=MAIN_PROMPT_NAMES,
-        exclude_models=APUNIM_TABLE_EXCLUDE_MODELS,
-    )
     wide_df = build_llm_apunim_prompt_table(
         long_df, prompt_names=MAIN_PROMPT_NAMES
     )
+
+    output_path = latex_output_dir / f"llm-apunim-by-prompt-{key}.tex"
     export_llm_apunim_prompt_table(
         wide_df,
         output_path=output_path,
@@ -1835,14 +1818,21 @@ def _run_apunim_prompt_table_for_dataset(
 
 
 def _run_apunim_prompt_table_step(
-    human_datasets, annotations_dir, latex_output_dir
+    human_datasets: list[str],
+    annotations_dir: Path,
+    latex_output_dir: Path,
+    cache_dir: Path,
 ):
     # Restricted to the datasets the paraphrase/stereotype/persona prompts
     # were actually run on (kumar, sap).
     for key in PROMPT_COMPARISON_DATASET_KEYS:
         if key in human_datasets:
             _run_apunim_prompt_table_for_dataset(
-                human_datasets, annotations_dir, latex_output_dir, key
+                human_datasets=human_datasets,
+                annotations_dir=annotations_dir,
+                latex_output_dir=latex_output_dir,
+                key=key,
+                cache_dir=cache_dir,
             )
 
 
@@ -1851,15 +1841,12 @@ def _run_apunim_grid_step(
 ):
     output_path = graph_output_dir / "llm_apunim_grid.png"
     grid_models = list(set(MODEL_DISPLAY_ORDER) - APUNIM_TABLE_EXCLUDE_MODELS)
-    _run_if_missing(
-        output_path,
-        lambda: plot_apunim_grid(
-            human_datasets=human_datasets,
-            annotations_dir=annotations_dir,
-            output_path=output_path,
-            prompt_name=prompt_name,
-            models=grid_models,
-        ),
+    plot_apunim_grid(
+        human_datasets=human_datasets,
+        annotations_dir=annotations_dir,
+        output_path=output_path,
+        prompt_name=prompt_name,
+        models=grid_models,
     )
 
 
@@ -1868,16 +1855,13 @@ def _run_adversarial_apunim_grid_for_prompt(
 ):
     output_path = graph_output_dir / f"llm_apunim_grid_{adv_prompt_name}.png"
     grid_models = list(set(MODEL_DISPLAY_ORDER) - APUNIM_TABLE_EXCLUDE_MODELS)
-    _run_if_missing(
-        output_path,
-        lambda: plot_apunim_grid(
-            human_datasets=human_datasets,
-            annotations_dir=annotations_dir,
-            output_path=output_path,
-            prompt_name=adv_prompt_name,
-            models=grid_models,
-            title=f"{adv_prompt_name.capitalize()} Prompt",
-        ),
+    plot_apunim_grid(
+        human_datasets=human_datasets,
+        annotations_dir=annotations_dir,
+        output_path=output_path,
+        prompt_name=adv_prompt_name,
+        models=grid_models,
+        title=f"{adv_prompt_name.capitalize()} Prompt",
     )
 
 
@@ -1899,9 +1883,6 @@ def _run_inherent_polarization_step(
     apunim_output_dir = Path("output/apunim")
 
     output_path = latex_output_dir / "inherent-polarization.tex"
-    if _skip_if_exists(output_path):
-        return
-
     inherent_df = compute_inherent_polarization_comparison(
         human_datasets=human_datasets,
         annotations_dir=annotations_dir,
@@ -1935,6 +1916,7 @@ def main(
     repeat_dir: Path,
     graph_output_dir: Path,
     latex_output_dir: Path,
+    cache_dir: Path,
     exclude_models: list[str],
     prompt_name: str = "default",
 ):
@@ -1974,7 +1956,7 @@ def main(
     )
 
     _run_apunim_prompt_table_step(
-        human_datasets, annotations_dir, latex_output_dir
+        human_datasets, annotations_dir, latex_output_dir, cache_dir=cache_dir
     )
     _run_apunim_grid_step(
         human_datasets, annotations_dir, graph_output_dir, prompt_name
@@ -2060,6 +2042,11 @@ if __name__ == "__main__":
         ),
     )
     parser.add_argument(
+        "--cache-dir",
+        required=True,
+        help="Directory for cached apunim computations.",
+    )
+    parser.add_argument(
         "--exclude-models",
         nargs="+",
         default=[],
@@ -2082,5 +2069,6 @@ if __name__ == "__main__":
         graph_output_dir=Path(args.graph_output_dir),
         latex_output_dir=Path(args.latex_output_dir),
         prompt_name=args.prompt_name,
+        cache_dir=Path(args.cache_dir),
         exclude_models=args.exclude_models,
     )

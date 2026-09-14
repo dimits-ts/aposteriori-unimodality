@@ -30,7 +30,7 @@ JOBS=(
 
 'kumar|python src/kumar.py --dataset-path=data/datasets/kumar.json --output-dir=output/main --graph-output-dir=graphs --ablation-dir=ablation'
 
-'llm|python src/llm_analysis.py --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --sap-path=data/datasets/sap.csv --kumar-path=data/datasets/kumar.json --annotations-dir=output/annotations --paraphrase-dir=output/ablations/paraphrase --graph-output-dir=graphs --latex-output-dir=manuscript/generated --exclude-models olmo7b llama8b'
+'llm|python src/llm_analysis.py --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --sap-path=data/datasets/sap.csv --kumar-path=data/datasets/kumar.json --annotations-dir=output/annotations --paraphrase-dir=output/ablations/paraphrase --graph-output-dir=graphs --latex-output-dir=manuscript/generated --cache-dir=cache --exclude-models olmo7b llama8b'
 )
 
 printf "%s\n" "${JOBS[@]}" |
