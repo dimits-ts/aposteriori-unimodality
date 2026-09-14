@@ -136,11 +136,7 @@ def _plot_matrix(
 
     ax.set_ylim(0.8, 5.2)
 
-    ax.set_title(
-        title,
-        pad=10,
-        fontweight="bold",
-    )
+    ax.set_title(title, fontweight="bold")
 
     # remove unnecessary subplot spines
     ax.spines["top"].set_visible(False)
@@ -164,22 +160,7 @@ def plot_annotation_distributions(
         _prepare_distributions(n_annotators, variance)
     )
 
-    fig, axs = plt.subplots(
-        2,
-        2,
-        sharex=True,
-        sharey=True,
-    )
-
-    # MUCH larger spacing
-    plt.subplots_adjust(
-        hspace=0.32,
-        wspace=0.18,
-        left=0.16,
-        right=0.96,
-        top=0.86,
-        bottom=0.16,
-    )
+    fig, axs = plt.subplots(2, 2)
 
     # Low polarization / low disagreement
     _plot_matrix(
@@ -215,19 +196,13 @@ def plot_annotation_distributions(
 
     # clearer matrix-style labels
     fig.supxlabel(
-        "Low $\\rightarrow$ High disagreement",
-        fontweight="bold",
-        y=0.08,  # avoid legend
-        fontsize=36
+        r"Low $\rightarrow$ High disagreement"
     )
 
-    fig.supylabel(
-        "Low $\\rightarrow$ High polarization", fontweight="bold", fontsize=36
-    )
+    fig.supylabel(r"Low $\rightarrow$ High polarization")
 
     fig.suptitle(
-        "``We will never stop in our fight against Radical Islamic Terrorism''",
-        fontweight="bold",
+        r"``\textbf{We will never stop in our fight against Radical Islamic Terrorism}''"
     )
 
     legend_handles = [
@@ -257,9 +232,6 @@ def plot_annotation_distributions(
         handles=legend_handles,
         loc="lower center",
         ncol=2,
-        bbox_to_anchor=(0.5, 0.01),
-        fontsize=18,
-        frameon=True,
     )
 
     tasks.graphs.save_plot(graph_dir / "disagreement_vs_polarization.png")
@@ -343,13 +315,10 @@ def _combined_dfu_plot(
 
 
 def discussion_example(graph_dir: Path) -> None:
-    misogynist_comment = """
-    ``Most women do not drive well.''
+    misogynist_comment = """``Most women do not drive well.''
     """
-    misandrist_comment = """
-    ``Most men need closer friendships,
-    not just romantic support.''
-    """
+    misandrist_comment = """``Most men need closer friendships,
+    not just romantic support.''"""
     discussion_comment = f"{misogynist_comment}{misandrist_comment}"
 
     d_woman_comment1 = _truncated_normal(
@@ -401,67 +370,82 @@ def _plot_example_individual(
         np.hstack([ndfu_man, ndfu_woman]), bins=NUM_BINS, normalized=True
     )
 
-    fig, ax = plt.subplots()
+    with plt.rc_context(
+        {
+            key: value * 2
+            for key, value in plt.rcParams.items()
+            if key
+            in {
+                "font.size",
+                "axes.titlesize",
+                "axes.labelsize",
+                "xtick.labelsize",
+                "ytick.labelsize",
+                "legend.fontsize",
+            }
+        }
+    ):
+        fig, ax = plt.subplots()
 
-    sns.histplot(
-        men_annot,
-        bins=NUM_BINS,
-        alpha=0.6,
-        kde=True,
-        ax=ax,
-        color=COLOR_MAP["Men"],
-    )
-    men_patches = list(ax.patches)
-
-    sns.histplot(
-        women_annot,
-        bins=NUM_BINS,
-        alpha=0.6,
-        kde=True,
-        ax=ax,
-        color=COLOR_MAP["Women"],
-    )
-    women_patches = ax.patches[len(men_patches) :]
-
-    for patch in men_patches:
-        patch.set_hatch(HATCH_MAP["Men"])
-        patch.set_edgecolor("black")
-
-    for patch in women_patches:
-        patch.set_hatch(HATCH_MAP["Women"])
-        patch.set_edgecolor("black")
-
-    legend_handles = [
-        Patch(
-            facecolor=COLOR_MAP["Men"],
-            edgecolor="black",
-            hatch=HATCH_MAP["Men"],
-            label="Men",
+        sns.histplot(
+            men_annot,
+            bins=NUM_BINS,
             alpha=0.6,
-        ),
-        Patch(
-            facecolor=COLOR_MAP["Women"],
-            edgecolor="black",
-            hatch=HATCH_MAP["Women"],
-            label="Women",
+            kde=True,
+            ax=ax,
+            color=COLOR_MAP["Men"],
+        )
+        men_patches = list(ax.patches)
+
+        sns.histplot(
+            women_annot,
+            bins=NUM_BINS,
             alpha=0.6,
-        ),
-    ]
+            kde=True,
+            ax=ax,
+            color=COLOR_MAP["Women"],
+        )
+        women_patches = ax.patches[len(men_patches) :]
 
-    ax.set_title(title)
-    ax.legend(handles=legend_handles, loc="upper right")
+        for patch in men_patches:
+            patch.set_hatch(HATCH_MAP["Men"])
+            patch.set_edgecolor("black")
 
-    ax.set_xlabel(
-        "Toxicity\n"
-        f"$nDFU_{{Men}}={ndfu_man:.4f}$\n"
-        f"$nDFU_{{Women}}={ndfu_woman:.4f}$\n"
-        f"$nDFU_{{All}}={ndfu_all:.4f}$",
-    )
-    ax.set_ylabel(r"\#Annotations")
-    ax.set_xlim(1, 10)
+        for patch in women_patches:
+            patch.set_hatch(HATCH_MAP["Women"])
+            patch.set_edgecolor("black")
 
-    tasks.graphs.save_plot(graph_path)
-    plt.close()
+        legend_handles = [
+            Patch(
+                facecolor=COLOR_MAP["Men"],
+                edgecolor="black",
+                hatch=HATCH_MAP["Men"],
+                label="Men",
+                alpha=0.6,
+            ),
+            Patch(
+                facecolor=COLOR_MAP["Women"],
+                edgecolor="black",
+                hatch=HATCH_MAP["Women"],
+                label="Women",
+                alpha=0.6,
+            ),
+        ]
+
+        ax.set_title(title)
+        ax.legend(handles=legend_handles, loc="upper right")
+
+        ax.set_xlabel(
+            "Toxicity\n"
+            f"$nDFU_{{Men}}={ndfu_man:.4f}$\n"
+            f"$nDFU_{{Women}}={ndfu_woman:.4f}$\n"
+            f"$nDFU_{{All}}={ndfu_all:.4f}$",
+        )
+        ax.set_ylabel(r"\#Annotations")
+        ax.set_xlim(1, 10)
+
+        tasks.graphs.save_plot(graph_path)
+        plt.close()
 
 
 if __name__ == "__main__":

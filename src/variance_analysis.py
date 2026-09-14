@@ -44,9 +44,7 @@ def main(
         dataset_path=dices_large_path, variant="990"
     )
     sap_ds = sap.SapDataset(dataset_path=sap_path)
-    kumar_ds = kumar.KumarDataset(
-        dataset_path=kumar_path, num_samples=3_000
-    )
+    kumar_ds = kumar.KumarDataset(dataset_path=kumar_path, num_samples=3_000)
     datasets = [dices350_ds, dices990_ds, sap_ds, kumar_ds]
     tasks.preprocessing.Dataset.print_descriptive_statistics(datasets)
     tasks.preprocessing.Dataset.print_annotation_count_table(datasets)
@@ -185,11 +183,8 @@ def plot_variance_curve(results_df, graph_path: Path):
 
     plt.xlabel(r"\# Annotators sampled per comment")
     plt.ylabel("Mean SD of $pol_{obs.}$ across comments")
-    plt.title(
-        "Effect of annotator sample size on $pol_{obs.}$ variability"
-    )
+    plt.title("Effect of annotator sample size on $pol_{obs.}$ variability")
     plt.grid(True)
-    plt.tight_layout()
 
     tasks.graphs.save_plot(graph_path)
     plt.close()
@@ -251,6 +246,7 @@ def plot_annotator_count_histogram_from_datasets(
     min_val = all_df["n_annotators"].min()
     max_val = all_df["n_annotators"].max()
     bins_edges = np.linspace(min_val, max_val, N_BINS + 1)
+    _, ax = plt.subplots()
 
     for i, dataset_name in enumerate(dataset_names):
         data_subset = all_df[all_df["dataset"] == dataset_name]["n_annotators"]

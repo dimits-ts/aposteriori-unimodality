@@ -9,36 +9,34 @@ import apunim
 from . import preprocessing
 
 # Okabe–Ito palette
-COLORBLIND_24 = [
+COLORBLIND_PALETTE = [
     # --- Core ---
-    "#000000",  #  1 black
-    "#E69F00",  #  2 orange
-    "#56B4E9",  #  3 sky blue
-    "#009E73",  #  4 bluish green
-    "#F0E442",  #  5 yellow
-    "#0072B2",  #  6 blue
-    "#D55E00",  #  7 vermillion
-    "#CC79A7",  #  8 reddish purple
-
+    "#000000",
+    "#E69F00",
+    "#56B4E9",
+    "#009E73",
+    "#F0E442",
+    "#0072B2",
+    "#D55E00",
+    "#CC79A7",
     # --- Neutral / light extensions ---
-    "#999999",  #  9 mid gray
-    "#8DD3C7",  # 10 light teal
-    "#FDB462",  # 11 light orange
-    "#B3DE69",  # 12 light yellow-green
-    "#80B1D3",  # 13 soft blue
-    "#FB8072",  # 14 soft coral
-    "#CAB2D6",  # 15 lavender
-    "#BC80BD",  # 16 plum
-
+    "#999999",
+    "#8DD3C7",
+    "#FDB462",
+    "#B3DE69",
+    "#80B1D3",
+    "#FB8072",
+    "#CAB2D6",
+    "#BC80BD",
     # --- Additional medium/dark colors ---
-    "#4D4D4D",  # 17 dark gray
-    "#1B9E77",  # 18 deep teal
-    "#7570B3",  # 19 indigo
-    "#A6761D",  # 20 ochre/brown
-    "#66A61E",  # 21 olive green
-    "#E7298A",  # 22 magenta
-    "#A6CEE3",  # 23 pale blue
-    "#FFB000",  # 24 amber
+    "#4D4D4D",
+    "#1B9E77",
+    "#7570B3",
+    "#A6761D",
+    "#66A61E",
+    "#E7298A",
+    "#A6CEE3",
+    "#FFB000",
 ]
 
 MARKERS = ["o", "s", "D", "^", "v", "P", "X"]

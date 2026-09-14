@@ -39,7 +39,11 @@ The following are produced:
    (dataset, model) -- an nDFU-by-SDB-group boxplot for the "default"
    prompt -- assembled into one grid instead of many separate images, and
    sized/fonted so it stays readable once placed in a paper (see
-   plot_apunim_grid's docstring for how that sizing works).
+   plot_apunim_grid's docstring for how that sizing works). The same grid
+   is also produced separately for each adversarial prompt (currently
+   "stereotype" and "persona", see ADVERSARIAL_PROMPT_NAMES), as
+   llm_apunim_grid_<prompt>.png, with a title that just names the prompt
+   instead of the main figure's title.
 
 Rows are matched across files (models, or prompt variants) using the
 comment id ("text_id") together with the sampled persona's characteristics,
@@ -112,6 +116,12 @@ MAIN_PROMPT_NAMES = ["default", "stereotype", "persona"]
 # DICES datasets only have the "default" prompt) -- used for both the
 # prompt mean-diff plot and the apunim-by-prompt LaTeX table.
 PROMPT_COMPARISON_DATASET_KEYS = ["kumar", "sap"]
+
+# The "adversarial" instruction prompts (instructions/adversarial/<dataset>/,
+# run by annotate_adversarial.sh) -- every MAIN_PROMPT_NAMES entry besides
+# the "default" baseline. Each gets its own composite apunim grid (see
+# plot_apunim_grid / main()).
+ADVERSARIAL_PROMPT_NAMES = [p for p in MAIN_PROMPT_NAMES if p != "default"]
 
 # Models excluded from the apunim-by-prompt LaTeX table (they were never
 # run on the stereotype/persona prompts to begin with; listed explicitly
@@ -351,9 +361,7 @@ def plot_annotation_histograms(
     n = len(dataset_keys)
     nrows = -(-n // ncols)  # ceil division
 
-    fig, axes = plt.subplots(
-        nrows, ncols, squeeze=False
-    )
+    fig, axes = plt.subplots(nrows, ncols, squeeze=False)
 
     for i, key in enumerate(dataset_keys):
         ax = axes[i // ncols][i % ncols]
@@ -516,9 +524,7 @@ def plot_prompt_mean_diff(
     n = len(keys_with_data)
     nrows = -(-n // ncols)  # ceil division
 
-    fig, axes = plt.subplots(
-        nrows, ncols, squeeze=False
-    )
+    fig, axes = plt.subplots(nrows, ncols, squeeze=False)
 
     for i, key in enumerate(keys_with_data):
         ax = axes[i // ncols][i % ncols]
@@ -783,6 +789,24 @@ def export_latex_table(
     print(f"Table exported to {output_path.resolve()}")
 
 
+def _sample_text_ids(
+    annotations_dir: Path, dataset_key: str, prompt_name: str
+) -> set:
+    """
+    Every text_id appearing in any model's annotation CSV for
+    (dataset_key, prompt_name) -- i.e. the comments llm_annotate.py
+    actually sampled for that (dataset, prompt). Shared by
+    _human_sample_dataset and the inherent-polarization comparison so both
+    restrict to exactly the same comment set the same way.
+    """
+    ids: set = set()
+    for path in find_annotation_files(
+        annotations_dir, dataset_key, prompt_name
+    ).values():
+        ids.update(pd.read_csv(path, usecols=["text_id"])["text_id"])
+    return ids
+
+
 def _human_sample_dataset(
     ds_human: tasks.preprocessing.Dataset,
     annotations_dir: Path,
@@ -805,13 +829,9 @@ def _human_sample_dataset(
     Returns None if no LLM annotation files exist for this (dataset,
     prompt), since there's then no sample to restrict to.
     """
-    files = find_annotation_files(annotations_dir, dataset_key, prompt_name)
-    if not files:
+    sample_ids = _sample_text_ids(annotations_dir, dataset_key, prompt_name)
+    if not sample_ids:
         return None
-
-    sample_ids: set = set()
-    for path in files.values():
-        sample_ids.update(pd.read_csv(path, usecols=["text_id"])["text_id"])
 
     comment_col = ds_human.get_comment_key_column()
     df = ds_human.get_dataset()
@@ -835,11 +855,17 @@ def plot_apunim_grid(
     prompt_name: str = "default",
     models: list[str] | None = None,
     sdb_columns_limit: int | None = 6,
+    title: str = "LLM Polarization is Disconnected From Humans",
 ) -> None:
     """Plot all datasets and models in a single 2x5 grid using subfigures.
 
     Each dataset occupies one subfigure (row), with one subplot per
     Human/model column. A single title is placed above each dataset row.
+
+    `title` is the figure-level suptitle. It defaults to the main
+    ("default" prompt) plot's title; callers producing a separate grid per
+    adversarial prompt (see main()) pass something that just names the
+    instruction instead, e.g. "Stereotype Prompt".
     """
     dataset_keys = [
         k for k in PROMPT_COMPARISON_DATASET_KEYS if k in human_datasets
@@ -970,7 +996,7 @@ def plot_apunim_grid(
 
     # One shared y-axis label for the whole figure.
     fig.supylabel("nDFU")
-    fig.suptitle("LLM Polarization is Disconnected From Humans")
+    fig.suptitle(title)
 
     tasks.graphs.save_plot(output_path)
     plt.close(fig)
@@ -1027,17 +1053,56 @@ def compute_llm_apunim_by_prompt(
 
     if not rows:
         return pd.DataFrame(
-            columns=[
-                "SDB Feature",
-                "Value",
-                "Model",
-                "Prompt",
-                "apunim",
-                "pvalue",
-                "support",
-            ]
+            columns=np.array(
+                [
+                    "SDB Feature",
+                    "Value",
+                    "Model",
+                    "Prompt",
+                    "apunim",
+                    "pvalue",
+                    "support",
+                ]
+            )
         )
     return pd.concat(rows, ignore_index=True)
+
+
+def export_llm_apunim_prompt_table(
+    df: pd.DataFrame, output_path: Path, dataset_name: str, label: str
+) -> None:
+    if _skip_if_exists(output_path):
+        return
+    if df.empty:
+        print(
+            f"No LLM apunim-by-prompt results for {dataset_name}; "
+            f"skipping {output_path}."
+        )
+        return
+
+    df = df.replace("_", r"\_", regex=True).set_index(
+        ["SDB Feature", "Value", "Model"]
+    )
+
+    latex_str = df.to_latex(
+        caption=(
+            "Aposteriori unimodality results for the LLM annotations of "
+            f"the {dataset_name} dataset, across the default, stereotype "
+            "and persona prompts."
+        ),
+        label=label,
+        escape=False,  # allow LaTeX math ($^{*}$) already in the cells
+        position="ht",
+        index=True,
+        multirow=True,
+        longtable=True,
+    )
+    latex_str = latex_str.replace(
+        r"\begin{table}[ht]", r"\begin{table}[ht]\centering"
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(latex_str)
+    print(f"Table exported to {output_path.resolve()}")
 
 
 def build_llm_apunim_prompt_table(
@@ -1089,37 +1154,229 @@ def build_llm_apunim_prompt_table(
     return wide
 
 
-def export_llm_apunim_prompt_table(
-    df: pd.DataFrame, output_path: Path, dataset_name: str, label: str
+# ---------------------------------------------------------------------------
+# 5. Inherent-polarization comparison (Human vs. LLM), default + adversarial
+# ---------------------------------------------------------------------------
+
+
+def _human_inherent_polarization(
+    dataset_key: str,
+    human_ds: tasks.preprocessing.Dataset,
+    sample_ids: set,
+    human_results_dir: Path,
+) -> pd.Series:
+    """
+    Human inherent-polarization values, restricted to `sample_ids` (the
+    same comments the LLMs were run on -- see _human_sample_dataset).
+
+    Reuses the precomputed output/main/<dataset>-inherent.csv written by
+    sap.py/kumar.py/dices.py when present: subsetting an *already
+    computed* per-comment Series to a smaller comment set is exact, not
+    an approximation, since inherent polarization is computed
+    independently per comment. Only recomputes -- mirroring each
+    dataset's own choice of exhaustive (sap/kumar) vs. random (dices, see
+    compute_inherent_polarization_random/_exhaustive) -- when no cached
+    file is found.
+    """
+    cached_path = human_results_dir / f"{dataset_key}-inherent.csv"
+    if cached_path.exists():
+        series = pd.read_csv(cached_path, index_col="comment")[
+            "inherent_polarization"
+        ]
+        return series[series.index.isin(sample_ids)].dropna()
+
+    fn = (
+        tasks.run_helper.compute_inherent_polarization_random
+        if dataset_key.startswith("dices")
+        else tasks.run_helper.compute_inherent_polarization_exhaustive
+    )
+    return fn(human_ds).dropna()
+
+
+def _llm_inherent_polarization(
+    dataset_key: str,
+    prompt_name: str,
+    pseudo: str,
+    path: Path,
+    apunim_output_dir: Path,
+) -> pd.Series:
+    """
+    LLM inherent-polarization values for a single (dataset, prompt,
+    model). Reuses the precomputed
+    apunim_output_dir/<dataset>-<prompt>-<model>-inherent.csv when
+    present (currently only written for the "default" prompt); otherwise
+    computes it directly on an LLMAnnotationDataset built from `path`.
+    Always exhaustive -- LLMs have at most MAX_ANNOTATORS_PER_ITEM (6)
+    annotators per comment, so the exhaustive search sap.py/kumar.py use
+    is trivially cheap here regardless of dataset.
+    """
+    cached_path = (
+        apunim_output_dir
+        / f"{dataset_key}-{prompt_name}-{pseudo}-inherent.csv"
+    )
+    if cached_path.exists():
+        series = pd.read_csv(cached_path, index_col="comment")[
+            "inherent_polarization"
+        ]
+        return series.dropna()
+
+    df = load_llm_df(path)
+    ds = LLMAnnotationDataset(df, dataset_key, pseudo, prompt_name)
+    return tasks.run_helper.compute_inherent_polarization_exhaustive(
+        ds
+    ).dropna()
+
+
+def compute_inherent_polarization_comparison(
+    human_datasets: tasks.preprocessing.LazyDatasetLoader,
+    annotations_dir: Path,
+    apunim_output_dir: Path,
+    human_results_dir: Path,
+    dataset_keys: list[str] = DATASET_KEYS,
+    prompt_names: list[str] = MAIN_PROMPT_NAMES,
+    exclude_models: set[str] | None = None,
+) -> pd.DataFrame:
+    """
+    Long-format DataFrame with one row per comment giving that comment's
+    inherent polarization, for every (Dataset, Prompt, Source) where
+    Source is "Human" or a model pseudo -- restricted, for both Human and
+    every model, to the sample of comments the LLMs were actually run on
+    for that (dataset, prompt) (see _human_sample_dataset). (dataset,
+    prompt) combinations with no LLM annotation files (e.g. DICES'
+    stereotype/persona columns, which were never run) are skipped.
+    Columns: 'Dataset', 'Prompt', 'Source', 'TextID', 'value'.
+    """
+    exclude_models = set(exclude_models or ())
+    records = []
+    for key in dataset_keys:
+        if key not in human_datasets:
+            continue
+        ds_human = human_datasets[key]
+
+        for prompt_name in prompt_names:
+            files = find_annotation_files(annotations_dir, key, prompt_name)
+            models = _order_models(set(files) - exclude_models)
+            if not models:
+                continue
+
+            sample_ids = _sample_text_ids(annotations_dir, key, prompt_name)
+            human_ds = _human_sample_dataset(
+                ds_human, annotations_dir, key, prompt_name
+            )
+            if human_ds is not None:
+                human_series = _human_inherent_polarization(
+                    key, human_ds, sample_ids, human_results_dir
+                )
+                for text_id, value in human_series.items():
+                    records.append(
+                        {
+                            "Dataset": key,
+                            "Prompt": prompt_name,
+                            "Source": "Human",
+                            "TextID": text_id,
+                            "value": value,
+                        }
+                    )
+
+            for pseudo in models:
+                llm_series = _llm_inherent_polarization(
+                    key, prompt_name, pseudo, files[pseudo], apunim_output_dir
+                )
+                for text_id, value in llm_series.items():
+                    records.append(
+                        {
+                            "Dataset": key,
+                            "Prompt": prompt_name,
+                            "Source": pseudo,
+                            "TextID": text_id,
+                            "value": value,
+                        }
+                    )
+
+    return pd.DataFrame(records)
+
+
+def build_inherent_polarization_table(
+    long_df: pd.DataFrame,
+    human_datasets: dict[str, pd.DataFrame],
+    dataset_keys: list[str],
+    prompt_names: list[str],
+) -> pd.DataFrame:
+    """
+    Build the inherent-polarization table as mean ± 2 SD.
+
+    Rows are (Dataset, Source), columns are prompts.
+    """
+    table = (
+        long_df.groupby(["Dataset", "Source", "Prompt"])["value"]
+        .agg(["mean", "std"])
+        .reset_index()
+    )
+
+    table["formatted"] = table.apply(
+        lambda row: f"{row['mean']:.3f} $\\pm$ {2 * row['std']:.3f}",
+        axis=1,
+    )
+
+    table = table.pivot(
+        index=["Dataset", "Source"],
+        columns="Prompt",
+        values="formatted",
+    )
+
+    # Ensure prompts appear in the requested order.
+    table = table.reindex(columns=prompt_names)
+
+    # Replace missing combinations with "---".
+    table = table.fillna("---")
+
+    return table
+
+
+def export_inherent_polarization_table(
+    df: pd.DataFrame,
+    output_path: Path,
+    label: str = "tab:inherent-polarization",
+    longtable: bool = True,
 ) -> None:
     if _skip_if_exists(output_path):
         return
+
     if df.empty:
-        print(
-            f"No LLM apunim-by-prompt results for {dataset_name}; "
-            f"skipping {output_path}."
-        )
+        print(f"No inherent-polarization results; skipping {output_path}.")
         return
 
-    df = df.replace("_", r"\_", regex=True).set_index(
-        ["SDB Feature", "Value", "Model"]
+    # Dataset and Source are already the index from
+    # build_inherent_polarization_table().
+    df = df.copy()
+
+    # Escape underscores in the index and column names/cells.
+    df.index = pd.MultiIndex.from_tuples(
+        [
+            (str(dataset).replace("_", r"\_"),
+             str(source).replace("_", r"\_"))
+            for dataset, source in df.index
+        ],
+        names=df.index.names,
     )
 
     latex_str = df.to_latex(
         caption=(
-            "Aposteriori unimodality results for the LLM annotations of "
-            f"the {dataset_name} dataset, across the default, stereotype "
-            "and persona prompts."
+            "Mean inherent polarization (mean $\\pm$ 2 SD) per "
+            "(dataset, prompt), for Human and each LLM."
         ),
         label=label,
-        escape=False,  # allow LaTeX math ($^{*}$) already in the cells
+        escape=False,
         position="ht",
         index=True,
         multirow=True,
-        longtable=True,
+        longtable=longtable,
     )
+    
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(latex_str)
+
     print(f"Table exported to {output_path.resolve()}")
 
 
@@ -1326,6 +1583,68 @@ def main(
             ),
         )
 
+    # The same composite apunim grid, but one per adversarial prompt
+    # (stereotype/persona) instead of the default prompt, with a title
+    # that just names the instruction rather than the main plot's title.
+    for adv_prompt_name in ADVERSARIAL_PROMPT_NAMES:
+        adv_grid_path = (
+            graph_output_dir / f"llm_apunim_grid_{adv_prompt_name}.png"
+        )
+        if _skip_if_exists(adv_grid_path):
+            continue
+        plot_apunim_grid(
+            human_datasets=human_datasets,
+            annotations_dir=annotations_dir,
+            output_path=adv_grid_path,
+            prompt_name=adv_prompt_name,
+            models=list(
+                set(MODEL_DISPLAY_ORDER) - APUNIM_TABLE_EXCLUDE_MODELS
+            ),
+            title=f"{adv_prompt_name.capitalize()} Prompt",
+        )
+
+    # -----------------------------------------------------------------------
+    # 5. Inherent polarization: Human vs. LLM annotations.
+    # -----------------------------------------------------------------------
+
+    # Human inherent-polarization cache:
+    #   output/main/<dataset>-inherent.csv
+    #
+    # LLM inherent-polarization cache:
+    #   output/apunim/<dataset>-<prompt>-<model>-inherent.csv
+    #
+    # These are deliberately NOT latex_output_dir.
+    human_results_dir = Path("output/main")
+    apunim_output_dir = Path("output/apunim")
+
+    inherent_df = compute_inherent_polarization_comparison(
+        human_datasets=human_datasets,
+        annotations_dir=annotations_dir,
+        apunim_output_dir=apunim_output_dir,
+        human_results_dir=human_results_dir,
+        dataset_keys=DATASET_KEYS[2:],
+        prompt_names=MAIN_PROMPT_NAMES,
+        exclude_models=set(exclude_models),
+    )
+
+    # Inherent-polarization LaTeX table.
+    inherent_table_path = latex_output_dir / "inherent-polarization.tex"
+
+    if not _skip_if_exists(inherent_table_path):
+        inherent_table_df = build_inherent_polarization_table(
+            long_df=inherent_df,
+            human_datasets=human_datasets,  # type: ignore
+            dataset_keys=DATASET_KEYS[2:],
+            prompt_names=MAIN_PROMPT_NAMES,
+        )
+
+        export_inherent_polarization_table(
+            df=inherent_table_df,
+            output_path=inherent_table_path,
+            label="tab:inherent-polarization",
+            longtable=False
+        )
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -1411,14 +1730,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(
-        dices_small_path=(
-            Path(args.dices_small_path) if args.dices_small_path else None
-        ),
-        dices_large_path=(
-            Path(args.dices_large_path) if args.dices_large_path else None
-        ),
-        sap_path=Path(args.sap_path) if args.sap_path else None,
-        kumar_path=Path(args.kumar_path) if args.kumar_path else None,
+        dices_small_path=Path(args.dices_small_path),
+        dices_large_path=Path(args.dices_large_path),
+        sap_path=Path(args.sap_path),
+        kumar_path=Path(args.kumar_path),
         annotations_dir=Path(args.annotations_dir),
         paraphrase_dir=Path(args.paraphrase_dir),
         repeat_dir=Path(args.repeat_dir),
