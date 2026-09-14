@@ -141,7 +141,7 @@ def simulate(
     Because the group codes are +/- 1/2, p_j represents approximately
     the difference between the two group means for comment j.
 
-    Importantly, the direction of polarization can change from comment
+    The direction of polarization can change from comment
     to comment. A comment may be favored by group A while another is
     favored by group B.
     """
@@ -797,7 +797,7 @@ def plot(
             1.08,
         )
 
-    for ax in axes[len(CONDITIONS) :]:
+    for ax in axes[len(CONDITIONS):]:
         ax.set_visible(False)
 
     handles, labels = axes[0].get_legend_handles_labels()

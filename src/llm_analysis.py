@@ -91,11 +91,6 @@ NON_PERSONA_COLS = {
 
 VARIANT_NAMES = ["variant1", "variant2", "variant3"]
 
-# N_PERSONAS_PER_COMMENT in llm_annotate.py: number of distinct annotator
-# personas sampled per comment, i.e. the max number of "annotators" any
-# single comment has in the LLM-annotation CSVs.
-MAX_ANNOTATORS_PER_ITEM = 6
-
 # Preferred left-to-right column order for the composite apunim grid (models
 # not in this list are appended alphabetically after it).
 MODEL_DISPLAY_ORDER = [
@@ -110,7 +105,7 @@ MODEL_DISPLAY_ORDER = [
 # The three main instruction prompts compared throughout this module (mean-
 # diff plots, apunim prompt table). "default" is treated as the baseline
 # that "stereotype"/"persona" are compared against.
-MAIN_PROMPT_NAMES = ["default", "stereotype", "persona"]
+MAIN_PROMPT_NAMES = ["default", "stereotype", "persona", "direct", "single"]
 
 # Datasets for which all three MAIN_PROMPT_NAMES were actually run (the
 # DICES datasets only have the "default" prompt) -- used for both the
@@ -1333,6 +1328,7 @@ def export_llm_apunim_prompt_table(
         index=True,
         multirow=True,
         longtable=True,
+        float_format="%.3f"
     )
     latex_str = latex_str.replace(
         r"\begin{table}[ht]", r"\begin{table}[ht]\centering"
