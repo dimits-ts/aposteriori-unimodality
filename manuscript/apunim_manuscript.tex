@@ -1042,7 +1042,7 @@ We briefly discuss the type of data most suited for our proposed methodology, an
 \paragraph{Filtering Datasets with Desirable Levels of Subjectivity} In order to investigate whether the numerous annotators per items can explain the lack of \ac{ip} in the DICES datasets (\S\ref{sec:inherent}) we gradually subsample the annotators for each item randomly with replacement, starting from five annotators per item, and scaling up to the full complement of annotators in the dataset with a step of two. For each such step, we choose ten annotator samples and compute the maximum \ac{ip} across all runs. Even with annotator counts similar to the Kumar and DICES datasets, \ac{ip} remains zero, suggesting that the absence of \ac{ip} can not be attributed to annotator number alone---rather, it is plausibly a pattern attributable to the DICES datasets themselves. This kind of analysis may be used in the exploratory phase of dataset selection in order to filter out datasets without enough group-specific subjectivity.
 
 
-\section{LLM Annotation}
+\section{LLM Annotation Procedure}
 \label{app:llms}
 
 \subsection{Models Used}
@@ -1131,6 +1131,9 @@ Tables~\ref{tab:llm-apunim-by-prompt-kumar} and~\ref{tab:llm-apunim-by-prompt-sa
 
 \section{Full Results}
 \label{app:full}
+
+\subsection{Human Annotations}
+\label{app:full:human}
 
 \begin{figure}[ht]
 	\includegraphics[width=0.48\linewidth]{apunim_ordinal_dices-990_Age.png}
@@ -1359,6 +1362,12 @@ Tables~\ref{tab:llm-apunim-by-prompt-kumar} and~\ref{tab:llm-apunim-by-prompt-sa
 	
 \end{table}
 
+
+\subsection{LLM Annotation}
+\label{app:full:llm}
+
+\input{generated/llm-apunim-by-prompt-sap.tex}
+\input{generated/llm-apunim-by-prompt-kumar.tex}
 
 \section{Prompts Used}
 \label{app:prompts}
