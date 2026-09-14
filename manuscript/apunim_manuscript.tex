@@ -246,7 +246,7 @@ When considered exhaustively, these theoretical, random groups include both obse
 	\includegraphics[width=0.32\linewidth]{ndfu_comment1.png}
 	\includegraphics[width=0.32\linewidth]{ndfu_comment2.png}
 	\includegraphics[width=0.32\linewidth]{ndfu_discussion.png}
-	\caption{A synthetic experiment simulating a polarizing discussion with two comments where annotators disagree about which one is toxic. When we aggregate the comments, we unintentionally change the comparison: instead of comparing two unimodal distributions (each comment viewed separately) with two bimodal distributions (their aggregated annotations), we end up comparing two bimodal distributions, obscuring the source of the polarization (polarization explained by gender, but not shown).}
+	\caption{Synthetic experiment showing two comments with annotators disagreeing about which one is toxic. Instead of comparing two unimodal distributions (comments viewed separately) with two bimodal distributions (their aggregated annotations), we end up comparing two bimodal distributions during aggregation, obscuring the source of the polarization (explained by gender, but not shown).}
 	\label{fig:ndfu_discussion}
 \end{figure}
 
@@ -311,7 +311,7 @@ We also include a perturbation-based p-value estimation, which tests whether the
 \begin{figure}
 	\centering
 	\includegraphics[width=\linewidth]{metric_comparison.png}
-	\caption{Polarization group attribution on randomly generated, synthetic distributions. Bars indicate standard error. For each experiment we assign a number of annotators per item, and split the annotator groups 50-50 or 80-20. Higher $\delta$ represents higher polarization between groups. Apunim is adept at attributing polarization to the correct group regardless of number of annotators per item, or how these annotators are split to different groups.}
+	\caption{Polarization group attribution on synthetic distributions. Bars indicate standard error. We assign a number of annotators per item, and split the annotator groups 50-50 or 80-20. Higher $\delta$ represents higher polarization. Apunim is adept at attributing polarization to the correct group regardless of number of annotators per item, or how these annotators are split.}
 	\label{fig:metrics}
 \end{figure}
 
@@ -331,7 +331,7 @@ Fig.~\ref{fig:metrics} shows the effectiveness of apunim, the aposteriori unimod
 \subsection{Human Annotators}
 \label{sec:results:humans}
 
-Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can explain observed polarization. Statistically significant results are presented in Table~\ref{tab:merged-apunim}. See App.~\ref{app:software} for details on other parameters and execution times, and App.~\ref{app:full} for the full results. We note that the lack of rich annotation data prevents us from analyzing how different annotator groups interact (e.g., the relationship between LGBTQ+ and Conservative annotators) and thus our analysis is necessarily uni-dimensional.
+Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can explain observed polarization. Statistically significant results are presented in Table~\ref{tab:merged-apunim}. See App.~\ref{app:software} for details on other parameters and execution times, and App.~\ref{app:full} for the full results. The lack of rich annotation data prevents us from analyzing how different annotator groups interact and thus our analysis is necessarily uni-dimensional.
 
 \begin{table}[t]
 	\small
@@ -440,9 +440,9 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 	\label{fig:llm-polarization}
 \end{figure*}
 
-Prior literature has shown that LLMs are not reliable annotators when using persona prompting; they tend to reproduce stereotypes \citep{lutz-etal-2025-prompt, liu-etal-2024-evaluating-large}, are unreliable for minority groups \citep{lutz-etal-2025-prompt} and persona adherence has been shown to be volatile \citep{shu-etal-2024-dont, kovavc2024stick}. Unlike prior work that investigated model performance \citep{gupta2024bias} or human--LLM agreement \citep{dong-etal-2024-llm, gomez-etal-2024-algorithmic, masud-etal-2024-hate}, we aim to discover whether attributable polarization exists regardless of faithfulness to the actual groups.
+Prior literature has shown that LLMs are not reliable annotators when using persona prompting; they tend to reproduce stereotypes \citep{lutz-etal-2025-prompt, liu-etal-2024-evaluating-large} and are unreliable for minority groups \citep{lutz-etal-2025-prompt}. Unlike prior work that investigated model performance \citep{gupta2024bias} or human--LLM agreement \citep{dong-etal-2024-llm, gomez-etal-2024-algorithmic, masud-etal-2024-hate}, we test whether attributable polarization exists regardless of faithfulness to the actual groups.
 
-We investigate six open-source LLMs with six annotators per item supplied with personas sampled from our human dataset. We annotate a random sample of 300 comments for the Sap dataset and 1000 items for Kumar. Our results show \emph{no statistically significant attribution effects} and very small \emph{apunim} values for any of the groups in all models and datasets (see App.~\ref{app:llms}; Table~\ref{tab:llm-apunim-by-prompt-kumar},~\ref{tab:llm-apunim-by-prompt-sap}). Using four adversarial prompts progressively emphasizing the importance of the LLMs' personas (App.~\ref{app:prompts}), since instruction prompts are known to influence the effect of personas \citep{weeber-etal-2026-one}, also yields no results. Indeed, the adversarial prompts did not seem to push the \emph{apunim} values to any particular direction, suggesting that instructing the model is an ineffective way of eliciting \emph{any} polarizing behavior. \footnote{These prompts do however tend to increase \ac{ip}, although not to human levels---see App.~\ref{app:llms}; Table~\ref{tab:inherent-polarization}.}\footnote{We note that there may exist other ways to induce polarizing behavior in LLMs such as Supervised Fine-tuning, although this is outside the scope of this work.}
+We investigate six open-source LLMs with six annotators per item supplied with personas sampled from our human dataset across a sample of 300 comments for the Sap and 1000 items for the Kumar dataset. Our results show \emph{no statistically significant attribution effects} and very small \emph{apunim} values for any of the groups in all models and datasets (see App.~\ref{app:llms}; Table~\ref{tab:llm-apunim-by-prompt-kumar},~\ref{tab:llm-apunim-by-prompt-sap}). Using four adversarial prompts progressively emphasizing the importance of the LLMs' personas (App.~\ref{app:prompts}), as instruction prompts are known to influence the effect of personas \citep{weeber-etal-2026-one}, also yields no results. Indeed, the adversarial prompts did not seem to push the \emph{apunim} values to any particular direction, suggesting that instructing the model is an ineffective way of eliciting \emph{any} polarizing behavior.\footnote{These prompts do however tend to increase \ac{ip}, although not to human levels---see App.~\ref{app:llms}; Table~\ref{tab:inherent-polarization}.}\footnote{We note that there may exist other ways to induce polarizing behavior in LLMs such as Supervised Fine-tuning, although this is outside the scope of this work.}
 
 This pattern can be explained both by the lack of overall polarization exhibited by these models and the homogeneous distribution of polarization across groups, which is not observable to this extent in human annotations (Fig.~\ref{fig:llm-polarization}), and which is further supported by overall small \ac{ip} values (App.~\ref{app:llms}; Table~\ref{tab:inherent-polarization}). Our findings therefore support social science work which warns against generating human annotation data without substantial replication studies \citep{rossi_2024, kapania-etal-2025-examining}.
 See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations.
@@ -481,7 +481,7 @@ We stress that our metric functions strictly as a diagnostic warning signal. Any
 
 \paragraph{Prompts Used} This study uses adversarial prompts which explicitly instruct the model to change its outputs according to their persona prompts. The purpose of these prompts is to test the LLMs under an extreme case of prompt engineering and are not to be used for generalized usage. The use of these prompts may degrade model performance, increase the risk of stereotyping and produce misleading results.
 
-\bibliographystyle{iclr2026_conference}
+\bibliographystyle{iclr2027_conference}
 \bibliography{refs}
 
 \FloatBarrier
@@ -1084,6 +1084,7 @@ We use a single Quadro RTX 6000 GPU for tasks requiring small (7-8B) models and 
 	\caption{Annotation frequencies for humans and each LLM in the primary annotation task using the default prompt.}
 	\label{fig:llm-human-frequencies}
 \end{figure*}
+%TODO fix this
 
 \input{generated/inherent-polarization.tex}
 
@@ -1125,15 +1126,15 @@ We examine the following conditions for selecting models and datasets for our LL
 
 Tables~\ref{tab:llm-apunim-by-prompt-kumar} and~\ref{tab:llm-apunim-by-prompt-sap} show the apunim results for the LLM annotation task on the Kumar and Sap datasets respectively. Apunim values are largely model-dependent, but no other concrete pattern can be discerned. Fig.~\ref{fig:llm-polarization-adversarial} shows the overall polarization patterns when using the different adversarial instructions. The Qwen-23B and LLaMa-70B models consistently produce no polarization, while the persona-focused prompt seems to elicit some varied polarization, even though it does not translate to higher apunim values. This pattern would indicate that the persona-focused prompt likely adds more overall variance to the persona-conditioned annotations, even though that variance is not consistent.
 
+\begingroup
+\scriptsize
 \input{generated/llm-apunim-by-prompt-kumar.tex}
 \input{generated/llm-apunim-by-prompt-sap.tex}
+\endgroup
 
 
 \section{Full Results}
 \label{app:full}
-
-\subsection{Human Annotations}
-\label{app:full:human}
 
 \begin{figure}[ht]
 	\includegraphics[width=0.48\linewidth]{apunim_ordinal_dices-990_Age.png}
@@ -1358,16 +1359,8 @@ Tables~\ref{tab:llm-apunim-by-prompt-kumar} and~\ref{tab:llm-apunim-by-prompt-sa
 	\end{tabularx}
 	\caption{Apunim results for the DICES-990 Dataset. $^{*}$ denotes $p<0.10$, $^{**}$ denotes $p<0.05$, and $^{***}$ denotes $p<0.01$. Rows shaded in gray indicate a negative $\text{apunim}$ value. Groups for which no polarized items among groups not included.}
 	\label{tab:dices990-full}
-	
-	
 \end{table}
 
-
-\subsection{LLM Annotation}
-\label{app:full:llm}
-
-\input{generated/llm-apunim-by-prompt-sap.tex}
-\input{generated/llm-apunim-by-prompt-kumar.tex}
 
 \section{Prompts Used}
 \label{app:prompts}
@@ -1376,25 +1369,6 @@ This section only involves the full contents of the prompts. See App.~\ref{app:l
 
 
 \subsection{Main Annotation Prompts}
-
-\subsubsection{DICES}
-
-\paragraph{Default}
-You are a human annotator with the following characteristics: \{persona\}.
-You are tasked with annotating LLM responses. Evaluate the final chatbot response in the conversation for unfair bias toward an individual or group.
-Consider whether the response exhibits any of the following:
-\begin{itemize}
-	\item \textbf{Targeting beliefs:} unfairly targets, insults, demeans, or expresses hostility toward a person or group because of their beliefs.
-	\item \textbf{Targeting gender or sexual orientation:} unfairly targets, insults, demeans, or expresses hostility toward a person or group because of their gender or sexual orientation.
-	\item \textbf{Targeting inherited attributes:} unfairly targets, insults, demeans, or expresses hostility toward a person or group because of an inherited or immutable attribute.
-	\item \textbf{Targeting status:} unfairly targets, insults, demeans, or expresses hostility toward a person or group because of their social, economic, or other status.
-	\item \textbf{Other unfair bias:} contains another form of unfair bias toward an individual or group that is not covered above.
-\end{itemize}
-Answer 1 if at least one of these forms of unfair bias is clearly present.
-Answer 0 if none can be clearly identified as present, but there is genuine ambiguity about whether at least one criterion applies.
-Answer -1 if none of the criteria apply and there is no meaningful ambiguity.
-Reply with a single number and nothing else.
-Do not infer bias solely from the topic being discussed. Base the judgment on what the chatbot response actually says or implies.
 
 \subsubsection{Kumar}
 
@@ -1414,15 +1388,16 @@ You are an annotator with the following characteristics: {{persona}}
 Annotate the comment according to how your persona would personally perceive it. Base your judgment on your persona's characteristics, attitudes, experiences, and sensitivities.
 
 How toxic would your persona find this comment?
-\begin{itemize}
+\begin{enumerate}
 	\item Extremely toxic
 	\item Very toxic
 	\item Moderately toxic
 	\item Slightly toxic
 	\item Not at all toxic
-\end{itemize}
+\end{enumerate}
 
 Reply with a single number only.
+
 
 \paragraph{Adversarial}
 You are an annotator with the following characteristics: {{persona}}
@@ -1431,15 +1406,45 @@ When rating the comment, be very sensitive to the specific characteristics of yo
 
 How toxic would your persona find this comment?
 
-\begin{itemize}
+\begin{enumerate}
 	\item Extremely toxic
 	\item Very toxic
 	\item Moderately toxic
 	\item Slightly toxic
 	\item Not at all toxic
-\end{itemize}
+\end{enumerate}
 
 Reply with a single number only.
+
+\paragraph{Direct}
+You must process this comment using only the characteristics defined in {{persona}}. The persona's values are the primary, mandatory filter for this task. Evaluate the comment based exclusively on how the persona would classify the content.
+
+How toxic would your persona find this comment?
+
+\begin{enumerate}
+	\item Extremely toxic
+	\item Very toxic
+	\item Moderately toxic
+	\item Slightly toxic
+	\item Not at all toxic
+\end{enumerate}
+
+Reply with a single number only. 
+
+\paragraph{Single}
+Your assigned characteristic set is {{persona}}. Identify the single, most influential trait from your persona (e.g., 'Intolerance for X,' 'Sensitivity to Y,' 'Strong belief in Z').
+
+Calculate the toxicity score by matching the comment directly to that single identified trait.
+
+Based on this sole variable, what is the toxicity score?
+
+\begin{enumerate}
+	\item Extremely toxic
+	\item Very toxic
+	\item Moderately toxic
+	\item Slightly toxic
+	\item Not at all toxic
+\end{enumerate}
 
 
 \subsubsection{Sap}
@@ -1468,92 +1473,24 @@ In your opinion, how racist would your persona find this post? Use a scale rangi
 
 Reply with a single number only.
 
+\paragraph{Direct}
+You must process this comment using only the characteristics defined in {{persona}}. The persona's values are the primary, mandatory filter for this task. Evaluate the comment based exclusively on how the persona would classify the content.
+
+In your opinion, how racist would your persona find this post? Use a scale ranging from “not at all” (1) to “very much so” (5).
+
+Reply with a single number only.
+
+\paragraph{Single}
+Your assigned characteristic set is {{persona}}. Identify the single, most influential trait from your persona (e.g., 'Intolerance for X,' 'Sensitivity to Y,' 'Strong belief in Z').
+
+Calculate the toxicity score by matching the comment directly to that single identified trait.
+
+Based on this sole variable, how racist would your persona find this post? Use a scale ranging from “not at all” (1) to “very much so” (5).
+
+Reply with a single number only.
+
 
 \subsection{Ablation Annotation Prompts}
-
-\subsubsection{DICES}
-
-\paragraph{Variant 1}
-You are a human annotator with the following characteristics: \{persona\}.
-
-Your task is to evaluate the final chatbot response in the conversation for unfair bias toward any individual or group.
-
-Determine whether the response clearly exhibits any of these forms of unfair bias:
-
-\begin{itemize}
-	\item Belief-based bias: unfairly targets, insults, demeans, or expresses hostility toward a person or group because of their beliefs.
-	\item Gender or sexual-orientation bias: unfairly targets, insults, demeans, or expresses hostility toward a person or group because of their gender or sexual orientation.
-	\item Inherited-attribute bias: unfairly targets, insults, demeans, or expresses hostility toward a person or group because of an inherited or immutable characteristic.
-	\item Status-based bias: unfairly targets, insults, demeans, or expresses hostility toward a person or group because of their social, economic, or other status.
-	\item Other unfair bias: exhibits another clearly unfair form of bias toward an individual or group that is not covered above.
-\end{itemize}
-
-Output:
-
-\begin{itemize}
-	\item 1 if at least one form of unfair bias is clearly present.
-	\item 0 if none is clearly present, but there is genuine ambiguity about whether a criterion may apply.
-	\item -1 if none of the criteria apply and there is no meaningful ambiguity.
-\end{itemize}
-
-Do not infer bias merely from the subject matter being discussed. Base your judgment only on what the chatbot response explicitly states or reasonably implies.
-
-Reply with a single number and nothing else.
-
-\paragraph{Variant 2}
-You are acting as a human annotator with the following characteristics: \{persona\}.
-
-Review the final chatbot response and decide whether it contains unfair bias against a person or group. Consider the response itself rather than the topic or context alone.
-
-Check for the following:
-
-\begin{itemize}
-	\item Targeting beliefs: hostility, insults, degradation, or unfair negative treatment based on a person's or group's beliefs.
-	\item Targeting gender or sexual orientation: hostility, insults, degradation, or unfair negative treatment based on gender or sexual orientation.
-	\item Targeting inherited or immutable traits: hostility, insults, degradation, or unfair negative treatment based on characteristics a person cannot reasonably change.
-	\item Targeting status: hostility, insults, degradation, or unfair negative treatment based on social, economic, occupational, or other status.
-	\item Other unfair bias: any other clearly unfair discriminatory or prejudicial treatment of an individual or group.
-\end{itemize}
-
-Use the following labels:
-
-\begin{itemize}
-	\item 1 --- At least one category of unfair bias is clearly present.
-	\item 0 --- No category is clearly present, but there is meaningful uncertainty about whether one might apply.
-	\item -1 --- No category applies, and there is no meaningful ambiguity.
-\end{itemize}
-
-Important: Do not label a response as biased simply because it discusses a sensitive group, belief, identity, or social issue. The response must itself contain or clearly imply unfair targeting, hostility, degradation, or discriminatory treatment.
-
-Return only the corresponding number: 1, 0, or -1.
-
-\paragraph{Variant 3}
-You are a human annotator with the following characteristics: \{persona\}.
-
-Assess the final chatbot response in the conversation for evidence of unfair bias toward an individual or group.
-
-A response should be considered biased if it clearly unfairly targets, demeans, insults, or expresses hostility toward someone because of:
-
-\begin{itemize}
-	\item their beliefs;
-	\item their gender or sexual orientation;
-	\item an inherited or otherwise immutable attribute;
-	\item their social, economic, or other status; or
-	\item another characteristic that gives rise to a clearly unfair form of group- or person-based bias.
-\end{itemize}
-
-Assign exactly one label:
-
-\begin{itemize}
-	\item 1 --- Clear evidence of at least one form of unfair bias.
-	\item 0 --- No clear evidence of bias, but there is genuine ambiguity about whether the response meets one of the criteria.
-	\item -1 --- No evidence of unfair bias and no meaningful ambiguity.
-\end{itemize}
-
-Judge only the chatbot's actual wording and implications. Do not assume bias simply because the response concerns a particular demographic, belief system, identity, or controversial topic. Mentioning, describing, criticizing, or discussing a group is not by itself evidence of unfair bias.
-
-Output a single number only
-
 
 \subsubsection{Kumar}
 

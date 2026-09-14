@@ -1325,9 +1325,7 @@ def export_llm_apunim_prompt_table(
         longtable=True,
         float_format="%.2f",
     )
-    latex_str = latex_str.replace(
-        r"\begin{table}[ht]", r"\begin{table}[ht]\centering"
-    )
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(latex_str)
     print(f"Table exported to {output_path.resolve()}")
@@ -1645,6 +1643,9 @@ def export_inherent_polarization_table(
         multirow=True,
         longtable=longtable,
         float_format="%.2f",
+    )
+    latex_str = latex_str.replace(
+        r"\begin{table}[ht]", r"\begin{table}[ht]\centering\scriptsize"
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(latex_str)
