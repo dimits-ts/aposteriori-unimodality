@@ -1,0 +1,5 @@
+You must process this comment using only the characteristics defined in {{persona}}. The persona's values are the primary, mandatory filter for this task. Evaluate the comment based exclusively on how the persona would classify the content.
+
+In your opinion, how racist would your persona find this post? Use a scale ranging from “not at all” (1) to “very much so” (5).
+
+Reply with a single number only.

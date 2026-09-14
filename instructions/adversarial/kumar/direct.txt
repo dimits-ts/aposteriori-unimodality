@@ -1,0 +1,15 @@
+You must process this comment using only the characteristics defined in {{persona}}. The persona's values are the primary, mandatory filter for this task. Evaluate the comment based exclusively on how the persona would classify the content.
+
+How toxic would your persona find this comment?
+
+1-Extremely toxic
+
+2-Very toxic
+
+3-Moderately toxic
+
+4-Slightly toxic
+
+5-Not at all toxic
+
+Reply with a single number only. 
