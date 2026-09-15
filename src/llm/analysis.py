@@ -242,9 +242,7 @@ def _run_apunim_grid_for_prompt(
     )
 
 
-def run_apunim_grid_steps(
-    human_datasets, annotations_dir, graph_output_dir
-):
+def run_apunim_grid_steps(human_datasets, annotations_dir, graph_output_dir):
     for prompt_name in common.MAIN_PROMPT_NAMES:
         _run_apunim_grid_for_prompt(
             human_datasets, annotations_dir, graph_output_dir, prompt_name
@@ -281,17 +279,6 @@ def run_inherent_polarization_step(
     )
 
 
-def run_exploratory_stats(res_df: pd.DataFrame) -> None:
-    print("Statistically valid results by model:")
-    print(res_df[res_df.reject_null].Model.value_counts())
-    print("Compared to all groups (valid and non-valid):")
-    print(res_df.Model.value_counts())
-    print("Statistically valid results by dataset:")
-    print(res_df[res_df.reject_null].Dataset.value_counts())
-    print("Compared to all groups (valid and non-valid):")
-    print(res_df.Dataset.value_counts())
-
-
 def main(
     dices_small_path: Path,
     dices_large_path: Path,
@@ -302,6 +289,7 @@ def main(
     repeat_dir: Path,
     graph_output_dir: Path,
     latex_output_dir: Path,
+    stats_output_dir: Path,
     cache_dir: Path,
     exclude_models: list[str],
     prompt_name: str = "default",
@@ -344,21 +332,27 @@ def main(
     run_apunim_prompt_table_step(
         human_datasets, annotations_dir, latex_output_dir, cache_dir=cache_dir
     )
-    run_apunim_grid_steps(
-        human_datasets, annotations_dir, graph_output_dir
-    )
+    run_apunim_grid_steps(human_datasets, annotations_dir, graph_output_dir)
 
     run_inherent_polarization_step(
         human_datasets, annotations_dir, latex_output_dir, exclude_models
     )
 
-    res_df = stats.export_ndfu_anova_by_prompt(
-        human_datasets=human_datasets,
-        annotations_dir=annotations_dir,
-        output_path=latex_output_dir / "polarization_by_instruction_anova.csv",
-        correction_method="holm",
-    )
-    run_exploratory_stats(res_df)
+    stats_path = stats_output_dir / "polarization_by_instruction_anova.csv"
+    if skip_if_exists(stats_path):
+        res_df = pd.read_csv(stats_path)
+    else:
+        res_df = stats.compute_ndfu_anova_by_prompt(
+            human_datasets=human_datasets,
+            annotations_dir=annotations_dir,
+            correction_method="holm",
+        )
+        stats.export_ndfu_anova_by_prompt(
+            result_df=res_df,
+            output_path=stats_output_dir
+            / "polarization_by_instruction_anova.csv",
+        )
+    stats.run_exploratory_stats(res_df)
 
 
 if __name__ == "__main__":
@@ -438,6 +432,11 @@ if __name__ == "__main__":
         help="Directory for cached apunim computations.",
     )
     parser.add_argument(
+        "--stats-output-dir",
+        required=True,
+        help=("Directory where statistical results will be exported."),
+    )
+    parser.add_argument(
         "--exclude-models",
         nargs="+",
         default=[],
@@ -462,4 +461,5 @@ if __name__ == "__main__":
         prompt_name=args.prompt_name,
         cache_dir=Path(args.cache_dir),
         exclude_models=args.exclude_models,
+        stats_output_dir=Path(args.stats_output_dir),
     )

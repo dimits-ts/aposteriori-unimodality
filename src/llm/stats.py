@@ -44,7 +44,7 @@ from .common import (
     load_llm_df,
     PROMPT_COMPARISON_DATASET_KEYS,
     VARIANT_NAMES,
-    _compute_ndfu_records
+    _compute_ndfu_records,
 )
 
 
@@ -477,6 +477,20 @@ def build_llm_apunim_prompt_table(
 # ---------------------------------------------------------------------------
 
 
+def _cohens_d(a, b) -> float:
+    """Pooled-SD standardized mean difference between two samples."""
+    a = np.asarray(a, dtype=float)
+    b = np.asarray(b, dtype=float)
+    n1, n2 = len(a), len(b)
+    if n1 < 2 or n2 < 2:
+        return np.nan
+    s1, s2 = a.var(ddof=1), b.var(ddof=1)
+    pooled_sd = np.sqrt(((n1 - 1) * s1 + (n2 - 1) * s2) / (n1 + n2 - 2))
+    if pooled_sd == 0:
+        return np.nan
+    return (a.mean() - b.mean()) / pooled_sd
+
+
 def compute_ndfu_anova_by_prompt(
     human_datasets: LazyDatasetLoader,
     annotations_dir: Path,
@@ -484,39 +498,20 @@ def compute_ndfu_anova_by_prompt(
     prompt_names: list[str] = MAIN_PROMPT_NAMES,
     exclude_models: set[str] | None = None,
     correction_method: str = "fdr_bh",
+    baseline_prompt: str = "default",
 ) -> pd.DataFrame:
     """
-    For each (dataset, model, SDB group), runs a one-way ANOVA
-    (scipy.stats.f_oneway) comparing that group's per-COMMENT nDFU values
-    across instruction prompts (default vs. each adversarial prompt).
-    LLM-only: human annotations are never used here (see polarization.py
-    for the Human-vs-LLM comparison).
+    ... (existing docstring) ...
 
-    Each comment contributes AT MOST ONE observation per (prompt, PC
-    Dimension) -- via common._compute_ndfu_records(..., deduped=True) --
-    unlike the apunim grid's plotting path, which broadcasts a comment's
-    single nDFU value once per annotator persona matching that group and
-    so double(sextuple-)counts it. With N comments and up to
-    MAX_ANNOTATORS_PER_ITEM annotators/comment, that broadcast would
-    inflate a group's observation count from <=N to close to
-    N * MAX_ANNOTATORS_PER_ITEM, both misreporting the true sample size
-    and violating the ANOVA independence assumption (the same value
-    appearing multiple times), inflating F-statistics and deflating
-    p-values.
-
-    Raw p-values are corrected for multiple hypothesis testing across the
-    entire batch of tests (all datasets/models/groups together) using
-    `correction_method` (default: Benjamini-Hochberg FDR). Set
-    `correction_method=None` to skip correction and keep only the raw
-    p-value.
-
-    Returns a long-format DataFrame with one row per (Dataset, Model,
-    PC Dimension) test, columns: 'Dataset', 'Model', 'PC Dimension',
-    'F', 'p_raw', 'n_prompts_compared', 'n_total_obs', and -- if
-    `correction_method` is set -- 'p_corrected' and 'reject_null'
-    (at alpha=0.05).
+    In addition to the F-test, each row also reports Cohen's d for every
+    non-baseline prompt against `baseline_prompt` (default: "default"),
+    as columns named 'cohens_d_<prompt>_vs_<baseline_prompt>'. This is a
+    standardized effect size (mean difference / pooled SD) meant to
+    separate statistically significant shifts (small p, possibly driven
+    by large N) from quantitatively meaningful ones -- conventional
+    thresholds (Cohen): ~0.2 small, ~0.5 medium, ~0.8 large. NaN when the
+    baseline or that prompt has <2 observations for the group.
     """
-
     exclude_models = set(exclude_models or ())
     records = []
 
@@ -564,17 +559,42 @@ def compute_ndfu_anova_by_prompt(
                 if len(samples) < 2:
                     continue
                 f_stat, p_value = stats.f_oneway(*samples)
-                records.append(
-                    {
-                        "Dataset": dataset_name,
-                        "Model": model,
-                        "PC Dimension": group,
-                        "F": f_stat,
-                        "p_raw": p_value,
-                        "n_prompts_compared": len(samples),
-                        "n_total_obs": sum(len(s) for s in samples),
-                    }
-                )
+
+                baseline_values = None
+                if (
+                    baseline_prompt in ndfu_by_prompt
+                    and group in ndfu_by_prompt[baseline_prompt].index
+                ):
+                    baseline_values = ndfu_by_prompt[baseline_prompt][group]
+
+                record = {
+                    "Dataset": dataset_name,
+                    "Model": model,
+                    "PC Dimension": group,
+                    "F": f_stat,
+                    "p_raw": p_value,
+                    "n_prompts_compared": len(samples),
+                    "n_total_obs": sum(len(s) for s in samples),
+                }
+
+                for prompt_name in prompt_names:
+                    if prompt_name == baseline_prompt:
+                        continue
+                    col = f"cohens_d_{prompt_name}_vs_{baseline_prompt}"
+                    prompt_values = None
+                    if (
+                        prompt_name in ndfu_by_prompt
+                        and group in ndfu_by_prompt[prompt_name].index
+                    ):
+                        prompt_values = ndfu_by_prompt[prompt_name][group]
+                    record[col] = (
+                        _cohens_d(prompt_values, baseline_values)
+                        if prompt_values is not None
+                        and baseline_values is not None
+                        else np.nan
+                    )
+
+                records.append(record)
 
     result_df = pd.DataFrame(records)
     if result_df.empty or correction_method is None:
@@ -589,28 +609,28 @@ def compute_ndfu_anova_by_prompt(
 
 
 def export_ndfu_anova_by_prompt(
-    human_datasets: LazyDatasetLoader,
-    annotations_dir: Path,
-    output_path: Path,
-    dataset_keys: list[str] = PROMPT_COMPARISON_DATASET_KEYS,
-    prompt_names: list[str] = MAIN_PROMPT_NAMES,
-    exclude_models: set[str] | None = None,
-    correction_method: str = "fdr_bh",
-) -> pd.DataFrame:
+    result_df: pd.DataFrame, output_path: Path
+) -> None:
     """
     Computes `compute_ndfu_anova_by_prompt` and writes it to `output_path`
     as a CSV. Returns the DataFrame as well, for scripts that want to
     chain further processing (e.g. filtering to significant rows).
     """
-    result_df = compute_ndfu_anova_by_prompt(
-        human_datasets=human_datasets,
-        annotations_dir=annotations_dir,
-        dataset_keys=dataset_keys,
-        prompt_names=prompt_names,
-        exclude_models=exclude_models,
-        correction_method=correction_method,
-    )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     result_df.to_csv(output_path, index=False)
     print(f"ANOVA results exported to {output_path.resolve()}")
-    return result_df
+
+
+def run_exploratory_stats(res_df: pd.DataFrame) -> None:
+    print("Statistically valid results by model:")
+    print(res_df[res_df.reject_null].Model.value_counts())
+    print("Compared to all groups (valid and non-valid):")
+    print(res_df.Model.value_counts())
+    print("Statistically valid results by dataset:")
+    print(res_df[res_df.reject_null].Dataset.value_counts())
+    print("Compared to all groups (valid and non-valid):")
+    print(res_df.Dataset.value_counts())
+
+    for col in [col for col in res_df.columns if "cohens_d" in col]:
+        print(col)
+        print(res_df[col].describe())
