@@ -425,6 +425,7 @@ def _draw_apunim_column(
     sdb_columns_limit: int | None,
     is_first_row: bool,
     is_first_col: bool,
+    dataset_name: str,
 ) -> None:
     color = graphs.COLORBLIND_PALETTE[1 if column == "Human" else 2]
 
@@ -458,7 +459,10 @@ def _draw_apunim_column(
     # the first column -- avoids repeating the same labels across the grid.
     if is_first_row:
         ax.set_title(column)
-    if not is_first_col:
+
+    if is_first_col:
+        ax.set_ylabel(dataset_name.split()[0])
+    else:
         ax.set_yticklabels([])
 
 
@@ -473,7 +477,6 @@ def _draw_apunim_row(
     sdb_columns_limit: int | None,
     is_first_row: bool,
 ) -> None:
-    subfig.suptitle(dataset_name)
     axes = subfig.subplots(nrows=1, ncols=len(columns), squeeze=False)[0]
 
     human_ds = _human_sample_dataset(
@@ -486,7 +489,13 @@ def _draw_apunim_row(
             column, dataset_key, prompt_name, human_ds, files
         )
         _draw_apunim_column(
-            axes[c], column, ds, sdb_columns_limit, is_first_row, c == 0
+            axes[c],
+            column,
+            ds,
+            sdb_columns_limit,
+            is_first_row,
+            c == 0,
+            dataset_name,
         )
 
 
@@ -497,7 +506,7 @@ def plot_apunim_grid(
     prompt_name: str = "default",
     models: list[str] | None = None,
     sdb_columns_limit: int | None = 6,
-    title: str = "LLM Polarization is Disconnected From Humans",
+    title: str = "Default",
 ) -> None:
     """Plot all datasets and models in a single 2x5 grid using subfigures.
 

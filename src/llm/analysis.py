@@ -225,10 +225,10 @@ def run_apunim_prompt_table_step(
             )
 
 
-def run_apunim_grid_step(
+def _run_apunim_grid_for_prompt(
     human_datasets, annotations_dir, graph_output_dir, prompt_name
 ):
-    output_path = graph_output_dir / "llm_apunim_grid.png"
+    output_path = graph_output_dir / f"llm_apunim_grid_{prompt_name}.png"
     grid_models = list(
         set(common.MODEL_DISPLAY_ORDER) - common.APUNIM_TABLE_EXCLUDE_MODELS
     )
@@ -238,32 +238,16 @@ def run_apunim_grid_step(
         output_path=output_path,
         prompt_name=prompt_name,
         models=grid_models,
+        title=f"{prompt_name.capitalize()} Prompt",
     )
 
 
-def _run_adversarial_apunim_grid_for_prompt(
-    human_datasets, annotations_dir, graph_output_dir, adv_prompt_name
-):
-    output_path = graph_output_dir / f"llm_apunim_grid_{adv_prompt_name}.png"
-    grid_models = list(
-        set(common.MODEL_DISPLAY_ORDER) - common.APUNIM_TABLE_EXCLUDE_MODELS
-    )
-    plots.plot_apunim_grid(
-        human_datasets=human_datasets,
-        annotations_dir=annotations_dir,
-        output_path=output_path,
-        prompt_name=adv_prompt_name,
-        models=grid_models,
-        title=f"{adv_prompt_name.capitalize()} Prompt",
-    )
-
-
-def run_adversarial_apunim_grid_steps(
+def run_apunim_grid_steps(
     human_datasets, annotations_dir, graph_output_dir
 ):
-    for adv_prompt_name in common.ADVERSARIAL_PROMPT_NAMES:
-        _run_adversarial_apunim_grid_for_prompt(
-            human_datasets, annotations_dir, graph_output_dir, adv_prompt_name
+    for prompt_name in common.MAIN_PROMPT_NAMES:
+        _run_apunim_grid_for_prompt(
+            human_datasets, annotations_dir, graph_output_dir, prompt_name
         )
 
 
@@ -360,10 +344,7 @@ def main(
     run_apunim_prompt_table_step(
         human_datasets, annotations_dir, latex_output_dir, cache_dir=cache_dir
     )
-    run_apunim_grid_step(
-        human_datasets, annotations_dir, graph_output_dir, prompt_name
-    )
-    run_adversarial_apunim_grid_steps(
+    run_apunim_grid_steps(
         human_datasets, annotations_dir, graph_output_dir
     )
 
