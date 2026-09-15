@@ -41,7 +41,8 @@ from scipy.stats import chi2_contingency
 from sklearn.metrics import adjusted_rand_score
 from sklearn.mixture import GaussianMixture
 
-import tasks.graphs
+from ..lib import graphs
+from ..lib.util import skip_if_exists
 
 
 N_LEVELS = 5
@@ -703,25 +704,18 @@ LEGEND_LABEL = {
 }
 
 
-def _condition_title(
-    n_ann,
-    minority
-):
+def _condition_title(n_ann, minority):
     return f"{n_ann} ann/item, " f"{int(round(minority * 100))}\\% minority"
 
 
-def plot(
-    rows,
-    methods,
-    out_path
-):
+def plot(rows, methods, out_path):
     methods = [m for m in METHOD_ORDER if m in methods] + [
         m for m in methods if m not in METHOD_ORDER
     ]
 
     df = pd.DataFrame(rows)
 
-    colors = tasks.graphs.COLORBLIND_PALETTE
+    colors = graphs.COLORBLIND_PALETTE
 
     n_rows = math.ceil(len(CONDITIONS) / PLOT_NUM_COLS)
 
@@ -761,16 +755,16 @@ def plot(
 
             method_df = condition_df[condition_df["method"] == method]
 
-            if method_df.empty:
+            if len(method_df) == 0:
                 continue
 
             sns.lineplot(
-                data=method_df,
+                data=method_df,  # type: ignore
                 x="delta",
                 y="detected",
                 estimator="mean",
                 errorbar="se",
-                marker=tasks.graphs.MARKERS[i % len(tasks.graphs.MARKERS)],
+                marker=graphs.MARKERS[i % len(graphs.MARKERS)],
                 color=colors[i % len(colors)],
                 label=LEGEND_LABEL.get(
                     method,
@@ -817,7 +811,7 @@ def plot(
 
     fig.supxlabel(r"Maximum group effect size $\delta$")
 
-    tasks.graphs.save_plot(out_path)
+    graphs.save_plot(out_path)
 
 
 # --------------------------------------------------------------------- main
@@ -836,14 +830,14 @@ def main(
     else:
         print("Using standard simulation.")
 
-    tasks.graphs.graph_setup()
+    graphs.graph_setup()
 
     cache_path.parent.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    if cache_path.exists():
+    if skip_if_exists(cache_path):
         print(f"loading cached results " f"from {cache_path}")
 
     else:

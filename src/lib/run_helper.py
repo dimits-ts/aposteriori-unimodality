@@ -13,7 +13,7 @@ from . import preprocessing
 
 def run_all_results(ds: preprocessing.Dataset) -> pd.DataFrame:
     """
-    Runs tasks.run_helper.results for each sdb_column and combines the results
+    Runs run_helper.results for each sdb_column and combines the results
     into a single MultiIndex DataFrame.
 
     Parameters

@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import matplotlib.patches as mpatches
 
-import tasks.graphs
-import tasks.run_helper
+from ..lib import graphs
+from ..lib import run_helper
 
 MIN_SUPPORT = 50
 SIG_ALPHA = 0.05  # p-value threshold for "statistically significant"
@@ -30,7 +30,7 @@ LINESTYLE_CYCLE = [
 
 
 def main(results_dir: Path, latex_output_dir: Path, graph_output_dir: Path):
-    tasks.graphs.graph_setup()
+    graphs.graph_setup()
     csv_to_latex(
         result_paths=list(results_dir.rglob("*-results.csv")),
         latex_output_dir=latex_output_dir,
@@ -76,7 +76,7 @@ def plot_dfu_histograms(
     datasets = sorted(full_df["dataset"].unique())
     legend_handles = []
     for i, (dataset, color, hatch) in enumerate(
-        zip(datasets, tasks.graphs.COLORBLIND_PALETTE, tasks.graphs.HATCHES)
+        zip(datasets, graphs.COLORBLIND_PALETTE, graphs.HATCHES)
     ):
         before = len(ax.patches)
 
@@ -115,7 +115,7 @@ def plot_dfu_histograms(
 
     ax.legend(handles=legend_handles)
 
-    tasks.graphs.save_plot(graph_output_dir / "apriori.png")
+    graphs.save_plot(graph_output_dir / "apriori.png")
     plt.close()
 
 
@@ -125,7 +125,7 @@ def csv_to_latex(result_paths: list[Path], latex_output_dir: Path) -> None:
             dataset_name = result_file.stem
             df = pd.read_csv(result_file)
             df = df.loc[df.pvalue.notna()]
-            tasks.run_helper.results_to_latex(
+            run_helper.results_to_latex(
                 res_df=df,
                 output_path=latex_output_dir / f"{dataset_name}.tex",
                 dataset_name=dataset_name,
@@ -187,7 +187,7 @@ def ordinal_graph_per_feature(
                 / f"apunim_ordinal_{dataset}_{safe_feature}.png"
             )
 
-            tasks.graphs.save_plot(out_path)
+            graphs.save_plot(out_path)
             plt.close()
 
 
@@ -214,7 +214,7 @@ def plot_sample_size_polarization(csv_path: Path, output_path: Path):
     ax.set_xlabel("Number of annotators")
     ax.set_ylabel("Mean polarization")
     ax.legend(title="Dataset")
-    tasks.graphs.save_plot(output_path)
+    graphs.save_plot(output_path)
     plt.close()
 
 
@@ -301,9 +301,9 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
 
     highlight_group_2 = {}
 
-    COLOR_GROUP_1 = tasks.graphs.COLORBLIND_PALETTE[0]
-    COLOR_GROUP_2 = tasks.graphs.COLORBLIND_PALETTE[1]
-    COLOR_OTHER = tasks.graphs.COLORBLIND_PALETTE[2]
+    COLOR_GROUP_1 = graphs.COLORBLIND_PALETTE[0]
+    COLOR_GROUP_2 = graphs.COLORBLIND_PALETTE[1]
+    COLOR_OTHER = graphs.COLORBLIND_PALETTE[2]
 
     all_features = list(data_stretched["feature"].unique())
 
@@ -417,7 +417,7 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
     ax.set_xticks([])  # Remove x-axis ticks
     fig.tight_layout()
 
-    tasks.graphs.save_plot(graph_output_dir / "apunim_ordinal.png")
+    graphs.save_plot(graph_output_dir / "apunim_ordinal.png")
     plt.close()
 
 

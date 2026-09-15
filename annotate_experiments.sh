@@ -90,7 +90,7 @@ run_annotation() {
 
   echo -e "\n=== Dataset: ${dataset} | Instruction: ${instruction_name}${suffix} x ${pseudo} (${model}) ===" >> "$target_log"
 
-  local cmd=(python src/llm_annotate.py
+  local cmd=(python -m src.llm.annotate
   --dataset "$dataset"
   --dataset-path "$dataset_path"
   --instruction-prompt-path "$instruction_path"

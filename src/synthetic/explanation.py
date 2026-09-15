@@ -9,7 +9,7 @@ import apunim
 from numpy.typing import NDArray
 from matplotlib.patches import Patch
 
-import tasks.graphs
+from ..lib import graphs
 
 
 INTUITION_SIZE = 50
@@ -17,19 +17,19 @@ DIFF_COMMENTS_SIZE = 200
 NUM_BINS = 10
 
 COLOR_MAP = {
-    "Men": tasks.graphs.COLORBLIND_PALETTE[0],
-    "Women": tasks.graphs.COLORBLIND_PALETTE[1],
+    "Men": graphs.COLORBLIND_PALETTE[0],
+    "Women": graphs.COLORBLIND_PALETTE[1],
 }
 
 HATCH_MAP = {
-    "Men": tasks.graphs.HATCHES[0],
-    "Women": tasks.graphs.HATCHES[1],
-    "All": tasks.graphs.HATCHES[2],
+    "Men": graphs.HATCHES[0],
+    "Women": graphs.HATCHES[1],
+    "All": graphs.HATCHES[2],
 }
 
 
 def main(graph_dir: Path):
-    tasks.graphs.graph_setup()
+    graphs.graph_setup()
     np.random.seed(seed=42)
 
     dfu_plots(graph_dir)
@@ -93,8 +93,8 @@ def _plot_matrix(
     color_map = {0: "blue", 1: "green"}
 
     marker_map = {
-        0: tasks.graphs.MARKERS[0],
-        1: tasks.graphs.MARKERS[1],
+        0: graphs.MARKERS[0],
+        1: graphs.MARKERS[1],
     }
 
     # Scatter points for each group separately
@@ -210,7 +210,7 @@ def plot_annotation_distributions(
             [],
             [],
             linestyle="",
-            marker=tasks.graphs.MARKERS[1],
+            marker=graphs.MARKERS[1],
             markersize=18,
             markerfacecolor="green",
             markeredgecolor="black",
@@ -220,7 +220,7 @@ def plot_annotation_distributions(
             [],
             [],
             linestyle="",
-            marker=tasks.graphs.MARKERS[0],
+            marker=graphs.MARKERS[0],
             markersize=18,
             markerfacecolor="blue",
             markeredgecolor="black",
@@ -234,7 +234,7 @@ def plot_annotation_distributions(
         ncol=2,
     )
 
-    tasks.graphs.save_plot(graph_dir / "disagreement_vs_polarization.png")
+    graphs.save_plot(graph_dir / "disagreement_vs_polarization.png")
     plt.close()
 
 
@@ -247,7 +247,7 @@ def dfu_plots(graph_dir: Path) -> None:
         datasets=[d_all, d1, d2],
         labels=["All", "Men", "Women"],
         colors=[
-            tasks.graphs.COLORBLIND_PALETTE[2],
+            graphs.COLORBLIND_PALETTE[2],
             COLOR_MAP["Men"],
             COLOR_MAP["Women"],
         ],
@@ -310,7 +310,7 @@ def _combined_dfu_plot(
     plt.ylabel(r"\#Annotations")
     plt.title(r"\textit{``Most women can't drive well.''}")
 
-    tasks.graphs.save_plot(graph_path)
+    graphs.save_plot(graph_path)
     plt.close()
 
 
@@ -444,7 +444,7 @@ def _plot_example_individual(
         ax.set_ylabel(r"\#Annotations")
         ax.set_xlim(1, 10)
 
-        tasks.graphs.save_plot(graph_path)
+        graphs.save_plot(graph_path)
         plt.close()
 
 

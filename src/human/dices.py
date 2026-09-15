@@ -5,9 +5,10 @@ import pandas as pd
 import numpy as np
 from tqdm.auto import tqdm
 
-import tasks.graphs
-import tasks.preprocessing
-import tasks.run_helper
+from ..lib import graphs
+from ..lib.preprocessing import DicesDataset
+from ..lib import run_helper
+from ..lib.util import skip_if_exists
 
 SAMPLE_SIZES = range(5, 51, 2)
 N_RUNS = 10
@@ -15,114 +16,6 @@ N_RUNS = 10
 # Config for the new fixed-size resampled experiment
 RESAMPLED_SIZE = 5
 RESAMPLED_RUNS = 10
-
-
-class DicesDataset(tasks.preprocessing.Dataset):
-    def __init__(self, dataset_path: Path, variant: str):
-        self.variant = variant
-        self.df = self._base_df(dataset_path)
-
-    def get_name(self) -> str:
-        return "DICES-" + self.variant
-
-    def get_dataset(self) -> pd.DataFrame:
-        return self.df
-
-    def get_sdb_columns(self) -> list[str]:
-        return ["Gender", "Race", "Age", "Education"]
-
-    def get_comment_key_column(self) -> str:
-        return "item_id"
-
-    def get_text_column(self) -> str:
-        return "text"
-
-    def get_annotation_column(self) -> str:
-        return "is_harmful"
-
-    def _base_df(self, dataset_path: Path) -> pd.DataFrame:
-        df = pd.read_csv(dataset_path)
-
-        if self.variant == "350":
-            target_label = "Q3_bias_targeting_inherited_attributes"
-        elif self.variant == "990":
-            target_label = "Q3_bias_incites_hatred"
-        else:
-            raise ValueError(f"Variant must be 990 and 350 not {self.variant}")
-
-        df = df.loc[
-            :,
-            [
-                "rater_gender",
-                "rater_age",
-                "rater_race",
-                "rater_education",
-                target_label,
-                "item_id",
-                "context",
-                "response",
-            ],
-        ]
-        # "context" is the conversation so far and "response" is the final
-        # chatbot turn being rated; concatenate into a single text field.
-        df["text"] = (
-            df["context"].fillna("") + "\n" + df["response"].fillna("")
-        )
-        df = df.drop(columns=["context", "response"])
-        df[target_label] = df[target_label].map(
-            {"No": -1, "Unsure": 0, "Yes": 1}
-        ).astype(int)
-
-        df = df.replace(
-            {
-                "College degree or higher": "College +",
-                "High school or below": "High school -",
-            }
-        )
-        df = df.replace(
-            {
-                "Asian/Asian subcontinent": "Asian",
-                "Black/African American": "African Am.",
-                "LatinX, Latino, Hispanic or Spanish Origin": "Latino",
-                "Self-describe (below)": "Other",
-            }
-        )
-        # add numbers for proper ordering during export
-        df = df.replace(
-            {
-                "gen x+": "3) Gen. X+",
-                "millenial": "2) Millennial",
-                "gen z": "1) Gen. Z",
-            }
-        )
-
-        agg = {
-            col: list for col in df.columns if col not in ("item_id", "text")
-        }
-        agg["text"] = "first"
-        df = df.groupby("item_id").agg(agg).reset_index()
-        df = df.rename(
-            columns={
-                "rater_gender": "Gender",
-                "rater_age": "Age",
-                "rater_race": "Race",
-                "rater_education": "Education",
-                target_label: "is_harmful",
-            }
-        )
-        return df
-
-
-def _skip_if_exists(path: Path) -> bool:
-    """
-    Returns True (and prints a message) if `path` already exists, so the
-    caller can skip recomputing it. Centralized here so every experiment
-    step uses the same check/logging behavior.
-    """
-    if path.exists():
-        print(f"Skipping (already exists): {path}")
-        return True
-    return False
 
 
 def run_for_dataset(
@@ -138,8 +31,8 @@ def run_for_dataset(
     for size in tqdm(sample_sizes, desc=f"Sample sizes for {ds.get_name()}"):
         run_means = []
         for _ in range(N_RUNS):
-            subsampled_ds = tasks.run_helper.subsample_dataset(ds, size, rng)
-            result = tasks.run_helper.compute_inherent_polarization_random(
+            subsampled_ds = run_helper.subsample_dataset(ds, size, rng)
+            result = run_helper.compute_inherent_polarization_random(
                 subsampled_ds
             )
             run_means.append(np.mean(result))
@@ -171,10 +64,10 @@ def run_resampled_experiment(
         ablation_dir
         / f"{ds.get_name().lower()}-results-resampled-n{sample_size}.csv"
     )
-    if _skip_if_exists(output_path):
+    if skip_if_exists(output_path):
         return
 
-    res = tasks.run_helper.run_all_results_resampled(
+    res = run_helper.run_all_results_resampled(
         ds=ds, sample_size=sample_size, n_runs=n_runs
     )
     res.to_csv(output_path)
@@ -191,43 +84,43 @@ def main(
     graph_output_dir.mkdir(parents=True, exist_ok=True)
     ablation_dir.mkdir(parents=True, exist_ok=True)
 
-    tasks.graphs.graph_setup()
+    graphs.graph_setup()
     ds_350 = DicesDataset(dataset_path=dataset_path_small, variant="350")
 
     graph_path = graph_output_dir / "dices-350.png"
-    if not _skip_if_exists(graph_path):
-        tasks.graphs.polarization_plot(ds=ds_350, output_path=graph_path)
+    if not skip_if_exists(graph_path):
+        graphs.polarization_plot(ds=ds_350, output_path=graph_path)
 
     inherent_path = output_dir / "dices-350-inherent.csv"
-    if not _skip_if_exists(inherent_path):
-        res = tasks.run_helper.compute_inherent_polarization_random(ds_350)
+    if not skip_if_exists(inherent_path):
+        res = run_helper.compute_inherent_polarization_random(ds_350)
         res.to_csv(inherent_path, header=True, index_label="comment")
 
     results_path = output_dir / "dices-350-results.csv"
-    if not _skip_if_exists(results_path):
-        res = tasks.run_helper.run_all_results(ds=ds_350)
+    if not skip_if_exists(results_path):
+        res = run_helper.run_all_results(ds=ds_350)
         res.to_csv(results_path)
 
     ds_990 = DicesDataset(dataset_path=dataset_path_large, variant="990")
 
     graph_path = graph_output_dir / "dices-990.png"
-    if not _skip_if_exists(graph_path):
-        tasks.graphs.polarization_plot(ds=ds_990, output_path=graph_path)
+    if not skip_if_exists(graph_path):
+        graphs.polarization_plot(ds=ds_990, output_path=graph_path)
 
     inherent_path = output_dir / "dices-990-inherent.csv"
-    if not _skip_if_exists(inherent_path):
-        res = tasks.run_helper.compute_inherent_polarization_random(ds_990)
+    if not skip_if_exists(inherent_path):
+        res = run_helper.compute_inherent_polarization_random(ds_990)
         res.to_csv(inherent_path, header=True, index_label="comment")
 
     results_path = output_dir / "dices-990-results.csv"
-    if not _skip_if_exists(results_path):
-        res = tasks.run_helper.run_all_results(ds=ds_990)
+    if not skip_if_exists(results_path):
+        res = run_helper.run_all_results(ds=ds_990)
         res.to_csv(results_path)
 
     # Sample-size sweep -> back to original behavior: computed together and
     # written once to output_dir, skipped entirely if it already exists.
     combined_path = output_dir / "sample_size_polarization.csv"
-    if not _skip_if_exists(combined_path):
+    if not skip_if_exists(combined_path):
         df_350 = run_for_dataset(ds_350, SAMPLE_SIZES)
         df_990 = run_for_dataset(ds_990, SAMPLE_SIZES)
         combined = pd.concat([df_350, df_990], ignore_index=True)

@@ -11,12 +11,9 @@ import matplotlib.pyplot as plt
 from tqdm.auto import tqdm
 import apunim
 
-import tasks.graphs
-import tasks.preprocessing
-import sap
-import kumar
-import dices
-
+from ..lib import graphs
+from ..lib.preprocessing import SapDataset, KumarDataset, DicesDataset, Dataset
+from ..lib.util import skip_if_exists
 
 MARKERS = {
     "DICES-350": "o",
@@ -36,18 +33,14 @@ def main(
     cache_dir: Path,
     min_comment_annotators: int = 3,
 ):
-    tasks.graphs.graph_setup()
-    dices350_ds = dices.DicesDataset(
-        dataset_path=dices_small_path, variant="350"
-    )
-    dices990_ds = dices.DicesDataset(
-        dataset_path=dices_large_path, variant="990"
-    )
-    sap_ds = sap.SapDataset(dataset_path=sap_path)
-    kumar_ds = kumar.KumarDataset(dataset_path=kumar_path, num_samples=3_000)
+    graphs.graph_setup()
+    dices350_ds = DicesDataset(dataset_path=dices_small_path, variant="350")
+    dices990_ds = DicesDataset(dataset_path=dices_large_path, variant="990")
+    sap_ds = SapDataset(dataset_path=sap_path)
+    kumar_ds = KumarDataset(dataset_path=kumar_path, num_samples=3_000)
     datasets = [dices350_ds, dices990_ds, sap_ds, kumar_ds]
-    tasks.preprocessing.Dataset.print_descriptive_statistics(datasets)
-    tasks.preprocessing.Dataset.print_annotation_count_table(datasets)
+    Dataset.print_descriptive_statistics(datasets)
+    Dataset.print_annotation_count_table(datasets)
 
     ann_size_df = get_annotator_counts_df(datasets)
     stats_df = get_statistics_df(ann_size_df)
@@ -186,19 +179,19 @@ def plot_variance_curve(results_df, graph_path: Path):
     plt.title("Effect of annotator sample size on $pol_{obs.}$ variability")
     plt.grid(True)
 
-    tasks.graphs.save_plot(graph_path)
+    graphs.save_plot(graph_path)
     plt.close()
 
 
 def get_dataset_variance(
-    dataset: tasks.preprocessing.Dataset,
+    dataset: Dataset,
     cache_dir: Path,
     min_comment_annotators: int,
 ) -> pd.DataFrame:
     cache_dir.mkdir(parents=True, exist_ok=True)
     cache_file = cache_dir / f"{dataset.get_name()}_variance.csv"
 
-    if cache_file.exists():
+    if skip_if_exists(cache_file):
         print(
             f"Loading cached variance results for {dataset.get_name()}"
             f"from {cache_file}"
@@ -223,7 +216,7 @@ def get_dataset_variance(
 
 
 def plot_annotator_count_histogram_from_datasets(
-    datasets: list[tasks.preprocessing.Dataset],
+    datasets: list[Dataset],
     graph_path: Path,
 ):
     """
@@ -260,10 +253,10 @@ def plot_annotator_count_histogram_from_datasets(
         else:
             percentage_counts = np.zeros_like(raw_counts, dtype=float)
 
-        selected_color = tasks.graphs.COLORBLIND_PALETTE[
-            i % len(tasks.graphs.COLORBLIND_PALETTE)
+        selected_color = graphs.COLORBLIND_PALETTE[
+            i % len(graphs.COLORBLIND_PALETTE)
         ]
-        selected_hatch = tasks.graphs.HATCHES[i % len(tasks.graphs.HATCHES)]
+        selected_hatch = graphs.HATCHES[i % len(graphs.HATCHES)]
 
         ax.bar(
             x=edges[:-1],
@@ -283,12 +276,12 @@ def plot_annotator_count_histogram_from_datasets(
     ax.grid(True, linestyle="--", alpha=0.3)
     plt.tight_layout()
 
-    tasks.graphs.save_plot(graph_path)
+    graphs.save_plot(graph_path)
     plt.close()
 
 
 def get_annotator_counts_df(
-    datasets: list[tasks.preprocessing.Dataset],
+    datasets: list[Dataset],
 ) -> pd.DataFrame:
     rows = []
 

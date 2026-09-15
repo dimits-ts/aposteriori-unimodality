@@ -1,6 +1,5 @@
 import argparse
 import os
-import itertools
 from pathlib import Path
 from typing import Optional
 
@@ -11,10 +10,12 @@ import transformers
 from tqdm.auto import tqdm
 from transformers import pipeline
 
-import tasks.preprocessing
-from dices import DicesDataset
-from kumar import KumarDataset
-from sap import SapDataset
+from ..lib.preprocessing import (
+    SapDataset,
+    KumarDataset,
+    DicesDataset,
+    Dataset,
+)
 
 SEED = 42
 N_PERSONAS_PER_COMMENT = 6
@@ -40,7 +41,7 @@ DATASET_LOADERS = {
 
 def load_dataset(
     dataset_key: str, dataset_path: Path
-) -> tasks.preprocessing.Dataset:
+) -> Dataset:
     return DATASET_LOADERS[dataset_key](dataset_path)
 
 
@@ -56,7 +57,7 @@ def load_generator(model_name: str):
 
 
 def get_subgroup_value_pools(
-    ds: tasks.preprocessing.Dataset,
+    ds: Dataset,
 ) -> dict[str, list]:
     """Distinct observed values per SDB column, used as the sampling pool
     for random persona characteristics."""
@@ -74,7 +75,7 @@ def truncate_text(tokenizer, text: str, max_tokens: int) -> str:
 
 
 def sample_texts(
-    ds: tasks.preprocessing.Dataset,
+    ds: Dataset,
     n: int,
     rng: np.random.Generator,
 ) -> list[tuple[str, str]]:
@@ -200,7 +201,9 @@ def main(
     sample_fraction: Optional[float] = None,
 ):
     # Toggle to True if VRAM is under durress
-    os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:False")
+    os.environ.setdefault(
+        "PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:False"
+    )
 
     transformers.set_seed(SEED)
     rng = np.random.default_rng(SEED)
