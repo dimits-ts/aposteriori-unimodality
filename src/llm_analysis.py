@@ -60,6 +60,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from scipy import stats
+from statsmodels.stats.multitest import multipletests
 
 import tasks.graphs
 import tasks.preprocessing
@@ -68,7 +70,7 @@ from dices import DicesDataset
 from kumar import KumarDataset
 from sap import SapDataset
 
-
+# TODO: lazy loading doesnt work currently because of Dataset.get_name() calls
 DATASET_KEYS = ["dices-350", "dices-990", "sap", "kumar"]
 
 DATASET_LOADERS = {
@@ -1322,7 +1324,7 @@ def export_llm_apunim_prompt_table(
         position="ht",
         index=True,
         multirow=True,
-        longtable=True
+        longtable=True,
     )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1649,6 +1651,183 @@ def export_inherent_polarization_table(
     print(f"Table exported to {output_path.resolve()}")
 
 
+def _ndfu_records_for_row_deduped(
+    row: pd.Series, annotation_col: str, sdb_columns: list[str], bins: int
+) -> list[dict]:
+    """
+    Same as `_ndfu_records_for_row`, but emits at most ONE record per
+    (comment, PC Dimension) instead of one per matching annotator. A
+    comment has a single nDFU value; if it should count as evidence for
+    "Gender: Female" at all, it should count once, not once per annotator
+    who happened to be sampled as Female. Avoids the pseudoreplication in
+    the original broadcast (see _ndfu_records_for_row), which inflates N
+    by up to MAX_ANNOTATORS_PER_ITEM x and biases significance tests.
+    """
+    annotations = row[annotation_col]
+    if (
+        not isinstance(annotations, (list, np.ndarray))
+        or len(annotations) == 0
+    ):
+        return []
+    try:
+        ndfu_value = _apunim_dfu(annotations, bins)
+    except Exception as e:
+        print(f"Error calculating NDFU for an item: {e}")
+        return []
+
+    return [
+        {"PC Dimension": f"{sdb_col}: {value}", "nDFU": ndfu_value}
+        for sdb_col in sdb_columns
+        for value in set(row[sdb_col])  # dedupe: one row per comment/group
+    ]
+
+
+def _compute_ndfu_anova_by_prompt(
+    human_datasets: tasks.preprocessing.LazyDatasetLoader,
+    annotations_dir: Path,
+    dataset_keys: list[str] = PROMPT_COMPARISON_DATASET_KEYS,
+    prompt_names: list[str] = MAIN_PROMPT_NAMES,
+    exclude_models: set[str] | None = None,
+    correction_method: str = "fdr_bh",
+) -> pd.DataFrame:
+    """
+    For each (dataset, model, SDB group), runs a one-way ANOVA
+    (scipy.stats.f_oneway) comparing that group's per-COMMENT nDFU values
+    across instruction prompts (default vs. each adversarial prompt).
+
+    Each comment contributes AT MOST ONE observation per (prompt, PC
+    Dimension) -- unlike `_compute_ndfu_records`/`_draw_apunim_column`,
+    which broadcast a comment's single nDFU value once per annotator
+    persona matching that group and so double(sextuple-)counts it. With
+    N comments and up to MAX_ANNOTATORS_PER_ITEM annotators/comment, that
+    broadcast inflates a group's observation count from <=N to close to
+    N * MAX_ANNOTATORS_PER_ITEM, which both misreports the true sample
+    size and violates the ANOVA independence assumption (the same value
+    appears multiple times), inflating F-statistics and deflating
+    p-values. This function fixes that by deduping to `set(row[sdb_col])`
+    per comment before building the per-group sample lists.
+
+    Raw p-values are corrected for multiple hypothesis testing across the
+    entire batch of tests using `correction_method` (default:
+    Benjamini-Hochberg FDR). Set `correction_method=None` to skip.
+
+    Returns a long-format DataFrame: 'Dataset', 'Model', 'PC Dimension',
+    'F', 'p_raw', 'n_prompts_compared', 'n_total_obs', and -- if
+    `correction_method` is set -- 'p_corrected', 'reject_null' (alpha=0.05).
+    """
+    exclude_models = set(exclude_models or ())
+    records = []
+
+    for dataset_key in dataset_keys:
+        if dataset_key not in human_datasets:
+            continue
+
+        files_by_prompt = {
+            p: find_annotation_files(annotations_dir, dataset_key, p)
+            for p in prompt_names
+        }
+        models = _order_models(
+            set.union(*(set(f) for f in files_by_prompt.values()))
+            - exclude_models
+        )
+        dataset_name = human_datasets[dataset_key].get_name()
+
+        for model in models:
+            ndfu_by_prompt = {}
+            for prompt_name in prompt_names:
+                path = files_by_prompt[prompt_name].get(model)
+                if path is None:
+                    continue
+                df = load_llm_df(path)
+                ds = LLMAnnotationDataset(df, dataset_key, model, prompt_name)
+
+                data = ds.get_dataset()
+                annotation_col = ds.get_annotation_column()
+                sdb_columns = ds.get_sdb_columns()
+                bins = _ndfu_bin_count(data[annotation_col].to_list())
+                if bins == 0:
+                    continue
+
+                group_records = pd.DataFrame(
+                    r
+                    for _, row in data.iterrows()
+                    for r in _ndfu_records_for_row_deduped(
+                        row, annotation_col, sdb_columns, bins
+                    )
+                )
+                if not group_records.empty:
+                    ndfu_by_prompt[prompt_name] = group_records.groupby(
+                        "PC Dimension"
+                    )["nDFU"].apply(list)
+
+            if len(ndfu_by_prompt) < 2:
+                continue
+
+            all_groups = sorted(
+                set.union(*(set(s.index) for s in ndfu_by_prompt.values()))
+            )
+
+            for group in all_groups:
+                samples = [
+                    s[group]
+                    for s in ndfu_by_prompt.values()
+                    if group in s.index and len(s[group]) >= 2
+                ]
+                if len(samples) < 2:
+                    continue
+                f_stat, p_value = stats.f_oneway(*samples)
+                records.append(
+                    {
+                        "Dataset": dataset_name,
+                        "Model": model,
+                        "PC Dimension": group,
+                        "F": f_stat,
+                        "p_raw": p_value,
+                        "n_prompts_compared": len(samples),
+                        "n_total_obs": sum(len(s) for s in samples),
+                    }
+                )
+
+    result_df = pd.DataFrame(records)
+    if result_df.empty or correction_method is None:
+        return result_df
+
+    reject, p_corrected, _, _ = multipletests(
+        result_df["p_raw"], alpha=0.05, method=correction_method
+    )
+    result_df["p_corrected"] = p_corrected
+    result_df["reject_null"] = reject
+    return result_df
+
+
+def export_ndfu_anova_by_prompt(
+    human_datasets: tasks.preprocessing.LazyDatasetLoader,
+    annotations_dir: Path,
+    output_path: Path,
+    dataset_keys: list[str] = PROMPT_COMPARISON_DATASET_KEYS,
+    prompt_names: list[str] = MAIN_PROMPT_NAMES,
+    exclude_models: set[str] | None = None,
+    correction_method: str = "fdr_bh",
+) -> pd.DataFrame:
+    """
+    Computes `compute_ndfu_anova_by_prompt` and writes it to `output_path`
+    as a CSV. Returns the DataFrame as well, for scripts that want to
+    chain further processing (e.g. filtering to significant rows).
+    """
+    result_df = _compute_ndfu_anova_by_prompt(
+        human_datasets=human_datasets,
+        annotations_dir=annotations_dir,
+        dataset_keys=dataset_keys,
+        prompt_names=prompt_names,
+        exclude_models=exclude_models,
+        correction_method=correction_method,
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    result_df.to_csv(output_path, index=False)
+    print(f"ANOVA results exported to {output_path.resolve()}")
+    return result_df
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -1926,7 +2105,7 @@ def main(
         sap_path=sap_path,
         kumar_path=kumar_path,
     )
-
+    """
     _run_histogram_step(
         human_datasets, annotations_dir, graph_output_dir, prompt_name
     )
@@ -1963,6 +2142,14 @@ def main(
 
     _run_inherent_polarization_step(
         human_datasets, annotations_dir, latex_output_dir, exclude_models
+    )
+    """
+    export_ndfu_anova_by_prompt(
+        human_datasets=human_datasets,
+        annotations_dir=annotations_dir,
+        output_path=latex_output_dir
+        / "polarization_by_instruction_anova.csv.csv",
+        correction_method="holm",
     )
 
 
