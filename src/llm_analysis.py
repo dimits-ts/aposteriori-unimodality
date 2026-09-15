@@ -1290,7 +1290,7 @@ def _trim_numeric_col(col):
     return pd.to_numeric(
         col,
         errors="coerce",
-    ).map(lambda x: "---" if pd.isna(x) else f"{x:.2f}")
+    ).map(lambda x: "---" if pd.isna(x) else f"{x:.3f}")
 
 
 def export_llm_apunim_prompt_table(
@@ -1322,8 +1322,7 @@ def export_llm_apunim_prompt_table(
         position="ht",
         index=True,
         multirow=True,
-        longtable=True,
-        float_format="%.2f",
+        longtable=True
     )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1581,8 +1580,6 @@ def compute_inherent_polarization_comparison(
 
 def build_inherent_polarization_table(
     long_df: pd.DataFrame,
-    human_datasets: dict[str, pd.DataFrame],
-    dataset_keys: list[str],
     prompt_names: list[str],
 ) -> pd.DataFrame:
     """
@@ -1642,7 +1639,7 @@ def export_inherent_polarization_table(
         index=True,
         multirow=True,
         longtable=longtable,
-        float_format="%.2f",
+        float_format="%.3f",
     )
     latex_str = latex_str.replace(
         r"\begin{table}[ht]", r"\begin{table}[ht]\centering\scriptsize"
@@ -1895,8 +1892,6 @@ def _run_inherent_polarization_step(
     )
     inherent_table_df = build_inherent_polarization_table(
         long_df=inherent_df,
-        human_datasets=human_datasets,
-        dataset_keys=DATASET_KEYS[2:],
         prompt_names=MAIN_PROMPT_NAMES,
     )
     export_inherent_polarization_table(
