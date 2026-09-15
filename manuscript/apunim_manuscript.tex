@@ -435,8 +435,8 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 
 \begin{figure*}[t]
 	\centering
-	\includegraphics[width=\linewidth]{llm_apunim_grid.png}
-	\caption{\ac{ndfu} grouped by dataset (rows) and model family (columns) for each \ac{pc} persona dimension in the primary annotation task (blue) using the default prompt, compared with human annotations on the same sample (yellow).}
+	\includegraphics[width=\linewidth]{investigation.drawio.png}
+	\caption{}
 	\label{fig:llm-polarization}
 \end{figure*}
 
@@ -1114,12 +1114,15 @@ We examine the following conditions for selecting models and datasets for our LL
 
 \subsection{LLM Annotation Results}
 
-\begin{figure}[t]
+\begin{figure*}[t]
+	\includegraphics[width=\linewidth]{llm_apunim_grid_default.png}
 	\includegraphics[width=\linewidth]{llm_apunim_grid_persona.png}
 	\includegraphics[width=\linewidth]{llm_apunim_grid_stereotype.png}
-	\caption{LLM polarization patterns for the adversarial prompts.}
+	\includegraphics[width=\linewidth]{llm_apunim_grid_single.png}
+	\includegraphics[width=\linewidth]{llm_apunim_grid_direct.png}
+	\caption{\ac{ndfu} grouped by dataset (rows) and model family (columns) for each \ac{pc} persona dimension in the primary annotation task (blue) using different instruction prompts, compared with human annotations on the same sample (yellow).}
 	\label{fig:llm-polarization-adversarial}
-\end{figure}
+\end{figure*}
 
 Tables~\ref{tab:llm-apunim-by-prompt-kumar} and~\ref{tab:llm-apunim-by-prompt-sap} show the apunim results for the LLM annotation task on the Kumar and Sap datasets respectively. Apunim values are largely model-dependent, but no other concrete pattern can be discerned. Fig.~\ref{fig:llm-polarization-adversarial} shows the overall polarization patterns when using the different adversarial instructions. The Qwen-23B and LLaMa-70B models consistently produce no polarization, while the persona-focused prompt seems to elicit some varied polarization, even though it does not translate to higher apunim values. This pattern would indicate that the persona-focused prompt likely adds more overall variance to the persona-conditioned annotations, even though that variance is not consistent.
 
