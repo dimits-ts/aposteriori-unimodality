@@ -297,6 +297,17 @@ def run_inherent_polarization_step(
     )
 
 
+def run_exploratory_stats(res_df: pd.DataFrame) -> None:
+    print("Statistically valid results by model:")
+    print(res_df[res_df.reject_null].Model.value_counts())
+    print("Compared to all groups (valid and non-valid):")
+    print(res_df.Model.value_counts())
+    print("Statistically valid results by dataset:")
+    print(res_df[res_df.reject_null].Dataset.value_counts())
+    print("Compared to all groups (valid and non-valid):")
+    print(res_df.Dataset.value_counts())
+
+
 def main(
     dices_small_path: Path,
     dices_large_path: Path,
@@ -360,12 +371,13 @@ def main(
         human_datasets, annotations_dir, latex_output_dir, exclude_models
     )
 
-    stats.export_ndfu_anova_by_prompt(
+    res_df = stats.export_ndfu_anova_by_prompt(
         human_datasets=human_datasets,
         annotations_dir=annotations_dir,
         output_path=latex_output_dir / "polarization_by_instruction_anova.csv",
         correction_method="holm",
     )
+    run_exploratory_stats(res_df)
 
 
 if __name__ == "__main__":
