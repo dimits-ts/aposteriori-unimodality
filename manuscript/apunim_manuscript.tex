@@ -1081,7 +1081,6 @@ We use a single Quadro RTX 6000 GPU for tasks requiring small (7-8B) models and 
 	\caption{Annotation frequencies for humans and each LLM in the primary annotation task using the default prompt.}
 	\label{fig:llm-human-frequencies}
 \end{figure*}
-%TODO fix this
 
 \input{generated/inherent-polarization.tex}
 
@@ -1091,7 +1090,6 @@ Fig.~\ref{fig:llm-human-frequencies} shows the different annotation frequencies 
 We also investigate whether LLM annotations include any \ac{ip}. Table~\ref{tab:inherent-polarization} shows that \ac{ip} is significantly smaller than in human annotations. Adversarial prompts seem to consistently increase it, although it does not approach human levels. It is also notable that as with LLM apunim values (next section), \ac{ip} seems to be primarily model-dependent.
 
 \subsection{Annotation Ablations}
-%TODO: Caption above or below?
 
 \begin{center}
 	\input{generated/llm-consistency-repeats.tex}
@@ -1115,11 +1113,11 @@ We examine the following conditions for selecting models and datasets for our LL
 \subsection{LLM Annotation Results}
 
 \begin{figure*}[t]
-	\includegraphics[width=0.8\linewidth]{llm_apunim_grid_default.png}
-	\includegraphics[width=0.8\linewidth]{llm_apunim_grid_persona.png}
-	\includegraphics[width=0.8\linewidth]{llm_apunim_grid_stereotype.png}
-	\includegraphics[width=0.8\linewidth]{llm_apunim_grid_single.png}
-	\includegraphics[width=0.8\linewidth]{llm_apunim_grid_direct.png}
+	\includegraphics[width=\linewidth]{llm_apunim_grid_default.png}
+	\includegraphics[width=\linewidth]{llm_apunim_grid_persona.png}
+	\includegraphics[width=\linewidth]{llm_apunim_grid_stereotype.png}
+	\includegraphics[width=\linewidth]{llm_apunim_grid_single.png}
+	\includegraphics[width=\linewidth]{llm_apunim_grid_direct.png}
 	\caption{\ac{ndfu} grouped by dataset (rows) and model family (columns) for each \ac{pc} persona dimension in the primary annotation task (blue) using different instruction prompts, compared with human annotations on the same sample (yellow).}
 	\label{fig:llm-polarization-adversarial}
 \end{figure*}

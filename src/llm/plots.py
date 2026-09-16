@@ -1,3 +1,4 @@
+import itertools
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -99,6 +100,15 @@ def _draw_annotation_histogram(
     dataset_key: str,
     prompt_name: str,
 ) -> None:
+    _LINESTYLES = [
+        "-",
+        "--",
+        "-.",
+        ":",
+        (0, (3, 1, 1, 1)),
+        (0, (5, 1)),
+        (0, (1, 1)),
+    ]
     human_vals = collect_human_annotations(ds)
     llm_vals = collect_llm_annotations(
         annotations_dir, dataset_key, prompt_name
@@ -114,24 +124,40 @@ def _draw_annotation_histogram(
     sources = ["Human"] + sorted(llm_vals.keys())
     sources = [s for s in sources if s in set(plot_df["source"])]
     palette = dict(zip(sources, graphs.COLORBLIND_PALETTE))
+    linestyle_cycle = itertools.cycle(_LINESTYLES)
+    dash_map = {s: next(linestyle_cycle) for s in sources}
 
     # Step-line histograms (rather than dodged bars) so up to 7 overlapping
-    # distributions (human + 6 models) stay legible.
-    sns.histplot(
-        data=plot_df,
-        x="value",
-        hue="source",
-        hue_order=sources,
-        discrete=True,
-        stat="probability",
-        common_norm=False,
-        palette=palette,
-        ax=ax,
-    )
+    # distributions (human + 6 models) stay legible. Draw one source at a
+    # time so each gets its own color AND line style/width — color alone
+    # doesn't scale to 7 overlapping series.
+    for source in sources:
+        sub = plot_df[plot_df["source"] == source]
+        is_human = source == "Human"
+        sns.histplot(
+            data=sub,
+            x="value",
+            discrete=True,
+            stat="probability",
+            common_norm=False,
+            element="step",
+            fill=False,
+            color=palette[source],
+            linestyle=dash_map[source],
+            linewidth=2.4 if is_human else 1.6,
+            alpha=1.0 if is_human else 0.85,
+            label=source,
+            ax=ax,
+        )
+
     ax.set_title(ds.get_name())
     ax.set_xlabel(f"{ds.get_annotation_column()} value")
     ax.set_ylabel("Proportion")
-    _clean_legend(ax)
+    # No per-axis legend; a single shared legend is built once, at the
+    # figure level, in plot_annotation_histograms.
+    legend = ax.get_legend()
+    if legend is not None:
+        legend.remove()
 
 
 def plot_annotation_histograms(
@@ -156,11 +182,33 @@ def plot_annotation_histograms(
         )
 
     _hide_unused_axes(axes, len(dataset_keys), nrows, ncols)
+
+    # Collect one legend entry per unique source across all subplots,
+    # preserving first-seen order (Human first), then draw it once,
+    # horizontally, below the whole figure.
+    handles_by_label = {}
+    for ax in fig.axes:
+        for handle, label in zip(*ax.get_legend_handles_labels()):
+            handles_by_label.setdefault(label, handle)
+
+    ordered_labels = sorted(
+        handles_by_label.keys(), key=lambda l: (l != "Human", l)
+    )
+    handles = [handles_by_label[l] for l in ordered_labels]
+
     fig.suptitle(
         f"Human vs. LLM annotation distributions ({prompt_name} prompt)",
         y=1.02,
     )
-    fig.tight_layout()
+    fig.legend(
+        handles,
+        ordered_labels,
+        loc="lower center",
+        bbox_to_anchor=(0.5, -0.02),
+        ncol=len(ordered_labels),
+        frameon=False,
+    )
+    fig.tight_layout(rect=(0, 0.06, 1, 1))
     graphs.save_plot(output_path)
     plt.close(fig)
 
@@ -477,7 +525,9 @@ def _draw_apunim_row(
     sdb_columns_limit: int | None,
     is_first_row: bool,
 ) -> None:
-    axes = subfig.subplots(nrows=1, ncols=len(columns), squeeze=False)[0]
+    axes = subfig.subplots(
+        nrows=1, ncols=len(columns), squeeze=False
+    )[0]
 
     human_ds = _human_sample_dataset(
         ds_human, annotations_dir, dataset_key, prompt_name
@@ -536,7 +586,7 @@ def plot_apunim_grid(
         return
 
     columns = ["Human"] + models
-    fig = plt.figure(constrained_layout=True)
+    fig = plt.figure(constrained_layout=True, figsize=(8, 2))
     subfigures = fig.subfigures(
         nrows=len(dataset_keys), ncols=1, height_ratios=[1] * len(dataset_keys)
     )
