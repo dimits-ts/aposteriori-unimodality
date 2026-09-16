@@ -621,16 +621,97 @@ def export_ndfu_anova_by_prompt(
     print(f"ANOVA results exported to {output_path.resolve()}")
 
 
-def run_exploratory_stats(res_df: pd.DataFrame) -> None:
-    print("Statistically valid results by model:")
-    print(res_df[res_df.reject_null].Model.value_counts())
-    print("Compared to all groups (valid and non-valid):")
-    print(res_df.Model.value_counts())
-    print("Statistically valid results by dataset:")
-    print(res_df[res_df.reject_null].Dataset.value_counts())
-    print("Compared to all groups (valid and non-valid):")
-    print(res_df.Dataset.value_counts())
+# ---------------------------------------------------------------------------
+# Cohen's d summary table (describe() stats x prompts)
+# ---------------------------------------------------------------------------
 
-    for col in [col for col in res_df.columns if "cohens_d" in col]:
-        print(col)
-        print(res_df[col].describe())
+
+def compute_cohens_d_summary_table(
+    result_df: pd.DataFrame,
+    prompt_names: list[str] = MAIN_PROMPT_NAMES,
+    baseline_prompt: str = "default",
+) -> pd.DataFrame:
+    """
+    Summarizes each 'cohens_d_<prompt>_vs_<baseline_prompt>' column
+    produced by `compute_ndfu_anova_by_prompt` with pandas' `.describe()`
+    (count, mean, std, min, 25%, 50%, 75%, max), and lays the results out
+    with the describe() stats as rows and the (non-baseline) prompts as
+    columns -- i.e. the same numbers `run_exploratory_stats` used to
+    print per-column, just reshaped into one table.
+
+    Prompts with no corresponding column in `result_df` are skipped.
+    """
+    columns = {}
+    for prompt_name in prompt_names:
+        if prompt_name == baseline_prompt:
+            continue
+        col = f"cohens_d_{prompt_name}_vs_{baseline_prompt}"
+        if col not in result_df.columns:
+            continue
+        columns[prompt_name] = pd.to_numeric(
+            result_df[col], errors="coerce"
+        ).describe()
+
+    return pd.DataFrame(columns)
+
+
+def export_cohens_d_summary_latex(
+    summary_df: pd.DataFrame,
+    output_path: Path,
+    caption: str,
+    label: str,
+) -> None:
+    """
+    Writes a describe()-stats-by-prompt table (as returned by
+    `compute_cohens_d_summary_table`) to `output_path` as a LaTeX table.
+    The "count" row is left as an integer; every other row is formatted
+    to 3 decimal places, with "---" for missing values.
+    """
+    df = summary_df.copy().astype(object)
+    df.columns = [str(c).capitalize() for c in df.columns]
+
+    for stat, row in df.iterrows():
+        if stat == "count":
+            df.loc[stat] = row.map(
+                lambda x: "---" if pd.isna(x) else f"{int(x)}"
+            )
+        else:
+            df.loc[stat] = row.map(
+                lambda x: "---" if pd.isna(x) else f"{x:.3f}"
+            )
+
+    latex_str = df.to_latex(
+        caption=caption,
+        label=label,
+        position="ht",
+        escape=True,
+        index=True,
+        column_format="r" * (len(df) + 1),
+    )
+    latex_str = latex_str.replace(
+        r"\begin{table}[ht]", r"\begin{table}[ht]\centering"
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(latex_str)
+    print(f"Table exported to {output_path.resolve()}")
+
+
+def _significance_ratio(res_df: pd.DataFrame, col: str) -> pd.Series:
+    """
+    For each distinct value of `col` (e.g. each model, or each dataset),
+    counts how many of its rows have `reject_null` True vs. how many rows
+    it has in total, and returns one "<significant> / <total>" string per
+    value -- ordered by total count, descending (matching
+    `Series.value_counts()`'s default order).
+    """
+    total = res_df[col].value_counts()
+    significant = res_df.loc[res_df.reject_null, col].value_counts()
+    significant = significant.reindex(total.index, fill_value=0)
+    return significant.astype(str) + " / " + total.astype(str)
+
+
+def run_exploratory_stats(res_df: pd.DataFrame) -> None:
+    print("Statistically significant / total distinct groups by model:")
+    print(_significance_ratio(res_df, "Model"))
+    print("Statistically significant / total distinct groups by dataset:")
+    print(_significance_ratio(res_df, "Dataset"))

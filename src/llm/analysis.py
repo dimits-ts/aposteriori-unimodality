@@ -289,7 +289,6 @@ def main(
     repeat_dir: Path,
     graph_output_dir: Path,
     latex_output_dir: Path,
-    stats_output_dir: Path,
     cache_dir: Path,
     exclude_models: list[str],
     prompt_name: str = "default",
@@ -338,7 +337,7 @@ def main(
         human_datasets, annotations_dir, latex_output_dir, exclude_models
     )
 
-    stats_path = stats_output_dir / "polarization_by_instruction_anova.csv"
+    stats_path = cache_dir / "polarization_by_instruction_anova.csv"
     if skip_if_exists(stats_path):
         res_df = pd.read_csv(stats_path)
     else:
@@ -347,11 +346,19 @@ def main(
             annotations_dir=annotations_dir,
             correction_method="holm",
         )
-        stats.export_ndfu_anova_by_prompt(
-            result_df=res_df,
-            output_path=stats_output_dir
-            / "polarization_by_instruction_anova.csv",
-        )
+    stats.export_ndfu_anova_by_prompt(
+        result_df=res_df,
+        output_path=stats_path
+    )
+    summary_df = stats.compute_cohens_d_summary_table(res_df)
+    stats.export_cohens_d_summary_latex(
+        summary_df,
+        output_path=latex_output_dir / "cohens_d.tex",
+        caption=r"""Cohen's d statistics showing the quantitative difference
+        in \ac{ndfu} between the default and each adversarial instruction
+        prompt for each of the groups of both datasets and across all models.""",
+        label="tab:cohens-d"
+    )
     stats.run_exploratory_stats(res_df)
 
 
@@ -432,11 +439,6 @@ if __name__ == "__main__":
         help="Directory for cached apunim computations.",
     )
     parser.add_argument(
-        "--stats-output-dir",
-        required=True,
-        help=("Directory where statistical results will be exported."),
-    )
-    parser.add_argument(
         "--exclude-models",
         nargs="+",
         default=[],
@@ -461,5 +463,4 @@ if __name__ == "__main__":
         prompt_name=args.prompt_name,
         cache_dir=Path(args.cache_dir),
         exclude_models=args.exclude_models,
-        stats_output_dir=Path(args.stats_output_dir),
     )
