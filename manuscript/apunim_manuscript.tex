@@ -432,24 +432,24 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 
 \subsection{What Polarization Patterns Do LLM Annotators Exhibit?}
 \label{sec:results:llms}
+%TODO: re-run sap with 600 comments
 
 \begin{figure*}[t]
 	\centering
 	\includegraphics[width=\linewidth]{investigation.drawio.png}
-	\caption{}
-	\label{fig:llm-polarization}
+	\caption{Our evaluation methodology. We test whether a standard instruction prompt is enough to produce polarization in the form of \ac{ip} (Table~\ref{tab:inherent-polarization}), \ac{ndfu} (Fig.~\ref{fig:llm-polarization-adversarial}) and apunim (Tables~\ref{tab:llm-apunim-by-prompt-kumar},~\ref{tab:llm-apunim-by-prompt-sap}). We then repeat the analysis for four adversarial instruction prompts emphasizing the effect of personas.}
+	\label{fig:llm-results}
 \end{figure*}
 
-Prior literature has shown that LLMs are not reliable annotators when using persona prompting; they tend to reproduce stereotypes \citep{lutz-etal-2025-prompt, liu-etal-2024-evaluating-large} and are unreliable for minority groups \citep{lutz-etal-2025-prompt}. Unlike prior work that investigated model performance \citep{gupta2024bias} or human--LLM agreement \citep{dong-etal-2024-llm, gomez-etal-2024-algorithmic, masud-etal-2024-hate}, we test whether attributable polarization exists regardless of faithfulness to the actual groups.
+Prior literature has shown that LLMs are not reliable annotators when using persona prompting; they tend to reproduce stereotypes \citep{lutz-etal-2025-prompt, liu-etal-2024-evaluating-large} and are unreliable for minority groups \citep{lutz-etal-2025-prompt}. Unlike prior work that investigated model performance \citep{gupta2024bias} or human--LLM agreement \citep{dong-etal-2024-llm, gomez-etal-2024-algorithmic, masud-etal-2024-hate}, we test whether attributable polarization exists regardless of faithfulness to the actual groups. We investigate four\footnote{We used six models, but pruned two since they proved unreliable---see ablations in App.~\ref{app:llms}.} open-source LLMs with six annotators per item supplied with personas sampled from our human dataset across a sample of 300 comments for the Sap and 1000 items for the Kumar dataset. See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations.
 
-We investigate six open-source LLMs with six annotators per item supplied with personas sampled from our human dataset across a sample of 300 comments for the Sap and 1000 items for the Kumar dataset. Our results show \emph{no statistically significant attribution effects} and very small \emph{apunim} values for any of the groups in all models and datasets (see App.~\ref{app:llms}; Table~\ref{tab:llm-apunim-by-prompt-kumar},~\ref{tab:llm-apunim-by-prompt-sap}). Using four adversarial prompts progressively emphasizing the importance of the LLMs' personas (App.~\ref{app:prompts}), as instruction prompts are known to influence the effect of personas \citep{weeber-etal-2026-one}, also yields no results. Indeed, the adversarial prompts did not seem to push the \emph{apunim} values to any particular direction, suggesting that instructing the model is an ineffective way of eliciting \emph{any} polarizing behavior.\footnote{These prompts do however tend to increase \ac{ip}, although not to human levels---see App.~\ref{app:llms}; Table~\ref{tab:inherent-polarization}.}\footnote{We note that there may exist other ways to induce polarizing behavior in LLMs such as Supervised Fine-tuning, although this is outside the scope of this work.}
+Fig.~\ref{fig:llm-results} shows our evaluation methodology. We begin by examining whether persona prompting with standard instructions leads to polarized annotations. Our results show \emph{no statistically significant attribution effects} and very small \emph{apunim} values for any of the groups in all models and datasets (App.~\ref{app:llms}; Table~\ref{tab:llm-apunim-by-prompt-kumar},~\ref{tab:llm-apunim-by-prompt-sap}). Unlike human annotations, we observe no \ac{ip} (App.~\ref{app:llms}; Table~\ref{tab:inherent-polarization}) and only two of the four models showing any polarization (App.~\ref{app:llms}; Fig.~\ref{fig:llm-polarization-adversarial}).
 
-This pattern can be explained both by the lack of overall polarization exhibited by these models and the homogeneous distribution of polarization across groups, which is not observable to this extent in human annotations (Fig.~\ref{fig:llm-polarization}), and which is further supported by overall small \ac{ip} values (App.~\ref{app:llms}; Table~\ref{tab:inherent-polarization}). Our findings therefore support social science work which warns against generating human annotation data without substantial replication studies \citep{rossi_2024, kapania-etal-2025-examining}.
-See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations.
+Since instruction prompts are known to influence the effect of personas \citep{weeber-etal-2026-one}, we also try four adversarial prompts progressively emphasizing the importance of the LLMs' personas (App.~\ref{app:prompts}), but still observe no effect on either apunim or \ac{ip}. While there are statistically significant differences in polarization, the effect is not quantitatively significant, as shown by App.~\ref{app:llms}; Table~\ref{tab:cohens-d}. Our findings therefore support social science work which warns against generating human annotation data without substantial replication studies \citep{rossi_2024, kapania-etal-2025-examining}.
 
 \begin{finding}
 	\label{finding:llms}
-	LLMs with persona-prompting do not produce annotations with attributable polarization across any group, which may be explained by the even distribution of polarization across groups.
+	LLMs with persona-prompting do not produce annotations with detectable \ac{ip}, nor with attributable polarization across any group, while only a few exhibit any polarization at all. This effect can not be reliably remedied by prompt engineering.
 \end{finding}
 
 
@@ -1115,16 +1115,22 @@ We examine the following conditions for selecting models and datasets for our LL
 \subsection{LLM Annotation Results}
 
 \begin{figure*}[t]
-	\includegraphics[width=\linewidth]{llm_apunim_grid_default.png}
-	\includegraphics[width=\linewidth]{llm_apunim_grid_persona.png}
-	\includegraphics[width=\linewidth]{llm_apunim_grid_stereotype.png}
-	\includegraphics[width=\linewidth]{llm_apunim_grid_single.png}
-	\includegraphics[width=\linewidth]{llm_apunim_grid_direct.png}
+	\includegraphics[width=0.8\linewidth]{llm_apunim_grid_default.png}
+	\includegraphics[width=0.8\linewidth]{llm_apunim_grid_persona.png}
+	\includegraphics[width=0.8\linewidth]{llm_apunim_grid_stereotype.png}
+	\includegraphics[width=0.8\linewidth]{llm_apunim_grid_single.png}
+	\includegraphics[width=0.8\linewidth]{llm_apunim_grid_direct.png}
 	\caption{\ac{ndfu} grouped by dataset (rows) and model family (columns) for each \ac{pc} persona dimension in the primary annotation task (blue) using different instruction prompts, compared with human annotations on the same sample (yellow).}
 	\label{fig:llm-polarization-adversarial}
 \end{figure*}
 
-Tables~\ref{tab:llm-apunim-by-prompt-kumar} and~\ref{tab:llm-apunim-by-prompt-sap} show the apunim results for the LLM annotation task on the Kumar and Sap datasets respectively. Apunim values are largely model-dependent, but no other concrete pattern can be discerned. Fig.~\ref{fig:llm-polarization-adversarial} shows the overall polarization patterns when using the different adversarial instructions. The Qwen-23B and LLaMa-70B models consistently produce no polarization, while the persona-focused prompt seems to elicit some varied polarization, even though it does not translate to higher apunim values. This pattern would indicate that the persona-focused prompt likely adds more overall variance to the persona-conditioned annotations, even though that variance is not consistent.
+\paragraph{Overall Polarization} Fig.~\ref{fig:llm-polarization-adversarial} shows the overall polarization patterns when using the different adversarial instructions. The Qwen-23B and LLaMa-70B models consistently produce no polarization, while the persona-focused prompt seems to elicit some varied polarization, even though it does not translate to higher apunim values. This pattern would indicate that the persona-focused prompt likely adds more overall variance to the persona-conditioned annotations, even though that variance is not consistent.
+
+\input{generated/cohens_d.tex}
+\paragraph{Do Instructions Influence Polarization?} No. While an ANOVA test\footnote{We use a parametric test due to the abundance of observations ($N={300,1000}$). We also used a multiple hypothesis p-value correction (specifically the ``Holms-Bonferroni'' method~\citep{holms}).} shows that the choice of instruction prompt does indeed affect polarization across most models (almost all groups for OLMo-32B, half for LLaMa-70B, Qwen-7B and a single group for Qwen-32B), these effects are almost always non-qualitatively significant ($<0.2$ Cohen's d), as shown in Table~\ref{tab:cohens-d}. The ``single'' prompts are the only ones producing a sometimes notable (small-to-medium) quantitative effect for a minority of examined groups. 
+
+
+\paragraph{Apunim Analysis} Tables~\ref{tab:llm-apunim-by-prompt-kumar} and~\ref{tab:llm-apunim-by-prompt-sap} show the apunim results for the LLM annotation task on the Kumar and Sap datasets respectively. Apunim values are largely model-dependent, but no other concrete pattern can be discerned. 
 
 \begingroup
 \scriptsize
