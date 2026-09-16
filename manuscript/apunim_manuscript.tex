@@ -24,6 +24,7 @@
 \usepackage{multicol}
 \usepackage{longtable}
 \usepackage{placeins}
+\usepackage{censor}
 
 
 %  ==================== MY COMMANDS ====================
@@ -61,7 +62,7 @@
 
 \begin{document}
 \maketitle
-
+%TODO: redact package name
 \begin{abstract}
 	Current representations of polarization focus exclusively on distinguishing minor disagreements from systematic differences in opinion between annotator groups. In this study we develop a new framework which not only detects, but also quantifies the degree to which any annotator subgroup causes these systematic differences. We first identify fundamental issues and demonstrate how they limit existing approaches: 1) the presence of ``inherent'' polarization that cannot be attributed to any known or latent groups, and 2) opposing polarization effects canceling each other out in aggregated annotations. We then introduce a new metric that attributes polarization to any annotator group while avoiding the above limitations and the persistent problem of group-size imbalances, releasing a PyPi-installable implementation. Our metric surpasses both traditional similarity metrics and prior approaches on detecting subgroup polarization, while also uncovering previously latent polarization in overlooked minority and fine-grained ideological groups. Finally, we explore the polarization patterns of persona-prompted LLM-as-a-judge models, finding that they are disconected from human polarization patterns, even when explicitly instructed to condition responses on persona characteristics.
 \end{abstract}
@@ -99,7 +100,7 @@ One alternative is using \emph{polarization}, which correlates better with human
 
 \begin{researchquestion}[Which polarization patterns are shared between human and LLM annotators]
 	\label{rq:llm}
-	We conduct an annotation study on the same datasets using six open-source models in order to compare polarization patterns between them and humans (\S\ref{sec:results:llms}). We find that persona-prompted LLMs consistently fail to produce any subgroup polarization patterns, confirming that persona prompting does not consistently influence LLM outputs (Finding~\ref{finding:llms}).
+	We conduct an annotation study on the same datasets using six open-source models in order to compare polarization patterns between them and humans (\S\ref{sec:results:llms}). We find that using persona-prompted LLMs to simulate the original annotation task consistently fail to produce any subgroup polarization patterns regardless of instruction prompt, confirming that persona prompting does not consistently influence LLM outputs in the examined tasks (Finding~\ref{finding:llms}).
 \end{researchquestion}
 
 Our work makes the following contributions: (1) The identification of severe issues present in subjective datasets and prior methodologies (2) A new polarization attribution metric that is robust to small annotator counts and minority group splits with a PyPi-installable implementation (3) The detection of new promising directions (ideological and ordinal groups) for analysis of subjective \ac{nlp} datasets (4) An exploration of LLM polarization patterns when using persona prompting. Our study also underscores the need for datasets with high annotator counts per item, instead of high annotator counts in general---see App.~\ref{app:ideal-dataset} for a more extensive discussion, empirical findings, and an intuition on how polarization attribution could be used for filtering subjective datasets.
@@ -331,7 +332,7 @@ Fig.~\ref{fig:metrics} shows the effectiveness of apunim, the aposteriori unimod
 \subsection{Human Annotators}
 \label{sec:results:humans}
 
-Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can explain observed polarization. Statistically significant results are presented in Table~\ref{tab:merged-apunim}. See App.~\ref{app:software} for details on other parameters and execution times, and App.~\ref{app:full} for the full results. The lack of rich annotation data prevents us from analyzing how different annotator groups interact and thus our analysis is necessarily uni-dimensional.
+Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can explain observed polarization. Statistically significant results are presented in Table~\ref{tab:merged-apunim}.\footnote{The results are not necessarily contingent on a reliable p-value estimation, as non-statistically significant results have very low ($<0.01$) apunim values. A threshold on the apunim values would produce similar tables.} See App.~\ref{app:software} for details on other parameters and execution times, and App.~\ref{app:full} for the full results. Note that the lack of rich annotation data prevents us from analyzing how different annotator groups interact and thus our analysis is necessarily uni-dimensional.
 
 \begin{table}[t]
 	\small
@@ -413,7 +414,7 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 	\label{tab:merged-apunim}
 \end{table}
 
-\emph{Polarization is consistently attributed to \textbf{ethnicity} across all datasets}, confirming prior work suggesting that it is a systematic source of annotator disagreement in these tasks~\cite{goyal2022your}.\footnote{We note that polarization attribution does not have a consistent direction across datasets, which we believe to be caused by studies using different ethnic subgroups, allowing polarization detection on the level of \acp{pc}, but distorting subgroup attribution.} Additionally, in both DICES-990 and Sap, \emph{\textbf{women} are a consistent source of polarization} (positive values), while \textbf{men} disagree among themselves (negative values), which is consistent with previous findings~\citep{wojatzki2018women, binns2017like}. Non-\textbf{transgender} annotators also showed the \emph{highest degree of polarization} in the Kumar dataset in absolute terms ($-0.788$) suggesting that transgender individuals are a systematic source of disagreement.\footnote{Only the inverse effect is detectable due to annotator sparsity, hence the negative sign.}
+\emph{Polarization is consistently attributed to \textbf{ethnicity} across all datasets}, confirming prior work suggesting that it is a systematic source of annotator disagreement in these tasks~\cite{goyal2022your}.\footnote{Note that polarization attribution does not have a consistent direction across datasets, which we believe to be caused by studies using different ethnic subgroups allowing detection but distorting attribution.} Additionally, in both DICES-990 and Sap, \emph{\textbf{women} are a consistent source of polarization} (positive values), while \textbf{men} disagree among themselves (negative values), which is consistent with previous findings~\citep{wojatzki2018women, binns2017like}. Non-\textbf{transgender} annotators also showed the \emph{highest degree of polarization} in the Kumar dataset in absolute terms ($-0.788$) suggesting that transgender individuals are a systematic source of disagreement.\footnote{Only the inverse effect is detectable due to annotator sparsity, hence the negative sign.}
 
 \begin{figure}[t]
 	\centering
@@ -441,7 +442,7 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 	\label{fig:llm-results}
 \end{figure*}
 
-Prior literature has shown that LLMs are not reliable annotators when using persona prompting; they tend to reproduce stereotypes \citep{lutz-etal-2025-prompt, liu-etal-2024-evaluating-large} and are unreliable for minority groups \citep{lutz-etal-2025-prompt}. Unlike prior work that investigated model performance \citep{gupta2024bias} or human--LLM agreement \citep{dong-etal-2024-llm, gomez-etal-2024-algorithmic, masud-etal-2024-hate}, we test whether attributable polarization exists regardless of faithfulness to the actual groups. We investigate four\footnote{We used six models, but pruned two since they proved unreliable---see ablations in App.~\ref{app:llms}.} open-source LLMs with six annotators per item supplied with personas sampled from our human dataset across a sample of 300 comments for the Sap and 1000 items for the Kumar dataset. See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations.
+Prior literature has shown that LLMs are not reliable annotators when using persona prompting; they tend to reproduce stereotypes \citep{lutz-etal-2025-prompt, liu-etal-2024-evaluating-large} and are unreliable for minority groups \citep{lutz-etal-2025-prompt}. Unlike prior work that investigated model performance \citep{gupta2024bias} or human--LLM agreement \citep{dong-etal-2024-llm, gomez-etal-2024-algorithmic, masud-etal-2024-hate}, we test whether attributable polarization exists regardless of faithfulness to the actual groups. We investigate four\footnote{We used six models, but pruned two since they proved unreliable---see ablations in App.~\ref{app:llms}.} open-source LLMs with six annotators per item\footnote{It is possible that LLMs can produce polarized patterns when scaled up to dozens or hundreds of annotators. This however is both hard to check due to exorbitant computational costs (App.~\ref{app:llms}) and hard to scale up in realistic deployment scenarios.} supplied with personas sampled from our human dataset across a sample of 300 comments for the Sap and 1000 items for the Kumar dataset. See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations.
 
 Fig.~\ref{fig:llm-results} shows our evaluation methodology. We begin by examining whether persona prompting with standard instructions leads to polarized annotations. Our results show \emph{no statistically significant attribution effects} and very small \emph{apunim} values for any of the groups in all models and datasets (App.~\ref{app:llms}; Table~\ref{tab:llm-apunim-by-prompt-kumar},~\ref{tab:llm-apunim-by-prompt-sap}). Unlike human annotations, we observe no \ac{ip} (App.~\ref{app:llms}; Table~\ref{tab:inherent-polarization}) and only two of the four models showing any polarization (App.~\ref{app:llms}; Fig.~\ref{fig:llm-polarization-adversarial}).
 
@@ -477,7 +478,7 @@ We stress that our metric functions strictly as a diagnostic warning signal. Any
 
 \paragraph{Data Sourcing and Privacy} All datasets employed in this study were either publicly accessible or provided to us by the original authors with full disclosure regarding the purpose of our research. No identifiable, personal information was included in our pipeline. We do not release proprietary data provided by the authors, nor have we provided any to proprietary LLMs. Finally, we note that our data is limited to English posts from a U.S. cultural context and our results may not be representative for other cultures.
 
-\paragraph{Examples Used} Our study utilizes examples of comments that may be considered divisive across certain demographics. These examples were generated by our team solely for demonstration purposes. We explicitly state that the contents of these examples and the groups studied do not necessarily reflect the views or behaviors of the groups they represent, nor do they reflect the opinions of the authors.
+\paragraph{Examples Used} Our study utilizes examples of comments that may be considered divisive across certain demographics. These examples were generated by our team solely for demonstration purposes. We explicitly state that the contents of these examples and the groups studied do not necessarily reflect the views or behaviors of the groups they represent, nor do they reflect the opinions of the authors. We have partially censored explicit slurs in Table~\ref{tab:inherent-examples} in order to both mitigate uncomfortable or triggering content, while also showing enough content for the examples to be effective.
 
 \paragraph{Prompts Used} This study uses adversarial prompts which explicitly instruct the model to change its outputs according to their persona prompts. The purpose of these prompts is to test the LLMs under an extreme case of prompt engineering and are not to be used for generalized usage. The use of these prompts may degrade model performance, increase the risk of stereotyping and produce misleading results.
 
@@ -807,25 +808,27 @@ The fact that the DICES datasets (featuring 70+ annotators per item) exhibit zer
 \begin{table}[t]
 	\begin{tabularx}{\linewidth}{X c}
 		\toprule
+		\multicolumn{2}{c}{\textcolor{red}{\textbf{Content Warning: Slurs, offensive, toxic and hateful speech.}}} \\
+		\midrule
 		\textbf{Comment}  & \ac{ip} \\
 		\midrule
 		The minks mentioned in the headline are indeed "rising" from where they were based, but that is due to them being buried in shallow mass graves (Africa) and filling with gas that causes them to rise out.  Rest assured, they're still very much dead, thankfully!. & 1 \\
-		There should be such thing as a bitch resistance for us women  & 1\\
-		There's a big difference between being a bitch and being a woman & 1 \\
-		i just watched a video of @joisnotonfire being an annoying hoe on skype i'm laughing & 1 \\
-		niggas love to commit crime & 1 \\
+		There should be such thing as a b\censor{it}ch resistance for us women  & 1\\
+		There's a big difference between being a b\censor{it}ch and being a woman & 1 \\
+		i just watched a video of @joisnotonfire being an annoying h\censor{o}e on skype i'm laughing & 1 \\
+		n\censor{igg}as love to commit crime & 1 \\
 		\midrule
-		I swear to God above I love ya and when ya be with this brotha, I swear I love you my bro as long as you not a nigga & 0.5 \\
-		I will become a cold ass bitch because of my treatment & 0.5\\
-		I would happily lay out a nigga & 0.5\\
-		Shoot yourself in the head you hypersensitive fuckin bitch.  & 0.5 \\
-		not all women are bitches, but all bitches are women & 0.5 \\
+		I swear to God above I love ya and when ya be with this brotha, I swear I love you my bro as long as you not a n\censor{igg}a & 0.5 \\
+		I will become a cold ass b\censor{it}ch because of my treatment & 0.5\\
+		I would happily lay out a n\censor{igg}a & 0.5\\
+		Shoot yourself in the head you hypersensitive fuckin b\censor{it}ch.  & 0.5 \\
+		not all women are b\censor{it}ches, but all b\censor{it}ches are women & 0.5 \\
 		\midrule
-		`` you ugly bitch!!!"- that seems to be my real name these days'' & 0 \\
+		``you ugly b\censor{it}ch!!!"- that seems to be my real name these days'' & 0 \\
 		``I am happy to report that drowning does kill this demonic entity. Oh holy are the waters of Chernarus!"" Omg, DED ;)''& 0\\
 		``Let them praise the name of the LORD: for his name alone is excellent; his glory is above the earth and heaven."" ~Psalms 148:13 \#Bible''& 0\\
-		someone plz get this nigger some help. He's playing up like mad & 0\\
-		stop talking you fucking nigger ! & 0 \\
+		someone plz get this n\censor{igg}er some help. He's playing up like mad & 0\\
+		stop talking you fucking n\censor{igg}er ! & 0 \\
 		\bottomrule
 	\end{tabularx}
 	\caption{Sample of comments from the Sap dataset and their \ac{ip}. Note that unambiguously toxic comments can be assigned with zero \ac{ip}, while more nuanced cases tend to have higher values.}
