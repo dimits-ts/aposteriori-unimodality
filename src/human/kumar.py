@@ -14,17 +14,17 @@ from ..lib import graphs
 # Seeds used to repeat the 3k-comment sample experiment with different
 # random subsamples, to see how sensitive results are to which 3k
 # comments happen to get selected.
-KUMAR_3K_SEED_ABLATION_SEEDS = list(range(10))
+KUMAR_SEED_ABLATION_SEEDS = list(range(10))
+SEED = 42
 
 
 def run_experiment(
     dataset_path: Path,
     output_path: Path,
     num_samples: int,
-    seed: int = 42,
+    seed: int,
 ) -> None:
     if skip_if_exists(output_path):
-        print(f"{output_path} exists, skipping...")
         return
 
     print(f"Running experiment {output_path}...")
@@ -38,8 +38,8 @@ def run_experiment(
 def run_seed_ablation_experiment(
     dataset_path: Path,
     ablation_dir: Path,
-    num_samples: int = 3_000,
-    seeds: list[int] = KUMAR_3K_SEED_ABLATION_SEEDS,
+    num_samples: int = 1_000,
+    seeds: list[int] = KUMAR_SEED_ABLATION_SEEDS,
 ) -> None:
     """
     Repeats the num_samples-comment experiment `len(seeds)` times, each
@@ -51,6 +51,10 @@ def run_seed_ablation_experiment(
         output_path = (
             ablation_dir / f"kumar{num_samples//1000}k-seed{seed}-results.csv"
         )
+
+        if skip_if_exists(output_path):
+            return
+
         run_experiment(
             dataset_path=dataset_path,
             output_path=output_path,
@@ -114,6 +118,42 @@ def seed_ablation(
     plt.close(g.figure)
 
 
+def main_analysis(
+    dataset_path: Path,
+    graph_output_dir: Path,
+    res_output_dir: Path,
+    num_samples: int,
+    seed: int,
+):
+    ds = KumarDataset(
+        dataset_path=dataset_path, num_samples=num_samples, seed=seed
+    )
+    graphs.polarization_plot(
+        ds=ds,
+        output_path=graph_output_dir / "kumar_sample.png",
+    )
+
+    inherent_path = res_output_dir / "kumar-inherent.csv"
+    if skip_if_exists(inherent_path):
+        print("Calculating inherent polarization...")
+        res = run_helper.compute_inherent_polarization_exhaustive(
+            dataset=ds,
+            max_annotators=6,
+        )
+        res.to_csv(
+            res,
+            header=True,
+            index_label="comment",
+        )
+
+    run_experiment(
+        dataset_path=dataset_path,
+        output_path=res_output_dir / "kumar-results.csv",
+        num_samples=num_samples,
+        seed=SEED
+    )
+
+
 def main(
     dataset_path: Path,
     output_dir: Path,
@@ -124,48 +164,38 @@ def main(
     graphs.graph_setup()
 
     print("Generating sample polarization plot...")
-    graphs.polarization_plot(
-        ds=KumarDataset(dataset_path=dataset_path, num_samples=3_000),
-        output_path=graph_output_dir / "kumar_sample.png",
-    )
-    print("Calculating inherent polarization...")
-    res = run_helper.compute_inherent_polarization_exhaustive(
-        dataset=KumarDataset(dataset_path=dataset_path, num_samples=3_000),
-        max_annotators=6,
-    )
-    res.to_csv(
-        output_dir / "kumar-inherent.csv", header=True, index_label="comment"
-    )
-
-    run_experiment(
+    main_analysis(
         dataset_path=dataset_path,
-        output_path=output_dir / "kumar-results.csv",
-        num_samples=3_000,
+        graph_output_dir=graph_output_dir,
+        res_output_dir=output_dir,
+        num_samples=1000,
+        seed=SEED,
     )
 
-    for sample_size in [30_000, 10_000, 1_000]:
+    for sample_size in [30_000, 10_000, 3_000]:
         run_experiment(
             dataset_path=dataset_path,
             output_path=ablations_dir
             / f"kumar{sample_size // 1000}k-results.csv",
             num_samples=sample_size,
+            seed=SEED
         )
 
-    # New ablation: repeat the 3k-comment experiment across 10 different
+    # New ablation: repeat the 1k-comment experiment across 10 different
     # seeds to measure sensitivity to which comments get sampled.
     run_seed_ablation_experiment(
         dataset_path=dataset_path,
         ablation_dir=ablations_dir,
         num_samples=3_000,
-        seeds=KUMAR_3K_SEED_ABLATION_SEEDS,
+        seeds=KUMAR_SEED_ABLATION_SEEDS,
     )
 
     # Figure: boxplots of the 10 seed runs, per subgroup.
-    boxplot_path = graph_output_dir / "kumar3k_seed_ablation.png"
+    boxplot_path = graph_output_dir / "kumar1k_seed_ablation.png"
     seed_ablation(
         ablation_dir=ablations_dir,
-        dataset_prefix="kumar3k",
-        seeds=KUMAR_3K_SEED_ABLATION_SEEDS,
+        dataset_prefix="kumar1k",
+        seeds=KUMAR_SEED_ABLATION_SEEDS,
         output_path=boxplot_path,
     )
 
