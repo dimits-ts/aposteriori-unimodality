@@ -186,7 +186,7 @@ def main(
     run_seed_ablation_experiment(
         dataset_path=dataset_path,
         ablation_dir=ablations_dir,
-        num_samples=3_000,
+        num_samples=1_000,
         seeds=KUMAR_SEED_ABLATION_SEEDS,
     )
 

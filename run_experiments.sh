@@ -20,23 +20,23 @@ JOBS=(
 
 'explanation|python -m src.synthetic.explanation --graph-output-dir=graphs'
 
-'dices|python -m src.human.dices --dataset-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dataset-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --graph-output-dir=graphs --output-dir=output/main --ablation-dir=ablation'
+'dices|python -m src.human.dices --dataset-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dataset-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --graph-output-dir=graphs --output-dir=output/human/main --ablation-dir=output/human/ablations'
 
-'sap|python -m src.human.sap --dataset-path=data/datasets/sap.csv --output-dir=output/main --graph-output-dir=graphs'
+'sap|python -m src.human.sap --dataset-path=data/datasets/sap.csv --output-dir=output/human/main --graph-output-dir=graphs'
 
 'metric_comparison|python -m src.synthetic.metric_comparison --cache-path=cache/metric-comparison.csv --graph-output-path=graphs/metric_comparison.png'
 
 'metric_comparison_simple|python -m src.synthetic.metric_comparison --cache-path=cache/metric-comparison-simple.csv --graph-output-path=graphs/metric_comparison_simple.png --simple-simulation'
 
-'kumar|python -m src.human.kumar --dataset-path=data/datasets/kumar.json --output-dir=output/main --graph-output-dir=graphs --ablation-dir=ablation'
+'kumar|python -m src.human.kumar --dataset-path=data/datasets/kumar.json --output-dir=output/human/main --graph-output-dir=graphs --ablation-dir=output/human/ablations'
 
-'llm|python -m src.llm.analysis --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --sap-path=data/datasets/sap.csv --kumar-path=data/datasets/kumar.json --annotations-dir=output/annotations --paraphrase-dir=output/ablations/paraphrase --graph-output-dir=graphs --latex-output-dir=manuscript/generated --cache-dir=cache --exclude-models olmo7b llama8b'
+'llm|python -m src.llm.analysis --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --sap-path=data/datasets/sap.csv --kumar-path=data/datasets/kumar.json --annotations-dir=output/llm/annotations --paraphrase-dir=output/llm/ablations/paraphrase --graph-output-dir=graphs --latex-output-dir=manuscript/generated --cache-dir=cache --exclude-models olmo7b llama8b'
 )
 
 printf "%s\n" "${JOBS[@]}" |
   parallel --colsep '\|' -j8 --delay 0.1 run_and_log "{1}" "{2}"
 
 python src/export_results.py \
-    --results-dir=output/main \
+    --results-dir=output/human_main \
     --latex-output-dir=manuscript/generated \
     --graph-output-dir=graphs
