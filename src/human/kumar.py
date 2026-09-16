@@ -18,21 +18,72 @@ KUMAR_SEED_ABLATION_SEEDS = list(range(10))
 SEED = 42
 
 
-def run_experiment(
+def main(
     dataset_path: Path,
-    output_path: Path,
+    output_dir: Path,
+    graph_output_dir: Path,
+    ablations_dir: Path,
+):
+    graph_output_dir.mkdir(parents=True, exist_ok=True)
+    graphs.graph_setup()
+
+    print("Generating sample polarization plot...")
+    main_analysis(
+        dataset_path=dataset_path,
+        graph_output_dir=graph_output_dir,
+        res_output_dir=output_dir,
+        num_samples=1000,
+        seed=SEED,
+    )
+
+    for sample_size in [30_000, 10_000, 3_000]:
+        _run_experiment(
+            dataset_path=dataset_path,
+            output_path=ablations_dir
+            / f"kumar{sample_size // 1000}k-results.csv",
+            num_samples=sample_size,
+            seed=SEED,
+        )
+
+    # New ablation: repeat the 1k-comment experiment across 10 different
+    # seeds to measure sensitivity to which comments get sampled.
+    run_seed_ablation_experiment(
+        dataset_path=dataset_path,
+        ablation_dir=ablations_dir,
+        num_samples=1_000,
+        seeds=KUMAR_SEED_ABLATION_SEEDS,
+    )
+
+    # Figure: boxplots of the 10 seed runs, per subgroup.
+    boxplot_path = graph_output_dir / "kumar1k_seed_ablation.png"
+    _seed_ablation(
+        ablation_dir=ablations_dir,
+        dataset_prefix="kumar1k",
+        seeds=KUMAR_SEED_ABLATION_SEEDS,
+        output_path=boxplot_path,
+    )
+
+
+def main_analysis(
+    dataset_path: Path,
+    graph_output_dir: Path,
+    res_output_dir: Path,
     num_samples: int,
     seed: int,
-) -> None:
-    if skip_if_exists(output_path):
-        return
-
-    print(f"Running experiment {output_path}...")
+):
     ds = KumarDataset(
         dataset_path=dataset_path, num_samples=num_samples, seed=seed
     )
-    res = run_helper.run_all_results(ds)
-    res.to_csv(output_path)
+    graphs.polarization_plot(
+        ds=ds,
+        output_path=graph_output_dir / "kumar_sample.png",
+    )
+    _inherent_experiment(dataset_path=ds, res_output_dir=res_output_dir)
+    _main_experiment(
+        dataset_path=dataset_path,
+        res_output_dir=res_output_dir,
+        num_samples=num_samples,
+    )
 
 
 def run_seed_ablation_experiment(
@@ -55,7 +106,7 @@ def run_seed_ablation_experiment(
         if skip_if_exists(output_path):
             return
 
-        run_experiment(
+        _run_experiment(
             dataset_path=dataset_path,
             output_path=output_path,
             num_samples=num_samples,
@@ -63,7 +114,7 @@ def run_seed_ablation_experiment(
         )
 
 
-def seed_ablation(
+def _seed_ablation(
     ablation_dir: Path,
     dataset_prefix: str,
     seeds: list[int],
@@ -118,86 +169,53 @@ def seed_ablation(
     plt.close(g.figure)
 
 
-def main_analysis(
-    dataset_path: Path,
-    graph_output_dir: Path,
-    res_output_dir: Path,
-    num_samples: int,
-    seed: int,
-):
-    ds = KumarDataset(
-        dataset_path=dataset_path, num_samples=num_samples, seed=seed
-    )
-    graphs.polarization_plot(
-        ds=ds,
-        output_path=graph_output_dir / "kumar_sample.png",
-    )
-
+def _inherent_experiment(ds: KumarDataset, res_output_dir: Path) -> None:
     inherent_path = res_output_dir / "kumar-inherent.csv"
     if skip_if_exists(inherent_path):
-        print("Calculating inherent polarization...")
-        res = run_helper.compute_inherent_polarization_exhaustive(
-            dataset=ds,
-            max_annotators=6,
-        )
-        res.to_csv(
-            res,
-            header=True,
-            index_label="comment",
-        )
+        return
 
-    run_experiment(
-        dataset_path=dataset_path,
-        output_path=res_output_dir / "kumar-results.csv",
-        num_samples=num_samples,
-        seed=SEED
+    print("Calculating inherent polarization...")
+    res = run_helper.compute_inherent_polarization_exhaustive(
+        dataset=ds,
+        max_annotators=6,
+    )
+    res.to_csv(
+        res,
+        header=True,
+        index_label="comment",
     )
 
 
-def main(
-    dataset_path: Path,
-    output_dir: Path,
-    graph_output_dir: Path,
-    ablations_dir: Path,
-):
-    graph_output_dir.mkdir(parents=True, exist_ok=True)
-    graphs.graph_setup()
+def _main_experiment(
+    dataset_path: Path, res_output_dir: Path, num_samples: int
+) -> None:
+    main_res_path = res_output_dir / "kumar-results.csv"
+    if skip_if_exists(main_res_path):
+        return
 
-    print("Generating sample polarization plot...")
-    main_analysis(
+    _run_experiment(
         dataset_path=dataset_path,
-        graph_output_dir=graph_output_dir,
-        res_output_dir=output_dir,
-        num_samples=1000,
+        output_path=main_res_path,
+        num_samples=num_samples,
         seed=SEED,
     )
 
-    for sample_size in [30_000, 10_000, 3_000]:
-        run_experiment(
-            dataset_path=dataset_path,
-            output_path=ablations_dir
-            / f"kumar{sample_size // 1000}k-results.csv",
-            num_samples=sample_size,
-            seed=SEED
-        )
 
-    # New ablation: repeat the 1k-comment experiment across 10 different
-    # seeds to measure sensitivity to which comments get sampled.
-    run_seed_ablation_experiment(
-        dataset_path=dataset_path,
-        ablation_dir=ablations_dir,
-        num_samples=1_000,
-        seeds=KUMAR_SEED_ABLATION_SEEDS,
-    )
+def _run_experiment(
+    dataset_path: Path,
+    output_path: Path,
+    num_samples: int,
+    seed: int,
+) -> None:
+    if skip_if_exists(output_path):
+        return
 
-    # Figure: boxplots of the 10 seed runs, per subgroup.
-    boxplot_path = graph_output_dir / "kumar1k_seed_ablation.png"
-    seed_ablation(
-        ablation_dir=ablations_dir,
-        dataset_prefix="kumar1k",
-        seeds=KUMAR_SEED_ABLATION_SEEDS,
-        output_path=boxplot_path,
+    print(f"Running experiment {output_path}...")
+    ds = KumarDataset(
+        dataset_path=dataset_path, num_samples=num_samples, seed=seed
     )
+    res = run_helper.run_all_results(ds)
+    res.to_csv(output_path)
 
 
 if __name__ == "__main__":
