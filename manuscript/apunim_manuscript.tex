@@ -64,7 +64,7 @@
 \maketitle
 %TODO: redact package name
 \begin{abstract}
-	Current representations of polarization focus exclusively on distinguishing minor disagreements from systematic differences in opinion between annotator groups. In this study we develop a new framework which not only detects, but also quantifies the degree to which any annotator subgroup causes these systematic differences. We first identify fundamental issues and demonstrate how they limit existing approaches: 1) the presence of ``inherent'' polarization that cannot be attributed to any known or latent groups, and 2) opposing polarization effects canceling each other out in aggregated annotations. We then introduce a new metric that attributes polarization to any annotator group while avoiding the above limitations and the persistent problem of group-size imbalances, releasing a PyPi-installable implementation. Our metric surpasses both traditional similarity metrics and prior approaches on detecting subgroup polarization, while also uncovering previously latent polarization in overlooked minority and fine-grained ideological groups. Finally, we explore the polarization patterns of persona-prompted LLM-as-a-judge models, finding that they are disconected from human polarization patterns, even when explicitly instructed to condition responses on persona characteristics.
+	Current representations of polarization focus exclusively on distinguishing minor disagreements from systematic differences in opinion between annotator groups. In this study we develop a new framework which not only detects, but also quantifies the degree to which any annotator subgroup causes these systematic differences. We first identify fundamental issues and demonstrate how they limit existing approaches: 1) the presence of ``inherent'' polarization that cannot be attributed to any known or latent groups, and 2) opposing polarization effects canceling each other out in aggregated annotations. We then introduce a new metric that attributes polarization to any annotator group while avoiding the above limitations and the persistent problem of group-size imbalances, releasing a PyPi-installable implementation. Our metric surpasses both traditional similarity metrics and prior approaches on detecting subgroup polarization. Finally, we explore the polarization patterns of persona-prompted LLM-as-a-judge models, finding that they are disconnected from human polarization patterns, even when explicitly instructed to condition responses on persona characteristics. Our work overall motivates the introduction of smaller datasets with more annotators per item, whose personal characteristics are made available alongside their annotations.
 \end{abstract}
 
 
@@ -95,15 +95,15 @@ One alternative is using \emph{polarization}, which correlates better with human
 
 \begin{researchquestion}[Which polarization patterns are detectable using our new representation]
 	\label{rq:human}
-	We apply our metric to four \ac{nlp} datasets focused on Toxicity and \ac{hs} detection (\S\ref{sec:results:humans}), confirming prior work showing that annotator gender and ethnicity significantly impact annotation, while discovering that ideological attributes and personal experiences may play a major role in explaining polarization (e.g., the more religious the annotators, the more polarized they become). These possibilities have not adequately explored by relevant literature (Finding~\ref{finding:human}).
+	We apply our metric to four \ac{nlp} datasets focused on Toxicity and \ac{hs} detection (\S\ref{sec:results:humans}), confirming prior work showing that annotator gender and ethnicity significantly impact annotation (Finding~\ref{finding:human}).
 \end{researchquestion}
 
 \begin{researchquestion}[Which polarization patterns are shared between human and LLM annotators]
 	\label{rq:llm}
-	We conduct an annotation study on the same datasets using six open-source models in order to compare polarization patterns between them and humans (\S\ref{sec:results:llms}). We find that using persona-prompted LLMs to simulate the original annotation task consistently fail to produce any subgroup polarization patterns regardless of instruction prompt, confirming that persona prompting does not consistently influence LLM outputs in the examined tasks (Finding~\ref{finding:llms}).
+	We conduct an annotation study on one Toxicity and one \ac{hs} dataset using six open-source models in order to compare polarization patterns between them and humans (\S\ref{sec:results:llms}). We find that using persona-prompted LLMs to simulate the original annotation task consistently fail to produce any subgroup polarization patterns regardless of instruction prompt, confirming that persona prompting does not consistently influence LLM outputs in the examined tasks (Finding~\ref{finding:llms}).
 \end{researchquestion}
 
-Our work makes the following contributions: (1) The identification of severe issues present in subjective datasets and prior methodologies (2) A new polarization attribution metric that is robust to small annotator counts and minority group splits with a PyPi-installable implementation (3) The detection of new promising directions (ideological and ordinal groups) for analysis of subjective \ac{nlp} datasets (4) An exploration of LLM polarization patterns when using persona prompting. Our study also underscores the need for datasets with high annotator counts per item, instead of high annotator counts in general---see App.~\ref{app:ideal-dataset} for a more extensive discussion, empirical findings, and an intuition on how polarization attribution could be used for filtering subjective datasets.
+Our work makes the following contributions: (1) The identification of severe issues present in subjective datasets and prior methodologies (2) A new polarization attribution metric that is robust to small annotator counts and minority group splits (3) a PyPi-installable implementation (4) An exploration of LLM polarization patterns when using persona prompting. Our study also underscores the need for datasets with high annotator counts per item, instead of high annotator counts in general (\S\ref{sec:ideal-dataset}).
 
 \begin{center}
 	\noindent\textcolor{red}{\textbf{Content Warning: Controversial and potentially harmful speech used for demonstration.}}
@@ -322,6 +322,18 @@ We construct polarization distributions annotated by two groups. Each annotator 
 
 Fig.~\ref{fig:metrics} shows the effectiveness of apunim, the aposteriori unimodality framework proposed by \citet{pavlopoulos-likas-2024}, the $\chi^2$ method presented in \citet{akhtar_2019}, GMM clustering used in \citet{checco_2017}, and a baseline using intergroup disagreement ($\Delta \alpha$ Krippendorff). Both the $\chi^2$ and GMM methods generally fail at attributing polarization, which is most likely caused by opposing polarization effects (see Fig.~\ref{fig:ndfu_discussion}) violating their assumptions on fixed mean differences between groups.\footnote{Indeed, re-running the experiment with a consistent mean-difference effect among the groups leads to exceptional performance by these methods---see App.~\ref{app:ablation}; Fig~\ref{fig:metrics-simple}.} Intergroup disagreement remains competitive when many annotators are available, but underperform in cases where the examined group is a minority and when a few annotators are available per item (a common case among \ac{nlp} datasets---see \S\ref{sec:datasets}). Apunim in contrast is robust both to the number of annotators per item, opposing polarization effects, and minority groups, which validates our initial motivation.
 
+%TODO: Integrate this
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=\linewidth]{metric_comparison_simple.png}
+	\caption{Polarization group attribution on randomly generated, synthetic distributions. Bars indicate standard error. For each experiment we assign a number of annotators per item, and split the annotator groups 50-50 or 80-20. The setup is much more simplified, relying on fixed-mean differences instead of the setup used in \S\ref{sec:apunim:recovery}.}
+	\label{fig:metrics-simple}
+\end{figure}
+
+We compare this simulation model with a simplified simulation that imposes a fixed polarization effect across all items, modeling the scenario where group bias is uniform. Specifically, the polarization $\text{shift}_{ij}$ is constant across $j$: $\text{shift}_{ij} = g_i \cdot \delta/2$. In this simplified case, the group difference is a global shift, meaning that if Group B rates one item higher than Group A, they rate all items higher. 
+
+The experiment, whose results are shown in Fig.~\ref{fig:metrics-simple} shows that these methods do indeed show excellent performance. This is expected, since they rely on consistent fixed means effects, which is disrupted in our original formulation of the problem. Thus, while these methods perform admirably in ideal conditions, they may completely fail at realistic annotation datasets. 
+
 \begin{finding}
 	\label{finding:comparison}
 	Apunim beats established and proposed methodologies in realistic conditions.
@@ -333,7 +345,7 @@ Fig.~\ref{fig:metrics} shows the effectiveness of apunim, the aposteriori unimod
 
 \subsection{Human Annotators}
 \label{sec:results:humans}
-
+%TODO: Explain why no Kumar
 
 \begin{table}[t]
 	\small
@@ -418,11 +430,16 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 	\label{fig:llm-results}
 \end{figure*}
 
-Prior literature has shown that LLMs are not reliable annotators when using persona prompting; they tend to reproduce stereotypes \citep{lutz-etal-2025-prompt, liu-etal-2024-evaluating-large} and are unreliable for minority groups \citep{lutz-etal-2025-prompt}. Unlike prior work that investigated model performance \citep{gupta2024bias} or human--LLM agreement \citep{dong-etal-2024-llm, gomez-etal-2024-algorithmic, masud-etal-2024-hate}, we test whether attributable polarization exists regardless of faithfulness to the actual groups. We investigate four\footnote{We used six models, but pruned two since they proved unreliable---see ablations in App.~\ref{app:llms}.} open-source LLMs with six annotators per item\footnote{It is possible that LLMs can produce polarized patterns when scaled up to dozens or hundreds of annotators. This however is both hard to check due to exorbitant computational costs (App.~\ref{app:llms}) and hard to scale up in realistic deployment scenarios.} supplied with personas sampled from our human dataset across a sample of 300 comments for the Sap and 1000 items for the Kumar dataset. See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations.
 
-Fig.~\ref{fig:llm-results} shows our evaluation methodology. We begin by examining whether persona prompting with standard instructions leads to polarized annotations. Our results show \emph{no statistically significant attribution effects} and very small \emph{apunim} values for any of the groups in all models and datasets (App.~\ref{app:llms}; Table~\ref{tab:llm-apunim-by-prompt-kumar},~\ref{tab:llm-apunim-by-prompt-sap}). Unlike human annotations, we observe no \ac{ip} (App.~\ref{app:llms}; Table~\ref{tab:inherent-polarization}) and only two of the four models showing any polarization (App.~\ref{app:llms}; Fig.~\ref{fig:llm-polarization-adversarial}).
+\paragraph{Premise} Prior literature has shown that LLMs are not reliable annotators when using persona prompting; they tend to reproduce stereotypes \citep{lutz-etal-2025-prompt, liu-etal-2024-evaluating-large} and are unreliable for minority groups \citep{lutz-etal-2025-prompt}. Unlike prior work that investigated model performance \citep{gupta2024bias} or human--LLM agreement \citep{dong-etal-2024-llm, gomez-etal-2024-algorithmic, masud-etal-2024-hate}, we test whether attributable polarization exists regardless of faithfulness to the actual groups. 
 
-Since instruction prompts are known to influence the effect of personas \citep{weeber-etal-2026-one}, we also try four adversarial prompts progressively emphasizing the importance of the LLMs' personas (App.~\ref{app:prompts}), but still observe no effect on either apunim or \ac{ip}. While there are statistically significant differences in polarization, the effect is not quantitatively significant, as shown by App.~\ref{app:llms}; Table~\ref{tab:cohens-d}. Our findings therefore support social science work which warns against generating human annotation data without substantial replication studies \citep{rossi_2024, kapania-etal-2025-examining}.
+\paragraph{Experimental Procedure} We investigate four\footnote{We used six models, but pruned two since they proved unreliable---see ablations in App.~\ref{app:llms}.} open-source LLMs with six annotators per item\footnote{It is possible that LLMs can produce polarized patterns when scaled up to dozens or hundreds of annotators. This however is both hard to check due to exorbitant computational costs (App.~\ref{app:llms}) and hard to scale up in realistic deployment scenarios.} supplied with personas sampled from our human dataset. Our findings support social science work which warns against generating human annotation data without substantial replication studies \citep{rossi_2024, kapania-etal-2025-examining}. Fig.~\ref{fig:llm-results} shows our overall evaluation methodology. See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations.
+
+\paragraph{Are LLMs Polarized by Default?} We begin by examining whether persona prompting with standard instructions leads to polarized annotations. Our results show \emph{no statistically significant attribution effects} and very small \emph{apunim} values for any of the groups in all models and datasets (App.~\ref{app:llms}; Table~\ref{tab:llm-apunim-by-prompt-kumar},~\ref{tab:llm-apunim-by-prompt-sap}). Unlike human annotations, we observe no \ac{ip} (App.~\ref{app:llms}; Table~\ref{tab:inherent-polarization}) and only two of the four models showing any polarization (App.~\ref{app:llms}; Fig.~\ref{fig:llm-polarization-adversarial}).
+
+\input{generated/cohens_d.tex}
+
+\paragraph{Do Instructions Influence Polarization?} Since instruction prompts are known to influence the effect of personas \citep{weeber-etal-2026-one}, we also try four adversarial prompts progressively emphasizing the importance of the LLMs' personas (App.~\ref{app:prompts}). While an ANOVA test\footnote{We use a parametric test due to the abundance of observations ($N={300,1000}$). We also used a multiple hypothesis p-value correction (specifically the ``Holms-Bonferroni'' method~\citep{holms}).} shows that the choice of instruction prompt does indeed affect polarization across most models (almost all groups for OLMo-32B, half for LLaMa-70B, Qwen-7B and a single group for Qwen-32B), these effects are almost always non-qualitatively significant ($<0.2$ Cohen's d), as shown in Table~\ref{tab:cohens-d}. The ``single'' prompts are the only ones producing a sometimes notable (small-to-medium) quantitative effect for a minority of examined groups.
 
 \begin{finding}
 	\label{finding:llms}
@@ -430,7 +447,20 @@ Since instruction prompts are known to influence the effect of personas \citep{w
 \end{finding}
 
 
-\section{Conclusion}
+\section{The Ideal Subjective Dataset}
+\label{sec:ideal-dataset}
+
+We briefly discuss the type of data most suited for our proposed methodology, and connect it with current \ac{nlp} datasets.
+
+\paragraph{How Many Annotators?} Our methodology does not directly require numerous annotators overall, only a sufficient number per item---indeed, statistically significant results can be obtained with as little as four annotations (see Sap-\ac{aa}; Table~\ref{tab:sdb-features}). A large annotator pool however is required to get sufficient coverage on the examined groups. More annotators allow both higher fidelity of each \ac{pc} dimension, and more such dimensions.
+
+\paragraph{How Many Items?} Our methodology is designed to work with smaller datasets common in \ac{nlp}. Three of the four datasets in the study feature low (300--600) item counts, while the Kumar dataset has been subsampled to 3\% of its original size. Large datasets should be used only to provide larger coverage on the target domain, since a much better representation of individual groups can be achieved with more annotators per item, rather than more items. Smaller datasets may also be more practical for social science analysis~\cite{rossi_2024}.
+
+%TODO
+\paragraph{Filtering Datasets with Desirable Levels of Subjectivity} \textbf{TODO}.This kind of analysis may be used in the exploratory phase of dataset selection in order to filter out datasets without enough group-specific subjectivity.
+
+
+\section*{Conclusion}
 \label{sec:conclusion}
 
 We discovered issues regarding the presence of inherent and conflicting polarization which render current methods around subgroup disagreement attribution suboptimal in realistic circumstances. We created a new metric that overcomes these issues and outperforms alternatives methodologies in realistic annotation settings, while also quantifying the attribution of each group.  By applying this metric to four subjective \ac{nlp} datasets, we discover that (1) ethnicity and gender seem to generally drive polarization attribution, and (2) ideological groups may be more important than reported in the literature. Finally, we find that persona prompting is not capable of unlocking consistent subgroup disagreement even when using adversarial instruction prompts.
@@ -441,7 +471,7 @@ In this work we used proprietary models such as Claude's Sonnet 5 and OpenAI's G
 
 
 \section*{Reproducibility Statement}
-We ensure that our LLM annotation study is reproducible by selecting exclusively open-source, locally hosted models and fixing all relevant seeds. An ablation study where we repeat annotations multiple times shows that our setup achieves 100\% consistency across all models. In order to ensure that the LLM annotators are not influenced by minute differences in the prompts, we execute a second ablation study where we rephrase the main annotation prompt three times and compare outputs. This procedure revealed that two models were especially sensitive to such changes, which led us to exclude those models from the analysis presented in this manuscript. Information on the synthetic experiments used in \S\ref{sec:inherent},\ref{sec:apunim} is disclosed in App.~\ref{app:experiments}. We analyze software design decisions, limitations and computational details in App.~\ref{app:software} and elaborate on our experimental setup in App.~\ref{app:design}, while ablations around sample sizes and sample selection for the Kumar dataset are detailed in App.~\ref{app:ablation}. Additionally, we include a discussion around the use of current \ac{nlp} datasets, as well as an empirical estimation of the number of required annotators for reproducible results in App.~\ref{app:ideal-dataset}.  All code, data-processing scripts and the library implementing \emph{apunim} are released anonymously: library \librarylink, online (HTML) documentation \doclink, replication code \explink.
+We ensure that our LLM annotation study is reproducible by selecting exclusively open-source, locally hosted models and fixing all relevant seeds. An ablation study where we repeat annotations multiple times shows that our setup achieves 100\% consistency across all models. In order to ensure that the LLM annotators are not influenced by minute differences in the prompts, we execute a second ablation study where we rephrase the main annotation prompt three times and compare outputs. This procedure revealed that two models were especially sensitive to such changes, which led us to exclude those models from the analysis presented in this manuscript. Information on the synthetic experiments used in \S\ref{sec:inherent},\ref{sec:apunim} is disclosed in App.~\ref{app:experiments}. We analyze software design decisions, limitations and computational details in App.~\ref{app:software} and elaborate on our experimental setup in App.~\ref{app:design}, while ablations around sample sizes and sample selection for the Kumar dataset are detailed in App.~\ref{app:ablation}. Additionally, we include a discussion around the use of current \ac{nlp} datasets, as well as an empirical estimation of the number of required annotators for reproducible results in App.~\ref{sec:ideal-dataset}.  All code, data-processing scripts and the library implementing \emph{apunim} are released anonymously: library \librarylink, online (HTML) documentation \doclink, replication code \explink.
 
 
 \section*{Ethics Statement}
@@ -718,7 +748,7 @@ Since annotation histograms may be noisy, we additionally assess whether the obs
 \end{equation}
 \noindent where \(\bar{\textit{apunim}}_{\mathrm{rand}}(d,g)\) denotes the average apunim values obtained from $t$ randomized annotator partitions.
 
-We account for the presence of multiple subgroups in each \ac{pc} dimension using a multiple-hypothesis correction. Since our test is parametric (App.~\ref{app:pvalue}), it assumes that there exist (1) enough data-points to reliably run the means-test, (2) enough annotations per \ac{pc} group to estimate \acp{ndfu} in Equations~\ref{eq:apriori}-\ref{eq:observed}, (3) the apunims of the random partitions are independent and identically distributed. Condition (1) can be safely assumed for most datasets, because they feature enough items to reliably assume normal residuals (see \S\ref{sec:datasets}). We discuss condition (2) in App.~\ref{app:ideal-dataset}. Condition (3) is partly fulfilled; the partitions are identically distributed, but may be dependent on the sample distribution. 
+We account for the presence of multiple subgroups in each \ac{pc} dimension using a multiple-hypothesis correction. Since our test is parametric (App.~\ref{app:pvalue}), it assumes that there exist (1) enough data-points to reliably run the means-test, (2) enough annotations per \ac{pc} group to estimate \acp{ndfu} in Equations~\ref{eq:apriori}-\ref{eq:observed}, (3) the apunims of the random partitions are independent and identically distributed. Condition (1) can be safely assumed for most datasets, because they feature enough items to reliably assume normal residuals (see \S\ref{sec:datasets}). We discuss condition (2) in App.~\ref{sec:ideal-dataset}. Condition (3) is partly fulfilled; the partitions are identically distributed, but may be dependent on the sample distribution. 
 
 Replacing the parametric means test with a non-parametric alternative would relax assumptions about the underlying distribution but would not resolve the potential dependence between the random apunims. We initially attempted to implement a permutation test on the empirical (random apunim) distribution, but this resulted in excessive computational costs.
 
@@ -740,7 +770,7 @@ In order to lower the computational cost required, we re-use the random partitio
 
 We use version \texttt{1.0.6} of the \texttt{apunim} library for our experiments. We use 100 random iterations for the apriori value calculation (Eq.~\ref{eq:apriori}) and the p-value estimation (App.~\ref{app:pvalue}), and set a confidence level of $\alpha=0.05$.
 
-While the library efficiently handles large numbers of annotators through vectorized operations, performance degrades significantly when processing a high volume of items, particularly when annotators belong to multiple distinct groups. For instance, while experiments across all datasets in \S\ref{sec:datasets} complete within a minute, the Kumar dataset necessitates approximately one hour of computation using commercial hardware. Furthermore, the annotator variance analysis detailed in App.~\ref{app:ideal-dataset} required over ten hours. While this latter time requirement is anticipated due to the inherently demanding nature and non-standard application of our library, it demonstrates the existence of a potential scaling bottleneck. The same applies to a lesser extent for the subsampling experiments on the DICES datasets, taking collectively three hours of computation.
+While the library efficiently handles large numbers of annotators through vectorized operations, performance degrades significantly when processing a high volume of items, particularly when annotators belong to multiple distinct groups. For instance, while experiments across all datasets in \S\ref{sec:datasets} complete within a minute, the Kumar dataset necessitates approximately one hour of computation using commercial hardware. Furthermore, the annotator variance analysis detailed in App.~\ref{sec:ideal-dataset} required over ten hours. While this latter time requirement is anticipated due to the inherently demanding nature and non-standard application of our library, it demonstrates the existence of a potential scaling bottleneck. The same applies to a lesser extent for the subsampling experiments on the DICES datasets, taking collectively three hours of computation.
 
 We hypothesize that this bottleneck is likely caused by repeated creation of numpy arrays, resulting in repeated memory allocations for each subgroup, in each item, for each \ac{pc} dimension. We plan on profiling and addressing it in the next releases of our software. Until then, we suggest either using multiprocessing for each \ac{pc} subgroup, or running the different experiments in parallel (indeed, we use the \texttt{gnu-parallel} package~\cite{tange_2025_16944306} for our own experiments). We also note that the Kumar dataset also requires substantial RAM resources, estimated around 42--46GB of dedicated RAM should the whole dataset be considered (this is not a requirement for loading the sample used in this study). The CPU-bound experiments require approximately 3 hours to run, assuming a computer capable of efficient multiprocessing.
 
@@ -779,7 +809,7 @@ Unlike disagreement, \ac{ip} does not provide any information, but rather repres
 
 Both of these explanations are plausible and reflect known limitations of most \ac{nlp} datasets. Unfortunately, we can not confirm any of these hypotheses
 
-The fact that the DICES datasets (featuring 70+ annotators per item) exhibit zero \ac{ip} in all items may initially seem to validate either of the above hypotheses. However, even when repeating the experiment using random annotator subsets (ranging from 5 to 50 annotators) and taking the maximum across ten random samples for each subset size, \emph{we still observed zero \ac{ip}} (App.~\ref{app:ideal-dataset}). This finding indicates that the DICES datasets may be structurally different. This explanation is plausible given that the annotation targets are LLM texts, which may be relatively unsubtle compared to human items, as supported by low overall polarization (Fig.~\ref{fig:dataset-polarization}; App~\ref{app:ann_details}). Although a definitive answer to this question eludes us due to the lack of other datasets with high annotator counts per item, the indication that the DICES datasets may not feature similar polarization patterns is noteworthy. 
+The fact that the DICES datasets (featuring 70+ annotators per item) exhibit zero \ac{ip} in all items may initially seem to validate either of the above hypotheses. However, even when repeating the experiment using random annotator subsets (ranging from 5 to 50 annotators) and taking the maximum across ten random samples for each subset size, \emph{we still observed zero \ac{ip}} (App.~\ref{sec:ideal-dataset}). This finding indicates that the DICES datasets may be structurally different. This explanation is plausible given that the annotation targets are LLM texts, which may be relatively unsubtle compared to human items, as supported by low overall polarization (Fig.~\ref{fig:dataset-polarization}; App~\ref{app:ann_details}). Although a definitive answer to this question eludes us due to the lack of other datasets with high annotator counts per item, the indication that the DICES datasets may not feature similar polarization patterns is noteworthy. 
 
 \begin{table}[t]
 	\begin{tabularx}{\linewidth}{X c}
@@ -838,21 +868,21 @@ To determine whether an observed score is statistically significant, we construc
 \section{Experiment Ablations}
 \label{app:ablation}
 
+\subsection{Why Do DICES not Exhibit InPol?} 
 
-\subsection{Why Do Statistical Methods Fail?}
-\label{app:ablation:comparison}
+In order to investigate whether the numerous annotators per items can explain the lack of \ac{ip} in the DICES datasets (\S\ref{sec:inherent}) we gradually subsample the annotators for each item randomly with replacement, starting from five annotators per item, and scaling up to the full complement of annotators in the dataset with a step of two. For each such step, we choose ten annotator samples and compute the maximum \ac{ip} across all runs. Even with annotator counts similar to the Kumar and DICES datasets, \ac{ip} remains zero, suggesting that the absence of \ac{ip} can not be attributed to annotator number alone---rather, it is plausibly a pattern attributable to the DICES datasets themselves. This kind of analysis may be used in the exploratory phase of dataset selection in order to filter out datasets without enough group-specific subjectivity.
+
+%TODO: Fix
+\subsection{How Many Annotators per Item?}
 
 \begin{figure}[t]
 	\centering
-	\includegraphics[width=\linewidth]{metric_comparison_simple.png}
-	\caption{Polarization group attribution on randomly generated, synthetic distributions. Bars indicate standard error. For each experiment we assign a number of annotators per item, and split the annotator groups 50-50 or 80-20. The setup is much more simplified, relying on fixed-mean differences instead of the setup used in \S\ref{sec:apunim:recovery}.}
-	\label{fig:metrics-simple}
+	\includegraphics[width=\linewidth]{pol_obs_subsampling_robustness.png}
+	\caption{\ac{sd} of $pol_{obs}$ across items, averaged across $1000$ runs (Eq.~\ref{eq:observed}). Shaded areas represent two \acp{sd}. Pol. estimates benefit from more annotators up to $n=20$, at which point they begin to plateau.}
+	\label{fig:std_error}
 \end{figure}
 
-In \S\ref{sec:apunim:recovery} we mentioned that the under-performance of the $\chi^2$ and GMM methodologies is likely caused by opposing polarization effects. We compare this simulation model with a simplified simulation that imposes a fixed polarization effect across all items, modeling the scenario where group bias is uniform. Specifically, the polarization $\text{shift}_{ij}$ is constant across $j$: $\text{shift}_{ij} = g_i \cdot \delta/2$. In this simplified case, the group difference is a global shift, meaning that if Group B rates one item higher than Group A, they rate all items higher. 
-
-The experiment, whose results are shown in Fig.~\ref{fig:metrics-simple} shows that these methods do indeed show excellent performance. This is expected, since they rely on consistent fixed means effects, which is disrupted in our original formulation of the problem. Thus, while these methods perform admirably in ideal conditions, they may completely fail at realistic annotation datasets. 
-
+We investigate observed polarization against varying numbers of annotators. Specifically, for every item, we repeatedly sampled $n$ annotators with replacement, calculated $pol_{obs}$ for each sample and measured \ac{sd}, averaging it across 1000 same-sized samples. As shown in Fig.~\ref{fig:std_error}, $pol_{obs}$ exhibits a clear, inverse relationship with the number of annotators, attributed to better histogram estimation provided by \ac{ndfu} (\S\ref{sec:apunim}), though the rate of gain substantially diminishes after 20 annotators. Interestingly, some variability persists even with a very high annotator count.
 
 \subsection{How Does Dataset Size Influence Apunim?}
 \label{app:ablation:sample-size}
@@ -878,27 +908,6 @@ We also test whether the results in Table~\ref{tab:apunim-main} are an artifact 
 Astute readers may notice that some variability does exist across differently sized samples for the same examined groups, where for example the sign of the apunim value may switch. We note that the statistically significant values (bold rows) change signs only when the apunim value approaches zero in the largest samples. Thus, the results are not inverted, but rather pushed towards zero.
 
 In order to verify that this variability is caused by the sample size, and not by different samples being drawn, we execute a further ablation study. Specifically, we execute the apunim study on the $3000$-sized sample of the dataset, using different subsets of the Kumar dataset. The results can be found in Fig.~\ref{fig:seeds}, where we note that variability is not an issue, except for a couple of cases. These cases seem to represent sparse annotator groups, where missing a few items may genuinely change the value of the apunim metric. These groups however are largely not detected by apunim as significant either way (see \S\ref{sec:results}).
-
-
-\section{The Ideal Subjective Dataset}
-\label{app:ideal-dataset}
-
-\begin{figure}[t]
-	\centering
-	\includegraphics[width=\linewidth]{pol_obs_subsampling_robustness.png}
-	\caption{\ac{sd} of $pol_{obs}$ across items, averaged across $1000$ runs (Eq.~\ref{eq:observed}). Shaded areas represent two \acp{sd}. Pol. estimates benefit from more annotators up to $n=20$, at which point they begin to plateau.}
-	\label{fig:std_error}
-\end{figure}
-
-We briefly discuss the type of data most suited for our proposed methodology, and connect it with current \ac{nlp} datasets.
-
-\paragraph{How Many Annotators?} Our methodology does not directly require numerous annotators overall, only a sufficient number per item---indeed, statistically significant results can be obtained with as little as four annotations (see Sap-\ac{aa}; Table~\ref{tab:sdb-features}). A large annotator pool however is required to get sufficient coverage on the examined groups. More annotators allow both higher fidelity of each \ac{pc} dimension, and more such dimensions.
-
-\paragraph{How Many Annotators per item?} We investigate observed polarization against varying numbers of annotators. Specifically, for every item, we repeatedly sampled $n$ annotators with replacement, calculated $pol_{obs}$ for each sample and measured \ac{sd}, averaging it across 1000 same-sized samples. As shown in Fig.~\ref{fig:std_error}, $pol_{obs}$ exhibits a clear, inverse relationship with the number of annotators, attributed to better histogram estimation provided by \ac{ndfu} (\S\ref{sec:apunim}), though the rate of gain substantially diminishes after 20 annotators. Interestingly, some variability persists even with a very high annotator count.
-
-\paragraph{How Many Items?} Our methodology is designed to work with smaller datasets common in \ac{nlp}. Three of the four datasets in the study feature low (300--600) item counts, while the Kumar dataset has been subsampled to 3\% of its original size. Large datasets should be used only to provide larger coverage on the target domain, since a much better representation of individual groups can be achieved with more annotators per item, rather than more items. Smaller datasets may also be more practical for social science analysis~\cite{rossi_2024}.
-
-\paragraph{Filtering Datasets with Desirable Levels of Subjectivity} In order to investigate whether the numerous annotators per items can explain the lack of \ac{ip} in the DICES datasets (\S\ref{sec:inherent}) we gradually subsample the annotators for each item randomly with replacement, starting from five annotators per item, and scaling up to the full complement of annotators in the dataset with a step of two. For each such step, we choose ten annotator samples and compute the maximum \ac{ip} across all runs. Even with annotator counts similar to the Kumar and DICES datasets, \ac{ip} remains zero, suggesting that the absence of \ac{ip} can not be attributed to annotator number alone---rather, it is plausibly a pattern attributable to the DICES datasets themselves. This kind of analysis may be used in the exploratory phase of dataset selection in order to filter out datasets without enough group-specific subjectivity.
 
 
 \section{LLM Annotation Procedure}
@@ -985,9 +994,6 @@ We examine the following conditions for selecting models and datasets for our LL
 \end{figure*}
 
 \paragraph{Overall Polarization} Fig.~\ref{fig:llm-polarization-adversarial} shows the overall polarization patterns when using the different adversarial instructions. The Qwen-23B and LLaMa-70B models consistently produce no polarization, while the persona-focused prompt seems to elicit some varied polarization, even though it does not translate to higher apunim values. This pattern would indicate that the persona-focused prompt likely adds more overall variance to the persona-conditioned annotations, even though that variance is not consistent.
-
-\input{generated/cohens_d.tex}
-\paragraph{Do Instructions Influence Polarization?} No. While an ANOVA test\footnote{We use a parametric test due to the abundance of observations ($N={300,1000}$). We also used a multiple hypothesis p-value correction (specifically the ``Holms-Bonferroni'' method~\citep{holms}).} shows that the choice of instruction prompt does indeed affect polarization across most models (almost all groups for OLMo-32B, half for LLaMa-70B, Qwen-7B and a single group for Qwen-32B), these effects are almost always non-qualitatively significant ($<0.2$ Cohen's d), as shown in Table~\ref{tab:cohens-d}. The ``single'' prompts are the only ones producing a sometimes notable (small-to-medium) quantitative effect for a minority of examined groups. 
 
 
 \paragraph{Apunim Analysis} Tables~\ref{tab:llm-apunim-by-prompt-kumar} and~\ref{tab:llm-apunim-by-prompt-sap} show the apunim results for the LLM annotation task on the Kumar and Sap datasets respectively. Apunim values are largely model-dependent, but no other concrete pattern can be discerned. 
