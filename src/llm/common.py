@@ -20,23 +20,15 @@ from ..lib.preprocessing import (
     KumarDataset,
     SapDataset,
     Dataset,
+    SubsampledView,
     LazyDatasetLoader,
-    SubsampledView
 )
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
-# TODO: lazy loading doesnt work currently because of Dataset.get_name() calls
 DATASET_KEYS = ["dices-350", "dices-990", "sap", "kumar"]
-
-DATASET_LOADERS = {
-    "dices-350": lambda p: DicesDataset(dataset_path=p, variant="350"),
-    "dices-990": lambda p: DicesDataset(dataset_path=p, variant="990"),
-    "kumar": lambda p: KumarDataset(dataset_path=p, num_samples=3_000),
-    "sap": lambda p: SapDataset(dataset_path=p),
-}
 
 # Columns in an llm_annotate.py output CSV (plus the "annotation_clean"
 # column we add in load_llm_df) that are *not* persona/SDB attributes.
@@ -88,6 +80,39 @@ ADVERSARIAL_PROMPT_NAMES = [p for p in MAIN_PROMPT_NAMES if p != "default"]
 # so the table is correct even if that changes).
 # Also used for LLM polarization grid.
 APUNIM_TABLE_EXCLUDE_MODELS = {"olmo7b", "llama8b"}
+
+
+# ---------------------------------------------------------------------------
+# HumanDatasets: dict-like container of per-key LazyDatasetLoaders
+# ---------------------------------------------------------------------------
+
+
+class HumanDatasets:
+    """
+    Dict-like container that holds one :class:`LazyDatasetLoader` per
+    dataset key and exposes the same ``key in ds``, ``ds[key]``,
+    ``ds.keys()`` interface that the rest of the codebase uses, so no
+    call sites need to change.
+
+    Each dataset is constructed at most once: the first access to
+    ``ds[key]`` calls that key's loader factory; subsequent accesses
+    return the cached instance.
+    """
+
+    def __init__(
+        self,
+        loaders: dict[str, LazyDatasetLoader],
+    ) -> None:
+        self._loaders = loaders
+
+    def __contains__(self, key: object) -> bool:
+        return key in self._loaders
+
+    def __getitem__(self, key: str) -> Dataset:
+        return self._loaders[key].get()
+
+    def keys(self) -> list[str]:
+        return list(self._loaders)
 
 
 class LLMAnnotationDataset(Dataset):
@@ -149,7 +174,7 @@ def _order_models(models: set[str] | list[str]) -> list[str]:
 
 
 def _available_dataset_keys(
-    human_datasets: LazyDatasetLoader,
+    human_datasets: HumanDatasets,
     dataset_keys: list[str] = DATASET_KEYS,
 ) -> list[str]:
     return [k for k in dataset_keys if k in human_datasets]
@@ -278,19 +303,8 @@ def _human_sample_dataset(
 ) -> Dataset | None:
     """
     Restricts `ds_human` down to just the comments actually sampled by
-    llm_annotate.py for (dataset_key, prompt_name) -- i.e. the same
-    "text_id"s that appear in the LLM annotation CSVs, since
-    llm_annotate.py's text_id *is* the human dataset's own comment-key
-    column value (see sample_texts() in llm_annotate.py). This is what
-    lets a "Human" column show the human annotations for the exact same
-    sample the LLM columns use, rather than the full dataset the way
-    sap.png/kumar.png/etc. do. Reuses lib.preprocessing.SubsampledView
-    (rather than a new Dataset subclass) since it already does exactly
-    this -- wrap a filtered DataFrame while delegating every other
-    Dataset method to the original.
-
-    Returns None if no LLM annotation files exist for this (dataset,
-    prompt), since there's then no sample to restrict to.
+    llm_annotate.py for (dataset_key, prompt_name). Returns None if no
+    LLM annotation files exist for this (dataset, prompt).
     """
     sample_ids = _sample_text_ids(annotations_dir, dataset_key, prompt_name)
     if not sample_ids:
@@ -335,14 +349,9 @@ def _ndfu_records_for_row(
     row: pd.Series, annotation_col: str, sdb_columns: list[str], bins: int
 ) -> list[dict]:
     """
-    One record per (annotator persona value, SDB column) for this comment
-    -- i.e. a comment's single nDFU value is broadcast once per annotator
-    whose persona matches a given group. This is what plot_apunim_grid's
-    boxplots are built from (see plots.py); it is NOT deduplicated per
-    comment, so a comment with several annotators sharing the same SDB
-    value contributes that many copies of its nDFU to that group. For a
-    per-comment (non-pseudoreplicated) version, see
-    _ndfu_records_for_row_deduped below, used by the ANOVA in stats.py.
+    One record per (annotator persona value, SDB column) for this comment.
+    Not deduplicated per comment; see _ndfu_records_for_row_deduped for
+    the ANOVA-safe version.
     """
     annotations = row[annotation_col]
     if (
@@ -368,15 +377,8 @@ def _ndfu_records_for_row_deduped(
 ) -> list[dict]:
     """
     Same as `_ndfu_records_for_row`, but emits at most ONE record per
-    (comment, PC Dimension) instead of one per matching annotator. A
-    comment has a single nDFU value; if it should count as evidence for
-    e.g. "Gender: Female" at all, it should count once, not once per
-    annotator who happened to be sampled as Female. Avoids the
-    pseudoreplication in `_ndfu_records_for_row`, which inflates a group's
-    observation count from <=N comments to close to N * annotators/comment,
-    both misreporting the true sample size and violating the independence
-    assumption of downstream significance tests (see stats.py's
-    compute_ndfu_anova_by_prompt).
+    (comment, PC Dimension) to avoid pseudoreplication in significance
+    tests (see stats.py's compute_ndfu_anova_by_prompt).
     """
     annotations = row[annotation_col]
     if (
@@ -403,22 +405,10 @@ def _compute_ndfu_records(
     deduped: bool = False,
 ) -> pd.DataFrame:
     """
-    Per-comment nDFU (apunim.dfu over that comment's annotator list),
-    broadcast onto every SDB group any of its annotators belonged to --
-    the same computation lib.graphs.polarization_plot does internally,
-    factored out here so it can be drawn onto an arbitrary subplot axis
-    (plots.py) or fed into a significance test (stats.py) instead of
-    always producing its own standalone figure.
-
-    `sdb_columns`, if given, overrides `ds.get_sdb_columns()` (e.g. to cap
-    how many SDB dimensions are included) without needing to mutate `ds`.
-
-    `deduped`, if True, uses `_ndfu_records_for_row_deduped` so each
-    comment contributes at most one row per (comment, PC Dimension)
-    instead of one row per matching annotator persona. Plotting code
-    (plots.py) defaults to False to match the original apunim-grid
-    behavior; statistical tests (stats.py) should pass True to avoid
-    pseudoreplication.
+    Per-comment nDFU broadcast onto every SDB group any of its annotators
+    belonged to. `sdb_columns` overrides `ds.get_sdb_columns()` without
+    mutating `ds`. `deduped=True` avoids pseudoreplication (use for
+    statistical tests; plotting defaults to False).
     """
     df = ds.get_dataset()
     annotation_col = ds.get_annotation_column()
@@ -448,14 +438,26 @@ def load_human_datasets(
     dices_large_path: Path,
     sap_path: Path,
     kumar_path: Path,
-) -> LazyDatasetLoader:
-    return LazyDatasetLoader(
-        {
-            "dices-350": dices_small_path,
-            "dices-990": dices_large_path,
-            "sap": sap_path,
-            "kumar": kumar_path,
-        },
-        dataset_keys=DATASET_KEYS,
-        dataset_loaders=DATASET_LOADERS,
+) -> HumanDatasets:
+    return HumanDatasets(
+        loaders={
+            "dices-350": LazyDatasetLoader(
+                lambda p=dices_small_path: DicesDataset(
+                    dataset_path=p, variant="350"
+                )
+            ),
+            "dices-990": LazyDatasetLoader(
+                lambda p=dices_large_path: DicesDataset(
+                    dataset_path=p, variant="990"
+                )
+            ),
+            "sap": LazyDatasetLoader(
+                lambda p=sap_path: SapDataset(dataset_path=p)
+            ),
+            "kumar": LazyDatasetLoader(
+                lambda p=kumar_path: KumarDataset(
+                    dataset_path=p, num_samples=3_000
+                )
+            ),
+        }
     )

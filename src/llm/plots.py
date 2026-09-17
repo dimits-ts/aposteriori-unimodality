@@ -8,8 +8,9 @@ import pandas as pd
 
 
 from ..lib import graphs
-from ..lib.preprocessing import Dataset, LazyDatasetLoader
+from ..lib.preprocessing import Dataset
 from .common import (
+    HumanDatasets,
     find_annotation_files,
     load_llm_df,
     _available_dataset_keys,
@@ -127,10 +128,6 @@ def _draw_annotation_histogram(
     linestyle_cycle = itertools.cycle(_LINESTYLES)
     dash_map = {s: next(linestyle_cycle) for s in sources}
 
-    # Step-line histograms (rather than dodged bars) so up to 7 overlapping
-    # distributions (human + 6 models) stay legible. Draw one source at a
-    # time so each gets its own color AND line style/width — color alone
-    # doesn't scale to 7 overlapping series.
     for source in sources:
         sub = plot_df[plot_df["source"] == source]
         is_human = source == "Human"
@@ -153,15 +150,13 @@ def _draw_annotation_histogram(
     ax.set_title(ds.get_name())
     ax.set_xlabel(f"{ds.get_annotation_column()} value")
     ax.set_ylabel("Proportion")
-    # No per-axis legend; a single shared legend is built once, at the
-    # figure level, in plot_annotation_histograms.
     legend = ax.get_legend()
     if legend is not None:
         legend.remove()
 
 
 def plot_annotation_histograms(
-    human_datasets: LazyDatasetLoader,
+    human_datasets: HumanDatasets,
     annotations_dir: Path,
     output_path: Path,
     prompt_name: str = "default",
@@ -183,18 +178,15 @@ def plot_annotation_histograms(
 
     _hide_unused_axes(axes, len(dataset_keys), nrows, ncols)
 
-    # Collect one legend entry per unique source across all subplots,
-    # preserving first-seen order (Human first), then draw it once,
-    # horizontally, below the whole figure.
     handles_by_label = {}
     for ax in fig.axes:
         for handle, label in zip(*ax.get_legend_handles_labels()):
             handles_by_label.setdefault(label, handle)
 
     ordered_labels = sorted(
-        handles_by_label.keys(), key=lambda l: (l != "Human", l)
+        handles_by_label.keys(), key=lambda label: (label != "Human", label)
     )
-    handles = [handles_by_label[l] for l in ordered_labels]
+    handles = [handles_by_label[label] for label in ordered_labels]
 
     fig.suptitle(
         f"Human vs. LLM annotation distributions ({prompt_name} prompt)",
@@ -224,16 +216,6 @@ def _paired_prompt_annotations(
     model: str,
     prompt_names: list[str],
 ) -> pd.DataFrame | None:
-    """
-    For a single (dataset, model), loads the annotation CSV for each of
-    `prompt_names` and aligns them on (text_id + persona attributes) -- the
-    key llm_annotate.py's seeding guarantees is shared across every prompt
-    variant of a given dataset (see module docstring). Returns None if the
-    model is missing any of the requested prompts, or if no items survive
-    the alignment; otherwise returns one row per matched (comment, persona)
-    item, with one column per prompt holding that prompt's cleaned
-    annotation value.
-    """
     dfs = _load_model_prompt_dfs(
         annotations_dir, dataset_key, model, prompt_names
     )
@@ -376,7 +358,7 @@ def _draw_prompt_diff_subplot(
 
 
 def plot_prompt_mean_diff(
-    human_datasets: LazyDatasetLoader,
+    human_datasets: HumanDatasets,
     annotations_dir: Path,
     output_path: Path,
     exclude_models: list[str],
@@ -385,14 +367,9 @@ def plot_prompt_mean_diff(
     ncols: int = 2,
 ) -> None:
     """
-    One subplot per dataset (skipping any dataset for which fewer than two
-    of `prompt_names` were run): for each model, the mean difference --
-    with standard-error bars -- between that model's annotations under
-    each non-baseline prompt (e.g. "stereotype", "persona") and its
-    annotations under `baseline_prompt` ("default"), computed item-by-item
-    on the *same* (comment, persona) pairs via `_paired_prompt_annotations`
-    so the comparison is apples-to-apples rather than comparing marginal
-    distributions.
+    One subplot per dataset: for each model, the mean difference (±SE)
+    between annotations under each non-baseline prompt and the baseline,
+    computed item-by-item on the same (comment, persona) pairs.
     """
     exclude_models = set(exclude_models)
     other_prompts = [p for p in prompt_names if p != baseline_prompt]
@@ -503,8 +480,6 @@ def _draw_apunim_column(
     ax.set_xticks([])
     ax.grid(axis="y", alpha=0.3, linewidth=0.4)
 
-    # Column titles only on the first dataset row; y-axis labels only on
-    # the first column -- avoids repeating the same labels across the grid.
     if is_first_row:
         ax.set_title(column)
 
@@ -525,9 +500,7 @@ def _draw_apunim_row(
     sdb_columns_limit: int | None,
     is_first_row: bool,
 ) -> None:
-    axes = subfig.subplots(
-        nrows=1, ncols=len(columns), squeeze=False
-    )[0]
+    axes = subfig.subplots(nrows=1, ncols=len(columns), squeeze=False)[0]
 
     human_ds = _human_sample_dataset(
         ds_human, annotations_dir, dataset_key, prompt_name
@@ -550,7 +523,7 @@ def _draw_apunim_row(
 
 
 def plot_apunim_grid(
-    human_datasets: LazyDatasetLoader,
+    human_datasets: HumanDatasets,
     annotations_dir: Path,
     output_path: Path,
     prompt_name: str = "default",
@@ -558,15 +531,9 @@ def plot_apunim_grid(
     sdb_columns_limit: int | None = 6,
     title: str = "Default",
 ) -> None:
-    """Plot all datasets and models in a single 2x5 grid using subfigures.
-
-    Each dataset occupies one subfigure (row), with one subplot per
-    Human/model column. A single title is placed above each dataset row.
-
-    `title` is the figure-level suptitle. It defaults to the main
-    ("default" prompt) plot's title; callers producing a separate grid per
-    adversarial prompt (see main()) pass something that just names the
-    instruction instead, e.g. "Stereotype Prompt".
+    """
+    All datasets and models in a single grid using subfigures. Each dataset
+    occupies one row, with one subplot per Human/model column.
     """
     dataset_keys = [
         k for k in PROMPT_COMPARISON_DATASET_KEYS if k in human_datasets
@@ -591,8 +558,6 @@ def plot_apunim_grid(
         nrows=len(dataset_keys), ncols=1, height_ratios=[1] * len(dataset_keys)
     )
 
-    # matplotlib collapses a single-row subfigures() call to a bare
-    # SubFigure rather than an array of length one.
     if len(dataset_keys) == 1:
         subfigures = [subfigures]
 

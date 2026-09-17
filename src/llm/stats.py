@@ -1,25 +1,6 @@
 """
 Statistical analysis of LLM (and, for the consistency tables, cross-model)
-annotation agreement and significance:
-
-1. Cross-model / cross-variant / repeat consistency tables built on
-   Krippendorff's alpha (ordinal) -- how consistent are different LLMs
-   with each other, and with themselves, across prompt paraphrases and
-   repeated runs.
-
-2. Aposteriori-unimodality (apunim) results per (dataset, SDB group,
-   model), pivoted into one column per instruction prompt
-   (default/stereotype/persona/...) so a group's apunim value can be
-   compared across prompts directly.
-
-3. A one-way ANOVA, per (dataset, model, SDB group), testing whether that
-   group's per-comment nDFU distribution shifts across instruction
-   prompts -- with p-values corrected for multiple hypothesis testing
-   across the whole batch (see compute_ndfu_anova_by_prompt).
-
-All tests operate purely on the LLM annotation CSVs; none of the tables or
-tests in this module compare against human annotations (see
-polarization.py for the Human-vs-LLM comparison).
+annotation agreement and significance.
 """
 
 from pathlib import Path
@@ -30,9 +11,9 @@ import pandas as pd
 from scipy import stats
 from statsmodels.stats.multitest import multipletests
 
-from ..lib.preprocessing import LazyDatasetLoader
 from ..lib import run_helper
 from .common import (
+    HumanDatasets,
     MAIN_PROMPT_NAMES,
     LLMAnnotationDataset,
     _available_dataset_keys,
@@ -105,7 +86,7 @@ def _consistency_row(
 
 
 def _cross_model_row(
-    human_datasets: LazyDatasetLoader,
+    human_datasets: HumanDatasets,
     annotations_dir: Path,
     key: str,
     prompt_name: str,
@@ -132,7 +113,7 @@ def _cross_model_row(
 
 
 def cross_model_consistency_table(
-    human_datasets: LazyDatasetLoader,
+    human_datasets: HumanDatasets,
     annotations_dir: Path,
     prompt_name: str = "default",
     exclude_models: list[str] | None = None,
@@ -140,9 +121,6 @@ def cross_model_consistency_table(
     """
     For each dataset: how consistent are the different LLMs with each
     other, when all of them are given the same (default) prompt?
-
-    `exclude_models`, if given, drops those model pseudos (e.g. "olmo7b")
-    from the comparison entirely.
     """
     exclude_models = set(exclude_models or [])
     rows = []
@@ -169,7 +147,7 @@ def _variant_dfs_for_model(
 
 
 def _variant_rows_for_dataset(
-    human_datasets: LazyDatasetLoader,
+    human_datasets: HumanDatasets,
     key: str,
     files_by_variant: dict[str, dict[str, Path]],
     variant_names: list[str],
@@ -193,7 +171,7 @@ def _variant_rows_for_dataset(
 
 
 def per_model_variant_consistency_table(
-    human_datasets: LazyDatasetLoader,
+    human_datasets: HumanDatasets,
     paraphrase_dir: Path,
     variant_names: list[str] = None,
 ) -> pd.DataFrame:
@@ -219,7 +197,7 @@ def per_model_variant_consistency_table(
 
 
 def _repeat_row(
-    human_datasets: LazyDatasetLoader,
+    human_datasets: HumanDatasets,
     key: str,
     pseudo: str,
     run_files: dict[str, Path],
@@ -240,7 +218,7 @@ def _repeat_row(
 
 
 def _repeat_rows_for_dataset(
-    human_datasets: LazyDatasetLoader,
+    human_datasets: HumanDatasets,
     key: str,
     files_by_model: dict[str, dict[str, Path]],
 ) -> list[dict]:
@@ -253,16 +231,14 @@ def _repeat_rows_for_dataset(
 
 
 def per_model_repeat_consistency_table(
-    human_datasets: LazyDatasetLoader,
+    human_datasets: HumanDatasets,
     repeat_dir: Path,
     prompt_name: str = "default",
 ) -> pd.DataFrame:
     """
     For each (dataset, model): how consistent is that model with itself
-    across repeated runs of the *same* prompt (the "-run0" .. "-runN"
-    repeat ablation in output/ablations/repeat)?
+    across repeated runs of the *same* prompt?
     """
-
     rows = []
     for key in _available_dataset_keys(human_datasets):
         files_by_model = find_repeat_files(repeat_dir, key, prompt_name)
@@ -311,16 +287,9 @@ def _apunim_row_for_model(
     try:
         res_df = run_helper.run_all_results(ds).reset_index()
     except ValueError as e:
-        # E.g. "No polarized comments found." -- can happen for a small/
-        # sparse (dataset, prompt, model) sample. Skip just this
-        # combination rather than failing the whole table.
         print(f"Skipping apunim for {dataset_key}/{prompt_name}/{pseudo}: {e}")
         return None
 
-    # The 2nd column is the (unnamed) per-SDB-column factor level, e.g.
-    # "Age" -> "1) Gen. X+"; rename positionally since its actual column
-    # label depends on pandas' index-naming, not on anything we control
-    # here (see run_all_results).
     res_df = res_df.rename(columns={res_df.columns[1]: "Value"})
     res_df["Model"] = pseudo
     res_df["Prompt"] = prompt_name
@@ -352,12 +321,9 @@ def compute_llm_apunim_by_prompt(
     exclude_models: set[str] | None = None,
 ) -> pd.DataFrame:
     """
-    Runs the same apunim analysis as lib.run_helper.run_all_results (the
-    pipeline sap.py/dices.py/kumar.py use to produce their "-results.csv"
-    files), but over the LLM annotation CSVs, once per (prompt, model)
-    available for `dataset_key`. Returns a long-format DataFrame with one
-    row per (SDB Feature, Value, Model, Prompt) combination and columns
-    'apunim', 'pvalue', 'support', ready to be pivoted into a table.
+    Runs apunim over LLM annotation CSVs, once per (prompt, model)
+    available for `dataset_key`. Returns long-format DataFrame with one
+    row per (SDB Feature, Value, Model, Prompt).
     """
     exclude_models = set(exclude_models or ())
     rows = []
@@ -415,7 +381,7 @@ def export_llm_apunim_prompt_table(
             f"the {dataset_name} dataset, across instruction prompts."
         ),
         label=label,
-        escape=False,  # allow LaTeX math ($^{*}$) already in the cells
+        escape=False,
         position="ht",
         index=True,
         multirow=True,
@@ -438,13 +404,8 @@ def build_llm_apunim_prompt_table(
     long_df: pd.DataFrame, prompt_names: list[str] = MAIN_PROMPT_NAMES
 ) -> pd.DataFrame:
     """
-    Pivots `compute_llm_apunim_by_prompt`'s long-format output into one row
-    per (SDB Feature, Value, Model) and one column per prompt, so a given
-    (dataset, model, SDB group)'s apunim value can be compared across the
-    default/stereotype/persona prompts directly. Cells combine the apunim
-    value with its significance stars (matching
-    lib.run_helper.results_to_latex); missing (prompt, model) results
-    show as "---".
+    Pivots long-format apunim output into one row per (SDB Feature, Value,
+    Model) and one column per prompt.
     """
     if long_df.empty:
         return pd.DataFrame()
@@ -492,7 +453,7 @@ def _cohens_d(a, b) -> float:
 
 
 def compute_ndfu_anova_by_prompt(
-    human_datasets: LazyDatasetLoader,
+    human_datasets: HumanDatasets,
     annotations_dir: Path,
     dataset_keys: list[str] = PROMPT_COMPARISON_DATASET_KEYS,
     prompt_names: list[str] = MAIN_PROMPT_NAMES,
@@ -501,16 +462,9 @@ def compute_ndfu_anova_by_prompt(
     baseline_prompt: str = "default",
 ) -> pd.DataFrame:
     """
-    ... (existing docstring) ...
-
-    In addition to the F-test, each row also reports Cohen's d for every
-    non-baseline prompt against `baseline_prompt` (default: "default"),
-    as columns named 'cohens_d_<prompt>_vs_<baseline_prompt>'. This is a
-    standardized effect size (mean difference / pooled SD) meant to
-    separate statistically significant shifts (small p, possibly driven
-    by large N) from quantitatively meaningful ones -- conventional
-    thresholds (Cohen): ~0.2 small, ~0.5 medium, ~0.8 large. NaN when the
-    baseline or that prompt has <2 observations for the group.
+    One-way ANOVA per (dataset, model, SDB group) testing whether that
+    group's per-comment nDFU distribution shifts across instruction prompts,
+    with FDR-corrected p-values and Cohen's d effect sizes vs. the baseline.
     """
     exclude_models = set(exclude_models or ())
     records = []
@@ -544,7 +498,7 @@ def compute_ndfu_anova_by_prompt(
                     )["nDFU"].apply(list)
 
             if len(ndfu_by_prompt) < 2:
-                continue  # need >=2 prompts to compare
+                continue
 
             all_groups = sorted(
                 set.union(*(set(s.index) for s in ndfu_by_prompt.values()))
@@ -611,18 +565,13 @@ def compute_ndfu_anova_by_prompt(
 def export_ndfu_anova_by_prompt(
     result_df: pd.DataFrame, output_path: Path
 ) -> None:
-    """
-    Computes `compute_ndfu_anova_by_prompt` and writes it to `output_path`
-    as a CSV. Returns the DataFrame as well, for scripts that want to
-    chain further processing (e.g. filtering to significant rows).
-    """
     output_path.parent.mkdir(parents=True, exist_ok=True)
     result_df.to_csv(output_path, index=False)
     print(f"ANOVA results exported to {output_path.resolve()}")
 
 
 # ---------------------------------------------------------------------------
-# Cohen's d summary table (describe() stats x prompts)
+# Cohen's d summary table
 # ---------------------------------------------------------------------------
 
 
@@ -631,16 +580,6 @@ def compute_cohens_d_summary_table(
     prompt_names: list[str] = MAIN_PROMPT_NAMES,
     baseline_prompt: str = "default",
 ) -> pd.DataFrame:
-    """
-    Summarizes each 'cohens_d_<prompt>_vs_<baseline_prompt>' column
-    produced by `compute_ndfu_anova_by_prompt` with pandas' `.describe()`
-    (count, mean, std, min, 25%, 50%, 75%, max), and lays the results out
-    with the describe() stats as rows and the (non-baseline) prompts as
-    columns -- i.e. the same numbers `run_exploratory_stats` used to
-    print per-column, just reshaped into one table.
-
-    Prompts with no corresponding column in `result_df` are skipped.
-    """
     columns = {}
     for prompt_name in prompt_names:
         if prompt_name == baseline_prompt:
@@ -661,12 +600,6 @@ def export_cohens_d_summary_latex(
     caption: str,
     label: str,
 ) -> None:
-    """
-    Writes a describe()-stats-by-prompt table (as returned by
-    `compute_cohens_d_summary_table`) to `output_path` as a LaTeX table.
-    The "count" row is left as an integer; every other row is formatted
-    to 3 decimal places, with "---" for missing values.
-    """
     df = summary_df.copy().astype(object)
     df.columns = [str(c).capitalize() for c in df.columns]
 
@@ -697,13 +630,6 @@ def export_cohens_d_summary_latex(
 
 
 def _significance_ratio(res_df: pd.DataFrame, col: str) -> pd.Series:
-    """
-    For each distinct value of `col` (e.g. each model, or each dataset),
-    counts how many of its rows have `reject_null` True vs. how many rows
-    it has in total, and returns one "<significant> / <total>" string per
-    value -- ordered by total count, descending (matching
-    `Series.value_counts()`'s default order).
-    """
     total = res_df[col].value_counts()
     significant = res_df.loc[res_df.reject_null, col].value_counts()
     significant = significant.reindex(total.index, fill_value=0)

@@ -3,9 +3,10 @@ from pathlib import Path
 import pandas as pd
 
 from ..lib import run_helper
-from ..lib.preprocessing import Dataset, LazyDatasetLoader
+from ..lib.preprocessing import Dataset
 from ..lib.util import skip_if_exists
 from .common import (
+    HumanDatasets,
     load_llm_df,
     LLMAnnotationDataset,
     find_annotation_files,
@@ -14,7 +15,7 @@ from .common import (
     _order_models,
     _available_dataset_keys,
     DATASET_KEYS,
-    MAIN_PROMPT_NAMES
+    MAIN_PROMPT_NAMES,
 )
 
 
@@ -30,17 +31,9 @@ def _human_inherent_polarization(
     human_results_dir: Path,
 ) -> pd.Series:
     """
-    Human inherent-polarization values, restricted to `sample_ids` (the
-    same comments the LLMs were run on -- see _human_sample_dataset).
-
-    Reuses the precomputed output/main/<dataset>-inherent.csv written by
-    sap.py/kumar.py/dices.py when present: subsetting an *already
-    computed* per-comment Series to a smaller comment set is exact, not
-    an approximation, since inherent polarization is computed
-    independently per comment. Only recomputes -- mirroring each
-    dataset's own choice of exhaustive (sap/kumar) vs. random (dices, see
-    compute_inherent_polarization_random/_exhaustive) -- when no cached
-    file is found.
+    Human inherent-polarization values, restricted to `sample_ids`.
+    Reuses the precomputed <dataset>-inherent.csv when present; only
+    recomputes when no cached file is found.
     """
     cached_path = human_results_dir / f"{dataset_key}-inherent.csv"
     if skip_if_exists(cached_path):
@@ -65,14 +58,8 @@ def _llm_inherent_polarization(
     apunim_output_dir: Path,
 ) -> pd.Series:
     """
-    LLM inherent-polarization values for a single (dataset, prompt,
-    model). Reuses the precomputed
-    apunim_output_dir/<dataset>-<prompt>-<model>-inherent.csv when
-    present (currently only written for the "default" prompt); otherwise
-    computes it directly on an LLMAnnotationDataset built from `path`.
-    Always exhaustive -- LLMs have at most MAX_ANNOTATORS_PER_ITEM (6)
-    annotators per comment, so the exhaustive search sap.py/kumar.py use
-    is trivially cheap here regardless of dataset.
+    LLM inherent-polarization values for a single (dataset, prompt, model).
+    Reuses a precomputed CSV when present; otherwise computes exhaustively.
     """
     cached_path = (
         apunim_output_dir
@@ -158,7 +145,7 @@ def _inherent_records_for_prompt(
 
 
 def _inherent_records_for_dataset(
-    human_datasets: LazyDatasetLoader,
+    human_datasets: HumanDatasets,
     key: str,
     prompt_names: list[str],
     annotations_dir: Path,
@@ -184,7 +171,7 @@ def _inherent_records_for_dataset(
 
 
 def compute_inherent_polarization_comparison(
-    human_datasets: LazyDatasetLoader,
+    human_datasets: HumanDatasets,
     annotations_dir: Path,
     apunim_output_dir: Path,
     human_results_dir: Path,
@@ -193,14 +180,9 @@ def compute_inherent_polarization_comparison(
     exclude_models: set[str] | None = None,
 ) -> pd.DataFrame:
     """
-    Long-format DataFrame with one row per comment giving that comment's
-    inherent polarization, for every (Dataset, Prompt, Source) where
-    Source is "Human" or a model pseudo -- restricted, for both Human and
-    every model, to the sample of comments the LLMs were actually run on
-    for that (dataset, prompt) (see _human_sample_dataset). (dataset,
-    prompt) combinations with no LLM annotation files (e.g. DICES'
-    stereotype/persona columns, which were never run) are skipped.
-    Columns: 'Dataset', 'Prompt', 'Source', 'TextID', 'value'.
+    Long-format DataFrame with one row per comment giving its inherent
+    polarization, for every (Dataset, Prompt, Source) restricted to the
+    sample of comments the LLMs were actually run on.
     """
     exclude_models = set(exclude_models or ())
     records = []
@@ -223,11 +205,7 @@ def build_inherent_polarization_table(
     long_df: pd.DataFrame,
     prompt_names: list[str],
 ) -> pd.DataFrame:
-    """
-    Build the inherent-polarization table as mean ± 2 SD.
-
-    Rows are (Dataset, Source), columns are prompts.
-    """
+    """Build the inherent-polarization table as mean ± 2 SD."""
     table = (
         long_df.groupby(["Dataset", "Source", "Prompt"])["value"]
         .agg(["mean", "std"])
@@ -239,9 +217,6 @@ def build_inherent_polarization_table(
     table = table.pivot(
         index=["Dataset", "Source"], columns="Prompt", values="formatted"
     )
-
-    # Ensure prompts appear in the requested order; missing combinations
-    # (e.g. DICES has no stereotype/persona columns) show as "---".
     table = table.reindex(columns=prompt_names)
     return table.fillna("---")
 
