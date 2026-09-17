@@ -78,7 +78,7 @@ def main_analysis(
         ds=ds,
         output_path=graph_output_dir / "kumar_sample.png",
     )
-    _inherent_experiment(dataset_path=ds, res_output_dir=res_output_dir)
+    _inherent_experiment(ds=ds, res_output_dir=res_output_dir)
     _main_experiment(
         dataset_path=dataset_path,
         res_output_dir=res_output_dir,
@@ -245,7 +245,7 @@ if __name__ == "__main__":
         help=(
             "Directory for results derived from subsampled ('ablated') "
             "datasets: the sample-size ablations and the 10-seed repeated "
-            "3k-comment ablation."
+            "1k-comment ablation."
         ),
     )
     args = parser.parse_args()
