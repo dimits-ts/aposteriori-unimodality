@@ -11,10 +11,6 @@ from ..lib import run_helper
 from ..lib import graphs
 
 
-KUMAR_SEED_ABLATION_SEEDS = list(range(10))
-SEED = 42
-
-
 def main(
     dataset_path: Path,
     output_dir: Path,
@@ -22,6 +18,8 @@ def main(
     ablations_dir: Path,
     latex_output_dir: Path,
 ):
+    KUMAR_SEED_ABLATION_SEEDS = list(range(10))
+    SEED = 42
     graph_output_dir.mkdir(parents=True, exist_ok=True)
     graphs.graph_setup()
 
@@ -30,6 +28,7 @@ def main(
         graph_output_dir=graph_output_dir,
         res_output_dir=output_dir,
         num_samples=1_000,
+        seed=SEED,
     )
 
     for sample_size in [30_000, 10_000, 3_000, 1_000]:
@@ -57,7 +56,7 @@ def main(
 
     export_latex_sample_size_table(
         ablations_dir=ablations_dir,
-        output_path=output_dir / "kumar_sample_size_comparison.tex",
+        output_path=latex_output_dir / "kumar_sample_size_comparison.tex",
         caption=(
             "Comparison of Apunim values across different sample sizes "
             "(1k, 3k, 10k, 30k) for the Kumar dataset."
@@ -72,13 +71,14 @@ def main_analysis(
     graph_output_dir: Path,
     res_output_dir: Path,
     num_samples: int,
+    seed: int,
 ):
     # Use a lazy loader so KumarDataset is only constructed if at least one
     # of the three sub-steps below actually needs it.  Previously the
     # dataset was loaded unconditionally before any skip_if_exists check.
     loader = LazyDatasetLoader(
         lambda: KumarDataset(
-            dataset_path=dataset_path, num_samples=num_samples, seed=SEED
+            dataset_path=dataset_path, num_samples=num_samples, seed=seed
         )
     )
 
@@ -94,6 +94,7 @@ def main_analysis(
         dataset_path=dataset_path,
         res_output_dir=res_output_dir,
         num_samples=num_samples,
+        seed=seed,
     )
 
 
@@ -129,7 +130,7 @@ def export_latex_sample_size_table(
     label: str,
     sample_sizes: list[int],
     decimals: int = 3,
-) -> str:
+) -> None:
     frames: dict[int, pd.DataFrame] = {}
     for n in sample_sizes:
         p = ablations_dir / f"kumar{n // 1000}k-results.csv"
@@ -141,13 +142,7 @@ def export_latex_sample_size_table(
         frames[n] = _load_results(p).set_index(["dimension", "subgroup"])
 
     # Pivot: rows = (dimension, subgroup), columns = sample sizes.
-    # Preserve row order of the first file; append extra rows from larger
-    # files at the end.
     combined = pd.DataFrame({n: df["apunim"] for n, df in frames.items()})
-    reference_index = frames[sample_sizes[0]].index
-    extra_index = combined.index.difference(reference_index, sort=False)
-    combined = combined.reindex(reference_index.append(extra_index))
-
     combined.columns = [r"\textbf{" + str(n) + "}" for n in combined.columns]
     combined.index.names = [None, r"\textbf{\ac{pc}}"]
 
@@ -162,28 +157,10 @@ def export_latex_sample_size_table(
         column_format="ll" + "r" * len(sample_sizes),
     )
 
-    # pandas renders index-level names on a separate row from column names.
-    # Collapse the two-row header into one merged row.
-    # The exact strings pandas emits (verified against pandas source):
-    #   col-names row:   " &  & \textbf{N1} & \textbf{N2} & ... \\"
-    #   idx-names row:   " & \textbf{\ac{pc}}" + " & " * N_cols + " \\"
-    pc_header = r"\ac{pc}"
-    col_header_cells = " & ".join(
-        r"\textbf{" + str(n) + "}" for n in sample_sizes
-    )
-    empty_value_cells = " & " * len(sample_sizes) + " "
-    two_row_header = (
-        f" &  & {col_header_cells} \\\\\n"
-        f" & \\textbf{{{pc_header}}}{empty_value_cells}\\\\"
-    )
-    one_row_header = rf"\textbf{{{pc_header}}} & {col_header_cells} \\"
-    latex = latex.replace(two_row_header, one_row_header)
-
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(latex, encoding="utf-8")
     print(f"Ablations table written to: {output_path}")
-    return latex
 
 
 def _polarization_plot(
@@ -221,7 +198,7 @@ def _inherent_experiment(
 
 
 def _main_experiment(
-    dataset_path: Path, res_output_dir: Path, num_samples: int
+    dataset_path: Path, res_output_dir: Path, num_samples: int, seed: int
 ) -> None:
     main_res_path = res_output_dir / "kumar-results.csv"
     if skip_if_exists(main_res_path):
@@ -231,7 +208,7 @@ def _main_experiment(
         dataset_path=dataset_path,
         output_path=main_res_path,
         num_samples=num_samples,
-        seed=SEED,
+        seed=seed,
     )
 
 

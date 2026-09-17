@@ -105,7 +105,9 @@ One alternative is using \emph{polarization}, which correlates better with human
 
 Our work makes the following contributions: (1) The identification of severe issues present in subjective datasets and prior methodologies (2) A new polarization attribution metric that is robust to small annotator counts and minority group splits with a PyPi-installable implementation (3) The detection of new promising directions (ideological and ordinal groups) for analysis of subjective \ac{nlp} datasets (4) An exploration of LLM polarization patterns when using persona prompting. Our study also underscores the need for datasets with high annotator counts per item, instead of high annotator counts in general---see App.~\ref{app:ideal-dataset} for a more extensive discussion, empirical findings, and an intuition on how polarization attribution could be used for filtering subjective datasets.
 
-\noindent\textcolor{red}{\textbf{Content Warning: Controversial and potentially harmful speech used for demonstration.}}
+\begin{center}
+	\noindent\textcolor{red}{\textbf{Content Warning: Controversial and potentially harmful speech used for demonstration.}}
+\end{center}
 
 
 \section{Background and Related Work}
@@ -332,24 +334,16 @@ Fig.~\ref{fig:metrics} shows the effectiveness of apunim, the aposteriori unimod
 \subsection{Human Annotators}
 \label{sec:results:humans}
 
-Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can explain observed polarization. Statistically significant results are presented in Table~\ref{tab:merged-apunim}.\footnote{The results are not necessarily contingent on a reliable p-value estimation, as non-statistically significant results have very low ($<0.01$) apunim values. A threshold on the apunim values would produce similar tables.} See App.~\ref{app:software} for details on other parameters and execution times, and App.~\ref{app:full} for the full results. Note that the lack of rich annotation data prevents us from analyzing how different annotator groups interact and thus our analysis is necessarily uni-dimensional.
 
 \begin{table}[t]
 	\small
 	\centering
 	\setlength{\tabcolsep}{4pt}
 	\begin{minipage}[t]{0.485\linewidth}
+		\vspace*{0mm} % vertically align tables
 		\begin{tabularx}{\linewidth}{X r r}
 			\toprule
 			\textbf{Group} & \textbf{Apunim} & \textbf{Support} \\
-			\midrule
-			\multicolumn{3}{c}{\textbf{DICES-350}} \\
-			\midrule
-			\rowcolor{gray!15}
-			Ethnicity=AfricanAm & -0.037 & 7627 \\
-			\rowcolor{gray!15}
-			Ethnicity=Asian & 0.045 & 6838 \\
-			Education=Other & -0.023 & 1841 \\
 			\midrule
 			\multicolumn{3}{c}{\textbf{DICES-990}} \\
 			\midrule
@@ -369,6 +363,23 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 			Gender=Man & 0.036 & 28817 \\
 			\rowcolor{gray!15}
 			Gender=Woman & -0.027 & 29990 \\
+			\bottomrule
+		\end{tabularx}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{0.485\linewidth}
+		\vspace*{0mm} % vertically align tables
+		\begin{tabularx}{\linewidth}{X r r}
+			\toprule
+			\textbf{Group} & \textbf{Apunim} & \textbf{Support} \\
+			\midrule
+			\multicolumn{3}{c}{\textbf{DICES-350}} \\
+			\midrule
+			\rowcolor{gray!15}
+			Ethnicity=AfricanAm & -0.037 & 7627 \\
+			\rowcolor{gray!15}
+			Ethnicity=Asian & 0.045 & 6838 \\
+			Education=Other & -0.023 & 1841 \\
 			\midrule
 			\multicolumn{3}{c}{\textbf{Sap}} \\
 			\midrule
@@ -381,53 +392,18 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 			\bottomrule
 		\end{tabularx}
 	\end{minipage}
-	\hfill
-	\begin{minipage}[t]{0.485\linewidth}
-		\begin{tabularx}{\linewidth}{X r r}
-			\toprule
-			\textbf{Group} & \textbf{Apunim} & \textbf{Support} \\
-			\midrule
-			\multicolumn{3}{c}{\textbf{Kumar}} \\
-			\midrule
-			\multicolumn{3}{c}{A. Innate Characteristics} \\
-			\midrule
-			\rowcolor{gray!15}
-			Ethnicity=White & -0.029 & 6619 \\
-			Education=College & -0.034 & 2508 \\
-			SexOrient=Heterosexual & -0.050 & 5721 \\
-			\rowcolor{gray!15}
-			IsTrans=No & -0.079 & 1697 \\
-			\midrule
-			\multicolumn{3}{c}{B. Experiences and Ideologies} \\
-			\midrule
-			HasBeenTargeted=False & -0.048 & 6632 \\
-			IsParent=No & -0.069 & 5514 \\
-			IsParent=Yes & 0.049 & 6216 \\
-			ReligionImportant=No & -0.062 & 3864 \\
-			ReligionImportant=Very & 0.052 & 4062 \\
-			SeenToxicity=False & 0.035 & 3050 \\
-			SeenToxicity=True & -0.077 & 6360 \\
-			\bottomrule
-		\end{tabularx}
-	\end{minipage}
-	\caption{Statistically significant ($p<0.05$) apunim results across the four datasets. Gray rows show \texttt{Ethnicity} and \texttt{Gender} groups. ``Support'' refers to number of annotations. Consult App.~\ref{app:full} for the full results.}
-	\label{tab:merged-apunim}
+	\caption{Statistically significant ($p<0.05$) apunim results across the Sap and DICES datasets. Gray rows show \texttt{Ethnicity} and \texttt{Gender} groups. ``Support'' refers to number of annotations. Consult App.~\ref{app:full} for the full results.}
+	\label{tab:apunim-main}
 \end{table}
+
+Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can explain observed polarization. Statistically significant results are presented in Table~\ref{tab:apunim-main}.\footnote{The results are not necessarily contingent on a reliable p-value estimation, as non-statistically significant results have very low ($<0.01$) apunim values. A threshold on the apunim values would produce similar tables.} See App.~\ref{app:software} for details on other parameters and execution times, and App.~\ref{app:full} for the full results. Note that the lack of rich annotation data prevents us from analyzing how different annotator groups interact and thus our analysis is necessarily uni-dimensional.
+
 
 \emph{Polarization is consistently attributed to \textbf{ethnicity} across all datasets}, confirming prior work suggesting that it is a systematic source of annotator disagreement in these tasks~\cite{goyal2022your}.\footnote{Note that polarization attribution does not have a consistent direction across datasets, which we believe to be caused by studies using different ethnic subgroups allowing detection but distorting attribution.} Additionally, in both DICES-990 and Sap, \emph{\textbf{women} are a consistent source of polarization} (positive values), while \textbf{men} disagree among themselves (negative values), which is consistent with previous findings~\citep{wojatzki2018women, binns2017like}. Non-\textbf{transgender} annotators also showed the \emph{highest degree of polarization} in the Kumar dataset in absolute terms ($-0.788$) suggesting that transgender individuals are a systematic source of disagreement.\footnote{Only the inverse effect is detectable due to annotator sparsity, hence the negative sign.}
 
-\begin{figure}[t]
-	\centering
-	\includegraphics[width=\linewidth]{apunim_ordinal.png}
-	\caption{Polarization attribution trends in ordinal groups. The left side of the x-axis refers to young annotators, low education, low religiousness, and negativity towards the impacts of toxicity and technology. The full ordinal modes for each dimension and their individual labels can be found in App.~\ref{app:full}. We exclude groups with $<50$ annotations, since they near-universally result in zero apunim values due to lack of data. Filled points represent statistical significant ($p<0.05$) values.}
-	\label{fig:ordinal}
-\end{figure}
-
-\emph{\textbf{Ideology and experiences} appear to be a more consistent source of annotator disagreement than inherent characteristics}. Specifically, the Kumar dataset, which tracks ideological attributes, shows polarization attribution linked primarily to personal experiences and beliefs, rather than to sociodemographic dimensions, although further datasets are required to generalize this finding. The divide between ideology/personal experiences and innate sociodemographic characteristics has not been adequately explored in current literature and should be further studied in future work. Furthermore, \emph{\textbf{religion} demonstrates a clear relationship with polarization attribution}. According to Fig.~\ref{fig:ordinal}, highly devout annotators exhibit higher levels of self-agreement compared with other annotators (positive apunim). Non-religious annotators show a pattern of increased internal disagreement (negative apunim), a trend that gradually reverses as religious devoutness increases (increasing apunim).\footnote{The statistical insignificance observed during the transition from irreligious to highly religious groups may represent genuine shifts rather than inconclusive results, since Eq.~\ref{eq:pvalue} checks whether $apunim \neq 0$, given that $\bar{\textit{apunim}}_{\mathrm{rand}}(d,g)$  will usually be close to zero. This phenomenon may also apply to other ordinal \acp{pc}, such as \texttt{Age} in both Sap and DICES-990, but finer-grained subgroups are needed to verify this.}
-
 \begin{finding}
 	\label{finding:human}
-	Annotator ethnicity and gender are consistent causes of polarization, while the latter may be more pronounced in ideological attributes and personal experiences. Polarization also escalates as annotators become more religious.
+	Annotator ethnicity and gender are consistent causes of polarization, confirming prior literature on Toxicity and \ac{hs} tasks.
 \end{finding}
 
 
@@ -881,136 +857,19 @@ The experiment, whose results are shown in Fig.~\ref{fig:metrics-simple} shows t
 \subsection{How Does Dataset Size Influence Apunim?}
 \label{app:ablation:sample-size}
 
-\begin{longtable}{l c c c}
-	\toprule
-	\textbf{\ac{pc}} & \textbf{1000} & \textbf{10000} & \textbf{30000} \\
-	\midrule
-	\caption{Comparison of apunim values across different sample sizes (1k, 10k, 30k) for the Kumar dataset.}
-	\label{tab:num-comments-apunim} \\
-	\toprule
-	% --- Age Features ---
-	\multicolumn{4}{l}{\textbf{Age}} \\
-	\midrule
-	8 - 24 & -0.002 & -0.037 & -0.016 \\
-	25 - 34 & 0.045 & 0.000 & 0.000 \\
-	35 - 44 & -0.043 & -0.001 & -0.001 \\
-	45 - 54 & 0.001 & 0.013 & 0.003 \\
-	55 - 64 & 0.002 & -0.057 & 0.001 \\
-	65 or older & -0.007 & N/A & 0.948 \\
-	\midrule
-	
-	% --- Education Features ---
-	\multicolumn{4}{l}{\textbf{Education}} \\
-	\midrule
-	High School graduate & -0.023 & -0.005 & 0.014 \\
-	College, no degree & -0.045 & 0.010 & 0.006 \\
-	Associate degree & 0.001 & 0.005 & 0.009 \\
-	Bachelor's degree & 0.029 & -0.001 & -0.000 \\
-	Master's degree & 0.024 & 0.004 & -0.000 \\
-	\midrule
-	
-	% --- Ethnicity Features ---
-	\multicolumn{4}{l}{\textbf{Ethnicity}} \\
-	\midrule
-	Asian & -0.012 & 0.011 & 0.007 \\
-	Black & 0.036 & -0.004 & -0.012 \\
-	Hispanic & 0.004 & 0.000 & -0.099 \\
-	Multiracial & 0.008 & 0.000 & 0.000 \\
-	Other & -0.008 & N/A & -0.306 \\
-	\textbf{White} & -0.023 & 0.000 & 0.000 \\
-	\midrule
-	
-	% --- Gender Features ---
-	\multicolumn{4}{l}{\textbf{Gender}} \\
-	\midrule
-	Female & -0.006 & 0.002 & 0.001 \\
-	Male & 0.040 & -0.002 & -0.001 \\
-	\midrule
-	
-	% --- Has Been Targeted Features ---
-	\multicolumn{4}{l}{\textbf{Has Been Targeted}} \\
-	\midrule
-	False & -0.059 & 0.000 & 0.000 \\
-	True & 0.017 & -0.003 & -0.002 \\
-	\midrule
-	
-	% --- Is Parent Features ---
-	\multicolumn{4}{l}{\textbf{Is Parent}} \\
-	\midrule
-	No & -0.084 & 0.001 & 0.001 \\
-	N/A & 0.004 & 1.000 & 0.000 \\
-	Yes & 0.071 & 0.000 & 0.000 \\
-	\midrule
-	
-	% --- Is Transgender Features ---
-	\multicolumn{4}{l}{\textbf{Is Transgender}} \\
-	\midrule
-	No & -0.102 & 0.000 & 0.000 \\
-	\midrule
-	
-	% --- Political Affiliation Features ---
-	\multicolumn{4}{l}{\textbf{Political Affiliation}} \\
-	\midrule
-	Conservative & 0.056 & -0.003 & -0.002 \\
-	Independent & -0.003 & 0.001 & 0.002 \\
-	Liberal & -0.026 & 0.001 & 0.001 \\
-	Other & -0.003 & 0.000 & 0.000 \\
-	\midrule
-	
-	% --- Religion Important Features ---
-	\multicolumn{4}{l}{\textbf{Religion Important}} \\
-	\midrule
-	No & -0.071 & 0.002 & 0.001 \\
-	Not very & -0.013 & 0.010 & 0.006 \\
-	Somewhat & 0.022 & 0.003 & -0.002 \\
-	Very & 0.043 & -0.003 & -0.002 \\
-	\midrule
-	
-	% --- Seen Toxicity Features ---
-	\multicolumn{4}{l}{\textbf{Seen Toxicity}} \\
-	\midrule
-	False & 0.025 & -0.001 & -0.001 \\
-	True & -0.082 & 0.001 & 0.000 \\
-	\midrule
-	
-	% --- Sexual Orientation Features ---
-	\multicolumn{4}{l}{\textbf{Sexual Orientation}} \\
-	\midrule
-	Bisexual & -0.003 & -0.040 & -0.013 \\
-	Heterosexual & -0.067 & 0.000 & 0.000 \\
-	Homosexual & -0.012 & 0.000 & 0.053 \\
-	\midrule
-	
-	% --- Technology Impact Features ---
-	\multicolumn{4}{l}{\textbf{Technology Impact}} \\
-	\midrule
-	Somewhat negative & -0.008 & 0.000 & 0.003 \\
-	Neutral & 0.017 & -0.014 & 0.000 \\
-	Somewhat positive & -0.053 & 0.000 & 0.001 \\
-	Very positive & 0.027 & -0.004 & -0.003 \\
-	\midrule
-	
-	% --- Toxicity Problem Features ---
-	\multicolumn{4}{l}{\textbf{Toxicity Problem}} \\
-	\midrule
-	Never & -0.008 & -0.037 & -0.081 \\
-	Rarely & 0.004 & 0.003 & -0.001 \\
-	Occasionally & -0.012 & -0.003 & -0.001 \\
-	Frequently & -0.032 & -0.001 & 0.000 \\
-	Very Frequently & -0.017 & 0.030 & 0.015 \\
-	\bottomrule
-\end{longtable}
+\input{generated/kumar_sample_size_comparison.tex}
+
+Since our approach was designed for the small-scale datasets common in \ac{nlp}, we were cautious when testing it on the massive Kumar dataset. Because of the data volume, we analyzed various smaller samples (1{,}000, 3{,}000, 10{,}000, and 30{,}000 items), shown in Table~\ref{tab:num-comments-apunim}. Sample size does not seem to have a consistent effect on apunim values, other than large splits uncovering significant polarization effects in sparsely populated groups (e.g., 65+ yo. in \textit{Age}, ``Prefer Not to Say'' in \textit{Sexual Orientation}, ``Never'' , ``Very Frequently'' in \textit{Toxicity Problem}). The apunim direction stays broadly the same.
 
 \begin{figure}[t]
-	\includegraphics[width=\linewidth]{kumar3k_seed_ablation.png}
+	\includegraphics[width=\linewidth]{kumar1k_seed_ablation.png}
 	\centering
-	\caption{Apunim values on the Kumar dataset ($n_{samples}=3000$) across ten runs with different subsets.  Black bars indicate two \acp{sd}. \ac{pc} dimensions with many groups are more volatile, although all dimensions broadly keep the same apunim sign across subsets.}
+	\caption{Apunim values on the Kumar dataset ($n_{samples}=1000$) across ten runs with different subsets.  Black bars indicate two \acp{sd}. \ac{pc} dimensions with many groups are more volatile, although all dimensions broadly keep the same apunim sign across subsets.}
 	\label{fig:seeds}
 \end{figure}
 
-Since our approach was designed for the small-scale datasets common in \ac{nlp}, we were cautious when testing it on the massive Kumar dataset. Because of the data volume, we analyzed various smaller samples (1,000, 10,000, and 30,000 items), shown in Table~\ref{tab:num-comments-apunim} (rows with more than one N/A values removed). As sample size increased, the statistical metrics (apunim values) consistently shrank, and we found no statistically significant effects in the larger samples.
+We also test whether the results in Table~\ref{tab:apunim-main} are an artifact of the dataset split, because of the small sample size used in the study. We repeat the apunim experiment with ten different subsets of the same dataset and record their apunim values, shown in Fig.~\ref{fig:seeds}. We find that most apunim values are stable, save for ``Never'' in \textit{Toxicity Problem}, ``Heterosexual'' in \textit{Sexual Orientation} and ``Neutral'' in \textit{Technology Impact}.
 
-The test is overly conservative, meaning it almost always suggests there is no significant effect, even when an effect likely exists in reality. This inability to detect a real signal is a Type II Error (a false negative). This suggests that our test is statistically weak or ``underpowered'' in massive settings. Since our methodology is built for the small-scale \ac{nlp} datasets that dominate the research field, we deem this limitation acceptable for the scope of our work. 
 
 
 \subsection{How Does Sample Selection Influence Apunim?}
@@ -1142,6 +1001,7 @@ We examine the following conditions for selecting models and datasets for our LL
 
 \section{Full Results}
 \label{app:full}
+%TODO: Export tables directly from code
 
 \begin{figure}[ht]
 	\includegraphics[width=0.48\linewidth]{apunim_ordinal_dices-990_Age.png}
