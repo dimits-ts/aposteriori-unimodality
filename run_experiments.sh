@@ -36,7 +36,7 @@ JOBS=(
 printf "%s\n" "${JOBS[@]}" |
   parallel --colsep '\|' -j8 --delay 0.1 run_and_log "{1}" "{2}"
 
-python src/export_results.py \
-    --results-dir=output/human_main \
+python -m src.human.export_results \
+    --results-dir=output/human/main \
     --latex-output-dir=manuscript/generated \
     --graph-output-dir=graphs

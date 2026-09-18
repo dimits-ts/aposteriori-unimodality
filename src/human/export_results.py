@@ -278,6 +278,7 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
         return
 
     data = pd.DataFrame(records)
+    data = data[data.dataset != "kumar"]
     data["significant"] = data["pvalue"] < SIG_ALPHA
 
     # --- Stretch each feature's ordinal series ---
@@ -294,7 +295,6 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
 
     # --- Color configuration ---
     highlight_group_1 = {
-        "kumar-Religion Important",
         "dices-990-Age",
         "sap-Age",
     }

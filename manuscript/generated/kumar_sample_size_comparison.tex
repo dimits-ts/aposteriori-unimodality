@@ -1,12 +1,14 @@
 \begin{longtable}{llrrrr}
 \caption{Comparison of Apunim values across different sample sizes (1k, 3k, 10k, 30k) for the Kumar dataset.} \label{tab:num-comments-apunim} \\
 \toprule
-\textbf{\ac{pc}} & \textbf{1000} & \textbf{3000} & \textbf{10000} & \textbf{30000} \\
+ &  & \textbf{1000} & \textbf{3000} & \textbf{10000} & \textbf{30000} \\
+ & \textbf{\ac{pc}} &  &  &  &  \\
 \midrule
 \endfirsthead
 \caption[]{Comparison of Apunim values across different sample sizes (1k, 3k, 10k, 30k) for the Kumar dataset.} \\
 \toprule
-\textbf{\ac{pc}} & \textbf{1000} & \textbf{3000} & \textbf{10000} & \textbf{30000} \\
+ &  & \textbf{1000} & \textbf{3000} & \textbf{10000} & \textbf{30000} \\
+ & \textbf{\ac{pc}} &  &  &  &  \\
 \midrule
 \endhead
 \midrule
@@ -15,11 +17,12 @@
 \endfoot
 \bottomrule
 \endlastfoot
-\multirow[t]{5}{*}{Age} & 1) 18 - 24 & 0.014 & -0.017 & -0.037 & -0.016 \\
+\multirow[t]{6}{*}{Age} & 1) 18 - 24 & 0.014 & -0.017 & -0.037 & -0.016 \\
  & 2) 25 - 34 & -0.003 & -0.000 & 0.000 & 0.000 \\
  & 3) 35 - 44 & 0.000 & -0.011 & -0.001 & -0.001 \\
  & 4) 45 - 54 & 0.022 & 0.033 & 0.013 & 0.003 \\
  & 5) 55 - 64 & 0.000 & 0.000 & -0.057 & 0.001 \\
+ & 6) 65 or older & --- & --- & --- & 0.948 \\
 \cline{1-6}
 \multirow[t]{5}{*}{Education} & 2) High School graduate & 0.000 & 0.000 & -0.005 & 0.014 \\
  & 3) College, no degree & 0.010 & 0.014 & 0.010 & 0.006 \\
@@ -27,9 +30,11 @@
  & 5) Bachelor's degree & 0.001 & -0.000 & -0.001 & -0.000 \\
  & 6) Master's degree & 0.000 & -0.006 & 0.004 & -0.000 \\
 \cline{1-6}
-\multirow[t]{4}{*}{Ethnicity} & Asian & -0.000 & 0.000 & 0.011 & 0.007 \\
+\multirow[t]{6}{*}{Ethnicity} & Asian & -0.000 & 0.000 & 0.011 & 0.007 \\
  & Black & 0.000 & -0.024 & -0.004 & -0.012 \\
+ & Hispanic & --- & --- & 0.000 & -0.099 \\
  & Multiracial & 0.000 & 0.000 & 0.000 & 0.000 \\
+ & Other & --- & --- & --- & -0.306 \\
  & White & 0.000 & -0.000 & -0.000 & 0.000 \\
 \cline{1-6}
 \multirow[t]{2}{*}{Gender} & Female & 0.001 & 0.000 & 0.002 & 0.001 \\
@@ -38,14 +43,17 @@
 \multirow[t]{2}{*}{Has Been Targeted} & False & 0.001 & 0.000 & -0.000 & 0.000 \\
  & True & -0.009 & -0.015 & -0.003 & -0.002 \\
 \cline{1-6}
-\multirow[t]{2}{*}{Is Parent} & No & -0.002 & 0.002 & 0.001 & 0.001 \\
+\multirow[t]{3}{*}{Is Parent} & No & -0.002 & 0.002 & 0.001 & 0.001 \\
+ & Prefer not to say & --- & --- & 1.000 & 0.000 \\
  & Yes & -0.000 & 0.000 & -0.000 & 0.000 \\
 \cline{1-6}
 Is Transgender & No & 0.000 & 0.000 & 0.000 & 0.000 \\
 \cline{1-6}
-\multirow[t]{3}{*}{Political Affiliation} & Conservative & -0.013 & 0.003 & -0.003 & -0.002 \\
+\multirow[t]{5}{*}{Political Affiliation} & Conservative & -0.013 & 0.003 & -0.003 & -0.002 \\
  & Independent & 0.000 & -0.001 & 0.001 & 0.002 \\
  & Liberal & -0.001 & 0.006 & 0.001 & 0.001 \\
+ & Other & --- & 0.000 & 0.000 & 0.000 \\
+ & Prefer not to say & --- & --- & 0.000 & 0.022 \\
 \cline{1-6}
 \multirow[t]{4}{*}{Religion Important} & 1) No & 0.002 & 0.004 & 0.002 & 0.001 \\
  & 2) Not very & 0.000 & -0.006 & 0.010 & 0.006 \\
@@ -55,8 +63,10 @@ Is Transgender & No & 0.000 & 0.000 & 0.000 & 0.000 \\
 \multirow[t]{2}{*}{Seen Toxicity} & False & -0.007 & 0.002 & -0.001 & -0.001 \\
  & True & -0.001 & 0.000 & 0.001 & 0.000 \\
 \cline{1-6}
-\multirow[t]{2}{*}{Sexual Orientation} & Bisexual & -0.068 & -0.029 & -0.040 & -0.013 \\
+\multirow[t]{4}{*}{Sexual Orientation} & Bisexual & -0.068 & -0.029 & -0.040 & -0.013 \\
  & Heterosexual & -0.001 & -0.000 & -0.000 & 0.000 \\
+ & Homosexual & --- & --- & 0.000 & 0.053 \\
+ & Prefer not to say & --- & --- & --- & 0.370 \\
 \cline{1-6}
 \multirow[t]{4}{*}{Technology Impact} & 2) Somewhat negative & 0.000 & 0.000 & 0.000 & 0.003 \\
  & 3) Neutral & 0.124 & 0.037 & -0.014 & 0.000 \\
@@ -68,18 +78,5 @@ Is Transgender & No & 0.000 & 0.000 & 0.000 & 0.000 \\
  & 3) Occasionally & 0.000 & -0.004 & -0.003 & -0.001 \\
  & 4) Frequently & 0.000 & 0.000 & -0.001 & -0.000 \\
  & 5) Very Frequently & 0.000 & -0.002 & 0.030 & 0.015 \\
-\cline{1-6}
-Age & 6) 65 or older & --- & --- & --- & 0.948 \\
-\cline{1-6}
-\multirow[t]{2}{*}{Ethnicity} & Hispanic & --- & --- & 0.000 & -0.099 \\
- & Other & --- & --- & --- & -0.306 \\
-\cline{1-6}
-Is Parent & Prefer not to say & --- & --- & 1.000 & 0.000 \\
-\cline{1-6}
-\multirow[t]{2}{*}{Political Affiliation} & Other & --- & 0.000 & 0.000 & 0.000 \\
- & Prefer not to say & --- & --- & 0.000 & 0.022 \\
-\cline{1-6}
-\multirow[t]{2}{*}{Sexual Orientation} & Homosexual & --- & --- & 0.000 & 0.053 \\
- & Prefer not to say & --- & --- & --- & 0.370 \\
 \cline{1-6}
 \end{longtable}
