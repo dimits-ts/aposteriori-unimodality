@@ -67,14 +67,14 @@
 %TODO: Run other metrics on actual data
 %TODO: Flip narrative
 \begin{abstract}
-	LLM-as-judge systems are increasingly used as scalable substitutes for human annotators, including in subjective tasks where human annotators systematically disagree along group lines---a phenomenon known as polarization. Whether these systems reproduce, ignore, or distort human polarization patterns is largely untested, in part because existing polarization metrics are unreliable. We find that they rest on a faulty assumption---that all polarization can be attributed to some annotator group---and that they can miss polarization entirely when opposing group effects cancel out in aggregate. We introduce a non-parametric clustering method that resolves both failure modes, enabling quantifiable attribution of polarization to any annotator group without training. Using this method, we audit LLM-as-judge systems against real human annotation datasets and find that their polarization structure is largely disconnected from human patterns, a gap that persists even when models are explicitly prompted to condition on persona characteristics. We validate the underlying method on simulated data, showing it remains reliable under group-size imbalance and inconsistent polarization effects that degrade current approaches. Our results suggest that persona-conditioning alone is insufficient for LLM judges to replicate the structure of human disagreement, with implications for their use in RLHF and other pipelines that treat human feedback as a proxy signal.
+	LLM-as-judge systems are increasingly used as scalable substitutes for human annotators, including in polarized, subjective tasks where human annotators systematically disagree along group lines. Whether these systems reproduce, ignore, or distort human polarization patterns is largely untested, in part because existing polarization representations are unreliable. In this work, we find that their unreliability partially rests on the faulty assumption that all polarization can be attributed to at least one annotator group. We also find that these representations can miss polarization entirely when annotators are polarized differently for each item. We posit that these limitations necessitate using a clustering approach, which we use to develop a method that resolves both failure modes, enabling quantifiable attribution of polarization to any annotator group without training. Using this method, we audit LLM-as-judge systems against real human annotation datasets and find that their polarization structure is largely disconnected from human patterns, a gap that persists even when models are explicitly prompted to condition on persona characteristics. We validate the underlying method on simulated data, showing it remains reliable under group-size imbalance and inconsistent polarization effects that degrade current approaches. Overall, our results suggest that persona-conditioning alone is insufficient for LLM judges to replicate the structure of human disagreement.
 \end{abstract}
 
 
 \section{Introduction}
 \label{sec:intro}
 
-Annotations are essential for subjective tasks, such as content moderation, toxicity, and \acf{hs} detection, which are especially important for protecting minority groups~\cite{un_hate_speech_targets, ucdavis_hate_speech}. However, in practice, analysis rests on inter-annotator agreement or majority-vote~\cite{ivey-etal-2025-nutmeg, petra_2022_handling, van_der_Velden}, which may lead to biased and misconfigured systems (e.g., toxicity models disproportionally marking \ac{aa} speech as ``toxic''~\cite{sap-etal-2019-risk}), or discard \emph{fundamental} disagreements between minority groups and the majority~\cite{quaranto2022dog}, (see the example in Fig.~\ref{fig:disagreement-vs-polarization}).\footnote{The simulated experiments in this study were implemented by generating random annotations following the normal distribution with differing means and \ac{sd}---see App.~\ref{app:experiments}.}
+Annotations are essential for subjective tasks, such as content moderation, toxicity, and \acf{hs} detection, which are especially important for protecting minority groups~\cite{un_hate_speech_targets, ucdavis_hate_speech}. Human annotation is however unscalable in practical scenarios (e.g., academic research on established datasets, social media content moderation), which motivates the use of traditional ML and LLM-as-a-judge models for annotation. Simultaneously, these tasks were traditionally part of safety-tuning new LLMs using RLHF, but because of the cost incurred by manual, human annotation, current practice also incorporates RLAIF, where LLM systems are used to train other LLMs~\citep{sharma_rlaif}. The reliance on these models for annotation requires evaluation, which is currently insufficient. Specifically, current practice relies on inter-annotator agreement or majority-vote~\cite{ivey-etal-2025-nutmeg, petra_2022_handling, van_der_Velden}, which may lead to biased and misconfigured systems (e.g., toxicity models disproportionally marking \ac{aa} speech as ``toxic''~\cite{sap-etal-2019-risk}), or discard \emph{fundamental} disagreements between minority groups and the majority~\cite{quaranto2022dog}, (see the example in Fig.~\ref{fig:disagreement-vs-polarization}).\footnote{The simulated experiments in this study were implemented by generating random annotations following the normal distribution with differing means and \ac{sd}---see App.~\ref{app:experiments}.}
 
 \FloatBarrier
 \begin{figure}[t]
@@ -84,21 +84,16 @@ Annotations are essential for subjective tasks, such as content moderation, toxi
 	\label{fig:disagreement-vs-polarization}
 \end{figure}
 
-One alternative is using \emph{polarization}, which correlates better with human judgments and is much less sensitive to different group sizes \cite{Pavlopoulos2023, pavlopoulos-likas-2024}. While we can detect polarization, there is little work on how to detect whether it is \emph{actually caused by marginalized groups}. Our work thus tries to answer the following \textbf{Main Research Question (MRQ): How can we build a robust representation of intergroup polarization?} We answer this question through the following sub-questions:
+One alternative is using \emph{polarization}, a clustering approach which correlates better with human judgments and is much less sensitive to different group sizes \cite{Pavlopoulos2023, pavlopoulos-likas-2024}. While we can detect polarization, there is little work on how to detect whether it is \emph{actually caused by marginalized groups}. Our work thus tries to answer the following \textbf{Main Research Question (MRQ): To what extent are LLM disagreements consistent with those of human annotators?} We answer this question through the following sub-questions:
 
-\begin{researchquestion}[How much of the observed polarization is attributable to annotator subgroups]
+\begin{researchquestion}[Why do current approaches fail]
 	\label{rq:inherent}
 	While prior work assumed that all polarization can be explained and attributed to some annotator characteristic, through the exhaustive creation of theoretical annotator groups (\S\ref{sec:inherent}) our study discovers the existence of \ac{ip}, which can not be attributed to \emph{any possible group} of annotators---known or unknown (Finding~\ref{finding:inherent}). We also discover that polarization across items has a \emph{direction}, preventing us from aggregating annotations on the dataset level to circumvent annotation sparsity (Finding~\ref{finding:conflicting}), which we later show to limit existing statistical approaches. 
 \end{researchquestion}
 
-\begin{researchquestion}[How can we quantify this attribution to each possible subgroup]
+\begin{researchquestion}[How can we build a reliable representation of polarization attribution]
 	\label{rq:metric}
-	In order to solve these issues we introduce a new metric ``\emph{apunim}'', which \emph{quantitatively} attributes polarization to specific annotator sociodemographic and ideological characteristics (referred to as \acp{pc} in this study) and outperforms prior approaches in scenarios with realistic annotation sparsity and minority group splits (Finding~\ref{finding:comparison}).
-\end{researchquestion}
-
-\begin{researchquestion}[Which polarization patterns are detectable using our new representation]
-	\label{rq:human}
-	We apply our metric to four \ac{nlp} datasets focused on Toxicity and \ac{hs} detection (\S\ref{sec:results:humans}), confirming prior work showing that annotator gender and ethnicity significantly impact annotation (Finding~\ref{finding:human}).
+	In order to solve these issues we introduce a new metric ``\emph{apunim}'', which \emph{quantitatively} attributes polarization to specific annotator sociodemographic and ideological characteristics (referred to as \acp{pc} in this study) and outperforms prior approaches in scenarios with realistic annotation sparsity and minority group splits (Finding~\ref{finding:comparison}). We apply our metric to four \ac{nlp} datasets focused on Toxicity and \ac{hs} detection (\S\ref{sec:results:humans}), confirming prior work showing that annotator gender and ethnicity significantly impact annotation (Finding~\ref{finding:human}).
 \end{researchquestion}
 
 \begin{researchquestion}[Which polarization patterns are shared between human and LLM annotators]
@@ -106,7 +101,7 @@ One alternative is using \emph{polarization}, which correlates better with human
 	We conduct an annotation study on one Toxicity and one \ac{hs} dataset using six open-source models in order to compare polarization patterns between them and humans (\S\ref{sec:results:llms}). We find that using persona-prompted LLMs to simulate the original annotation task consistently fail to produce any subgroup polarization patterns regardless of instruction prompt, confirming that persona prompting does not consistently influence LLM outputs in the examined tasks (Finding~\ref{finding:llms}).
 \end{researchquestion}
 
-Our work makes the following contributions: (1) The identification of severe issues present in subjective datasets and prior methodologies (2) A new polarization attribution metric that is robust to small annotator counts and minority group splits (3) a PyPi-installable implementation (4) An exploration of LLM polarization patterns when using persona prompting. Our study also underscores the need for datasets with high annotator counts per item, instead of high annotator counts in general (\S\ref{app:ideal-dataset}).
+Our work makes the following contributions: (1) The identification of severe issues present in subjective datasets and prior methodologies (2) A new polarization attribution metric that is robust to small annotator counts and minority group splits (3) An exploration of LLM polarization patterns when using persona prompting. We also release a PyPI library implementing our metric.
 
 \begin{center}
 	\noindent\textcolor{red}{\textbf{Content Warning: Controversial and potentially harmful speech used for demonstration.}}
@@ -182,7 +177,7 @@ While many studies study the effect of subgroups on annotation agreement~\cite{g
 
 We use four datasets from current \ac{nlp} research that include \ac{pc} information at the level of individual annotators; specifically, the ``Kumar'' \cite{kumar-et-al-2021} and ``Sap'' \cite{sap-etal-2022-annotators} datasets, which are concerned with Toxicity and \ac{hs} detection respectively. We also examine the DICES-350 and 990 datasets~\cite{dices} which focus on LLM response safety.\footnote{Specifically, we use the ``Breadth of Posts'' dataset with the ``\textit{toyou}'' labels for Sap. For DICES-350 we choose the \textit{Q3\_bias\_targeting\_inherited\_attributes} label, while for DICES-990 the \textit{Q3\_bias\_incites\_hatred} forgoing the \textit{Q3\_bias\_overall} labels which are aggregated scores. The choice of labels transforms DICES into a \ac{hs} task with the most coherence since the two datasets do not share labels.}
 
-A brief overview of dataset characteristics is provided in Table~\ref{tab:datasets}. The Kumar dataset stands out for its large size, featuring more than 100{,}000 annotated items, as well as 10 distinct \ac{pc} dimensions.\footnote{We sample 3{,}000 items in this study due to computational constraints (App.~\ref{app:software}). Our results remain consistent, for both different and differently sized-samples (App.~\ref{app:ablation}).} In contrast, the DICES datasets contain fewer annotated items but involve more than an order of magnitude more annotators per item than the other datasets. More details on the annotations, including overall levels of observed polarization, can be found in App.~\ref{app:ann_details}.
+A brief overview of dataset characteristics is provided in Table~\ref{tab:datasets}. The Kumar dataset stands out for its large size, featuring more than 100{,}000 annotated items, as well as 10 distinct \ac{pc} dimensions.\footnote{We sample 1{,}000 items in order to allow for a full LLM annotation later (\S\ref{sec:results}). Our results remain consistent, for both different and differently sized-samples (App.~\ref{app:ablation}).} In contrast, the DICES datasets contain fewer annotated items but involve more than an order of magnitude more annotators per item than the other datasets. More details on the annotations, including overall levels of observed polarization, can be found in App.~\ref{app:ann_details}. For a discussion on the need for datasets with high annotator counts per item, instead of high annotator counts in general, see App.~\ref{app:ideal-dataset}.
 
 
 \section{Can We Attribute All Polarization to Annotator Groups?}
@@ -343,12 +338,7 @@ The experiment, whose results are shown in Fig.~\ref{fig:metrics-simple} shows t
 \end{finding}
 
 
-\section{Attributing Real-Life Polarization}
-\label{sec:results}
-
-\subsection{Human Annotators}
-\label{sec:results:humans}
-%TODO: Explain why no Kumar
+\subsection{How Are Humans Polarized?}
 
 \begin{table}[t]
 	\small
@@ -413,7 +403,6 @@ The experiment, whose results are shown in Fig.~\ref{fig:metrics-simple} shows t
 
 Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can explain observed polarization. Statistically significant results are presented in Table~\ref{tab:apunim-main}.\footnote{The results are not necessarily contingent on a reliable p-value estimation, as non-statistically significant results have very low ($<0.01$) apunim values. A threshold on the apunim values would produce similar tables.} See App.~\ref{app:software} for details on other parameters and execution times, and App.~\ref{app:full} for the full results. Note that the lack of rich annotation data prevents us from analyzing how different annotator groups interact and thus our analysis is necessarily uni-dimensional.
 
-
 \emph{Polarization is consistently attributed to \textbf{ethnicity} across all datasets}, confirming prior work suggesting that it is a systematic source of annotator disagreement in these tasks~\cite{goyal2022your}.\footnote{Note that polarization attribution does not have a consistent direction across datasets, which we believe to be caused by studies using different ethnic subgroups allowing detection but distorting attribution.} Additionally, in both DICES-990 and Sap, \emph{\textbf{women} are a consistent source of polarization} (positive values), while \textbf{men} disagree among themselves (negative values), which is consistent with previous findings~\citep{wojatzki2018women, binns2017like}. Non-\textbf{transgender} annotators also showed the \emph{highest degree of polarization} in the Kumar dataset in absolute terms ($-0.788$) suggesting that transgender individuals are a systematic source of disagreement.\footnote{Only the inverse effect is detectable due to annotator sparsity, hence the negative sign.}
 
 \begin{finding}
@@ -422,7 +411,7 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 \end{finding}
 
 
-\subsection{What Polarization Patterns Do LLM Annotators Exhibit?}
+\section{What Polarization Patterns Do LLM Annotators Exhibit?}
 \label{sec:results:llms}
 %TODO: re-run sap with 600 comments
 
