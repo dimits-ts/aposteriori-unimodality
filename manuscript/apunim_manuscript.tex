@@ -25,6 +25,7 @@
 \usepackage{longtable}
 \usepackage{placeins}
 \usepackage{censor}
+\usepackage[inline]{enumitem}
 
 
 %  ==================== MY COMMANDS ====================
@@ -101,7 +102,12 @@ One alternative is using \emph{polarization}, a clustering approach which correl
 	We conduct an annotation study on one Toxicity and one \ac{hs} dataset using six open-source models in order to compare polarization patterns between them and humans (\S\ref{sec:results:llms}). We find that using persona-prompted LLMs to simulate the original annotation task consistently fail to produce any subgroup polarization patterns regardless of instruction prompt, confirming that persona prompting does not consistently influence LLM outputs in the examined tasks (Finding~\ref{finding:llms}).
 \end{researchquestion}
 
-Our work makes the following contributions: (1) The identification of severe issues present in subjective datasets and prior methodologies (2) A new polarization attribution metric that is robust to small annotator counts and minority group splits (3) An exploration of LLM polarization patterns when using persona prompting. We also release a PyPI library implementing our metric.
+Our work makes the following contributions:
+\begin{enumerate*}
+	\item The identification of severe issues present in subjective datasets and prior methodologies.
+	\item A new polarization attribution metric that is robust to small annotator counts and minority group splits.
+	\item An exploration of LLM polarization patterns when using persona prompting. We also release a PyPI library implementing our metric.
+\end{enumerate*}
 
 \begin{center}
 	\noindent\textcolor{red}{\textbf{Content Warning: Controversial and potentially harmful speech used for demonstration.}}
@@ -147,6 +153,12 @@ For our work, we use a non-parametric polarization metric, \ac{ndfu}, which has 
 \label{sec:related:attribution}
 
 While many studies study the effect of subgroups on annotation agreement~\cite{goyal2022your, binns2017like, giorgi2025human, al2020identifying, sachdeva2022assessing}, attributing \emph{polarization} is a relatively new concept. Under the name \emph{aposteriori unimodality}~\cite{pavlopoulos-likas-2024}, the original idea is that if polarization in a single item is positive, but zero for all annotator subgroups, then it is explained by those groups. Though promising, this mechanism operates on the assumption that \emph{all} polarization can be explained by a single split, which we disprove prove to be impossible in many cases (\S\ref{sec:inherent}). Additionally, getting polarization estimates from few annotations per item is extremely noisy, which is especially problematic when the output is binary (i.e., an item either is or is not polarizing) instead of a quantifiable value.\footnote{For example, when presented with noisy estimates of a metric in the  $[0,1]$ range, we would ideally want to distinguish between cases where attribution is close to $0.001$, and cases where attribution is $0.49$.} 
+
+
+\subsection{LLM Annotation}
+\label{sec:related:llm}
+
+Prior literature has shown that LLMs are not reliable annotators when using persona prompting; they tend to reproduce stereotypes \citep{lutz-etal-2025-prompt, liu-etal-2024-evaluating-large} and are unreliable for minority groups \citep{lutz-etal-2025-prompt}. Unlike prior work that investigated model performance \citep{gupta2024bias} or human--LLM agreement \citep{dong-etal-2024-llm, gomez-etal-2024-algorithmic, masud-etal-2024-hate}, we test whether attributable polarization exists regardless of faithfulness to the actual groups.
 
 
 \section{Datasets}
@@ -202,7 +214,7 @@ A(\text{``Could be better, could be worse''})\\
 	\label{fig:inherent}
 \end{figure}
 
-Intuitively, a group partially explains the polarization of a item $c$ when the annotations of that group $A(c \given g) = \{a(c, g') \in A(c) \given g'=g\}$ exhibit higher polarization compared to the full set of annotations $A(c)$. Consider the case where a misogynistic comment is annotated for toxicity by male and female annotators shown in Fig.~\ref{fig:inherent}, left. The annotations are generally polarized ($nDFU_{all}=.62$); but both female ($nDFU_{women}=.10$) and male ($nDFU_{men}=.37$) annotators exhibit low polarization between their respective groups. This pattern suggests that the overall polarization is partially caused by substantive disagreements between male and female annotators.\footnote{\label{foot:iterative}Since polarization persists among male annotators, another subgroup of men may also contribute to it.}
+Intuitively, a group partially explains the polarization of a item $c$ when the annotations of that group $A(c \given g) = \{a(c, g') \in A(c) \given g'=g\}$ exhibit higher polarization compared to the full set of annotations $A(c)$. Consider the case where a misogynistic comment is annotated for toxicity by male and female annotators shown in Fig.~\ref{fig:inherent}, left. The annotations are generally polarized ($nDFU_{all}=0.62$); but both female ($nDFU_{women}=0.10$) and male ($nDFU_{men}=0.37$) annotators exhibit low polarization between their respective groups. This pattern suggests that the overall polarization is partially caused by substantive disagreements between male and female annotators.\footnote{\label{foot:iterative}Since polarization persists among male annotators, another subgroup of men may also contribute to it.}
 
 
 \subsection{Inherent polarization}
@@ -233,7 +245,7 @@ When considered exhaustively, these theoretical, random groups include both obse
 \end{equation}
 \noindent where $\tilde{r}$ is an operator that selects a randomly sized, randomly selected subset.
 
-\paragraph{Does It Exist?} We compute the \ac{ip} for each item across the four datasets. For Sap and Kumar, we use the exhaustive formulation (Eq.~\ref{eq:inherent}), whereas for the two DICES datasets we rely on the Monte Carlo approximation with $k=1000$ (Eq.~\ref{eq:random}). Fig.~\ref{fig:inherent}, right shows that in all DICES items there exists at least one group that fully accounts for the observed polarization.\footnote{$Pol_{inh}^{MC}(c)=0 \Rightarrow Pol_{inh}(c)=0$ due to Eq.~\ref{eq:random}, as is the case of increased $k$ in Eq.~\ref{eq:random}.} Interestingly, this observation does not hold for the Kumar and Sap datasets, despite evaluating all possible annotator groups exhaustively. See App.~\ref{app:ann_details};Table~\ref{tab:inherent-examples} for a qualitative look through items with high InPol.
+\paragraph{Does It Exist?} We compute the \ac{ip} for each item across the four datasets. For Sap and Kumar, we use the exhaustive formulation (Eq.~\ref{eq:inherent}), whereas for the two DICES datasets we rely on the Monte Carlo approximation with $k=1000$ (Eq.~\ref{eq:random}). Fig.~\ref{fig:inherent}, right shows that in all DICES items there exists at least one group that fully accounts for the observed polarization.\footnote{$Pol_{inh}^{MC}(c)=0 \Rightarrow Pol_{inh}(c)=0$ due to Eq.~\ref{eq:random}, as is the case of increased $k$ in Eq.~\ref{eq:random}.} Interestingly, this observation does not hold for the Kumar and Sap datasets, despite evaluating all possible annotator groups exhaustively. See App.~\ref{app:ann_details};Table~\ref{tab:inherent-examples} for a qualitative look through items with high \ac{ip}.
 
 \begin{finding}
 	\label{finding:inherent}
@@ -312,15 +324,21 @@ We also include a perturbation-based p-value estimation, which tests whether the
 \begin{figure}
 	\centering
 	\includegraphics[width=\linewidth]{metric_comparison.png}
-	\caption{Polarization group attribution on synthetic distributions. Bars indicate standard error. We assign a number of annotators per item, and split the annotator groups 50-50 or 80-20. Higher $\delta$ represents higher polarization. Apunim is adept at attributing polarization to the correct group regardless of number of annotators per item, or how these annotators are split. Dashed lines show the results of a simplified polarization setup.}
+	\caption{Polarization group attribution on synthetic distributions. Bars indicate standard error. We assign a number of annotators per item, and split the annotator groups 50-50 or 80-20. Higher $\delta$ represents higher polarization. Apunim is adept at attributing polarization to the correct group regardless of number of annotators per item, or how these annotators are split. Dashed lines show the results of a simplified polarization setup, where polarization always has the same direction.}
 	\label{fig:metrics}
 \end{figure}
 
-We construct polarization distributions annotated by two groups. Each annotator is slightly biased to judge similarly with their group, although the group effect is different for each item. We model the disagreement between these groups using a parameter $\delta$; higher $\delta$ signifies a larger divergence between the groups. An effect is considered detected if the statistic recovered using perturbations of a null distribution is significant. The complete experimental setup is detailed in App.~\ref{app:experiments}.
+%We construct polarization distributions annotated by two groups. Each annotator is slightly biased to judge similarly with their group, although the group effect is different for each item. We model the disagreement between these groups using a parameter $\delta$; higher $\delta$ signifies a larger divergence between the groups. An effect is considered detected if the statistic recovered using perturbations of a null distribution is significant. The complete experimental setup is detailed in App.~\ref{app:experiments}.
 
-Fig.~\ref{fig:metrics} shows the effectiveness of apunim, the aposteriori unimodality framework proposed by \citet{pavlopoulos-likas-2024}, the $\chi^2$ method presented in \citet{akhtar_2019}, GMM clustering used in \citet{checco_2017}, and a baseline using intergroup disagreement ($\Delta \alpha$ Krippendorff). Both the $\chi^2$ and GMM methods generally fail at attributing polarization, which is most likely caused by opposing polarization effects (see Fig.~\ref{fig:ndfu_discussion}) violating their assumptions on fixed mean differences between groups.\footnote{Indeed, re-running the experiment with a consistent mean-difference effect among the groups leads to exceptional performance by these methods---see App.~\ref{app:ablation}; Fig~\ref{fig:metrics-simple}.} Intergroup disagreement remains competitive when many annotators are available, but underperforms in cases where the examined group is a minority and when a few annotators are available per item (a common case among \ac{nlp} datasets---see \S\ref{sec:datasets}). Apunim in contrast is robust both to the number of annotators per item, opposing polarization effects, and minority groups, which validates our initial motivation.
+We compare the effectiveness of apunim, the aposteriori unimodality framework proposed by \citet{pavlopoulos-likas-2024}, the $\chi^2$ method presented in \citet{akhtar_2019}, GMM clustering used in \citet{checco_2017}, and a baseline using intergroup disagreement ($\Delta \alpha$ Krippendorff) on simulated distributions. To determine whether a score is statistically significant, we construct a null distribution for each method. The null hypothesis is that the group labels are unrelated to the observed annotations. We therefore repeatedly shuffle the group labels across annotators, recompute the method's statistic, and use the resulting scores to form the null distribution. The observed score is then compared with this distribution. See App.~\ref{app:pvalue} for the apunim p-value implementation. We try two simulation setups:
 
-We compare this simulation model with a simplified simulation that imposes a fixed polarization effect across all items, modeling the scenario where group bias is uniform. Specifically, the polarization $\text{shift}_{ij}$ is constant across $j$: $\text{shift}_{ij} = g_i \cdot \delta/2$. In this simplified case, the group difference is a global shift, meaning that if Group B rates one item higher than Group A, they rate all items higher. Fig.~\ref{fig:metrics-simple} shows that these methods do indeed show excellent performance. This is expected, since they rely on consistent fixed means effects, which is disrupted in our original formulation of the problem. Thus, while these methods perform well in ideal conditions, they may completely fail on realistic annotation datasets. 
+\begin{enumerate}
+	\item \textbf{Fixed polarization effect across all items}, modeling the scenario where group bias is uniform. Specifically, the polarization $\text{shift}_{ij}$ is constant across $j$: $\text{shift}_{ij} = g_i \cdot \delta/2$. In this simplified case, the group difference is a global shift, meaning that if Group B rates one item higher than Group A, they rate all items higher.
+	
+	\item \textbf{Item-specific group effect}. Annotations are generated according to \(y_{ij}=b_j+g_i p_j+\epsilon_{ij}\), where \(b_j\) represents the baseline rating for item \(j\), \(g_i\in\{-\frac{1}{2},+\frac{1}{2}\}\) indicates the annotator's group, and \(p_j\) controls the magnitude and direction of polarization for item \(j\). We sample \(p_j\) uniformly from \([-\delta,\delta]\), such that different items can favor different groups while \(\delta\) controls the maximum group-level separation. Thus, rather than modeling a fixed group bias, the simulation captures situations where groups systematically disagree on particular items, with the direction and strength of disagreement varying across items but being consistent among annotators of the same group.
+\end{enumerate}
+
+As shown in Fig.~\ref{fig:metrics}, \emph{both the $\chi^2$ and GMM methods generally fail} at attributing polarization. Intergroup disagreement remains competitive when many annotators are available, but underperforms in cases where the examined group is a minority and when a few annotators are available per item (a common case among \ac{nlp} datasets---see \S\ref{sec:datasets}). Apunim in contrast is robust both to the number of annotators per item, opposing polarization effects, and minority groups, which validates our initial motivation. In contrast, the fixed-effects simulation shows that simple statistical approaches do indeed show excellent performance. This is expected, since they rely on consistent fixed means effects, which is disrupted by opposing polarization effects (see Fig.~\ref{fig:ndfu_discussion}) violating their assumptions on fixed mean differences between groups. Thus, while these methods perform well in ideal conditions, they may completely fail on realistic annotation datasets. 
 
 \begin{finding}
 	\label{finding:comparison}
@@ -391,9 +409,10 @@ We compare this simulation model with a simplified simulation that imposes a fix
 	\label{tab:apunim-main}
 \end{table}
 
-Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can explain observed polarization. Statistically significant results are presented in Table~\ref{tab:apunim-main}.\footnote{The results are not necessarily contingent on a reliable p-value estimation, as non-statistically significant results have very low ($<0.01$) apunim values. A threshold on the apunim values would produce similar tables.} See App.~\ref{app:software} for details on other parameters and execution times, and App.~\ref{app:full} for the full results. Note that the lack of rich annotation data prevents us from analyzing how different annotator groups interact and thus our analysis is necessarily uni-dimensional.
+Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can explain observed polarization. Statistically significant results are presented in Table~\ref{tab:apunim-main}.\footnote{The results are not necessarily contingent on a reliable p-value estimation, as non-statistically significant results have very low ($<0.01$) apunim values. A threshold on the apunim values would produce similar tables.} Note that the lack of rich annotation data prevents us from analyzing how different annotator groups interact and thus our analysis is necessarily uni-dimensional. None of the Kumar dimensions show statistically significant values, but this is expected, as our methodology requires at least six annotators per item to work reliably.
+See App.~\ref{app:software} for details on other parameters and execution times, and App.~\ref{app:full} for the full results. 
 
-\emph{Polarization is consistently attributed to \textbf{ethnicity} across all datasets}, confirming prior work suggesting that it is a systematic source of annotator disagreement in these tasks~\cite{goyal2022your}.\footnote{Note that polarization attribution does not have a consistent direction across datasets, which we believe to be caused by studies using different ethnic subgroups allowing detection but distorting attribution.} Additionally, in both DICES-990 and Sap, \emph{\textbf{women} are a consistent source of polarization} (positive values), while \textbf{men} disagree among themselves (negative values), which is consistent with previous findings~\citep{wojatzki2018women, binns2017like}. Non-\textbf{transgender} annotators also showed the \emph{highest degree of polarization} in the Kumar dataset in absolute terms ($-0.788$) suggesting that transgender individuals are a systematic source of disagreement.\footnote{Only the inverse effect is detectable due to annotator sparsity, hence the negative sign.}
+\emph{Polarization is consistently attributed to \textbf{ethnicity} across both datasets}, confirming prior work suggesting that it is a systematic source of annotator disagreement in these tasks~\cite{goyal2022your}.\footnote{Note that polarization attribution does not have a consistent direction across datasets, which we believe to be caused by studies using different ethnic subgroups allowing detection but distorting attribution.} Additionally, in both DICES-990 and Sap, \emph{\textbf{women} are a consistent source of polarization} (positive values), while \textbf{men} disagree among themselves (negative values), which is consistent with previous findings~\citep{wojatzki2018women, binns2017like}.
 
 \begin{finding}
 	\label{finding:human}
@@ -404,18 +423,17 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 \section{What Polarization Patterns Do LLM Annotators Exhibit?}
 \label{sec:results:llms}
 %TODO: re-run sap with 600 comments
+ 
 
-\begin{figure*}[t]
-	\centering
-	\includegraphics[width=\linewidth]{investigation.drawio.png}
-	\caption{Our evaluation methodology. We test whether a standard instruction prompt is enough to produce polarization in the form of \ac{ip} (Table~\ref{tab:inherent-polarization}), \ac{ndfu} (Fig.~\ref{fig:llm-polarization-adversarial}) and apunim (Tables~\ref{tab:llm-apunim-by-prompt-kumar},~\ref{tab:llm-apunim-by-prompt-sap}). We then repeat the analysis for four adversarial instruction prompts emphasizing the effect of personas.}
-	\label{fig:llm-results}
-\end{figure*}
+\paragraph{Experimental Procedure} We investigate four\footnote{We used six models, but discarded two since they proved unreliable---see ablations in App.~\ref{app:llms}.} open-source LLMs with six annotators per item\footnote{It is possible that LLMs can produce polarized patterns when scaled up to dozens or hundreds of annotators. This however is both hard to check due to exorbitant computational costs (App.~\ref{app:llms}) and hard to scale up in realistic deployment scenarios.} supplied with personas sampled from our human dataset. We test polarization structure on three fronts: 
+\begin{enumerate*}
+	\item Observed polarization (\ac{ndfu}).
+	\item Overall \ac{ip}.
+	\item Apunim values for each group.
+\end{enumerate*}
+See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations.
 
-
-\paragraph{Premise} Prior literature has shown that LLMs are not reliable annotators when using persona prompting; they tend to reproduce stereotypes \citep{lutz-etal-2025-prompt, liu-etal-2024-evaluating-large} and are unreliable for minority groups \citep{lutz-etal-2025-prompt}. Unlike prior work that investigated model performance \citep{gupta2024bias} or human--LLM agreement \citep{dong-etal-2024-llm, gomez-etal-2024-algorithmic, masud-etal-2024-hate}, we test whether attributable polarization exists regardless of faithfulness to the actual groups. 
-
-\paragraph{Experimental Procedure} We investigate four\footnote{We used six models, but pruned two since they proved unreliable---see ablations in App.~\ref{app:llms}.} open-source LLMs with six annotators per item\footnote{It is possible that LLMs can produce polarized patterns when scaled up to dozens or hundreds of annotators. This however is both hard to check due to exorbitant computational costs (App.~\ref{app:llms}) and hard to scale up in realistic deployment scenarios.} supplied with personas sampled from our human dataset. Our findings support social science work which warns against generating human annotation data without substantial replication studies \citep{rossi_2024, kapania-etal-2025-examining}. Fig.~\ref{fig:llm-results} shows our overall evaluation methodology. See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations.
+%Our findings support social science work which warns against generating human annotation data without substantial replication studies \citep{rossi_2024, kapania-etal-2025-examining}.
 
 \paragraph{Are LLMs Polarized by Default?} We begin by examining whether persona prompting with standard instructions leads to polarized annotations. Our results show \emph{no statistically significant attribution effects} and very small \emph{apunim} values for any of the groups in all models and datasets (App.~\ref{app:llms}; Table~\ref{tab:llm-apunim-by-prompt-kumar},~\ref{tab:llm-apunim-by-prompt-sap}). Unlike human annotations, we observe no \ac{ip} (App.~\ref{app:llms}; Table~\ref{tab:inherent-polarization}) and only two of the four models showing any polarization (App.~\ref{app:llms}; Fig.~\ref{fig:llm-polarization-adversarial}).
 
@@ -828,10 +846,6 @@ We simulate the distribution of toxicity annotations in Fig.~\ref{fig:inherent},
 \paragraph{Discussion-Level Polarization}
 We examine nDFU scores for three specific textual examples presented in Fig.~\ref{fig:ndfu_discussion}. For the individual items, $N_{annotators}=200$ for each group. In the first case (misogynist item), Men's scores are modeled with $\text{loc}=6$, while Women's scores are modeled with $\text{loc}=2$. In the second case (misandrist item), the roles are reversed. The third visualization combines distributions for men and women derived from the respective single-item distributions.
 
-\paragraph{Synthetic Polarization Datasets}
-To model polarization more realistically for the experiments in \S\ref{sec:apunim:recovery}, we use a item-specific group effect rather than assuming that annotators in one group are uniformly biased toward higher or lower ratings. Specifically, annotations are generated according to \(y_{ij}=b_j+g_i p_j+\epsilon_{ij}\), where \(b_j\) represents the baseline rating for item \(j\), \(g_i\in\{-\frac{1}{2},+\frac{1}{2}\}\) indicates the annotator's group, and \(p_j\) controls the magnitude and direction of polarization for item \(j\). We sample \(p_j\) uniformly from \([-\delta,\delta]\), such that different items can favor different groups while \(\delta\) controls the maximum group-level separation. Thus, rather than modeling a fixed group bias, the simulation captures situations where groups systematically disagree on particular items, with the direction and strength of disagreement varying across items but being consistent among annotators of the same group.
-
-To determine whether an observed score is statistically significant, we construct a null distribution for each method. The null hypothesis is that the group labels are unrelated to the observed annotations. We therefore repeatedly shuffle the group labels across annotators, recompute the method's statistic, and use the resulting scores to form the null distribution. The observed score is then compared with this distribution. See App.~\ref{app:pvalue} for the apunim p-value implementation.
 
 
 \section{Experiment Ablations}

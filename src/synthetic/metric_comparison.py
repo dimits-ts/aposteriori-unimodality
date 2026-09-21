@@ -21,9 +21,9 @@ Two simulation models are compared in a single plot:
         other out in the pooled distribution.
 
 Visual encoding:
-    Line style  →  simulation type  (solid = simple, dashed = standard)
-    Color       →  method
-    Marker      →  method
+    Line style  ->  simulation type  (solid = simple, dashed = standard)
+    Color       ->  method
+    Marker      ->  method
 
 All methods receive identical synthetic annotations for a given simulation,
 where the strength of polarization is controlled by delta.
@@ -83,8 +83,8 @@ SIMULATION_STANDARD = "standard"
 
 # Line styles keyed by simulation label.
 SIMULATION_LINESTYLE = {
-    SIMULATION_SIMPLE: "-",
-    SIMULATION_STANDARD: "--",
+    SIMULATION_SIMPLE: "--",
+    SIMULATION_STANDARD: "-",
 }
 
 # Human-readable legend labels for simulation types.
@@ -582,15 +582,6 @@ def plot(rows, methods, out_path):
         squeeze=False,
     )
 
-    fig.subplots_adjust(
-        left=0.08,
-        right=0.98,
-        top=0.86,
-        bottom=0.22,  # slightly more room for the two-block legend
-        wspace=0.25,
-        hspace=0.35,
-    )
-
     axes = axes.ravel()
 
     # ----------------------------------------------------------------
@@ -612,6 +603,7 @@ def plot(rows, methods, out_path):
 
             for simulation in [SIMULATION_SIMPLE, SIMULATION_STANDARD]:
                 sim_df = method_df[method_df["simulation"] == simulation]
+                opacity = 1 if simulation in SIMULATION_STANDARD else 0.3
 
                 if len(sim_df) == 0:
                     continue
@@ -631,6 +623,7 @@ def plot(rows, methods, out_path):
                     err_kws={"capsize": 3},
                     ax=ax,
                     legend=False,
+                    alpha=opacity,
                 )
 
         ax.set_xlabel("")
@@ -640,15 +633,6 @@ def plot(rows, methods, out_path):
 
     for ax in axes[len(CONDITIONS) :]:
         ax.set_visible(False)
-
-    # ----------------------------------------------------------------
-    # Build a two-block legend manually.
-    #
-    # Block 1 — methods (color + marker, neutral solid line)
-    # Block 2 — simulation types (line style only, neutral grey)
-    # ----------------------------------------------------------------
-
-    neutral = "#555555"
 
     method_handles = [
         plt.Line2D(
@@ -664,23 +648,10 @@ def plot(rows, methods, out_path):
         for i, m in enumerate(methods)
     ]
 
-    sim_handles = [
-        plt.Line2D(
-            [0],
-            [0],
-            color=neutral,
-            linestyle=SIMULATION_LINESTYLE[sim],
-            lw=1.6,
-            label=SIMULATION_LEGEND_LABEL[sim],
-        )
-        for sim in [SIMULATION_SIMPLE, SIMULATION_STANDARD]
-    ]
-
     fig.legend(
-        handles=method_handles + sim_handles,
-        loc="lower center",
-        ncol=len(methods),
-        title="Method / Simulation model",
+        handles=method_handles,
+        loc="lower right",
+        title="Method",
     )
 
     fig.suptitle(
