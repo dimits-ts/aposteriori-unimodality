@@ -16,6 +16,9 @@ from .common import (
     _available_dataset_keys,
     DATASET_KEYS,
     MAIN_PROMPT_NAMES,
+    ADVERSARIAL_PROMPT_NAMES,
+    center_table_latex,
+    trim_numeric_col_latex,
 )
 
 
@@ -205,20 +208,29 @@ def build_inherent_polarization_table(
     long_df: pd.DataFrame,
     prompt_names: list[str],
 ) -> pd.DataFrame:
-    """Build the inherent-polarization table as mean ± 2 SD."""
+    """Build the inherent-polarization table with raw mean and 2*std values."""
     table = (
         long_df.groupby(["Dataset", "Source", "Prompt"])["value"]
         .agg(["mean", "std"])
         .reset_index()
     )
-    table["formatted"] = table.apply(
-        lambda row: f"{row['mean']:.3f} $\\pm$ {2 * row['std']:.3f}", axis=1
+    table["std"] = 2 * table["std"]  # store as 2*SD from here on
+
+    mean_pivot = table.pivot(
+        index=["Dataset", "Source"], columns="Prompt", values="mean"
+    ).reindex(columns=prompt_names)
+    std_pivot = table.pivot(
+        index=["Dataset", "Source"], columns="Prompt", values="std"
+    ).reindex(columns=prompt_names)
+
+    # MultiIndex columns: (stat, prompt)
+    mean_pivot.columns = pd.MultiIndex.from_tuples(
+        [("mean", c) for c in mean_pivot.columns]
     )
-    table = table.pivot(
-        index=["Dataset", "Source"], columns="Prompt", values="formatted"
+    std_pivot.columns = pd.MultiIndex.from_tuples(
+        [("std", c) for c in std_pivot.columns]
     )
-    table = table.reindex(columns=prompt_names)
-    return table.fillna("---")
+    return pd.concat([mean_pivot, std_pivot], axis=1)
 
 
 def _escape_underscores(index: pd.MultiIndex) -> pd.MultiIndex:
@@ -232,34 +244,45 @@ def _escape_underscores(index: pd.MultiIndex) -> pd.MultiIndex:
 
 
 def export_inherent_polarization_table(
-    df: pd.DataFrame,
-    output_path: Path,
-    label: str = "tab:inherent-polarization",
-    longtable: bool = True,
+    df: pd.DataFrame, output_path: Path, label: str, float_format: str
 ) -> None:
     if df.empty:
         print(f"No inherent-polarization results; skipping {output_path}.")
         return
 
     df = df.copy()
-    df.index = _escape_underscores(df.index)
+    prompt_names = df["mean"].columns.tolist()
 
-    latex_str = df.to_latex(
+    # Build display DataFrame with formatted "mean ± 2SD" strings per prompt
+    display = pd.DataFrame(index=df.index)
+    for prompt in prompt_names:
+        mean_col = trim_numeric_col_latex(
+            df["mean"][prompt], float_format=float_format
+        )
+        std_col = trim_numeric_col_latex(df["std"][prompt], float_format=".3f")
+        # trim_numeric_col_latex returns a Series of strings; combine them
+        display[prompt.capitalize()] = [
+            f"{m} $\\pm$ {s}" if m != "---" else "---"
+            for m, s in zip(mean_col, std_col)
+        ]
+
+    display.index = _escape_underscores(display.index)
+    col_count = len(display.columns)
+
+    latex_str = display.to_latex(
         caption=(
             "Mean inherent polarization (mean $\\pm$ 2 SD) per "
             "(dataset, prompt), for Human and each LLM."
         ),
         label=label,
         escape=False,
-        position="ht",
+        position="t",
         index=True,
         multirow=True,
-        longtable=longtable,
-        float_format="%.3f",
+        column_format="ll" + "r" * col_count,
     )
-    latex_str = latex_str.replace(
-        r"\begin{table}[ht]", r"\begin{table}[ht]\centering\scriptsize"
-    )
+
+    latex_str = center_table_latex(latex_str)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(latex_str)
     print(f"Table exported to {output_path.resolve()}")

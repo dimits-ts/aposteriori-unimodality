@@ -10,6 +10,7 @@ and computing the per-comment nDFU values that both the apunim grid
 (plots.py) and the prompt-sensitivity ANOVA (stats.py) are built from.
 """
 
+import re
 from pathlib import Path
 
 import numpy as np
@@ -461,3 +462,19 @@ def load_human_datasets(
             ),
         }
     )
+
+
+def center_table_latex(latex_str: str) -> str:
+    latex_str = re.sub(
+        r"(\\begin\{table\}\[[^\]]*\])",
+        lambda m: m.group(1) + "\n\\centering",
+        latex_str,
+    )
+    return latex_str
+
+
+def trim_numeric_col_latex(col: pd.Series, float_format: str) -> pd.Series:
+    return pd.to_numeric(
+        col,
+        errors="coerce",
+    ).map(lambda x: "---" if pd.isna(x) else f"{x:{float_format}}")

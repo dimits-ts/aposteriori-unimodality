@@ -275,7 +275,7 @@ def run_inherent_polarization_step(
         df=inherent_table_df,
         output_path=output_path,
         label="tab:inherent-polarization",
-        longtable=False,
+        float_format=".2f"
     )
 
 
