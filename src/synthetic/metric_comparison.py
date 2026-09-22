@@ -4,24 +4,28 @@ Comparing apunim and agreement/statistical attribution methods.
 Goal: To test whether different methods can correctly detect a polarization
 signal (a known group effect) embedded in synthetic data.
 
-Two simulation models are compared in a single plot:
+Both simulations share the same generative model:
 
-    Simple model (solid lines):
-        y_ij = b_j + g_i * (delta/2) + epsilon_ij
+    y_ij = b_j + g_i * p_j + epsilon_ij
 
-        The group shift is uniform across all comments. Group A always
-        rates lower, group B always rates higher.
+and differ only in how p_j is sampled:
 
-    Standard model (dashed lines):
-        y_ij = b_j + g_i * p_j + epsilon_ij
+    Unidirectional (solid lines):
+        p_j ~ Uniform(0, delta)
 
-        The polarization effect p_j is comment-specific, drawn uniformly
-        from [-delta, delta]. The direction of disagreement can vary
-        across comments, so positive and negative effects can cancel each
-        other out in the pooled distribution.
+        The group effect is always positive: Group B always rates higher
+        than Group A, though by a varying amount across items.
+
+    Bidirectional (dashed lines):
+        p_j ~ Uniform(-delta, delta)
+
+        The direction of the group effect varies across items, so groups
+        can systematically disagree in opposite directions on different
+        items. Positive and negative effects can cancel each other out
+        in the pooled distribution.
 
 Visual encoding:
-    Line style  ->  simulation type  (solid = simple, dashed = standard)
+    Line style  ->  simulation type  (solid = unidirectional, dashed = bidirectional)
     Color       ->  method
     Marker      ->  method
 
@@ -78,19 +82,19 @@ PLOT_NUM_COLS = 3
 
 # simulation labels
 
-SIMULATION_SIMPLE = "simple"
-SIMULATION_STANDARD = "standard"
+SIMULATION_UNIDIRECTIONAL = "unidirectional"
+SIMULATION_BIDIRECTIONAL = "bidirectional"
 
 # Line styles keyed by simulation label.
 SIMULATION_LINESTYLE = {
-    SIMULATION_SIMPLE: "--",
-    SIMULATION_STANDARD: "-",
+    SIMULATION_UNIDIRECTIONAL: "--",
+    SIMULATION_BIDIRECTIONAL: "-",
 }
 
 # Human-readable legend labels for simulation types.
 SIMULATION_LEGEND_LABEL = {
-    SIMULATION_SIMPLE: "Simple",
-    SIMULATION_STANDARD: "Standard",
+    SIMULATION_UNIDIRECTIONAL: "Unidirectional",
+    SIMULATION_BIDIRECTIONAL: "Bidirectional",
 }
 
 
@@ -139,19 +143,15 @@ def _groups(n_ann, minority_frac):
     return np.array(["B"] * n_min + ["A"] * (n_ann - n_min))
 
 
-def simulate_simple(n_items, n_ann, delta, minority_frac, rng, sigma=SIGMA):
-    """Group-driven polarization: the two groups sit `delta` apart."""
-    groups = _groups(n_ann, minority_frac)
-    base = rng.uniform(2.5, 3.5, size=n_items)
-    shift = np.where(groups == "B", delta / 2, -delta / 2)
-    vals = rng.normal(base[None, :] + shift[:, None], sigma)
-    return (
-        np.clip(np.round(vals), 1, N_LEVELS),
-        groups,
-    )
-
-
-def simulate(n_items, n_ann, delta, minority_frac, rng, sigma=SIGMA):
+def simulate(
+    n_items,
+    n_ann,
+    delta,
+    minority_frac,
+    rng,
+    unidirectional: bool,
+    sigma=SIGMA,
+):
     """
     Generate annotations with a comment-specific group effect.
 
@@ -170,8 +170,10 @@ def simulate(n_items, n_ann, delta, minority_frac, rng, sigma=SIGMA):
                 +1/2 for group B.
 
         p_j:
-            Comment-specific polarization effect sampled uniformly
-            from [-delta, delta].
+            Comment-specific polarization effect. When unidirectional=True,
+            sampled from Uniform(0, delta) so the group effect always favours
+            Group B. When unidirectional=False, sampled from
+            Uniform(-delta, delta) so the direction can vary across items.
 
         epsilon_ij:
             Independent annotation noise.
@@ -181,6 +183,8 @@ def simulate(n_items, n_ann, delta, minority_frac, rng, sigma=SIGMA):
 
     if delta == 0:
         polarization = np.zeros(n_items)
+    elif unidirectional:
+        polarization = rng.uniform(0, delta, size=n_items)
     else:
         polarization = rng.uniform(-delta, delta, size=n_items)
 
@@ -326,9 +330,9 @@ def method_chi2_variance(matrix, groups, seed):
     pooled annotation level.
 
     Note that this tests a global association between group and
-    annotation level. Under the standard comment-specific polarization
-    simulation, positive and negative comment effects can cancel
-    each other out in the pooled distribution.
+    annotation level. Under the bidirectional simulation, positive and
+    negative comment effects can cancel each other out in the pooled
+    distribution.
     """
     levels = np.arange(1, N_LEVELS + 1)
     unique_groups = np.unique(groups)
@@ -360,9 +364,9 @@ def method_mixture_clustering(matrix, groups, seed, n_perm=200):
     """
     Fit a 2-component Gaussian mixture to annotator mean ratings.
 
-    Under the standard comment-specific polarization model, the direction
-    of the group effect can vary across comments, so annotator means may
-    no longer cleanly separate into two groups.
+    Under the bidirectional simulation, the direction of the group effect
+    can vary across comments, so annotator means may no longer cleanly
+    separate into two groups.
     """
     unique_groups = np.unique(groups)
 
@@ -449,29 +453,44 @@ def _one(job, n_items):
     n_ann, minority, delta, rep = job
 
     seed = _seed(n_ann, minority, delta, rep)
-    rng = np.random.default_rng(seed)
 
-    # ----------------------------------------------------------------
-    # Run the simple simulation
-    # ----------------------------------------------------------------
-
-    # Use a child RNG derived from the same seed so that the two
+    # Use child RNGs derived from the same seed so that the two
     # simulations are independent but still deterministic.
-    rng_simple = np.random.default_rng(seed ^ 0xABCD1234)
-    rng_standard = np.random.default_rng(seed ^ 0xDCBA4321)
+    rng_unidirectional = np.random.default_rng(seed ^ 0xABCD1234)
+    rng_bidirectional = np.random.default_rng(seed ^ 0xDCBA4321)
 
-    matrix_simple, groups_simple = simulate_simple(
-        n_items, n_ann, delta, minority, rng_simple
+    matrix_unidirectional, groups_unidirectional = simulate(
+        n_items,
+        n_ann,
+        delta,
+        minority,
+        rng_unidirectional,
+        unidirectional=True,
     )
-    matrix_standard, groups_standard = simulate(
-        n_items, n_ann, delta, minority, rng_standard
+    matrix_bidirectional, groups_bidirectional = simulate(
+        n_items,
+        n_ann,
+        delta,
+        minority,
+        rng_bidirectional,
+        unidirectional=False,
     )
 
     method_rows = []
 
     for matrix, groups, sim_label, apunim_label in [
-        (matrix_simple, groups_simple, SIMULATION_SIMPLE, "apunim"),
-        (matrix_standard, groups_standard, SIMULATION_STANDARD, "apunim"),
+        (
+            matrix_unidirectional,
+            groups_unidirectional,
+            SIMULATION_UNIDIRECTIONAL,
+            "apunim",
+        ),
+        (
+            matrix_bidirectional,
+            groups_bidirectional,
+            SIMULATION_BIDIRECTIONAL,
+            "apunim",
+        ),
     ]:
         for method, stat, pvalue in _run_methods(
             matrix, groups, rep, apunim_label
@@ -512,7 +531,7 @@ def run(out_csv: Path, n_items: int, n_reps: int, workers: int) -> None:
                 "minority",
                 "delta",
                 "rep",
-                "simulation",  # NEW: "simple" or "standard"
+                "simulation",  # "unidirectional" or "bidirectional"
                 "method",
                 "stat",
                 "pvalue",
@@ -558,8 +577,8 @@ def plot(rows, methods, out_path):
 
     Visual encoding
     ---------------
-    Color  + marker  →  method          (same palette as before)
-    Line style       →  simulation type (solid = simple, dashed = standard)
+    Color  + marker  →  method
+    Line style       →  simulation type (solid = unidirectional, dashed = bidirectional)
 
     A single legend covers both dimensions: the upper block shows
     methods (color/marker), the lower block shows simulation types
@@ -601,9 +620,12 @@ def plot(rows, methods, out_path):
             if len(method_df) == 0:
                 continue
 
-            for simulation in [SIMULATION_SIMPLE, SIMULATION_STANDARD]:
+            for simulation in [
+                SIMULATION_UNIDIRECTIONAL,
+                SIMULATION_BIDIRECTIONAL,
+            ]:
                 sim_df = method_df[method_df["simulation"] == simulation]
-                opacity = 1 if simulation in SIMULATION_STANDARD else 0.3
+                opacity = 0.3 if simulation == SIMULATION_UNIDIRECTIONAL else 1
 
                 if len(sim_df) == 0:
                     continue
@@ -668,9 +690,9 @@ if __name__ == "__main__":
         description=(
             "Compare apunim against agreement-based and other statistical "
             "attribution baselines on synthetic data with comment-specific "
-            "group polarization. Both the simple and the standard simulation "
-            "models are run and displayed in a single plot, distinguished "
-            "by line style."
+            "group polarization. Both unidirectional and bidirectional "
+            "simulation models are run and displayed in a single plot, "
+            "distinguished by line style."
         )
     )
 
