@@ -12,7 +12,11 @@ from scipy import stats
 from statsmodels.stats.multitest import multipletests
 
 from ..lib import run_helper
-from ..lib.util import center_table_latex, trim_numeric_col_latex
+from ..lib.util import (
+    center_table_latex,
+    trim_numeric_col_latex,
+    significance_superscript,
+)
 from .common import (
     HumanDatasets,
     MAIN_PROMPT_NAMES,
@@ -397,7 +401,7 @@ def export_llm_apunim_prompt_table(
 def _apunim_prompt_cell(row: pd.Series) -> str:
     if pd.isna(row["apunim"]):
         return "---"
-    stars = run_helper.significance_superscript(row["pvalue"])
+    stars = significance_superscript(row["pvalue"])
     return f"{row['apunim']:.4f}{stars}"
 
 
@@ -602,11 +606,11 @@ def export_cohens_d_summary_latex(
     label: str,
 ) -> None:
     df = summary_df.copy().astype(object)
-    df.drop(["count"])
+    df = df.drop(["count"])
     df.columns = [str(c).capitalize() for c in df.columns]
 
     for stat, row in df.iterrows():
-        df.loc[stat] = trim_numeric_col_latex(row, float_format=".2f")
+        df.loc[stat] = trim_numeric_col_latex(row, float_format=".3f")
 
     latex_str = df.to_latex(
         caption=caption,

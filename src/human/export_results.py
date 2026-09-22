@@ -10,11 +10,7 @@ from matplotlib.lines import Line2D
 import matplotlib.patches as mpatches
 
 from ..lib import graphs
-from ..lib import run_helper
-from ..lib.util import (
-    center_table_latex,
-    trim_numeric_col_latex,
-)
+from ..lib.util import center_table_latex, significance_superscript
 
 MIN_SUPPORT = 50
 SIG_ALPHA = 0.05  # p-value threshold for "statistically significant"
@@ -142,7 +138,7 @@ def _results_to_latex(
     output_path: Path,
     dataset_name: str,
     table_label: str,
-    columns: list[str] | None = None
+    columns: list[str] | None = None,
 ) -> None:
     """
     Export results to a single LaTeX table where apunim values include
@@ -157,7 +153,7 @@ def _results_to_latex(
     if "pvalue" in res_df.columns and "apunim" in res_df.columns:
         res_df["apunim"] = res_df.apply(
             lambda r: (
-                f"{r['apunim']:.4f}{_significance_superscript(r['pvalue'])}"
+                f"{r['apunim']:.4f}{significance_superscript(r['pvalue'])}"
                 if not pd.isna(r["pvalue"])
                 else "---"
             ),
@@ -190,19 +186,6 @@ def _results_to_latex(
     # Write to file
     output_path.write_text(latex_str)
     print(f"Table exported to {output_path.resolve()}")
-
-
-def _significance_superscript(p):
-    if pd.isna(p):
-        return ""
-    elif p < 0.001:
-        return r"$^{***}$"
-    elif p < 0.01:
-        return r"$^{**}$"
-    elif p < 0.05:
-        return r"$^{*}$"
-    else:
-        return ""
 
 
 def ordinal_graph_per_feature(

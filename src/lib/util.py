@@ -30,3 +30,16 @@ def trim_numeric_col_latex(col: pd.Series, float_format: str) -> pd.Series:
         col,
         errors="coerce",
     ).map(lambda x: "---" if pd.isna(x) else f"{x:{float_format}}")
+
+
+def significance_superscript(p):
+    if pd.isna(p):
+        return ""
+    elif p < 0.001:
+        return r"$^{***}$"
+    elif p < 0.01:
+        return r"$^{**}$"
+    elif p < 0.05:
+        return r"$^{*}$"
+    else:
+        return ""
