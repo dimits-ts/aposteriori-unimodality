@@ -293,9 +293,7 @@ Apunim measures the degree to which an annotator group contributes to overall po
 
 \begin{itemize}
 	\item$apunim(g) \approx 0$: The group $g$ does not meaningfully disagree with the other annotators.
-	
 	\item $apunim(g) > 0$: The group $g$ has fundamental disagreements with the other annotators. 
-	
 	\item $apunim(g) < 0$: The annotators of group $g$ are polarized between themselves.
 \end{itemize}
 
@@ -321,7 +319,7 @@ Annotations are generated according to$y_{ij} = b_j + g_i p_j + \epsilon_{ij}$, 
 	\item \textbf{Bidirectional polarization}: $p_j \sim \text{Uniform}(-\delta, +\delta)$. The direction of the group effect can vary across items, so that groups may systematically disagree in opposite directions on different items (see Finding~\ref{finding:conflicting}).
 \end{enumerate}
 
-As shown in Fig.~\ref{fig:metrics}, \emph{both the $\chi^2$ and GMM methods generally fail} at attributing polarization. Intergroup disagreement remains competitive when many annotators are available, but underperforms in cases where the examined group is a minority and when a few annotators are available per item (a common case among \ac{nlp} datasets---see \S\ref{sec:datasets}). Apunim in contrast is robust both to the number of annotators per item, opposing polarization effects, and minority groups, which validates our initial motivation. In contrast, the fixed-effects simulation shows that simple statistical approaches do indeed show excellent performance. This is expected, since they rely on consistent fixed means effects, which is disrupted by opposing polarization effects (see Fig.~\ref{fig:ndfu_discussion}) violating their assumptions on fixed mean differences between groups. Thus, while these methods perform well in ideal conditions, they may completely fail on realistic annotation datasets. 
+As shown in Fig.~\ref{fig:metrics}, \emph{both the $\chi^2$ and GMM methods generally fail} at attributing polarization. Intergroup disagreement remains competitive when many annotators are available, but underperforms in cases where the examined group is a minority and when a few annotators are available per item (a common case among \ac{nlp} datasets---see \S\ref{sec:datasets}). Apunim in contrast is robust both to the number of annotators per item, opposing polarization effects, and minority groups, which validates our initial motivation. In contrast, the fixed-effects simulation shows that simple statistical approaches do indeed show excellent performance. This is expected, since they rely on consistent fixed means effects, which is disrupted by opposing polarization effects (see Fig.~\ref{fig:ndfu_discussion}) violating their assumptions on fixed mean differences between groups. Thus, while these methods perform well in ideal conditions, they may completely fail on realistic annotation datasets. While we consider two groups in this experiment, ablations with $k=\{3,5,10\}$ groups can be found in App.~\ref{app:ablation}; Fig.~\ref{fig:metrics-multiple}.
 
 \begin{finding}
 	\label{finding:comparison}
@@ -418,13 +416,10 @@ See App.~\ref{app:software} for details on other parameters and execution times,
 \end{enumerate*}
 See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations.
 
-%Our findings support social science work which warns against generating human annotation data without substantial replication studies \citep{rossi_2024, kapania-etal-2025-examining}.
 
 \paragraph{Are LLMs Polarized by Default?} We begin by examining whether persona prompting with standard instructions leads to polarized annotations. Our results show \emph{no statistically significant attribution effects} and very small \emph{apunim} values for any of the groups in all models and datasets (App.~\ref{app:llms}; Table~\ref{tab:llm-apunim-by-prompt-kumar},~\ref{tab:llm-apunim-by-prompt-sap}). Unlike human annotations, we observe no \ac{ip} (App.~\ref{app:llms}; Table~\ref{tab:inherent-polarization}) and only two of the four models showing any polarization (App.~\ref{app:llms}; Fig.~\ref{fig:llm-polarization-adversarial}).
 
-
-
-\paragraph{Do Instructions Influence Polarization?} Since instruction prompts are known to influence the effect of personas \citep{weeber-etal-2026-one}, we also try four adversarial prompts progressively emphasizing the importance of the LLMs' personas (App.~\ref{app:prompts}). While an ANOVA test\footnote{We use a parametric test due to the abundance of observations ($N={300,1000}$). We also used a multiple hypothesis p-value correction (specifically the ``Holms-Bonferroni'' method~\citep{holms}).} shows that the choice of instruction prompt does indeed affect polarization across most models (almost all groups for OLMo-32B, half for LLaMa-70B, Qwen-7B and a single group for Qwen-32B), these effects are almost always non-qualitatively significant ($<0.2$ Cohen's d), as shown in Table~\ref{tab:cohens-d}. The ``single'' prompts are the only ones producing a sometimes notable (small-to-medium) quantitative effect for a minority of examined groups.
+\paragraph{Do Instructions Influence Polarization?} Since instruction prompts are known to influence the effect of personas \citep{weeber-etal-2026-one}, we also try four adversarial prompts progressively emphasizing the importance of the LLMs' personas (App.~\ref{app:prompts}). While an ANOVA test\footnote{We use a parametric test due to the abundance of observations ($N={300,1000}$). We also used a multiple hypothesis p-value correction (specifically the ``Holms-Bonferroni'' method~\citep{holms}).} shows that the choice of instruction prompt does indeed affect polarization across most models (almost all groups for OLMo-32B, half for LLaMa-70B, Qwen-7B and a single group for Qwen-32B), these effects are almost always non-qualitatively significant ($<0.2$ Cohen's d), as shown in Table~\ref{tab:cohens-d}. The ``single'' prompts are the only ones producing a sometimes notable (small-to-medium) quantitative effect for a minority of examined groups. Our findings support social science work which warns against generating human annotation data without substantial replication studies \citep{rossi_2024, kapania-etal-2025-examining}.
 
 \begin{finding}
 	\label{finding:llms}
@@ -831,21 +826,22 @@ We simulate the distribution of toxicity annotations in Fig.~\ref{fig:inherent},
 We examine nDFU scores for three specific textual examples presented in Fig.~\ref{fig:ndfu_discussion}. For the individual items, $N_{annotators}=200$ for each group. In the first case (misogynist item), Men's scores are modeled with $\text{loc}=6$, while Women's scores are modeled with $\text{loc}=2$. In the second case (misandrist item), the roles are reversed. The third visualization combines distributions for men and women derived from the respective single-item distributions.
 
 
-
 \section{Experiment Ablations}
 \label{app:ablation}
 
-\subsection{Why Do DICES not Exhibit InPol?} 
-
+\paragraph{Why Do DICES not Exhibit InPol?} 
 In order to investigate whether the numerous annotators per items can explain the lack of \ac{ip} in the DICES datasets (\S\ref{sec:inherent}) we gradually subsample the annotators for each item randomly with replacement, starting from five annotators per item, and scaling up to the full complement of annotators in the dataset with a step of two. For each such step, we choose ten annotator samples and compute the maximum \ac{ip} across all runs. Even with annotator counts similar to the Kumar and DICES datasets, \ac{ip} remains zero, suggesting that the absence of \ac{ip} can not be attributed to annotator number alone---rather, it is plausibly a pattern attributable to the DICES datasets themselves. This kind of analysis may be used in the exploratory phase of dataset selection in order to filter out datasets without enough group-specific subjectivity.
 
+\begin{figure}[t]
+	\includegraphics[width=\linewidth]{metric_comparison_multiple.png}
+	\centering
+	\caption{Polarization group attribution on synthetic distributions. Bars indicate standard error. The setup is identical to the one used for Fig.~\ref{fig:metrics}, although in these experiments we consider multiple $k$ annotator groups for each item. Dashed lines show the results of a simplified polarization setup, where polarization always has the same direction.}
+	\label{fig:metrics-multiple}
+\end{figure}
 
-\subsection{How Does Dataset Size Influence Apunim?}
-\label{app:ablation:sample-size}
+\paragraph{Does Apunim Work for More than Two Groups?} We repeat the experiment comparing apunim to prior methodologies shown in Fig.~\ref{fig:metrics} but generalized across multiple groups. As shown in Fig.~\ref{fig:metrics-multiple}, apunim stays competitive even in the presence of multiple annotator groups. Note the increased efficiency of many methods when polarization is unidirectional. This pattern indicates that the challenges of bidirectional polarization severely limiting prior approaches may be generalizable to more than two groups.
 
 \input{generated/kumar_sample_size_comparison.tex}
-
-Since our approach was designed for the small-scale datasets common in \ac{nlp}, we were cautious when testing it on the massive Kumar dataset. Because of the data volume, we analyzed various smaller samples (1{,}000, 3{,}000, 10{,}000, and 30{,}000 items), shown in Table~\ref{tab:num-comments-apunim}. Sample size does not seem to have a consistent effect on apunim values, other than large splits uncovering significant polarization effects in sparsely populated groups (e.g., 65+ yo. in \textit{Age}, ``Prefer Not to Say'' in \textit{Sexual Orientation}, ``Never'' , ``Very Frequently'' in \textit{Toxicity Problem}). The apunim direction stays broadly the same.
 
 \begin{figure}[t]
 	\includegraphics[width=\linewidth]{kumar1k_seed_ablation.png}
@@ -854,15 +850,10 @@ Since our approach was designed for the small-scale datasets common in \ac{nlp},
 	\label{fig:seeds}
 \end{figure}
 
-We also test whether the results in Table~\ref{tab:apunim-main} are an artifact of the dataset split, because of the small sample size used in the study. We repeat the apunim experiment with ten different subsets of the same dataset and record their apunim values, shown in Fig.~\ref{fig:seeds}. We find that most apunim values are stable, save for ``Never'' in \textit{Toxicity Problem}, ``Heterosexual'' in \textit{Sexual Orientation} and ``Neutral'' in \textit{Technology Impact}.
+\paragraph{How Does Dataset Size Influence Apunim?} Since our approach was designed for the small-scale datasets common in \ac{nlp}, we were cautious when testing it on the massive Kumar dataset. Because of the data volume, we analyzed various smaller samples (1{,}000, 3{,}000, 10{,}000, and 30{,}000 items), shown in Table~\ref{tab:num-comments-apunim}. Sample size does not seem to have a consistent effect on apunim values, other than large splits uncovering significant polarization effects in sparsely populated groups (e.g., 65+ yo. in \textit{Age}, ``Prefer Not to Say'' in \textit{Sexual Orientation}, ``Never'' , ``Very Frequently'' in \textit{Toxicity Problem}). The apunim direction stays broadly the same. We also test whether the results in Table~\ref{tab:apunim-main} are an artifact of the dataset split, because of the small sample size used in the study. We repeat the apunim experiment with ten different subsets of the same dataset and record their apunim values, shown in Fig.~\ref{fig:seeds}. We find that most apunim values are stable, save for ``Never'' in \textit{Toxicity Problem}, ``Heterosexual'' in \textit{Sexual Orientation} and ``Neutral'' in \textit{Technology Impact}.
 
-
-\subsection{How Does Sample Selection Influence Apunim?}
-\label{app:ablation:samples}
-
-Astute readers may notice that some variability does exist across differently sized samples for the same examined groups, where for example the sign of the apunim value may switch. We note that the statistically significant values (bold rows) change signs only when the apunim value approaches zero in the largest samples. Thus, the results are not inverted, but rather pushed towards zero.
-
-In order to verify that this variability is caused by the sample size, and not by different samples being drawn, we execute a further ablation study. Specifically, we execute the apunim study on the $3000$-sized sample of the dataset, using different subsets of the Kumar dataset. The results can be found in Fig.~\ref{fig:seeds}, where we note that variability is not an issue, except for a couple of cases. These cases seem to represent sparse annotator groups, where missing a few items may genuinely change the value of the apunim metric. These groups however are largely not detected by apunim as significant either way (see Table~\ref{tab:apunim-main}).
+\paragraph{How Does Sample Selection Influence Apunim?}
+Astute readers may notice that some variability does exist across differently sized samples for the same examined groups, where for example the sign of the apunim value may switch. We note that the statistically significant values (bold rows) change signs only when the apunim value approaches zero in the largest samples. Thus, the results are not inverted, but rather pushed towards zero. In order to verify that this variability is caused by the sample size, and not by different samples being drawn, we execute a further ablation study. Specifically, we execute the apunim study on the $3000$-sized sample of the dataset, using different subsets of the Kumar dataset. The results can be found in Fig.~\ref{fig:seeds}, where we note that variability is not an issue, except for a couple of cases. These cases seem to represent sparse annotator groups, where missing a few items may genuinely change the value of the apunim metric. These groups however are largely not detected by apunim as significant either way (see Table~\ref{tab:apunim-main}).
 
 
 \section{LLM Annotation Procedure}

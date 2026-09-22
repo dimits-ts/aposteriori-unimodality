@@ -58,7 +58,7 @@ import pandas as pd
 
 from ..lib import graphs
 from ..lib.util import skip_if_exists
-from . import polarization, stats, common, plots
+from . import polarization, stats, shared, plots
 
 # TODO: Separate table export and io from common?
 
@@ -81,7 +81,7 @@ def main(
     graph_output_dir.mkdir(parents=True, exist_ok=True)
     latex_output_dir.mkdir(parents=True, exist_ok=True)
 
-    human_datasets = common.load_human_datasets(
+    human_datasets = shared.load_human_datasets(
         dices_small_path=dices_small_path,
         dices_large_path=dices_large_path,
         sap_path=sap_path,
@@ -165,7 +165,7 @@ def run_prompt_diff_step(
         human_datasets=human_datasets,
         annotations_dir=annotations_dir,
         output_path=output_path,
-        prompt_names=common.MAIN_PROMPT_NAMES,
+        prompt_names=shared.MAIN_PROMPT_NAMES,
         exclude_models=exclude_models,
     )
 
@@ -270,13 +270,13 @@ def _run_apunim_prompt_table_for_dataset(
         long_df = stats.compute_llm_apunim_by_prompt(
             annotations_dir=annotations_dir,
             dataset_key=key,
-            prompt_names=common.MAIN_PROMPT_NAMES,
-            exclude_models=common.APUNIM_TABLE_EXCLUDE_MODELS,
+            prompt_names=shared.MAIN_PROMPT_NAMES,
+            exclude_models=shared.APUNIM_TABLE_EXCLUDE_MODELS,
         )
         long_df.to_csv(cache_path)
 
     wide_df = stats.build_llm_apunim_prompt_table(
-        long_df, prompt_names=common.MAIN_PROMPT_NAMES
+        long_df, prompt_names=shared.MAIN_PROMPT_NAMES
     )
 
     output_path = latex_output_dir / f"llm-apunim-by-prompt-{key}.tex"
@@ -296,7 +296,7 @@ def run_apunim_prompt_table_step(
 ):
     # Restricted to the datasets the paraphrase/stereotype/persona prompts
     # were actually run on (kumar, sap).
-    for key in common.PROMPT_COMPARISON_DATASET_KEYS:
+    for key in shared.PROMPT_COMPARISON_DATASET_KEYS:
         if key in human_datasets:
             _run_apunim_prompt_table_for_dataset(
                 human_datasets=human_datasets,
@@ -312,7 +312,7 @@ def _run_apunim_grid_for_prompt(
 ):
     output_path = graph_output_dir / f"llm_apunim_grid_{prompt_name}.png"
     grid_models = list(
-        set(common.MODEL_DISPLAY_ORDER) - common.APUNIM_TABLE_EXCLUDE_MODELS
+        set(shared.MODEL_DISPLAY_ORDER) - shared.APUNIM_TABLE_EXCLUDE_MODELS
     )
     plots.plot_apunim_grid(
         human_datasets=human_datasets,
@@ -325,7 +325,7 @@ def _run_apunim_grid_for_prompt(
 
 
 def run_apunim_grid_steps(human_datasets, annotations_dir, graph_output_dir):
-    for prompt_name in common.MAIN_PROMPT_NAMES:
+    for prompt_name in shared.MAIN_PROMPT_NAMES:
         _run_apunim_grid_for_prompt(
             human_datasets, annotations_dir, graph_output_dir, prompt_name
         )
@@ -345,13 +345,13 @@ def run_inherent_polarization_step(
         annotations_dir=annotations_dir,
         apunim_output_dir=apunim_output_dir,
         human_results_dir=human_results_dir,
-        dataset_keys=common.DATASET_KEYS[2:],
-        prompt_names=common.MAIN_PROMPT_NAMES,
+        dataset_keys=shared.DATASET_KEYS[2:],
+        prompt_names=shared.MAIN_PROMPT_NAMES,
         exclude_models=set(exclude_models),
     )
     inherent_table_df = polarization.build_inherent_polarization_table(
         long_df=inherent_df,
-        prompt_names=common.MAIN_PROMPT_NAMES,
+        prompt_names=shared.MAIN_PROMPT_NAMES,
     )
     polarization.export_inherent_polarization_table(
         df=inherent_table_df,

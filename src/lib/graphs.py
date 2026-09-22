@@ -174,6 +174,10 @@ def graph_setup() -> None:
             "legend.title_fontsize": 22,
             "figure.titlesize": 26,
             "figure.labelsize": 22,
+            # Subplots
+            "figure.subplot.wspace": 0.3,
+            "figure.subplot.hspace": 0.7,
+            "figure.subplot.bottom": 0.2,
             # Axes
             "axes.linewidth": 0.8,
             "axes.edgecolor": "black",

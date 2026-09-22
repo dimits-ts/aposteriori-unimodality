@@ -17,7 +17,7 @@ from ..lib.util import (
     trim_numeric_col_latex,
     significance_superscript,
 )
-from .common import (
+from .shared import (
     HumanDatasets,
     MAIN_PROMPT_NAMES,
     LLMAnnotationDataset,

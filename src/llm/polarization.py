@@ -9,7 +9,7 @@ from ..lib.util import (
     center_table_latex,
     trim_numeric_col_latex,
 )
-from .common import (
+from .shared import (
     HumanDatasets,
     load_llm_df,
     LLMAnnotationDataset,
