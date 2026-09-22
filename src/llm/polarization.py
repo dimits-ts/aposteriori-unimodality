@@ -4,7 +4,11 @@ import pandas as pd
 
 from ..lib import run_helper
 from ..lib.preprocessing import Dataset
-from ..lib.util import skip_if_exists
+from ..lib.util import (
+    skip_if_exists,
+    center_table_latex,
+    trim_numeric_col_latex,
+)
 from .common import (
     HumanDatasets,
     load_llm_df,
@@ -16,9 +20,6 @@ from .common import (
     _available_dataset_keys,
     DATASET_KEYS,
     MAIN_PROMPT_NAMES,
-    ADVERSARIAL_PROMPT_NAMES,
-    center_table_latex,
-    trim_numeric_col_latex,
 )
 
 

@@ -12,6 +12,7 @@ from scipy import stats
 from statsmodels.stats.multitest import multipletests
 
 from ..lib import run_helper
+from ..lib.util import center_table_latex, trim_numeric_col_latex
 from .common import (
     HumanDatasets,
     MAIN_PROMPT_NAMES,
@@ -26,8 +27,6 @@ from .common import (
     PROMPT_COMPARISON_DATASET_KEYS,
     VARIANT_NAMES,
     _compute_ndfu_records,
-    center_table_latex,
-    trim_numeric_col_latex,
 )
 
 
@@ -243,9 +242,15 @@ def per_model_repeat_consistency_table(
     """
     rows = []
     for key in _available_dataset_keys(human_datasets):
+        if "dices" in key:
+            continue
+
         files_by_model = find_repeat_files(repeat_dir, key, prompt_name)
         if not files_by_model:
-            continue
+            raise ValueError(
+                f"No files for repeat ablation found in {repeat_dir} for "
+                f"dataset {key} and prompt {prompt_name}."
+            )
         rows.extend(
             _repeat_rows_for_dataset(human_datasets, key, files_by_model)
         )
@@ -256,16 +261,17 @@ def export_latex_table(
     df: pd.DataFrame, output_path: Path, caption: str, label: str
 ) -> None:
     df = df.copy()
+    # very common column in all exported tables in this module
     if "Krippendorff's alpha" in df.columns:
-        df["Krippendorff's alpha"] = df["Krippendorff's alpha"].map(
-            lambda x: "---" if pd.isna(x) else f"{x:.4f}"
+        df["Krippendorff's alpha"] = trim_numeric_col_latex(
+            df["Krippendorff's alpha"], float_format=".4f"  # type: ignore
         )
 
     latex_str = df.to_latex(
         index=False,
         caption=caption,
         label=label,
-        position="ht",
+        position="t",
         escape=True,
     )
     latex_str = center_table_latex(latex_str=latex_str)
@@ -596,17 +602,11 @@ def export_cohens_d_summary_latex(
     label: str,
 ) -> None:
     df = summary_df.copy().astype(object)
+    df.drop(["count"])
     df.columns = [str(c).capitalize() for c in df.columns]
 
     for stat, row in df.iterrows():
-        if stat == "count":
-            df.loc[stat] = row.map(
-                lambda x: "---" if pd.isna(x) else f"{int(x)}"
-            )
-        else:
-            df.loc[stat] = row.map(
-                lambda x: "---" if pd.isna(x) else f"{x:.3f}"
-            )
+        df.loc[stat] = trim_numeric_col_latex(row, float_format=".2f")
 
     latex_str = df.to_latex(
         caption=caption,

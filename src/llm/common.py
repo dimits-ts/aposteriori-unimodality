@@ -457,24 +457,8 @@ def load_human_datasets(
             ),
             "kumar": LazyDatasetLoader(
                 lambda p=kumar_path: KumarDataset(
-                    dataset_path=p, num_samples=3_000
+                    dataset_path=p, num_samples=1_000
                 )
             ),
         }
     )
-
-
-def center_table_latex(latex_str: str) -> str:
-    latex_str = re.sub(
-        r"(\\begin\{table\}\[[^\]]*\])",
-        lambda m: m.group(1) + "\n\\centering",
-        latex_str,
-    )
-    return latex_str
-
-
-def trim_numeric_col_latex(col: pd.Series, float_format: str) -> pd.Series:
-    return pd.to_numeric(
-        col,
-        errors="coerce",
-    ).map(lambda x: "---" if pd.isna(x) else f"{x:{float_format}}")

@@ -1,10 +1,23 @@
-\begin{table}[ht]
+\begin{table}[t]
 \centering
 \caption{Consistency (Krippendorff's $\alpha$, ordinal) of each model with itself across repeated runs of the same (default) prompt.}
 \label{tab:llm-consistency-repeats}
-\begin{tabular}{}
+\begin{tabular}{llrrl}
 \toprule
+Dataset & Model & Runs & Items & Krippendorff's alpha \\
 \midrule
+Sap et al. 2022 & llama70b & 5 & 180 & 1.0000 \\
+Sap et al. 2022 & llama8b & 5 & 180 & 1.0000 \\
+Sap et al. 2022 & olmo32b & 5 & 178 & 1.0000 \\
+Sap et al. 2022 & olmo7b & 5 & 172 & 1.0000 \\
+Sap et al. 2022 & qwen32b & 5 & 180 & 1.0000 \\
+Sap et al. 2022 & qwen7b & 5 & 180 & 1.0000 \\
+Kumar et al. 2021 & llama70b & 5 & 600 & 1.0000 \\
+Kumar et al. 2021 & llama8b & 5 & 600 & 1.0000 \\
+Kumar et al. 2021 & olmo32b & 5 & 600 & 1.0000 \\
+Kumar et al. 2021 & olmo7b & 5 & 567 & 1.0000 \\
+Kumar et al. 2021 & qwen32b & 5 & 600 & 1.0000 \\
+Kumar et al. 2021 & qwen7b & 5 & 589 & 1.0000 \\
 \bottomrule
 \end{tabular}
 \end{table}

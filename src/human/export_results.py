@@ -11,6 +11,10 @@ import matplotlib.patches as mpatches
 
 from ..lib import graphs
 from ..lib import run_helper
+from ..lib.util import (
+    center_table_latex,
+    trim_numeric_col_latex,
+)
 
 MIN_SUPPORT = 50
 SIG_ALPHA = 0.05  # p-value threshold for "statistically significant"
@@ -122,15 +126,83 @@ def plot_dfu_histograms(
 def csv_to_latex(result_paths: list[Path], latex_output_dir: Path) -> None:
     for result_file in result_paths:
         if "sample_size" not in result_file.stem:
-            dataset_name = result_file.stem
+            dataset_name = result_file.stem.split("_")[0]
             df = pd.read_csv(result_file)
             df = df.loc[df.pvalue.notna()]
-            run_helper.results_to_latex(
+            _results_to_latex(
                 res_df=df,
                 output_path=latex_output_dir / f"{dataset_name}.tex",
                 dataset_name=dataset_name,
                 table_label=f"tab:{dataset_name}",
             )
+
+
+def _results_to_latex(
+    res_df: pd.DataFrame,
+    output_path: Path,
+    dataset_name: str,
+    table_label: str,
+    columns: list[str] | None = None
+) -> None:
+    """
+    Export results to a single LaTeX table where apunim values include
+    significance stars (as superscripts), and the pvalue column is removed.
+    """
+    res_df = (
+        res_df.replace("_", r"\_", regex=True)
+        .rename(columns={"Unnamed: 1": "Value", "SDB Feature": r"\ac{pc}"})
+        .set_index([r"\ac{pc}", "Value"])
+    )
+
+    if "pvalue" in res_df.columns and "apunim" in res_df.columns:
+        res_df["apunim"] = res_df.apply(
+            lambda r: (
+                f"{r['apunim']:.4f}{_significance_superscript(r['pvalue'])}"
+                if not pd.isna(r["pvalue"])
+                else "---"
+            ),
+            axis=1,
+        )
+        res_df = res_df.drop(columns=["pvalue"])
+
+    if columns is None:
+        columns = list(res_df.columns)
+
+    latex_str = res_df.to_latex(
+        caption=(
+            "Aposteriori unimodality results for the "
+            f"{dataset_name.capitalize()} dataset. "
+            "Stars indicate statistical significance: "
+            "*: p<0.1, **: p<0.05, ***: p<0.01."
+        ),
+        label=table_label,
+        escape=False,  # allow LaTeX math ($^{*}$)
+        columns=columns,
+        position="t",
+        index=True,
+        float_format="%.4f",
+        multirow=False,
+        longtable=dataset_name == "kumar",
+    )
+
+    latex_str = center_table_latex(latex_str=latex_str)
+
+    # Write to file
+    output_path.write_text(latex_str)
+    print(f"Table exported to {output_path.resolve()}")
+
+
+def _significance_superscript(p):
+    if pd.isna(p):
+        return ""
+    elif p < 0.001:
+        return r"$^{***}$"
+    elif p < 0.01:
+        return r"$^{**}$"
+    elif p < 0.05:
+        return r"$^{*}$"
+    else:
+        return ""
 
 
 def ordinal_graph_per_feature(
@@ -401,7 +473,7 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
         line.set_markeredgecolor(color)
         line.set_markersize(9)
 
-    add_grouped_legend(
+    _add_grouped_legend(
         ax,
         group_1=highlight_group_1,
         group_1_title="Directional",
@@ -421,7 +493,7 @@ def ordinal_graph(results_dir: Path, graph_output_dir: Path) -> None:
     plt.close()
 
 
-def add_grouped_legend(
+def _add_grouped_legend(
     ax,
     group_1: Iterable[str],
     group_2: Iterable[str],
