@@ -14,6 +14,7 @@ from statsmodels.stats.multitest import multipletests
 from ..lib import run_helper
 from ..lib.util import (
     center_table_latex,
+    small_table_latex,
     trim_numeric_col_latex,
     significance_superscript,
 )
@@ -659,6 +660,7 @@ def export_cohens_d_summary_latex(
         column_format="r" * (len(df.columns) + n_index_cols),
     )
     latex_str = center_table_latex(latex_str)
+    latex_str = small_table_latex(latex_str)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(latex_str)

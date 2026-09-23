@@ -17,12 +17,13 @@ def skip_if_exists(path: Path) -> bool:
 
 
 def center_table_latex(latex_str: str) -> str:
-    latex_str = re.sub(
-        r"(\\begin\{table\}\[[^\]]*\])",
-        lambda m: m.group(1) + "\n\\centering",
-        latex_str,
+    return _append_command_to_table_latex(
+        latex_str=latex_str, command=r"\centering"
     )
-    return latex_str
+
+
+def small_table_latex(latex_str: str, size: str = r"\small") -> str:
+    return _append_command_to_table_latex(latex_str=latex_str, command=size)
 
 
 def trim_numeric_col_latex(col: pd.Series, float_format: str) -> pd.Series:
@@ -43,3 +44,11 @@ def significance_superscript(p):
         return r"$^{*}$"
     else:
         return ""
+
+
+def _append_command_to_table_latex(latex_str: str, command: str) -> str:
+    return re.sub(
+        r"(\\begin\{table\}\[[^\]]*\])",
+        lambda m: m.group(1) + f"\n{command}",
+        latex_str,
+    )

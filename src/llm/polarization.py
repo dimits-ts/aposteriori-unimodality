@@ -7,6 +7,7 @@ from ..lib.preprocessing import Dataset
 from ..lib.util import (
     skip_if_exists,
     center_table_latex,
+    small_table_latex,
     trim_numeric_col_latex,
 )
 from .shared import (
@@ -284,6 +285,8 @@ def export_inherent_polarization_table(
     )
 
     latex_str = center_table_latex(latex_str)
+    latex_str = small_table_latex(latex_str)
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(latex_str)
     print(f"Table exported to {output_path.resolve()}")
