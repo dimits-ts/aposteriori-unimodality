@@ -9,7 +9,7 @@ import pandas as pd
 
 from ..lib import graphs
 from ..lib.preprocessing import Dataset
-from .common import (
+from .shared import (
     HumanDatasets,
     find_annotation_files,
     load_llm_df,
