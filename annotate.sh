@@ -5,15 +5,13 @@ set -uo pipefail
 # ============================================================
 # Dataset configuration
 # ============================================================
-datasets=("dices-350" "dices-990" "sap" "kumar")
+datasets=("sap" "kumar")
 dataset_paths=(
-  "data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv"
-  "data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv"
   "data/datasets/sap.csv"
   "data/datasets/kumar.json"
 )
 # Instructions subdirectory key for each dataset; dices variants share guidelines.
-instruction_keys=("dices" "dices" "sap" "kumar")
+instruction_keys=("sap" "kumar")
 
 # ============================================================
 # Model configuration
@@ -59,7 +57,7 @@ adv_dataset_indices=(2 3)   # sap, kumar
 instructions_dir="instructions"
 adv_instructions_dir="instructions/adversarial"
 
-output_dir="output/annotations"
+output_dir="output/llm/annotations"
 log_dir="logs"
 log_file="${log_dir}/annotation.log"
 
@@ -72,7 +70,7 @@ ablation_paraphrase_dirs=(
   "instructions/ablation/sap"
   "instructions/ablation/kumar"
 )
-ablation_output_dir="output/ablations"
+ablation_output_dir="output/llm/ablations"
 ablation_repeat_output_dir="${ablation_output_dir}/repeat"
 ablation_paraphrase_output_dir="${ablation_output_dir}/paraphrase"
 ablation_log_file="${log_dir}/ablation.log"
@@ -213,12 +211,12 @@ for i in "${!datasets[@]}"; do
   # ----------------------------------------------------------
   # 4. Adversarial annotations (4-model subset, sap + kumar only)
   # ----------------------------------------------------------
-  local is_adv_dataset=0
+
   for adv_idx in "${adv_dataset_indices[@]}"; do
     [ "$adv_idx" -eq "$i" ] && is_adv_dataset=1 && break
   done
 
-  if [ "$is_adv_dataset" -eq 1 ]; then
+
     adv_instructions_path="${adv_instructions_dir}/${instruction_keys[$i]}"
 
     echo -e "\n\n======================================================="  >> "$log_file"
@@ -244,7 +242,6 @@ for i in "${!datasets[@]}"; do
         done
       done
     fi
-  fi
 
 done
 

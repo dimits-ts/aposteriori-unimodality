@@ -23,15 +23,11 @@ MAX_NEW_TOKENS = 3
 MAX_CTX_TOKENS = 512
 
 SAMPLES_PER_DATASET = {
-    "dices-350": 300,
-    "dices-990": 300,
     "kumar": 1000,
-    "sap": 300,
+    "sap": 585,
 }
 
 DATASET_LOADERS = {
-    "dices-350": lambda p: DicesDataset(dataset_path=p, variant="350"),
-    "dices-990": lambda p: DicesDataset(dataset_path=p, variant="990"),
     "kumar": lambda p: KumarDataset(
         dataset_path=p, num_samples=SAMPLES_PER_DATASET["kumar"]
     ),
@@ -39,9 +35,78 @@ DATASET_LOADERS = {
 }
 
 
-def load_dataset(
-    dataset_key: str, dataset_path: Path
-) -> Dataset:
+def main(
+    dataset_key: str,
+    dataset_path: Path,
+    instruction_prompt_path: Path,
+    model_name: str,
+    output_path: Path,
+    sample_fraction: Optional[float] = None,
+):
+    # Toggle to True if VRAM is under durress
+    os.environ.setdefault(
+        "PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:False"
+    )
+
+    transformers.set_seed(SEED)
+    rng = np.random.default_rng(SEED)
+
+    ds = load_dataset(dataset_key, dataset_path)
+    template = instruction_prompt_path.read_text()
+    value_pools = get_subgroup_value_pools(ds)
+    generator = load_generator(model_name)
+
+    base_n = SAMPLES_PER_DATASET[dataset_key]
+    if sample_fraction is not None:
+        n_samples = max(1, int(round(base_n * sample_fraction)))
+    else:
+        n_samples = base_n
+
+    packets = sample_texts(
+        ds,
+        n_samples,
+        rng,
+    )
+
+    rows = []
+
+    for packet in tqdm(
+        packets,
+        desc=f"Annotating {ds.get_name()}",
+    ):
+        text_id, text = packet
+
+        text = truncate_text(
+            generator.tokenizer,
+            text,
+            MAX_CTX_TOKENS,
+        )
+
+        rows.extend(
+            annotate_comment(
+                generator=generator,
+                template=template,
+                text_id=text_id,
+                text=text,
+                value_pools=value_pools,
+                model_name=model_name,
+                prompt_name=instruction_prompt_path.name,
+                rng=rng,
+            )
+        )
+
+    output_path.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    pd.DataFrame(rows).to_csv(
+        output_path,
+        index=False,
+    )
+
+
+def load_dataset(dataset_key: str, dataset_path: Path) -> Dataset:
     return DATASET_LOADERS[dataset_key](dataset_path)
 
 
@@ -190,77 +255,6 @@ def annotate_comment(
         )
 
     return rows
-
-
-def main(
-    dataset_key: str,
-    dataset_path: Path,
-    instruction_prompt_path: Path,
-    model_name: str,
-    output_path: Path,
-    sample_fraction: Optional[float] = None,
-):
-    # Toggle to True if VRAM is under durress
-    os.environ.setdefault(
-        "PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:False"
-    )
-
-    transformers.set_seed(SEED)
-    rng = np.random.default_rng(SEED)
-
-    ds = load_dataset(dataset_key, dataset_path)
-    template = instruction_prompt_path.read_text()
-    value_pools = get_subgroup_value_pools(ds)
-    generator = load_generator(model_name)
-
-    base_n = SAMPLES_PER_DATASET[dataset_key]
-    if sample_fraction is not None:
-        n_samples = max(1, int(round(base_n * sample_fraction)))
-    else:
-        n_samples = base_n
-
-    packets = sample_texts(
-        ds,
-        n_samples,
-        rng,
-    )
-
-    rows = []
-
-    for packet in tqdm(
-        packets,
-        desc=f"Annotating {ds.get_name()}",
-    ):
-        text_id, text = packet
-
-        text = truncate_text(
-            generator.tokenizer,
-            text,
-            MAX_CTX_TOKENS,
-        )
-
-        rows.extend(
-            annotate_comment(
-                generator=generator,
-                template=template,
-                text_id=text_id,
-                text=text,
-                value_pools=value_pools,
-                model_name=model_name,
-                prompt_name=instruction_prompt_path.name,
-                rng=rng,
-            )
-        )
-
-    output_path.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    pd.DataFrame(rows).to_csv(
-        output_path,
-        index=False,
-    )
 
 
 if __name__ == "__main__":
