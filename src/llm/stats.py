@@ -584,19 +584,42 @@ def compute_cohens_d_summary_table(
     result_df: pd.DataFrame,
     prompt_names: list[str] = MAIN_PROMPT_NAMES,
     baseline_prompt: str = "default",
+    by_model: bool = True,
 ) -> pd.DataFrame:
-    columns = {}
-    for prompt_name in prompt_names:
-        if prompt_name == baseline_prompt:
-            continue
-        col = f"cohens_d_{prompt_name}_vs_{baseline_prompt}"
-        if col not in result_df.columns:
-            continue
-        columns[prompt_name] = pd.to_numeric(
-            result_df[col], errors="coerce"
-        ).describe()
+    """
+    Summary stats (via `.describe()`) of Cohen's d values for each
+    non-baseline prompt vs. `baseline_prompt`.
 
-    return pd.DataFrame(columns)
+    If `by_model` (default), the summary is computed separately per model
+    and the result is indexed by (Model, stat). Otherwise all models are
+    pooled together and the result is indexed by stat only (old behavior).
+    """
+    cols = {
+        prompt_name: f"cohens_d_{prompt_name}_vs_{baseline_prompt}"
+        for prompt_name in prompt_names
+        if prompt_name != baseline_prompt
+        and f"cohens_d_{prompt_name}_vs_{baseline_prompt}" in result_df.columns
+    }
+
+    def _describe(df: pd.DataFrame) -> dict:
+        return {
+            prompt_name: pd.to_numeric(df[col], errors="coerce").describe()
+            for prompt_name, col in cols.items()
+        }
+
+    if not by_model:
+        return pd.DataFrame(_describe(result_df))
+
+    model_order = _order_models(set(result_df["Model"]))
+    frames = []
+    for model in model_order:
+        sub = result_df.loc[result_df["Model"] == model]
+        model_df = pd.DataFrame(_describe(sub))
+        model_df = model_df.reset_index(names="stat")
+        model_df.insert(0, "Model", model)
+        frames.append(model_df)
+
+    return pd.concat(frames, ignore_index=True).set_index(["Model", "stat"])
 
 
 def export_cohens_d_summary_latex(
@@ -604,13 +627,27 @@ def export_cohens_d_summary_latex(
     output_path: Path,
     caption: str,
     label: str,
+    by_model: bool,
+    model_order: list[str] | None = None,
 ) -> None:
     df = summary_df.copy().astype(object)
-    df = df.drop(["count"])
-    df.columns = [str(c).capitalize() for c in df.columns]
 
-    for stat, row in df.iterrows():
-        df.loc[stat] = trim_numeric_col_latex(row, float_format=".3f")
+    if by_model:
+        df = df.drop(index="count", level="stat")
+        df = df.stack().unstack(level="stat")
+        if model_order is not None:
+            df = df.reindex(model_order, level="Model")
+        df.columns = [str(c).capitalize() for c in df.columns]
+        n_index_cols = 2
+    else:
+        df = df.drop("count")
+        df.columns = [str(c).capitalize() for c in df.columns]
+        n_index_cols = 1
+
+    for idx, row in df.iterrows():
+        df.loc[idx] = trim_numeric_col_latex(
+            pd.to_numeric(row), float_format=".3f"
+        )
 
     latex_str = df.to_latex(
         caption=caption,
@@ -618,7 +655,8 @@ def export_cohens_d_summary_latex(
         position="t",
         escape=True,
         index=True,
-        column_format="r" * (len(df) + 1),
+        multirow=by_model,
+        column_format="r" * (len(df.columns) + n_index_cols),
     )
     latex_str = center_table_latex(latex_str)
 

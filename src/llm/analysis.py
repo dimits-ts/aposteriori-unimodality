@@ -133,7 +133,7 @@ def main(
         )
 
     stats.export_ndfu_anova_by_prompt(result_df=res_df, output_path=stats_path)
-    summary_df = stats.compute_cohens_d_summary_table(res_df)
+    summary_df = stats.compute_cohens_d_summary_table(res_df, by_model=True)
     stats.export_cohens_d_summary_latex(
         summary_df,
         output_path=latex_output_dir / "cohens_d.tex",
@@ -141,6 +141,7 @@ def main(
         in \ac{ndfu} between the default and each adversarial instruction
         prompt for each of the groups of both datasets and across all models.""",
         label="tab:cohens-d",
+        by_model=True
     )
     stats.run_exploratory_stats(res_df)
 
