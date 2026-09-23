@@ -58,9 +58,91 @@ import pandas as pd
 
 from ..lib import graphs
 from ..lib.util import skip_if_exists
-from . import polarization, stats, common, plots
+from . import polarization, stats, shared, plots
 
 # TODO: Separate table export and io from common?
+
+
+def main(
+    dices_small_path: Path,
+    dices_large_path: Path,
+    sap_path: Path,
+    kumar_path: Path,
+    annotations_dir: Path,
+    paraphrase_dir: Path,
+    repeat_dir: Path,
+    graph_output_dir: Path,
+    latex_output_dir: Path,
+    cache_dir: Path,
+    exclude_models: list[str],
+    prompt_name: str = "default",
+):
+    graphs.graph_setup()
+    graph_output_dir.mkdir(parents=True, exist_ok=True)
+    latex_output_dir.mkdir(parents=True, exist_ok=True)
+
+    human_datasets = shared.load_human_datasets(
+        dices_small_path=dices_small_path,
+        dices_large_path=dices_large_path,
+        sap_path=sap_path,
+        kumar_path=kumar_path,
+    )
+
+    run_histogram_step(
+        human_datasets, annotations_dir, graph_output_dir, prompt_name
+    )
+    run_prompt_diff_step(
+        human_datasets, annotations_dir, graph_output_dir, exclude_models
+    )
+
+    run_cross_model_consistency_step(
+        human_datasets, annotations_dir, latex_output_dir, prompt_name
+    )
+    _run_cross_model_consistency_excluding_step(
+        human_datasets,
+        annotations_dir,
+        latex_output_dir,
+        prompt_name,
+        exclude_models,
+    )
+
+    run_variant_consistency_step(
+        human_datasets, paraphrase_dir, latex_output_dir
+    )
+    run_repeat_consistency_step(
+        human_datasets, repeat_dir, latex_output_dir, prompt_name
+    )
+
+    run_apunim_prompt_table_step(
+        human_datasets, annotations_dir, latex_output_dir, cache_dir=cache_dir
+    )
+    run_apunim_grid_steps(human_datasets, annotations_dir, graph_output_dir)
+
+    run_inherent_polarization_step(
+        human_datasets, annotations_dir, latex_output_dir, exclude_models
+    )
+
+    stats_path = cache_dir / "polarization_by_instruction_anova.csv"
+    if skip_if_exists(stats_path):
+        res_df = pd.read_csv(stats_path)
+    else:
+        res_df = stats.compute_ndfu_anova_by_prompt(
+            human_datasets=human_datasets,
+            annotations_dir=annotations_dir,
+            correction_method="holm",
+        )
+
+    stats.export_ndfu_anova_by_prompt(result_df=res_df, output_path=stats_path)
+    summary_df = stats.compute_cohens_d_summary_table(res_df)
+    stats.export_cohens_d_summary_latex(
+        summary_df,
+        output_path=latex_output_dir / "cohens_d.tex",
+        caption=r"""Cohen's d statistics showing the quantitative difference
+        in \ac{ndfu} between the default and each adversarial instruction
+        prompt for each of the groups of both datasets and across all models.""",
+        label="tab:cohens-d",
+    )
+    stats.run_exploratory_stats(res_df)
 
 
 def run_histogram_step(
@@ -83,7 +165,7 @@ def run_prompt_diff_step(
         human_datasets=human_datasets,
         annotations_dir=annotations_dir,
         output_path=output_path,
-        prompt_names=common.MAIN_PROMPT_NAMES,
+        prompt_names=shared.MAIN_PROMPT_NAMES,
         exclude_models=exclude_models,
     )
 
@@ -188,13 +270,13 @@ def _run_apunim_prompt_table_for_dataset(
         long_df = stats.compute_llm_apunim_by_prompt(
             annotations_dir=annotations_dir,
             dataset_key=key,
-            prompt_names=common.MAIN_PROMPT_NAMES,
-            exclude_models=common.APUNIM_TABLE_EXCLUDE_MODELS,
+            prompt_names=shared.MAIN_PROMPT_NAMES,
+            exclude_models=shared.APUNIM_TABLE_EXCLUDE_MODELS,
         )
         long_df.to_csv(cache_path)
 
     wide_df = stats.build_llm_apunim_prompt_table(
-        long_df, prompt_names=common.MAIN_PROMPT_NAMES
+        long_df, prompt_names=shared.MAIN_PROMPT_NAMES
     )
 
     output_path = latex_output_dir / f"llm-apunim-by-prompt-{key}.tex"
@@ -214,7 +296,7 @@ def run_apunim_prompt_table_step(
 ):
     # Restricted to the datasets the paraphrase/stereotype/persona prompts
     # were actually run on (kumar, sap).
-    for key in common.PROMPT_COMPARISON_DATASET_KEYS:
+    for key in shared.PROMPT_COMPARISON_DATASET_KEYS:
         if key in human_datasets:
             _run_apunim_prompt_table_for_dataset(
                 human_datasets=human_datasets,
@@ -230,7 +312,7 @@ def _run_apunim_grid_for_prompt(
 ):
     output_path = graph_output_dir / f"llm_apunim_grid_{prompt_name}.png"
     grid_models = list(
-        set(common.MODEL_DISPLAY_ORDER) - common.APUNIM_TABLE_EXCLUDE_MODELS
+        set(shared.MODEL_DISPLAY_ORDER) - shared.APUNIM_TABLE_EXCLUDE_MODELS
     )
     plots.plot_apunim_grid(
         human_datasets=human_datasets,
@@ -243,7 +325,7 @@ def _run_apunim_grid_for_prompt(
 
 
 def run_apunim_grid_steps(human_datasets, annotations_dir, graph_output_dir):
-    for prompt_name in common.MAIN_PROMPT_NAMES:
+    for prompt_name in shared.MAIN_PROMPT_NAMES:
         _run_apunim_grid_for_prompt(
             human_datasets, annotations_dir, graph_output_dir, prompt_name
         )
@@ -263,103 +345,20 @@ def run_inherent_polarization_step(
         annotations_dir=annotations_dir,
         apunim_output_dir=apunim_output_dir,
         human_results_dir=human_results_dir,
-        dataset_keys=common.DATASET_KEYS[2:],
-        prompt_names=common.MAIN_PROMPT_NAMES,
+        dataset_keys=shared.DATASET_KEYS[2:],
+        prompt_names=shared.MAIN_PROMPT_NAMES,
         exclude_models=set(exclude_models),
     )
     inherent_table_df = polarization.build_inherent_polarization_table(
         long_df=inherent_df,
-        prompt_names=common.MAIN_PROMPT_NAMES,
+        prompt_names=shared.MAIN_PROMPT_NAMES,
     )
     polarization.export_inherent_polarization_table(
         df=inherent_table_df,
         output_path=output_path,
         label="tab:inherent-polarization",
-        longtable=False,
+        float_format=".2f",
     )
-
-
-def main(
-    dices_small_path: Path,
-    dices_large_path: Path,
-    sap_path: Path,
-    kumar_path: Path,
-    annotations_dir: Path,
-    paraphrase_dir: Path,
-    repeat_dir: Path,
-    graph_output_dir: Path,
-    latex_output_dir: Path,
-    cache_dir: Path,
-    exclude_models: list[str],
-    prompt_name: str = "default",
-):
-    graphs.graph_setup()
-    graph_output_dir.mkdir(parents=True, exist_ok=True)
-    latex_output_dir.mkdir(parents=True, exist_ok=True)
-
-    human_datasets = common.load_human_datasets(
-        dices_small_path=dices_small_path,
-        dices_large_path=dices_large_path,
-        sap_path=sap_path,
-        kumar_path=kumar_path,
-    )
-
-    run_histogram_step(
-        human_datasets, annotations_dir, graph_output_dir, prompt_name
-    )
-    run_prompt_diff_step(
-        human_datasets, annotations_dir, graph_output_dir, exclude_models
-    )
-
-    run_cross_model_consistency_step(
-        human_datasets, annotations_dir, latex_output_dir, prompt_name
-    )
-    _run_cross_model_consistency_excluding_step(
-        human_datasets,
-        annotations_dir,
-        latex_output_dir,
-        prompt_name,
-        exclude_models,
-    )
-    run_variant_consistency_step(
-        human_datasets, paraphrase_dir, latex_output_dir
-    )
-    run_repeat_consistency_step(
-        human_datasets, repeat_dir, latex_output_dir, prompt_name
-    )
-
-    run_apunim_prompt_table_step(
-        human_datasets, annotations_dir, latex_output_dir, cache_dir=cache_dir
-    )
-    run_apunim_grid_steps(human_datasets, annotations_dir, graph_output_dir)
-
-    run_inherent_polarization_step(
-        human_datasets, annotations_dir, latex_output_dir, exclude_models
-    )
-
-    stats_path = cache_dir / "polarization_by_instruction_anova.csv"
-    if skip_if_exists(stats_path):
-        res_df = pd.read_csv(stats_path)
-    else:
-        res_df = stats.compute_ndfu_anova_by_prompt(
-            human_datasets=human_datasets,
-            annotations_dir=annotations_dir,
-            correction_method="holm",
-        )
-    stats.export_ndfu_anova_by_prompt(
-        result_df=res_df,
-        output_path=stats_path
-    )
-    summary_df = stats.compute_cohens_d_summary_table(res_df)
-    stats.export_cohens_d_summary_latex(
-        summary_df,
-        output_path=latex_output_dir / "cohens_d.tex",
-        caption=r"""Cohen's d statistics showing the quantitative difference
-        in \ac{ndfu} between the default and each adversarial instruction
-        prompt for each of the groups of both datasets and across all models.""",
-        label="tab:cohens-d"
-    )
-    stats.run_exploratory_stats(res_df)
 
 
 if __name__ == "__main__":
@@ -390,7 +389,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--annotations-dir",
-        default="output/annotations",
+        required=True,
         help=(
             "Directory containing the main (non-ablation) llm_annotate.py "
             "outputs, e.g. output/annotations."
@@ -398,7 +397,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--paraphrase-dir",
-        default="output/ablations/paraphrase",
+        required=True,
         help=(
             "Directory containing the paraphrase-ablation llm_annotate.py "
             "outputs (variant1/variant2/variant3), e.g. "
@@ -407,7 +406,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--repeat-dir",
-        default="output/ablations/repeat",
+        required=True,
         help=(
             "Directory containing the repeat-ablation llm_annotate.py "
             "outputs (same prompt, run N times: '-run0', '-run1', ...), "
@@ -416,22 +415,13 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--graph-output-dir",
-        default="graphs",
+        required=True,
         help="Directory for the histogram and apunim polarization plots.",
     )
     parser.add_argument(
         "--latex-output-dir",
-        default="manuscript/generated",
+        required=True,
         help="Directory for the consistency LaTeX tables.",
-    )
-    parser.add_argument(
-        "--prompt-name",
-        default="default",
-        help=(
-            "Instruction-prompt stem (matches the instructions/*/<name>.txt "
-            "file) whose LLM annotations are used for the histograms and "
-            "cross-model consistency table."
-        ),
     )
     parser.add_argument(
         "--cache-dir",
@@ -460,7 +450,7 @@ if __name__ == "__main__":
         repeat_dir=Path(args.repeat_dir),
         graph_output_dir=Path(args.graph_output_dir),
         latex_output_dir=Path(args.latex_output_dir),
-        prompt_name=args.prompt_name,
+        prompt_name="default",
         cache_dir=Path(args.cache_dir),
         exclude_models=args.exclude_models,
     )

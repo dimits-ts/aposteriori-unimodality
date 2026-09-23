@@ -12,7 +12,12 @@ from scipy import stats
 from statsmodels.stats.multitest import multipletests
 
 from ..lib import run_helper
-from .common import (
+from ..lib.util import (
+    center_table_latex,
+    trim_numeric_col_latex,
+    significance_superscript,
+)
+from .shared import (
     HumanDatasets,
     MAIN_PROMPT_NAMES,
     LLMAnnotationDataset,
@@ -241,9 +246,15 @@ def per_model_repeat_consistency_table(
     """
     rows = []
     for key in _available_dataset_keys(human_datasets):
+        if "dices" in key:
+            continue
+
         files_by_model = find_repeat_files(repeat_dir, key, prompt_name)
         if not files_by_model:
-            continue
+            raise ValueError(
+                f"No files for repeat ablation found in {repeat_dir} for "
+                f"dataset {key} and prompt {prompt_name}."
+            )
         rows.extend(
             _repeat_rows_for_dataset(human_datasets, key, files_by_model)
         )
@@ -254,21 +265,20 @@ def export_latex_table(
     df: pd.DataFrame, output_path: Path, caption: str, label: str
 ) -> None:
     df = df.copy()
+    # very common column in all exported tables in this module
     if "Krippendorff's alpha" in df.columns:
-        df["Krippendorff's alpha"] = df["Krippendorff's alpha"].map(
-            lambda x: "---" if pd.isna(x) else f"{x:.4f}"
+        df["Krippendorff's alpha"] = trim_numeric_col_latex(
+            df["Krippendorff's alpha"], float_format=".4f"  # type: ignore
         )
 
     latex_str = df.to_latex(
         index=False,
         caption=caption,
         label=label,
-        position="ht",
+        position="t",
         escape=True,
     )
-    latex_str = latex_str.replace(
-        r"\begin{table}[ht]", r"\begin{table}[ht]\centering"
-    )
+    latex_str = center_table_latex(latex_str=latex_str)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(latex_str)
     print(f"Table exported to {output_path.resolve()}")
@@ -349,13 +359,6 @@ def compute_llm_apunim_by_prompt(
     return pd.concat(rows, ignore_index=True)
 
 
-def _trim_numeric_col(col):
-    return pd.to_numeric(
-        col,
-        errors="coerce",
-    ).map(lambda x: "---" if pd.isna(x) else f"{x:.3f}")
-
-
 def export_llm_apunim_prompt_table(
     df: pd.DataFrame, output_path: Path, dataset_name: str, label: str
 ) -> None:
@@ -369,7 +372,9 @@ def export_llm_apunim_prompt_table(
 
     for number_col in MAIN_PROMPT_NAMES:
         number_col = number_col.capitalize()
-        df[number_col] = _trim_numeric_col(df[number_col])
+        df[number_col] = trim_numeric_col_latex(
+            df[number_col], float_format=".3f"
+        )
 
     df = df.replace("_", r"\_", regex=True).set_index(
         [r"\ac{pc}", "Value", "Model"]
@@ -382,7 +387,7 @@ def export_llm_apunim_prompt_table(
         ),
         label=label,
         escape=False,
-        position="ht",
+        position="t",
         index=True,
         multirow=True,
         longtable=True,
@@ -396,7 +401,7 @@ def export_llm_apunim_prompt_table(
 def _apunim_prompt_cell(row: pd.Series) -> str:
     if pd.isna(row["apunim"]):
         return "---"
-    stars = run_helper.significance_superscript(row["pvalue"])
+    stars = significance_superscript(row["pvalue"])
     return f"{row['apunim']:.4f}{stars}"
 
 
@@ -601,29 +606,22 @@ def export_cohens_d_summary_latex(
     label: str,
 ) -> None:
     df = summary_df.copy().astype(object)
+    df = df.drop(["count"])
     df.columns = [str(c).capitalize() for c in df.columns]
 
     for stat, row in df.iterrows():
-        if stat == "count":
-            df.loc[stat] = row.map(
-                lambda x: "---" if pd.isna(x) else f"{int(x)}"
-            )
-        else:
-            df.loc[stat] = row.map(
-                lambda x: "---" if pd.isna(x) else f"{x:.3f}"
-            )
+        df.loc[stat] = trim_numeric_col_latex(row, float_format=".3f")
 
     latex_str = df.to_latex(
         caption=caption,
         label=label,
-        position="ht",
+        position="t",
         escape=True,
         index=True,
         column_format="r" * (len(df) + 1),
     )
-    latex_str = latex_str.replace(
-        r"\begin{table}[ht]", r"\begin{table}[ht]\centering"
-    )
+    latex_str = center_table_latex(latex_str)
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(latex_str)
     print(f"Table exported to {output_path.resolve()}")

@@ -1,31 +1,39 @@
 """
-Comparing apunim and agreement/statistical attribution methods.
+Multi-group ablation for apunim and comparison methods.
 
-Goal: To test whether different methods can correctly detect a polarization
-signal (a known group effect) embedded in synthetic data.
+Goal: Test whether methods can detect polarization when only one of k groups
+is responsible for it, and the rest behave identically.
 
-Both simulations share the same generative model:
+Generative model:
 
-    y_ij = b_j + g_i * p_j + epsilon_ij
+    y_ij = b_j + mu_{g_i, j} + epsilon_ij
 
-and differ only in how p_j is sampled:
+where:
 
-    Unidirectional (solid lines):
-        p_j ~ Uniform(0, delta)
+    b_j:
+        Baseline rating for item j, drawn from Uniform(2.5, 3.5).
 
-        The group effect is always positive: Group B always rates higher
-        than Group A, though by a varying amount across items.
+    mu_{g, j}:
+        Group- and item-specific offset (Option B).
+        For the single polarizing group G0:
+            unidirectional:  mu_{G0, j} ~ Uniform(0, delta)
+            bidirectional:   mu_{G0, j} ~ Uniform(-delta, delta)
+        For all non-polarizing groups G1..Gk-1:
+            mu_{g, j} = 0
 
-    Bidirectional (dashed lines):
-        p_j ~ Uniform(-delta, delta)
+    epsilon_ij:
+        Independent annotation noise ~ Normal(0, sigma).
 
-        The direction of the group effect varies across items, so groups
-        can systematically disagree in opposite directions on different
-        items. Positive and negative effects can cancel each other out
-        in the pooled distribution.
+All k group labels are passed to each method unchanged; no binary collapse
+is performed. The minimum of 3 annotators per group (required by apunim)
+sets a hard lower bound of n >= 3k annotators per item.
 
-All methods receive identical synthetic annotations for a given simulation,
-where the strength of polarization is controlled by delta.
+Conditions: two per k value, one near the minimum n, one with a spread
+minority share (polarizing group is a smaller fraction than 1/k).
+
+k=3  (min n=9):   (9,  1/3),  (30, 1/5)
+k=5  (min n=15):  (15, 1/5),  (50, 1/8)
+k=10 (min n=30):  (30, 1/10), (100, 1/15)
 """
 
 import argparse
@@ -52,20 +60,27 @@ from .shared import (
     SIMULATION_UNIDIRECTIONAL,
     _run_methods,
     _seed,
-    simulate,
+    simulate_multigroup,
 )
 
 
-# (annotators/item, minority share)
-CONDITIONS = [
-    (80, 0.5),
-    (80, 0.2),
-    (20, 0.5),
-    (20, 0.2),
-    (6, 0.5),
-]
+# ---------------------------------------------------------------- conditions
 
-PLOT_NUM_COLS = 3
+# CONDITIONS_MULTIGROUP: dict mapping k -> list of (n_ann, minority_frac)
+#
+# minority_frac is the share of annotators belonging to the single
+# polarizing group G0.  The remaining k-1 groups share the rest equally.
+#
+# Constraint: n_ann * minority_frac >= 3  (apunim needs >= 3 per group)
+#             n_ann * (1 - minority_frac) / (k-1) >= 3
+
+CONDITIONS_MULTIGROUP = {
+    3: [(9, 1 / 3), (30, 1 / 5)],
+    5: [(15, 1 / 5), (50, 1 / 8)],
+    10: [(30, 1 / 10), (100, 1 / 15)],
+}
+
+PLOT_NUM_COLS = 2
 
 
 # --------------------------------------------------------------------- main
@@ -93,6 +108,7 @@ def main(
     for row in rows:
         row["delta"] = float(row["delta"])
         row["n_ann"] = int(row["n_ann"])
+        row["k"] = int(row["k"])
         row["minority"] = float(row["minority"])
         row["detected"] = int(row["detected"])
         row["stat"] = float(row["stat"])
@@ -108,60 +124,39 @@ def main(
 # ------------------------------------------------------------------- runner
 
 
-def _one(job, n_items):
+def _one_multigroup(job, n_items):
     """
-    Run both simulations for a single job and emit rows for each.
+    Run both simulations for a single (k, n_ann, minority, delta, rep) job.
 
-    Each row carries a `simulation` column so that the plotting
-    code can separate the two experiments visually.
+    Each row carries `k` and `simulation` columns so the plotting code
+    can facet by number of groups and separate simulation types.
     """
-    n_ann, minority, delta, rep = job
+    k, n_ann, minority, delta, rep = job
 
-    seed = _seed(n_ann, minority, delta, rep)
+    seed = _seed(k, n_ann, minority, delta, rep)
 
-    # Use child RNGs derived from the same seed so that the two
-    # simulations are independent but still deterministic.
-    rng_unidirectional = np.random.default_rng(seed ^ 0xABCD1234)
-    rng_bidirectional = np.random.default_rng(seed ^ 0xDCBA4321)
+    rng_uni = np.random.default_rng(seed ^ 0xABCD1234)
+    rng_bi = np.random.default_rng(seed ^ 0xDCBA4321)
 
-    matrix_unidirectional, groups_unidirectional = simulate(
-        n_items,
-        n_ann,
-        delta,
-        minority,
-        rng_unidirectional,
-        unidirectional=True,
+    matrix_uni, groups_uni = simulate_multigroup(
+        n_items, n_ann, k, delta, minority, rng_uni, unidirectional=True
     )
-    matrix_bidirectional, groups_bidirectional = simulate(
-        n_items,
-        n_ann,
-        delta,
-        minority,
-        rng_bidirectional,
-        unidirectional=False,
+    matrix_bi, groups_bi = simulate_multigroup(
+        n_items, n_ann, k, delta, minority, rng_bi, unidirectional=False
     )
 
     method_rows = []
 
-    for matrix, groups, sim_label, apunim_label in [
-        (
-            matrix_unidirectional,
-            groups_unidirectional,
-            SIMULATION_UNIDIRECTIONAL,
-            "apunim",
-        ),
-        (
-            matrix_bidirectional,
-            groups_bidirectional,
-            SIMULATION_BIDIRECTIONAL,
-            "apunim",
-        ),
+    for matrix, groups, sim_label in [
+        (matrix_uni, groups_uni, SIMULATION_UNIDIRECTIONAL),
+        (matrix_bi, groups_bi, SIMULATION_BIDIRECTIONAL),
     ]:
         for method, stat, pvalue in _run_methods(
-            matrix, groups, rep, apunim_label
+            matrix, groups, rep, "apunim"
         ):
             method_rows.append(
                 (
+                    k,
                     n_ann,
                     minority,
                     delta,
@@ -179,8 +174,9 @@ def _one(job, n_items):
 
 def run(out_csv: Path, n_items: int, n_reps: int, workers: int) -> None:
     jobs = [
-        (n_ann, minority, delta, rep)
-        for n_ann, minority in CONDITIONS
+        (k, n_ann, minority, delta, rep)
+        for k, conditions in CONDITIONS_MULTIGROUP.items()
+        for n_ann, minority in conditions
         for delta in DELTAS
         for rep in range(n_reps)
     ]
@@ -192,6 +188,7 @@ def run(out_csv: Path, n_items: int, n_reps: int, workers: int) -> None:
         writer = csv.writer(fh)
         writer.writerow(
             [
+                "k",
                 "n_ann",
                 "minority",
                 "delta",
@@ -204,7 +201,7 @@ def run(out_csv: Path, n_items: int, n_reps: int, workers: int) -> None:
             ]
         )
 
-        worker = functools.partial(_one, n_items=n_items)
+        worker = functools.partial(_one_multigroup, n_items=n_items)
 
         with ProcessPoolExecutor(max_workers=workers) as executor:
             for result in executor.map(worker, jobs, chunksize=4):
@@ -216,18 +213,16 @@ def run(out_csv: Path, n_items: int, n_reps: int, workers: int) -> None:
 # ------------------------------------------------------------------ figure
 
 
-def _condition_title(n_ann, minority):
-    return f"{n_ann} ann/item, {int(round(minority * 100))}\\% minority"
+def _condition_title(k, n_ann, minority):
+    return (
+        f"k={k} groups, {n_ann} ann/item, "
+        f"{int(round(minority * 100))}\\% polarizing"
+    )
 
 
 def plot(rows, methods, out_path):
     """
-    Plot detection rates for both simulations in a shared panel grid.
-
-    Visual encoding
-    ---------------
-    Color  + marker  ->  method
-    Line style       ->  simulation type (solid = unidirectional, dashed = bidirectional)
+    Plot detection rates faceted by k, one panel per (k, condition).
     """
     methods = [m for m in METHOD_ORDER if m in methods] + [
         m for m in methods if m not in METHOD_ORDER
@@ -235,7 +230,15 @@ def plot(rows, methods, out_path):
 
     df = pd.DataFrame(rows)
     colors = graphs.COLORBLIND_PALETTE
-    n_rows = math.ceil(len(CONDITIONS) / PLOT_NUM_COLS)
+
+    # Build ordered list of (k, n_ann, minority) panels
+    panels = [
+        (k, n_ann, minority)
+        for k, conditions in CONDITIONS_MULTIGROUP.items()
+        for n_ann, minority in conditions
+    ]
+
+    n_rows = math.ceil(len(panels) / PLOT_NUM_COLS)
 
     fig, axes = plt.subplots(
         n_rows,
@@ -245,9 +248,10 @@ def plot(rows, methods, out_path):
     )
     axes = axes.ravel()
 
-    for ax, (n_ann, minority) in zip(axes, CONDITIONS):
+    for ax, (k, n_ann, minority) in zip(axes, panels):
         condition_df = df[
-            (df["n_ann"] == n_ann)
+            (df["k"] == k)
+            & (df["n_ann"] == n_ann)
             & (df["minority"] == minority)
             & (df["method"].isin(methods))
         ]
@@ -264,7 +268,7 @@ def plot(rows, methods, out_path):
             ]:
                 sim_df = method_df[method_df["simulation"] == simulation]
                 opacity = (
-                    1.0 if simulation == SIMULATION_UNIDIRECTIONAL else 0.3
+                    0.3 if simulation == SIMULATION_UNIDIRECTIONAL else 1
                 )
 
                 if len(sim_df) == 0:
@@ -290,10 +294,10 @@ def plot(rows, methods, out_path):
 
         ax.set_xlabel("")
         ax.set_ylabel("")
-        ax.set_title(_condition_title(n_ann, minority))
+        ax.set_title(_condition_title(k, n_ann, minority))
         ax.set_ylim(-0.04, 1.08)
 
-    for ax in axes[len(CONDITIONS) :]:
+    for ax in axes[len(panels) :]:
         ax.set_visible(False)
 
     method_handles = [
@@ -312,12 +316,13 @@ def plot(rows, methods, out_path):
 
     fig.legend(
         handles=method_handles,
-        loc="lower right",
+        loc="lower center",
         title="Method",
+        ncols=len(method_handles)
     )
 
     fig.suptitle(
-        "Apunim vs. prior approaches on polarization subgroup attribution"
+        "Multi-group ablation: detection when one of k groups drives polarization"
     )
     fig.supylabel("Detection rate")
     fig.supxlabel(r"Maximum group effect size $\delta$")
@@ -328,11 +333,9 @@ def plot(rows, methods, out_path):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=(
-            "Compare apunim against agreement-based and other statistical "
-            "attribution baselines on synthetic data with comment-specific "
-            "group polarization. Both unidirectional and bidirectional "
-            "simulation models are run and displayed in a single plot, "
-            "distinguished by line style."
+            "Multi-group ablation: compare apunim and other methods when "
+            "only one of k groups causes polarization. Runs unidirectional "
+            "and bidirectional simulations for k in {3, 5, 10}."
         )
     )
 

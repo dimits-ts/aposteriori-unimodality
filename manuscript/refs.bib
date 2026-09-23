@@ -971,3 +971,243 @@
 	},
 	series = {FAccT '25}
 }
+
+@inproceedings{sharma_rlaif,
+	author = {Sharma, Archit and Keh, Sedrick and Mitchell, Eric and Finn, Chelsea and Arora, Kushal and Kollar, Thomas},
+	booktitle = {Advances in Neural Information Processing Systems},
+	doi = {10.52202/079017-0919},
+	editor = {A. Globerson and L. Mackey and D. Belgrave and A. Fan and U. Paquet and J. Tomczak and C. Zhang},
+	pages = {29166--29190},
+	publisher = {Curran Associates, Inc.},
+	title = {A Critical Evaluation of AI Feedback for Aligning Large Language Models},
+	url = {https://proceedings.neurips.cc/paper_files/paper/2024/file/33870b3e099880cd8e705cd07173ac27-Paper-Conference.pdf},
+	volume = {37},
+	year = {2024}
+}
+
+@article{davani-etal-2022-dealing,
+	title = "Dealing with Disagreements: Looking Beyond the Majority Vote in Subjective Annotations",
+	author = "Mostafazadeh Davani, Aida  and
+	D{\'i}az, Mark  and
+	Prabhakaran, Vinodkumar",
+	editor = "Roark, Brian  and
+	Nenkova, Ani",
+	journal = "Transactions of the Association for Computational Linguistics",
+	volume = "10",
+	year = "2022",
+	address = "Cambridge, MA",
+	publisher = "MIT Press",
+	url = "https://aclanthology.org/2022.tacl-1.6/",
+	doi = "10.1162/tacl_a_00449",
+	pages = "92--110",
+	abstract = "Majority voting and averaging are common approaches used to resolve annotator disagreements and derive single ground truth labels from multiple annotations. However, annotators may systematically disagree with one another, often reflecting their individual biases and values, especially in the case of subjective tasks such as detecting affect, aggression, and hate speech. Annotator disagreements may capture important nuances in such tasks that are often ignored while aggregating annotations to a single ground truth. In order to address this, we investigate the efficacy of multi-annotator models. In particular, our multi-task based approach treats predicting each annotators' judgements as separate subtasks, while sharing a common learned representation of the task. We show that this approach yields same or better performance than aggregating labels in the data prior to training across seven different binary classification tasks. Our approach also provides a way to estimate uncertainty in predictions, which we demonstrate better correlate with annotation disagreements than traditional methods. Being able to model uncertainty is especially useful in deployment scenarios where knowing when not to make a prediction is important."
+}
+
+@inproceedings{leonardelli-etal-2023-semeval,
+	title = "{S}em{E}val-2023 Task 11: Learning with Disagreements ({L}e{W}i{D}i)",
+	author = "Leonardelli, Elisa  and
+	Abercrombie, Gavin  and
+	Almanea, Dina  and
+	Basile, Valerio  and
+	Fornaciari, Tommaso  and
+	Plank, Barbara  and
+	Rieser, Verena  and
+	Uma, Alexandra  and
+	Poesio, Massimo",
+	editor = {Ojha, Atul Kr.  and
+	Do{\u{g}}ru{\"o}z, A. Seza  and
+	Da San Martino, Giovanni  and
+	Tayyar Madabushi, Harish  and
+	Kumar, Ritesh  and
+	Sartori, Elisa},
+	booktitle = "Proceedings of the 17th International Workshop on Semantic Evaluation (SemEval-2023)",
+	month = jul,
+	year = "2023",
+	address = "Toronto, Canada",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/2023.semeval-1.314/",
+	doi = "10.18653/v1/2023.semeval-1.314",
+	pages = "2304--2318",
+	abstract = "NLP datasets annotated with human judgments are rife with disagreements between the judges. This is especially true for tasks depending on subjective judgments such as sentiment analysis or offensive language detection. Particularly in these latter cases, the NLP community has come to realize that the common approach of reconciling' these different subjective interpretations risks misrepresenting the evidence. Many NLP researchers have therefore concluded that rather than eliminating disagreements from annotated corpora, we should preserve themindeed, some argue that corpora should aim to preserve all interpretations produced by annotators. But this approach to corpus creation for NLP has not yet been widely accepted. The objective of the Le-Wi-Di series of shared tasks is to promote this approach to developing NLP models by providing a unified framework for training and evaluating with such datasets. We report on the second such shared task, which differs from the first edition in three crucial respects: (i) it focuses entirely on NLP, instead of both NLP and computer vision tasks in its first edition; (ii) it focuses on subjective tasks, instead of covering different types of disagreements as training with aggregated labels for subjective NLP tasks is in effect a misrepresentation of the data; and (iii) for the evaluation, we concentrated on soft approaches to evaluation. This second edition of Le-Wi-Di attracted a wide array of partici- pants resulting in 13 shared task submission papers."
+}
+
+@ARTICLE{uma_2022_scaling,
+	
+	AUTHOR={Uma, Alexandra  and Almanea, Dina  and Poesio, Massimo },
+	
+	TITLE={Scaling and Disagreements: Bias, Noise, and Ambiguity},
+	
+	JOURNAL={Frontiers in Artificial Intelligence},
+	
+	VOLUME={Volume 5 - 2022},
+	
+	YEAR={2022},
+	
+	URL={https://www.frontiersin.org/journals/artificial-intelligence/articles/10.3389/frai.2022.818451},
+	
+	DOI={10.3389/frai.2022.818451},
+	
+	ISSN={2624-8212},
+	
+	ABSTRACT={Crowdsourced data are often rife with disagreement, whether because of genuine item ambiguity, overlapping labels,  subjectivity or annotator error.  Hence,  a variety of methods have been developed for learning from data containing disagreement. One of the observations emerging from this work is that different methods appear to work best depending on characteristics of the6dataset such as the level of noise. In this paper, we investigate the use of an approach developed to estimate noise, temperature scaling, in learning from data containing disagreements. We find that temperature scaling works with data in which the disagreements are the result of label overlap, but not with data in which the disagreements are due to annotator bias, as in, e.g., subjective tasks such as labelling an item as offensive or not. We also find that disagreements due to ambiguity do not fit perfectly in either category.}}
+	
+	@inproceedings{abercrombie-etal-2025-consistency,
+		title = "Consistency is Key: Disentangling Label Variation in Natural Language Processing with Intra-Annotator Agreement",
+		author = "Abercrombie, Gavin  and
+		Dinkar, Tanvi  and
+		Cercas Curry, Amanda  and
+		Rieser, Verena  and
+		Hovy, Dirk",
+		editor = "Abercrombie, Gavin  and
+		Basile, Valerio  and
+		Frenda, Simona  and
+		Tonelli, Sara  and
+		Dudy, Shiran",
+		booktitle = "Proceedings of the The 4th Workshop on Perspectivist Approaches to NLP",
+		month = nov,
+		year = "2025",
+		address = "Suzhou, China",
+		publisher = "Association for Computational Linguistics",
+		url = "https://aclanthology.org/2025.nlperspectives-1.6/",
+		doi = "10.18653/v1/2025.nlperspectives-1.6",
+		pages = "63--74",
+		ISBN = "979-8-89176-350-0",
+		abstract = "We commonly use agreement measures to assess the utility of judgements made by human annotators in Natural Language Processing (NLP) tasks. While inter-annotator agreement is frequently used as an indication of label reliability by measuring consistency between annotators, we argue for the additional use of intra-annotator agreement to measure label stability (and annotator consistency) over time. However, in a systematic review, we find that the latter is rarely reported in this field. Calculating these measures can act as important quality control and could provide insights into why annotators disagree. We conduct exploratory annotation experiments to investigate the relationships between these measures and perceptions of subjectivity and ambiguity in text items, finding that annotators provide inconsistent responses around 25{\%} of the time across four different NLP tasks."
+	}
+	
+	@inproceedings{vitsakis-etal-2023-ilab,
+		title = "i{L}ab at {S}em{E}val-2023 Task 11 Le-Wi-Di: Modelling Disagreement or Modelling Perspectives?",
+		author = "Vitsakis, Nikolas  and
+		Parekh, Amit  and
+		Dinkar, Tanvi  and
+		Abercrombie, Gavin  and
+		Konstas, Ioannis  and
+		Rieser, Verena",
+		editor = {Ojha, Atul Kr.  and
+		Do{\u{g}}ru{\"o}z, A. Seza  and
+		Da San Martino, Giovanni  and
+		Tayyar Madabushi, Harish  and
+		Kumar, Ritesh  and
+		Sartori, Elisa},
+		booktitle = "Proceedings of the 17th International Workshop on Semantic Evaluation (SemEval-2023)",
+		month = jul,
+		year = "2023",
+		address = "Toronto, Canada",
+		publisher = "Association for Computational Linguistics",
+		url = "https://aclanthology.org/2023.semeval-1.231/",
+		doi = "10.18653/v1/2023.semeval-1.231",
+		pages = "1660--1669",
+		abstract = "There are two competing approaches for modelling annotator disagreement: distributional soft-labelling approaches (which aim to capture the level of disagreement) or modelling perspectives of individual annotators or groups thereof. We adapt a multi-task architecture which has previously shown success in modelling perspectives to evaluate its performance on the SEMEVAL Task 11. We do so by combining both approaches, i.e. predicting individual annotator perspectives as an interim step towards predicting annotator disagreement. Despite its previous success, we found that a multi-task approach performed poorly on datasets which contained distinct annotator opinions, suggesting that this approach may not always be suitable when modelling perspectives. Furthermore, our results explain that while strongly perspectivist approaches might not achieve state-of-the-art performance according to evaluation metrics used by distributional approaches, our approach allows for a more nuanced understanding of individual perspectives present in the data. We argue that perspectivist approaches are preferable because they enable decision makers to amplify minority views, and that it is important to re-evaluate metrics to reflect this goal."
+	}
+	
+	@inproceedings{vitsakis-etal-2024-voices,
+		title = "Voices in a Crowd: Searching for clusters of unique perspectives",
+		author = "Vitsakis, Nikolas  and
+		Parekh, Amit  and
+		Konstas, Ioannis",
+		editor = "Al-Onaizan, Yaser  and
+		Bansal, Mohit  and
+		Chen, Yun-Nung",
+		booktitle = "Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing",
+		month = nov,
+		year = "2024",
+		address = "Miami, Florida, USA",
+		publisher = "Association for Computational Linguistics",
+		url = "https://aclanthology.org/2024.emnlp-main.696/",
+		doi = "10.18653/v1/2024.emnlp-main.696",
+		pages = "12517--12539",
+		abstract = "Language models have been shown to reproduce underlying biases existing in their training data, which is the majority perspective by default. Proposed solutions aim to capture minority perspectives by either modelling annotator disagreements or grouping annotators based on shared metadata, both of which face significant challenges. We propose a framework that trains models without encoding annotator metadata, extracts latent embeddings informed by annotator behaviour, and creates clusters of similar opinions, that we refer to as voices. Resulting clusters are validated post-hoc via internal and external quantitative metrics, as well a qualitative analysis to identify the type of voice that each cluster represents. Our results demonstrate the strong generalisation capability of our framework, indicated by resulting clusters being adequately robust, while also capturing minority perspectives based on different demographic factors throughout two distinct datasets."
+	}
+	
+	@article{davani-etal-2023-hate,
+		title = "Hate Speech Classifiers Learn Normative Social Stereotypes",
+		author = "Davani, Aida Mostafazadeh  and
+		Atari, Mohammad  and
+		Kennedy, Brendan  and
+		Dehghani, Morteza",
+		journal = "Transactions of the Association for Computational Linguistics",
+		volume = "11",
+		year = "2023",
+		address = "Cambridge, MA",
+		publisher = "MIT Press",
+		url = "https://aclanthology.org/2023.tacl-1.18/",
+		doi = "10.1162/tacl_a_00550",
+		pages = "300--319",
+		abstract = "Social stereotypes negatively impact individuals' judgments about different groups and may have a critical role in understanding language directed toward marginalized groups. Here, we assess the role of social stereotypes in the automated detection of hate speech in the English language by examining the impact of social stereotypes on annotation behaviors, annotated datasets, and hate speech classifiers. Specifically, we first investigate the impact of novice annotators' stereotypes on their hate-speech-annotation behavior. Then, we examine the effect of normative stereotypes in language on the aggregated annotators' judgments in a large annotated corpus. Finally, we demonstrate how normative stereotypes embedded in language resources are associated with systematic prediction errors in a hate-speech classifier. The results demonstrate that hate-speech classifiers reflect social stereotypes against marginalized groups, which can perpetuate social inequalities when propagated at scale. This framework, combining social-psychological and computational-linguistic methods, provides insights into sources of bias in hate-speech moderation, informing ongoing debates regarding machine learning fairness."
+	}
+	
+	@inproceedings{rottger-etal-2022-two,
+		title = "Two Contrasting Data Annotation Paradigms for Subjective {NLP} Tasks",
+		author = {R{\"o}ttger, Paul  and
+		Vidgen, Bertie  and
+		Hovy, Dirk  and
+		Pierrehumbert, Janet},
+		editor = "Carpuat, Marine  and
+		de Marneffe, Marie-Catherine  and
+		Meza Ruiz, Ivan Vladimir",
+		booktitle = "Proceedings of the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies",
+		month = jul,
+		year = "2022",
+		address = "Seattle, United States",
+		publisher = "Association for Computational Linguistics",
+		url = "https://aclanthology.org/2022.naacl-main.13/",
+		doi = "10.18653/v1/2022.naacl-main.13",
+		pages = "175--190",
+		abstract = "Labelled data is the foundation of most natural language processing tasks. However, labelling data is difficult and there often are diverse valid beliefs about what the correct data labels should be. So far, dataset creators have acknowledged annotator subjectivity, but rarely actively managed it in the annotation process. This has led to partly-subjective datasets that fail to serve a clear downstream use. To address this issue, we propose two contrasting paradigms for data annotation. The descriptive paradigm encourages annotator subjectivity, whereas the prescriptive paradigm discourages it. Descriptive annotation allows for the surveying and modelling of different beliefs, whereas prescriptive annotation enables the training of models that consistently apply one belief. We discuss benefits and challenges in implementing both paradigms, and argue that dataset creators should explicitly aim for one or the other to facilitate the intended use of their dataset. Lastly, we conduct an annotation experiment using hate speech data that illustrates the contrast between the two paradigms."
+	}
+	
+	@inproceedings{fleisig-etal-2023-majority,
+		title = "When the Majority is Wrong: Modeling Annotator Disagreement for Subjective Tasks",
+		author = "Fleisig, Eve  and
+		Abebe, Rediet  and
+		Klein, Dan",
+		editor = "Bouamor, Houda  and
+		Pino, Juan  and
+		Bali, Kalika",
+		booktitle = "Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing",
+		month = dec,
+		year = "2023",
+		address = "Singapore",
+		publisher = "Association for Computational Linguistics",
+		url = "https://aclanthology.org/2023.emnlp-main.415/",
+		doi = "10.18653/v1/2023.emnlp-main.415",
+		pages = "6715--6726",
+		abstract = "Though majority vote among annotators is typically used for ground truth labels in machine learning, annotator disagreement in tasks such as hate speech detection may reflect systematic differences in opinion across groups, not noise. Thus, a crucial problem in hate speech detection is determining if a statement is offensive to the demographic group that it targets, when that group may be a small fraction of the annotator pool. We construct a model that predicts individual annotator ratings on potentially offensive text and combines this information with the predicted target group of the text to predict the ratings of target group members. We show gains across a range of metrics, including raising performance over the baseline by 22{\%} at predicting individual annotators' ratings and by 33{\%} at predicting variance among annotators, which provides a metric for model uncertainty downstream. We find that annotators' ratings can be predicted using their demographic information as well as opinions on online content, and that non-invasive questions on annotators' online experiences minimize the need to collect demographic information when predicting annotators' opinions."
+	}
+	
+	@inproceedings{gupta_2023_same,
+		author = {Gupta, Soumyajit and Lee, Sooyong and De-Arteaga, Maria and Lease, Matthew},
+		title = {Same Same, But Different: Conditional Multi-Task Learning for Demographic-Specific Toxicity Detection},
+		year = {2023},
+		isbn = {9781450394161},
+		publisher = {Association for Computing Machinery},
+		address = {New York, NY, USA},
+		url = {https://doi.org/10.1145/3543507.3583290},
+		doi = {10.1145/3543507.3583290},
+		abstract = {Algorithmic bias often arises as a result of differential subgroup validity, in which predictive relationships vary across groups. For example, in toxic language detection, comments targeting different demographic groups can vary markedly across groups. In such settings, trained models can be dominated by the relationships that best fit the majority group, leading to disparate performance. We propose framing toxicity detection as multi-task learning (MTL), allowing a model to specialize on the relationships that are relevant to each demographic group while also leveraging shared properties across groups. With toxicity detection, each task corresponds to identifying toxicity against a particular demographic group. However, traditional MTL requires labels for all tasks to be present for every data point. To address this, we propose Conditional MTL (CondMTL), wherein only training examples relevant to the given demographic group are considered by the loss function. This lets us learn group specific representations in each branch which are not cross contaminated by irrelevant labels. Results on synthetic and real data show that using CondMTL improves predictive recall over various baselines in general and for the minority demographic group in particular, while having similar overall accuracy.},
+		booktitle = {Proceedings of the ACM Web Conference 2023},
+		pages = {3689–3700},
+		numpages = {12},
+		keywords = {Multi-task learning, conditional loss, differential subgroup validity},
+		location = {Austin, TX, USA},
+		series = {WWW '23}
+	}
+	
+	@inproceedings{lee-etal-2023-large,
+		title = "Can Large Language Models Capture Dissenting Human Voices?",
+		author = "Lee, Noah  and
+		An, Na Min  and
+		Thorne, James",
+		editor = "Bouamor, Houda  and
+		Pino, Juan  and
+		Bali, Kalika",
+		booktitle = "Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing",
+		month = dec,
+		year = "2023",
+		address = "Singapore",
+		publisher = "Association for Computational Linguistics",
+		url = "https://aclanthology.org/2023.emnlp-main.278/",
+		doi = "10.18653/v1/2023.emnlp-main.278",
+		pages = "4569--4585",
+		abstract = "Large language models (LLMs) have shown impressive achievements in solving a broad range of tasks. Augmented by instruction fine-tuning, LLMs have also been shown to generalize in zero-shot settings as well. However, whether LLMs closely align with the human disagreement distribution has not been well-studied, especially within the scope of natural language inference (NLI). In this paper, we evaluate the performance and alignment of LLM distribution with humans using two different techniques to estimate the multinomial distribution: Monte Carlo Estimation (MCE) and Log Probability Estimation (LPE). As a result, we show LLMs exhibit limited ability in solving NLI tasks and simultaneously fail to capture human disagreement distribution. The inference and human alignment performances plunge even further on data samples with high human disagreement levels, raising concerns about their natural language understanding (NLU) ability and their representativeness to a larger human population."
+	}

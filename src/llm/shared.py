@@ -10,6 +10,7 @@ and computing the per-comment nDFU values that both the apunim grid
 (plots.py) and the prompt-sensitivity ANOVA (stats.py) are built from.
 """
 
+import re
 from pathlib import Path
 
 import numpy as np
@@ -456,7 +457,7 @@ def load_human_datasets(
             ),
             "kumar": LazyDatasetLoader(
                 lambda p=kumar_path: KumarDataset(
-                    dataset_path=p, num_samples=3_000
+                    dataset_path=p, num_samples=1_000
                 )
             ),
         }

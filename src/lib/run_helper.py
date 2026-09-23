@@ -171,78 +171,6 @@ def run_all_results_resampled(
     return combined_df
 
 
-def results_to_latex(
-    res_df: pd.DataFrame,
-    output_path: Path,
-    dataset_name: str,
-    table_label: str,
-    columns: list[str] | None = None,
-    two_column: bool = False,
-    small_fontsize: bool = True,
-) -> None:
-    """
-    Export results to a single LaTeX table where apunim values include
-    significance stars (as superscripts), and the pvalue column is removed.
-    """
-    res_df = (
-        res_df.replace("_", r"\_", regex=True)
-        .rename(columns={"Unnamed: 1": "Value"})
-        .set_index(["SDB Feature", "Value"])
-    )
-
-    if "pvalue" in res_df.columns and "apunim" in res_df.columns:
-        res_df["apunim"] = res_df.apply(
-            lambda r: (
-                f"{r['apunim']:.4f}{significance_superscript(r['pvalue'])}"
-                if not pd.isna(r["pvalue"])
-                else "---"
-            ),
-            axis=1,
-        )
-        res_df = res_df.drop(columns=["pvalue"])
-
-    if columns is None:
-        columns = list(res_df.columns)
-
-    latex_str = res_df.to_latex(
-        caption=(
-            f"Aposteriori unimodality results for the {dataset_name} "
-            "dataset."
-        ),
-        label=table_label,
-        escape=False,  # allow LaTeX math ($^{*}$)
-        columns=columns,
-        position="ht",
-        index=True,
-        float_format="%.4f",
-        multirow=False,
-        longtable=dataset_name == "kumar",
-    )
-
-    # Small font
-    if small_fontsize:
-        latex_str = latex_str.replace(
-            r"\begin{table}[ht]",
-            r"\begin{table}[ht]\centering",
-        )
-
-    # Two-column layout support
-    if two_column:
-        latex_str = latex_str.replace(r"\begin{table}", r"\begin{table*}")
-        latex_str = latex_str.replace(r"\end{table}", r"\end{table*}")
-        latex_str = re.sub(
-            r"\\begin\{tabular\}\{([^}]+)\}",
-            r"\\centering\\begin{tabular*}{\\textwidth}"
-            r"{@{\\extracolsep{\\fill}}\1}",
-            latex_str,
-        )
-        latex_str = latex_str.replace(r"\end{tabular}", r"\end{tabular*}")
-
-    # Write to file
-    output_path.write_text(latex_str)
-    print(f"Table exported to {output_path.resolve()}")
-
-
 def _extract_annotations_and_attributes(
     df: pd.DataFrame, value_col: str, feature_col: str, comment_key_col: str
 ) -> tuple[list, list]:
@@ -297,17 +225,6 @@ def _run_aposteriori(
     return results
 
 
-def significance_superscript(p):
-    if pd.isna(p):
-        return ""
-    elif p < 0.001:
-        return r"$^{***}$"
-    elif p < 0.01:
-        return r"$^{**}$"
-    elif p < 0.05:
-        return r"$^{*}$"
-    else:
-        return ""
 
 
 def _compute_bins(

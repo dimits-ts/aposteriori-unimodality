@@ -1,4 +1,7 @@
+import re
 from pathlib import Path
+
+import pandas as pd
 
 
 def skip_if_exists(path: Path) -> bool:
@@ -11,3 +14,32 @@ def skip_if_exists(path: Path) -> bool:
         print(f"Skipping (already exists): {path}")
         return True
     return False
+
+
+def center_table_latex(latex_str: str) -> str:
+    latex_str = re.sub(
+        r"(\\begin\{table\}\[[^\]]*\])",
+        lambda m: m.group(1) + "\n\\centering",
+        latex_str,
+    )
+    return latex_str
+
+
+def trim_numeric_col_latex(col: pd.Series, float_format: str) -> pd.Series:
+    return pd.to_numeric(
+        col,
+        errors="coerce",
+    ).map(lambda x: "---" if pd.isna(x) else f"{x:{float_format}}")
+
+
+def significance_superscript(p):
+    if pd.isna(p):
+        return ""
+    elif p < 0.001:
+        return r"$^{***}$"
+    elif p < 0.01:
+        return r"$^{**}$"
+    elif p < 0.05:
+        return r"$^{*}$"
+    else:
+        return ""
