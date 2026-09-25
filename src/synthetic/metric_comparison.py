@@ -264,7 +264,7 @@ def plot(rows, methods, out_path):
             ]:
                 sim_df = method_df[method_df["simulation"] == simulation]
                 opacity = (
-                    1.0 if simulation == SIMULATION_UNIDIRECTIONAL else 0.3
+                    0.3 if simulation == SIMULATION_UNIDIRECTIONAL else 1
                 )
 
                 if len(sim_df) == 0:
