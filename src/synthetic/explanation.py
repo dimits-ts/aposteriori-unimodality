@@ -202,7 +202,7 @@ def plot_annotation_distributions(
     fig.supylabel(r"Low $\rightarrow$ High polarization")
 
     fig.suptitle(
-        r"``\textbf{We will never stop in our fight against Radical Islamic Terrorism}''"
+        r"``\textit{We will never stop in our fight against Radical Islamic Terrorism}''"
     )
 
     legend_handles = [
