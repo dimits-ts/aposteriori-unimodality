@@ -317,7 +317,7 @@ def plot(rows, methods, out_path):
     )
 
     fig.suptitle(
-        "Apunim vs. prior approaches on polarization subgroup attribution"
+        "Prior approaches fail at attributing systematic disagreement to groups"
     )
     fig.supylabel("Detection rate")
     fig.supxlabel(r"Maximum group effect size $\delta$")
