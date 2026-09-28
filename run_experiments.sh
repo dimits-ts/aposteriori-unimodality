@@ -16,23 +16,29 @@ export -f run_and_log
 mkdir -p logs
 
 JOBS=(
-'variance_analysis|python src/variance_analysis.py --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --sap-path=data/datasets/sap.csv --kumar-path=data/datasets/kumar.json --graph-output-dir=graphs --cache-dir=cache --latex-output-dir=manuscript/generated'
+'variance_analysis|python -m src.synthetic.variance_analysis --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --sap-path=data/datasets/sap.csv --kumar-path=data/datasets/kumar.json --graph-output-dir=graphs --cache-dir=cache --latex-output-dir=manuscript/generated'
 
-'explanation|python src/explanation.py --graph-output-dir=graphs'
+'explanation|python -m src.synthetic.explanation --graph-output-dir=graphs'
 
-'dices|python src/dices.py --dataset-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dataset-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --graph-output-dir=graphs --output-dir=output --ablation-dir=ablation'
+'dices|python -m src.human.dices --dataset-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dataset-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --graph-output-dir=graphs --output-dir=output/human/main --ablation-dir=output/human/ablations'
 
-'sap|python src/sap.py --dataset-path=data/datasets/sap.csv --output-dir=output --graph-output-dir=graphs'
+'sap|python -m src.human.sap --dataset-path=data/datasets/sap.csv --output-dir=output/human/main --graph-output-dir=graphs'
 
-'metric_comparison|python src/metric_comparison.py --output-dir=output --graph-output-dir=graphs --label="apunim (fixed binning)"'
+'metric_comparison|python -m src.synthetic.metric_comparison --cache-path=cache/metric-comparison.csv --graph-output-path=graphs/metric_comparison.png'
 
-'kumar|python src/kumar.py --dataset-path=data/datasets/kumar.json --output-dir=output --graph-output-dir=graphs --ablation-dir=ablation'
+'metric_comparison_multiple|python -m src.synthetic.metric_comparison_multiple --cache-path=cache/metric-comparison-multiple.csv --graph-output-path=graphs/metric_comparison_multiple.png'
+
+'human_comparison|python -m src.synthetic.human_comparison --dices-350-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-990-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --sap-path=data/datasets/sap.csv --kumar-path=data/datasets/kumar.json --cache-dir=cache --latex-output-dir=manuscript/generated'
+
+'kumar|python -m src.human.kumar --dataset-path=data/datasets/kumar.json --output-dir=output/human/main --graph-output-dir=graphs --ablation-dir=output/human/ablations --latex-output-dir=manuscript/generated --graph-output-dir=graphs --latex-output-dir=manuscript/generated'
+
+'llm|python -m src.llm.analysis --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --sap-path=data/datasets/sap.csv --kumar-path=data/datasets/kumar.json --annotations-dir=output/llm/annotations --paraphrase-dir=output/llm/ablations/paraphrase --repeat-dir=output/llm/ablations/repeat --graph-output-dir=graphs --latex-output-dir=manuscript/generated --cache-dir=cache --exclude-models olmo7b llama8b'
 )
 
 printf "%s\n" "${JOBS[@]}" |
-parallel --colsep '\|' -j8 --delay 0.1 run_and_log {1} {2}
+  parallel --colsep '\|' -j8 --delay 0.1 run_and_log "{1}" "{2}"
 
-python src/export_results.py \
-    --results-dir=output \
+python -m src.human.export_results \
+    --results-dir=output/human/main \
     --latex-output-dir=manuscript/generated \
     --graph-output-dir=graphs

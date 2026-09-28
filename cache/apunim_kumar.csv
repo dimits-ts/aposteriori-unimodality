@@ -1,0 +1,1244 @@
+,SDB Feature,Value,apunim,pvalue,support,Model,Prompt
+0,Age,1) 18 - 24,0.0,,9,llama70b,default
+1,Age,2) 25 - 34,,,3,llama70b,default
+2,Age,3) 35 - 44,1.9032394707859828e-16,0.9096655293982665,7,llama70b,default
+3,Age,4) 45 - 54,0.0,,3,llama70b,default
+4,Age,5) 55 - 64,0.0,,3,llama70b,default
+5,Age,6) 65 or older,1.6653345369377353e-16,,4,llama70b,default
+6,Age,Prefer not to say,0.0,,6,llama70b,default
+7,Age,Under 18,0.0,,10,llama70b,default
+8,Education,1) No high school,0.0,,9,llama70b,default
+9,Education,2) High School graduate,0.0,,6,llama70b,default
+10,Education,"3) College, no degree",0.0,,3,llama70b,default
+11,Education,4) Associate degree,5.329070518200753e-16,0.8743340836219966,8,llama70b,default
+12,Education,5) Bachelor's degree,0.0,0.8743340836219966,12,llama70b,default
+13,Education,7) Professional degree,0.0,,3,llama70b,default
+14,Education,8) Doctoral degree,0.0,,3,llama70b,default
+15,Education,Other,0.0,,3,llama70b,default
+16,Education,Prefer not to say,0.0,,3,llama70b,default
+17,Ethnicity,Asian,0.0684798445847499,0.9531631078979925,23,llama70b,default
+18,Ethnicity,Black,0.0,0.9531631078979925,12,llama70b,default
+19,Ethnicity,Hispanic,0.0,0.9531631078979925,18,llama70b,default
+20,Ethnicity,Multiracial,0.0,,9,llama70b,default
+21,Ethnicity,Other,0.0,0.9531631078979925,16,llama70b,default
+22,Ethnicity,Unknown,-0.1902834008097165,0.9531631078979925,14,llama70b,default
+23,Ethnicity,White,1.0408340855860843e-16,0.9531631078979925,16,llama70b,default
+24,Gender,Female,-0.010207237859572936,0.9556128123566155,72,llama70b,default
+25,Gender,Male,0.003134796238244503,0.9556128123566155,58,llama70b,default
+26,Gender,Nonbinary,-0.025151101579255174,0.9556128123566155,51,llama70b,default
+27,Gender,Unknown,0.01095197978096032,0.9556128123566155,77,llama70b,default
+28,Has Been Targeted,False,0.0021571094733059165,0.9236496536500003,341,llama70b,default
+29,Has Been Targeted,True,-0.056825604180274165,0.4396895188971995,340,llama70b,default
+30,Is Parent,No,-0.00994200497100213,0.9034689039464434,129,llama70b,default
+31,Is Parent,Prefer not to say,-0.02088273540885787,0.9034689039464434,154,llama70b,default
+32,Is Parent,Yes,0.024042742653606432,0.9034689039464434,136,llama70b,default
+33,Is Transgender,No,0.0200377522869176,0.7856054429664472,135,llama70b,default
+34,Is Transgender,Prefer not to say,-0.025143361270401437,0.7856054429664472,136,llama70b,default
+35,Is Transgender,Yes,0.015910958392470483,0.7856054429664472,142,llama70b,default
+36,Political Affiliation,Conservative,2.3980817331903383e-16,0.9741979628751634,29,llama70b,default
+37,Political Affiliation,Independent,2.1035804677108233e-16,0.9741979628751634,39,llama70b,default
+38,Political Affiliation,Liberal,0.0,0.9741979628751634,32,llama70b,default
+39,Political Affiliation,Other,0.0,0.9741979628751634,30,llama70b,default
+40,Political Affiliation,Prefer not to say,1.0560658039117345e-16,0.9741979628751634,41,llama70b,default
+41,Religion Important,1) No,-0.007244432519452756,0.9665302128061164,44,llama70b,default
+42,Religion Important,2) Not very,-0.020568070519098616,0.9665302128061164,33,llama70b,default
+43,Religion Important,3) Somewhat,1.0248212535001446e-16,0.9665302128061164,26,llama70b,default
+44,Religion Important,4) Very,0.006470165348670027,0.9665302128061164,46,llama70b,default
+45,Religion Important,Prefer not to say,0.01466992665036691,0.9665302128061164,42,llama70b,default
+46,Seen Toxicity,False,0.02681173499125719,0.5078718066753163,345,llama70b,default
+47,Seen Toxicity,True,-0.032464758650149285,0.5078718066753163,320,llama70b,default
+48,Sexual Orientation,Bisexual,1.0658141036401505e-16,0.9692100671744828,25,llama70b,default
+49,Sexual Orientation,Heterosexual,1.959217102279688e-16,0.9692100671744828,35,llama70b,default
+50,Sexual Orientation,Homosexual,1.0408340855860843e-16,0.9692100671744828,16,llama70b,default
+51,Sexual Orientation,Other,0.0,0.9692100671744828,45,llama70b,default
+52,Sexual Orientation,Prefer not to say,0.0,0.9692100671744828,37,llama70b,default
+53,Technology Impact,1) Very negative,0.08459869848156164,0.9789222719258857,33,llama70b,default
+54,Technology Impact,2) Somewhat negative,1.0802169969325848e-16,0.9789222719258857,37,llama70b,default
+55,Technology Impact,3) Neutral,2.664535259100376e-16,0.9789222719258857,26,llama70b,default
+56,Technology Impact,4) Somewhat positive,-0.01674196120116903,0.9789222719258857,41,llama70b,default
+57,Technology Impact,5) Very positive,-0.0384615384615385,0.9789222719258857,31,llama70b,default
+58,Toxicity Problem,1) Never,-0.04906808672499046,0.9779339726070864,36,llama70b,default
+59,Toxicity Problem,2) Rarely,0.0,0.9779339726070864,38,llama70b,default
+60,Toxicity Problem,3) Occasionally,-0.008746355685131144,0.9779339726070864,35,llama70b,default
+61,Toxicity Problem,4) Frequently,-0.00773195876288657,0.9779339726070864,39,llama70b,default
+62,Toxicity Problem,5) Very Frequently,0.05017502917152865,0.9779339726070864,24,llama70b,default
+63,Age,1) 18 - 24,0.0,0.9669629736927599,31,olmo32b,default
+64,Age,2) 25 - 34,2.599546594244269e-16,0.9669629736927599,52,olmo32b,default
+65,Age,3) 35 - 44,0.0,0.9669629736927599,25,olmo32b,default
+66,Age,4) 45 - 54,-0.00530503978779844,0.9669629736927599,54,olmo32b,default
+67,Age,5) 55 - 64,0.0,0.9669629736927599,49,olmo32b,default
+68,Age,6) 65 or older,-0.029126213592232903,0.9669629736927599,36,olmo32b,default
+69,Age,Prefer not to say,-0.015668943350742964,0.9669629736927599,58,olmo32b,default
+70,Age,Under 18,0.0,0.9669629736927599,42,olmo32b,default
+71,Education,1) No high school,2.220446049250314e-16,0.9435276693230452,16,olmo32b,default
+72,Education,2) High School graduate,0.0,0.9435276693230452,24,olmo32b,default
+73,Education,"3) College, no degree",0.0,,9,olmo32b,default
+74,Education,4) Associate degree,2.498001805406602e-16,0.9435276693230452,39,olmo32b,default
+75,Education,5) Bachelor's degree,2.5376526277146444e-16,0.9435276693230452,24,olmo32b,default
+76,Education,6) Master's degree,,,3,olmo32b,default
+77,Education,7) Professional degree,0.0,0.9435276693230452,24,olmo32b,default
+78,Education,8) Doctoral degree,0.0,0.9435276693230452,33,olmo32b,default
+79,Education,Other,1.0248212535001443e-16,0.9435276693230452,13,olmo32b,default
+80,Education,Prefer not to say,0.0,0.9435276693230452,28,olmo32b,default
+81,Ethnicity,Asian,1.0860877414811315e-16,0.9829628527455898,46,olmo32b,default
+82,Ethnicity,Black,2.4671622769447924e-16,0.9829628527455898,63,olmo32b,default
+83,Ethnicity,Hispanic,0.0,0.9829628527455898,70,olmo32b,default
+84,Ethnicity,Multiracial,2.481674996220938e-16,0.9829628527455898,62,olmo32b,default
+85,Ethnicity,Other,0.0,0.9829628527455898,40,olmo32b,default
+86,Ethnicity,Unknown,2.422304781000342e-16,0.9829628527455898,66,olmo32b,default
+87,Ethnicity,White,0.0,0.9829628527455898,55,olmo32b,default
+88,Gender,Female,0.036495243870087464,0.9911353527812938,291,olmo32b,default
+89,Gender,Male,0.016713091922005586,0.9911353527812938,250,olmo32b,default
+90,Gender,Nonbinary,-0.0026075619295958183,0.9911353527812938,271,olmo32b,default
+91,Gender,Unknown,-0.011574499356972218,0.9911353527812938,326,olmo32b,default
+92,Has Been Targeted,False,0.003541118814248124,0.8218709049044757,1465,olmo32b,default
+93,Has Been Targeted,True,-0.020557192839825125,0.5131428741399512,1529,olmo32b,default
+94,Is Parent,No,-0.016088431651526316,0.7983866013773178,542,olmo32b,default
+95,Is Parent,Prefer not to say,0.007900270920561862,0.7983866013773178,643,olmo32b,default
+96,Is Parent,Yes,0.02301150575287667,0.7983866013773178,592,olmo32b,default
+97,Is Transgender,No,0.014440976270166495,0.8866889210506259,597,olmo32b,default
+98,Is Transgender,Prefer not to say,-0.005137270065735106,0.8866889210506259,604,olmo32b,default
+99,Is Transgender,Yes,0.008521091620926517,0.8866889210506259,575,olmo32b,default
+100,Political Affiliation,Conservative,-0.0030211480362537656,0.9895045740113935,175,olmo32b,default
+101,Political Affiliation,Independent,0.009057683139996681,0.9895045740113935,164,olmo32b,default
+102,Political Affiliation,Liberal,0.0,0.9895045740113935,170,olmo32b,default
+103,Political Affiliation,Other,-0.010146003464489066,0.9895045740113935,144,olmo32b,default
+104,Political Affiliation,Prefer not to say,-0.006337532274469688,0.9895045740113935,144,olmo32b,default
+105,Religion Important,1) No,-0.018432489135321414,0.9594994489962825,161,olmo32b,default
+106,Religion Important,2) Not very,-0.020993850286279557,0.9594994489962825,166,olmo32b,default
+107,Religion Important,3) Somewhat,0.016691957511381004,0.9594994489962825,125,olmo32b,default
+108,Religion Important,4) Very,0.010800332317917279,0.9594994489962825,177,olmo32b,default
+109,Religion Important,Prefer not to say,-0.002654226654869635,0.9594994489962825,167,olmo32b,default
+110,Seen Toxicity,False,-0.011697799149250862,0.5879299541998625,1497,olmo32b,default
+111,Seen Toxicity,True,-0.011368940718529591,0.5879299541998625,1434,olmo32b,default
+112,Sexual Orientation,Bisexual,-0.026179334766662222,0.9486843236738912,170,olmo32b,default
+113,Sexual Orientation,Heterosexual,-0.02311174648558489,0.9486843236738912,143,olmo32b,default
+114,Sexual Orientation,Homosexual,0.03906352755491269,0.9486843236738912,159,olmo32b,default
+115,Sexual Orientation,Other,-0.0022675736961451517,0.9801870634041435,156,olmo32b,default
+116,Sexual Orientation,Prefer not to say,-0.019498916726848364,0.9486843236738912,190,olmo32b,default
+117,Technology Impact,1) Very negative,0.0,0.9395908220452074,148,olmo32b,default
+118,Technology Impact,2) Somewhat negative,0.010267210741082285,0.9395908220452074,173,olmo32b,default
+119,Technology Impact,3) Neutral,-0.028355387523629497,0.9395908220452074,153,olmo32b,default
+120,Technology Impact,4) Somewhat positive,0.006622516556291285,0.9395908220452074,150,olmo32b,default
+121,Technology Impact,5) Very positive,0.02512272596015034,0.9395908220452074,133,olmo32b,default
+122,Toxicity Problem,1) Never,-0.009556907037359168,0.9577428949888966,193,olmo32b,default
+123,Toxicity Problem,2) Rarely,-0.013394786115512085,0.9577428949888966,178,olmo32b,default
+124,Toxicity Problem,3) Occasionally,0.008331129330864726,0.9577428949888966,174,olmo32b,default
+125,Toxicity Problem,4) Frequently,-0.0011890606420930116,0.9577428949888966,165,olmo32b,default
+126,Toxicity Problem,5) Very Frequently,-0.006004002668445547,0.9577428949888966,174,olmo32b,default
+127,Age,1) 18 - 24,1.9032394707859828e-16,0.9435276693230448,7,qwen32b,default
+128,Age,2) 25 - 34,0.0,0.9435276693230448,21,qwen32b,default
+129,Age,3) 35 - 44,1.0248212535001446e-16,0.9435276693230448,13,qwen32b,default
+130,Age,4) 45 - 54,0.0,,3,qwen32b,default
+131,Age,5) 55 - 64,0.0,,6,qwen32b,default
+132,Age,6) 65 or older,0.16618075801749263,0.9435276693230448,9,qwen32b,default
+133,Age,Prefer not to say,-0.22178988326848248,0.9435276693230448,6,qwen32b,default
+134,Age,Under 18,1.6653345369377353e-16,,4,qwen32b,default
+135,Education,1) No high school,0.0,,3,qwen32b,default
+136,Education,5) Bachelor's degree,0.0,,9,qwen32b,default
+137,Education,7) Professional degree,0.0,,3,qwen32b,default
+138,Education,8) Doctoral degree,0.0,,6,qwen32b,default
+139,Education,Prefer not to say,0.0,,3,qwen32b,default
+140,Ethnicity,Asian,0.0,,6,qwen32b,default
+141,Ethnicity,Black,0.0,,6,qwen32b,default
+142,Ethnicity,Hispanic,0.0,,15,qwen32b,default
+143,Ethnicity,Multiracial,1.0408340855860843e-16,0.9531631078979915,16,qwen32b,default
+144,Ethnicity,Other,0.0,,3,qwen32b,default
+145,Ethnicity,Unknown,1.6653345369377353e-16,,4,qwen32b,default
+146,Ethnicity,White,0.0,0.9531631078979915,13,qwen32b,default
+147,Gender,Female,-0.10873440285204983,0.9804658890994251,38,qwen32b,default
+148,Gender,Male,0.016875811337083615,0.9804658890994251,52,qwen32b,default
+149,Gender,Nonbinary,1.0824674490095277e-16,0.9804658890994251,40,qwen32b,default
+150,Gender,Unknown,0.05977108944467997,0.9804658890994251,22,qwen32b,default
+151,Has Been Targeted,False,0.013547415955845453,0.8003785971758561,199,qwen32b,default
+152,Has Been Targeted,True,-0.04089178301418225,0.8003785971758561,207,qwen32b,default
+153,Is Parent,No,0.045194441200513726,0.8519455088313368,103,qwen32b,default
+154,Is Parent,Prefer not to say,-0.017137096774193582,0.8519455088313368,63,qwen32b,default
+155,Is Parent,Yes,0.01404056162246501,0.8519455088313368,49,qwen32b,default
+156,Is Transgender,No,0.028806584362139984,0.6108643016582972,97,qwen32b,default
+157,Is Transgender,Prefer not to say,0.030759162303664933,0.6108643016582972,93,qwen32b,default
+158,Is Transgender,Yes,-0.10333048676345004,0.6108643016582972,79,qwen32b,default
+159,Political Affiliation,Conservative,-0.08414424728105303,0.9955571515255855,24,qwen32b,default
+160,Political Affiliation,Independent,-0.054170249355116065,0.9955571515255855,26,qwen32b,default
+161,Political Affiliation,Liberal,0.03718694662281827,0.9955571515255855,45,qwen32b,default
+162,Political Affiliation,Other,1.013681892049056e-16,0.9955571515255855,23,qwen32b,default
+163,Political Affiliation,Prefer not to say,0.06075216972034732,0.9955571515255855,19,qwen32b,default
+164,Religion Important,1) No,-0.013563501849568217,0.9652200833739106,24,qwen32b,default
+165,Religion Important,2) Not very,0.0,0.9652200833739106,19,qwen32b,default
+166,Religion Important,3) Somewhat,0.0,0.9652200833739106,22,qwen32b,default
+167,Religion Important,4) Very,0.0,0.9652200833739106,16,qwen32b,default
+168,Religion Important,Prefer not to say,0.0924697619976591,0.5105548111280512,25,qwen32b,default
+169,Seen Toxicity,False,0.01263745281470531,0.9954604521954937,211,qwen32b,default
+170,Seen Toxicity,True,-0.0036805062310324484,0.9954604521954937,164,qwen32b,default
+171,Sexual Orientation,Bisexual,0.0,0.9652200833739106,22,qwen32b,default
+172,Sexual Orientation,Heterosexual,-0.03314917127071826,0.9652200833739106,25,qwen32b,default
+173,Sexual Orientation,Homosexual,0.0,,12,qwen32b,default
+174,Sexual Orientation,Other,-0.06103286384976521,0.9652200833739106,12,qwen32b,default
+175,Sexual Orientation,Prefer not to say,2.1035804677108233e-16,0.9652200833739106,19,qwen32b,default
+176,Technology Impact,1) Very negative,1.0408340855860843e-16,0.9531631078979916,16,qwen32b,default
+177,Technology Impact,2) Somewhat negative,0.0,0.9531631078979916,16,qwen32b,default
+178,Technology Impact,3) Neutral,-0.3464052287581701,,11,qwen32b,default
+179,Technology Impact,4) Somewhat positive,0.13935144609991257,0.9531631078979916,14,qwen32b,default
+180,Technology Impact,5) Very positive,0.0,,3,qwen32b,default
+181,Toxicity Problem,1) Never,0.0,0.9600635240913502,16,qwen32b,default
+182,Toxicity Problem,2) Rarely,0.0,0.9600635240913502,21,qwen32b,default
+183,Toxicity Problem,3) Occasionally,1.0248212535001446e-16,0.9600635240913502,13,qwen32b,default
+184,Toxicity Problem,4) Frequently,9.992007221626408e-17,0.9600635240913502,10,qwen32b,default
+185,Toxicity Problem,5) Very Frequently,2.1035804677108233e-16,0.9600635240913502,19,qwen32b,default
+186,Age,1) 18 - 24,0.0,0.9900722714600663,31,qwen7b,default
+187,Age,2) 25 - 34,0.0,0.9900722714600663,21,qwen7b,default
+188,Age,3) 35 - 44,0.0,0.9900722714600663,15,qwen7b,default
+189,Age,4) 45 - 54,-0.0072202166064981215,0.9900722714600663,36,qwen7b,default
+190,Age,5) 55 - 64,0.0,0.9900722714600663,15,qwen7b,default
+191,Age,6) 65 or older,0.03092783505154648,0.9900722714600663,40,qwen7b,default
+192,Age,Prefer not to say,-0.03264812575574364,0.9900722714600663,40,qwen7b,default
+193,Age,Under 18,1.0248212535001446e-16,0.9900722714600663,26,qwen7b,default
+194,Education,1) No high school,0.0,,15,qwen7b,default
+195,Education,2) High School graduate,0.0,0.9604183564993375,16,qwen7b,default
+196,Education,"3) College, no degree",0.0,,6,qwen7b,default
+197,Education,4) Associate degree,2.0075265650756257e-16,0.9604183564993375,37,qwen7b,default
+198,Education,5) Bachelor's degree,5.828670879282074e-16,0.9604183564993375,23,qwen7b,default
+199,Education,6) Master's degree,0.0,,15,qwen7b,default
+200,Education,7) Professional degree,0.0,,12,qwen7b,default
+201,Education,8) Doctoral degree,0.0,0.9604183564993375,15,qwen7b,default
+202,Education,Other,0.0,,18,qwen7b,default
+203,Education,Prefer not to say,0.0,,21,qwen7b,default
+204,Ethnicity,Asian,0.0,0.9484196106391378,38,qwen7b,default
+205,Ethnicity,Black,2.311076500240122e-16,0.9484196106391378,54,qwen7b,default
+206,Ethnicity,Hispanic,0.0,0.9484196106391378,51,qwen7b,default
+207,Ethnicity,Multiracial,1.1102230246251565e-16,0.9484196106391378,43,qwen7b,default
+208,Ethnicity,Other,0.0,0.9484196106391378,40,qwen7b,default
+209,Ethnicity,Unknown,2.297013154396876e-16,0.9484196106391378,33,qwen7b,default
+210,Ethnicity,White,0.0,0.9484196106391378,33,qwen7b,default
+211,Gender,Female,0.03448275862068978,0.8179497997007067,195,qwen7b,default
+212,Gender,Male,-0.005018169233431114,0.9610863735897988,207,qwen7b,default
+213,Gender,Nonbinary,0.019664967225054692,0.8179497997007067,184,qwen7b,default
+214,Gender,Unknown,-0.04429749071473846,0.8179497997007067,235,qwen7b,default
+215,Has Been Targeted,False,0.007564959982458113,0.7528784117343528,1067,qwen7b,default
+216,Has Been Targeted,True,-0.02240180032733194,0.7528784117343528,1140,qwen7b,default
+217,Is Parent,No,-0.012546468401487034,0.7681374811081558,397,qwen7b,default
+218,Is Parent,Prefer not to say,0.012630662020905934,0.7681374811081558,491,qwen7b,default
+219,Is Parent,Yes,0.01829875200980017,0.7681374811081558,427,qwen7b,default
+220,Is Transgender,No,-0.01889443705618137,0.6234032967730742,458,qwen7b,default
+221,Is Transgender,Prefer not to say,0.038971431619941946,0.46202069682697433,397,qwen7b,default
+222,Is Transgender,Yes,-0.03912815780942172,0.46202069682697433,475,qwen7b,default
+223,Political Affiliation,Conservative,-0.025235032162295917,0.9693724628759651,133,qwen7b,default
+224,Political Affiliation,Independent,-0.016145307769929455,0.9693724628759651,125,qwen7b,default
+225,Political Affiliation,Liberal,-0.0042523033309709276,0.9693724628759651,153,qwen7b,default
+226,Political Affiliation,Other,0.030629936428434118,0.9693724628759651,108,qwen7b,default
+227,Political Affiliation,Prefer not to say,0.014593467685893173,0.9693724628759651,88,qwen7b,default
+228,Religion Important,1) No,-0.07802795031055908,0.8864830833939292,114,qwen7b,default
+229,Religion Important,2) Not very,0.011548857400278487,0.8864830833939292,137,qwen7b,default
+230,Religion Important,3) Somewhat,-0.02597402597402593,0.8864830833939292,93,qwen7b,default
+231,Religion Important,4) Very,-0.005305039787798486,0.8864830833939292,138,qwen7b,default
+232,Religion Important,Prefer not to say,0.013024602026049182,0.8864830833939292,119,qwen7b,default
+233,Seen Toxicity,False,-0.004786989879560333,0.866344878268188,1073,qwen7b,default
+234,Seen Toxicity,True,0.012731725856171593,0.866344878268188,1105,qwen7b,default
+235,Sexual Orientation,Bisexual,-0.01828029790115077,0.9902342697627828,132,qwen7b,default
+236,Sexual Orientation,Heterosexual,-0.00447984071677427,0.9902342697627828,145,qwen7b,default
+237,Sexual Orientation,Homosexual,0.008786202408070405,0.9902342697627828,102,qwen7b,default
+238,Sexual Orientation,Other,-0.02547682027008203,0.9902342697627828,85,qwen7b,default
+239,Sexual Orientation,Prefer not to say,0.02400826090697874,0.9902342697627828,127,qwen7b,default
+240,Technology Impact,1) Very negative,0.0,0.9780878306062044,99,qwen7b,default
+241,Technology Impact,2) Somewhat negative,0.0,0.9780878306062044,153,qwen7b,default
+242,Technology Impact,3) Neutral,1.0517902338554116e-16,0.9780878306062044,100,qwen7b,default
+243,Technology Impact,4) Somewhat positive,0.0048622366288492746,0.9780878306062044,136,qwen7b,default
+244,Technology Impact,5) Very positive,0.011952191235059832,0.9780878306062044,72,qwen7b,default
+245,Toxicity Problem,1) Never,-0.015233112786582716,0.9822432504318677,142,qwen7b,default
+246,Toxicity Problem,2) Rarely,-0.0026893769610041337,0.9822432504318677,102,qwen7b,default
+247,Toxicity Problem,3) Occasionally,0.011866433630761002,0.9822432504318677,131,qwen7b,default
+248,Toxicity Problem,4) Frequently,-0.015712479682138143,0.9822432504318677,121,qwen7b,default
+249,Toxicity Problem,5) Very Frequently,-0.009900990099009676,0.9822432504318677,118,qwen7b,default
+250,Age,1) 18 - 24,9.992007221626408e-17,0.9294654384141396,10,llama70b,stereotype
+251,Age,2) 25 - 34,0.0,0.9294654384141396,10,llama70b,stereotype
+252,Age,3) 35 - 44,0.0,,3,llama70b,stereotype
+253,Age,4) 45 - 54,0.0,,9,llama70b,stereotype
+254,Age,5) 55 - 64,0.0,,3,llama70b,stereotype
+255,Age,6) 65 or older,0.0,0.9294654384141396,14,llama70b,stereotype
+256,Age,Prefer not to say,0.0,,3,llama70b,stereotype
+257,Education,1) No high school,9.992007221626408e-17,0.9294654384141396,10,llama70b,stereotype
+258,Education,2) High School graduate,0.0,,3,llama70b,stereotype
+259,Education,4) Associate degree,5.329070518200753e-16,0.9294654384141396,8,llama70b,stereotype
+260,Education,5) Bachelor's degree,1.9032394707859828e-16,0.9294654384141396,7,llama70b,stereotype
+261,Education,6) Master's degree,0.0,,3,llama70b,stereotype
+262,Education,7) Professional degree,0.0,,3,llama70b,stereotype
+263,Education,8) Doctoral degree,0.0,,3,llama70b,stereotype
+264,Education,Other,0.0,,6,llama70b,stereotype
+265,Education,Prefer not to say,0.0,,9,llama70b,stereotype
+266,Ethnicity,Asian,0.07361963190184068,0.9119549093674352,22,llama70b,stereotype
+267,Ethnicity,Black,0.0,0.9119549093674352,27,llama70b,stereotype
+268,Ethnicity,Hispanic,0.0,,15,llama70b,stereotype
+269,Ethnicity,Multiracial,,,8,llama70b,stereotype
+270,Ethnicity,Other,4.996003610813206e-16,0.9119549093674352,11,llama70b,stereotype
+271,Ethnicity,Unknown,-0.1935483870967741,0.9119549093674352,10,llama70b,stereotype
+272,Ethnicity,White,0.0,,15,llama70b,stereotype
+273,Gender,Female,0.015228426395939224,0.8978798742637271,74,llama70b,stereotype
+274,Gender,Male,-0.017121116043119847,0.8978798742637271,75,llama70b,stereotype
+275,Gender,Nonbinary,-0.03887688984881202,0.8978798742637271,49,llama70b,stereotype
+276,Gender,Unknown,0.0366275051831374,0.8978798742637271,46,llama70b,stereotype
+277,Has Been Targeted,False,-0.0006207324643079045,0.982082644078125,316,llama70b,stereotype
+278,Has Been Targeted,True,-0.000816771031854081,0.982082644078125,369,llama70b,stereotype
+279,Is Parent,No,0.011080332409972216,0.9650927952115482,126,llama70b,stereotype
+280,Is Parent,Prefer not to say,-0.0028793857310437697,0.9650927952115482,117,llama70b,stereotype
+281,Is Parent,Yes,-0.015351601188510816,0.9650927952115482,137,llama70b,stereotype
+282,Is Transgender,No,0.03266992114156976,0.6223867472753238,118,llama70b,stereotype
+283,Is Transgender,Prefer not to say,-0.037153697472975804,0.6223867472753238,155,llama70b,stereotype
+284,Is Transgender,Yes,0.04023776863283028,0.6223867472753238,145,llama70b,stereotype
+285,Political Affiliation,Conservative,0.0,0.913966676748118,31,llama70b,stereotype
+286,Political Affiliation,Independent,0.0,0.913966676748118,24,llama70b,stereotype
+287,Political Affiliation,Liberal,0.0,0.913966676748118,51,llama70b,stereotype
+288,Political Affiliation,Other,0.0,0.913966676748118,31,llama70b,stereotype
+289,Political Affiliation,Prefer not to say,0.0,0.913966676748118,15,llama70b,stereotype
+290,Religion Important,1) No,0.016875811337083494,0.9582816962776388,48,llama70b,stereotype
+291,Religion Important,2) Not very,-0.01960784313725488,0.9582816962776388,22,llama70b,stereotype
+292,Religion Important,3) Somewhat,9.992007221626408e-17,0.9582816962776388,20,llama70b,stereotype
+293,Religion Important,4) Very,0.004728132387706966,0.9582816962776388,51,llama70b,stereotype
+294,Religion Important,Prefer not to say,0.048509348155634346,0.9582816962776388,43,llama70b,stereotype
+295,Seen Toxicity,False,0.03755569700827502,0.6815672092085134,378,llama70b,stereotype
+296,Seen Toxicity,True,-0.01697798423239218,0.6815672092085134,312,llama70b,stereotype
+297,Sexual Orientation,Bisexual,0.0,0.9349604954876595,31,llama70b,stereotype
+298,Sexual Orientation,Heterosexual,0.0,0.9349604954876595,44,llama70b,stereotype
+299,Sexual Orientation,Homosexual,0.0,0.9349604954876595,22,llama70b,stereotype
+300,Sexual Orientation,Other,0.0,,30,llama70b,stereotype
+301,Sexual Orientation,Prefer not to say,0.0,0.9349604954876595,40,llama70b,stereotype
+302,Technology Impact,1) Very negative,-0.009900990099009983,0.9807744649336424,37,llama70b,stereotype
+303,Technology Impact,2) Somewhat negative,0.0,,27,llama70b,stereotype
+304,Technology Impact,3) Neutral,2.3790493384824787e-16,0.9807744649336424,34,llama70b,stereotype
+305,Technology Impact,4) Somewhat positive,9.868649107779169e-17,0.9807744649336424,27,llama70b,stereotype
+306,Technology Impact,5) Very positive,-0.008634473936680405,0.9807744649336424,35,llama70b,stereotype
+307,Toxicity Problem,1) Never,0.0007147962830593049,0.9517765160327692,39,llama70b,stereotype
+308,Toxicity Problem,2) Rarely,0.0,0.9517765160327692,24,llama70b,stereotype
+309,Toxicity Problem,3) Occasionally,0.0,0.9517765160327692,34,llama70b,stereotype
+310,Toxicity Problem,4) Frequently,0.046480021745039464,0.9517765160327692,36,llama70b,stereotype
+311,Toxicity Problem,5) Very Frequently,-0.046104928457869516,0.9517765160327692,40,llama70b,stereotype
+312,Age,1) 18 - 24,0.0,0.931696319214053,42,olmo32b,stereotype
+313,Age,2) 25 - 34,0.0,0.931696319214053,51,olmo32b,stereotype
+314,Age,3) 35 - 44,0.0,0.931696319214053,24,olmo32b,stereotype
+315,Age,4) 45 - 54,0.01721439749608782,0.931696319214053,45,olmo32b,stereotype
+316,Age,5) 55 - 64,0.0,0.931696319214053,34,olmo32b,stereotype
+317,Age,6) 65 or older,0.002227171492204902,0.931696319214053,48,olmo32b,stereotype
+318,Age,Prefer not to say,-0.019042123485285608,0.931696319214053,38,olmo32b,stereotype
+319,Age,Under 18,0.0,0.931696319214053,35,olmo32b,stereotype
+320,Education,1) No high school,0.0,0.8848529625244203,22,olmo32b,stereotype
+321,Education,2) High School graduate,0.0,0.8848529625244203,28,olmo32b,stereotype
+322,Education,"3) College, no degree",0.0,,3,olmo32b,stereotype
+323,Education,4) Associate degree,0.0,0.8848529625244203,40,olmo32b,stereotype
+324,Education,5) Bachelor's degree,3.1086244689504396e-16,0.8848529625244203,21,olmo32b,stereotype
+325,Education,6) Master's degree,0.0,0.8848529625244203,15,olmo32b,stereotype
+326,Education,7) Professional degree,0.0,0.8848529625244203,18,olmo32b,stereotype
+327,Education,8) Doctoral degree,0.0,0.8848529625244203,15,olmo32b,stereotype
+328,Education,Other,3.1720657846433055e-16,0.8848529625244203,31,olmo32b,stereotype
+329,Education,Prefer not to say,2.7429039431915633e-16,0.8848529625244203,44,olmo32b,stereotype
+330,Ethnicity,Asian,0.01194426011944261,0.9040444629903956,74,olmo32b,stereotype
+331,Ethnicity,Black,0.0,0.9040444629903956,72,olmo32b,stereotype
+332,Ethnicity,Hispanic,0.0,0.9040444629903956,45,olmo32b,stereotype
+333,Ethnicity,Multiracial,0.0,0.9040444629903956,73,olmo32b,stereotype
+334,Ethnicity,Other,0.0,0.9040444629903956,58,olmo32b,stereotype
+335,Ethnicity,Unknown,0.017341040462427994,0.9040444629903956,52,olmo32b,stereotype
+336,Ethnicity,White,0.0,0.9040444629903956,48,olmo32b,stereotype
+337,Gender,Female,0.002198370619423347,0.9230841741866211,321,olmo32b,stereotype
+338,Gender,Male,-0.032882011605415894,0.9230841741866211,291,olmo32b,stereotype
+339,Gender,Nonbinary,0.018204257945078902,0.9230841741866211,259,olmo32b,stereotype
+340,Gender,Unknown,-0.03832944085726036,0.9230841741866211,295,olmo32b,stereotype
+341,Has Been Targeted,False,0.023108010086007554,0.3348368265222019,1408,olmo32b,stereotype
+342,Has Been Targeted,True,-0.0207184013730538,0.3348368265222019,1524,olmo32b,stereotype
+343,Is Parent,No,-0.016787114020978294,0.7094513229548665,587,olmo32b,stereotype
+344,Is Parent,Prefer not to say,0.04477611940298499,0.6764576605032527,649,olmo32b,stereotype
+345,Is Parent,Yes,-0.017968131992315575,0.7094513229548665,569,olmo32b,stereotype
+346,Is Transgender,No,0.024831258901480146,0.6326851239498705,638,olmo32b,stereotype
+347,Is Transgender,Prefer not to say,-0.024435914240239692,0.6326851239498705,654,olmo32b,stereotype
+348,Is Transgender,Yes,0.017819979188345117,0.6326851239498705,577,olmo32b,stereotype
+349,Political Affiliation,Conservative,0.01946246524559799,0.9966218204224349,144,olmo32b,stereotype
+350,Political Affiliation,Independent,-0.018297267942183983,0.9966218204224349,177,olmo32b,stereotype
+351,Political Affiliation,Liberal,0.009059438756720852,0.9966218204224349,187,olmo32b,stereotype
+352,Political Affiliation,Other,-0.005489696873259478,0.9966218204224349,166,olmo32b,stereotype
+353,Political Affiliation,Prefer not to say,0.023265833692374036,0.9966218204224349,148,olmo32b,stereotype
+354,Religion Important,1) No,0.00891600187705295,0.978711401480853,152,olmo32b,stereotype
+355,Religion Important,2) Not very,0.006599560029331383,0.978711401480853,176,olmo32b,stereotype
+356,Religion Important,3) Somewhat,0.028311965811965996,0.978711401480853,150,olmo32b,stereotype
+357,Religion Important,4) Very,0.022542412270509127,0.978711401480853,179,olmo32b,stereotype
+358,Religion Important,Prefer not to say,-0.008829639889196538,0.978711401480853,151,olmo32b,stereotype
+359,Seen Toxicity,False,0.002195333639658978,0.896939946132227,1437,olmo32b,stereotype
+360,Seen Toxicity,True,0.029137979485738402,0.39347560844026247,1457,olmo32b,stereotype
+361,Sexual Orientation,Bisexual,0.020408163265306138,0.9124554847900503,178,olmo32b,stereotype
+362,Sexual Orientation,Heterosexual,0.015882100443554314,0.9124554847900503,177,olmo32b,stereotype
+363,Sexual Orientation,Homosexual,0.0,0.9124554847900503,140,olmo32b,stereotype
+364,Sexual Orientation,Other,-0.022908284752442398,0.9124554847900503,157,olmo32b,stereotype
+365,Sexual Orientation,Prefer not to say,0.011051022807429981,0.9124554847900503,181,olmo32b,stereotype
+366,Technology Impact,1) Very negative,-0.01332017760236781,0.9835653101864597,160,olmo32b,stereotype
+367,Technology Impact,2) Somewhat negative,-0.02564747296957521,0.9835653101864597,188,olmo32b,stereotype
+368,Technology Impact,3) Neutral,0.002290950744559204,0.9835653101864597,141,olmo32b,stereotype
+369,Technology Impact,4) Somewhat positive,-0.008994003997335133,0.9835653101864597,168,olmo32b,stereotype
+370,Technology Impact,5) Very positive,0.06456439175969643,0.9835653101864597,128,olmo32b,stereotype
+371,Toxicity Problem,1) Never,-0.00448571653419379,0.9883697170903184,168,olmo32b,stereotype
+372,Toxicity Problem,2) Rarely,0.008786202408070393,0.9883697170903184,154,olmo32b,stereotype
+373,Toxicity Problem,3) Occasionally,0.019410171531748108,0.9883697170903184,173,olmo32b,stereotype
+374,Toxicity Problem,4) Frequently,-0.034529759200363594,0.9883697170903184,172,olmo32b,stereotype
+375,Toxicity Problem,5) Very Frequently,-0.02211523995787563,0.9883697170903184,175,olmo32b,stereotype
+376,Age,2) 25 - 34,2.664535259100376e-16,0.951041324616632,15,qwen32b,stereotype
+377,Age,4) 45 - 54,0.0,,3,qwen32b,stereotype
+378,Age,5) 55 - 64,0.0,,3,qwen32b,stereotype
+379,Age,Prefer not to say,0.0,,9,qwen32b,stereotype
+380,Education,4) Associate degree,9.992007221626408e-17,0.9294654384141396,10,qwen32b,stereotype
+381,Education,5) Bachelor's degree,0.0,,6,qwen32b,stereotype
+382,Education,7) Professional degree,0.0,,3,qwen32b,stereotype
+383,Education,Other,0.0,,9,qwen32b,stereotype
+384,Ethnicity,Asian,-0.08256880733944962,0.7501038886919443,6,qwen32b,stereotype
+385,Ethnicity,Black,0.0,,12,qwen32b,stereotype
+386,Ethnicity,Hispanic,0.0,,3,qwen32b,stereotype
+387,Ethnicity,Multiracial,0.0,,6,qwen32b,stereotype
+388,Ethnicity,Other,0.0,,6,qwen32b,stereotype
+389,Ethnicity,Unknown,-0.030538051381483116,0.7501038886919443,20,qwen32b,stereotype
+390,Ethnicity,White,0.0,,6,qwen32b,stereotype
+391,Gender,Female,-0.046483909415971275,0.8755794659378363,40,qwen32b,stereotype
+392,Gender,Male,-0.08379888268156414,0.6701376964203135,41,qwen32b,stereotype
+393,Gender,Nonbinary,0.08377270064440538,0.6701376964203135,54,qwen32b,stereotype
+394,Gender,Unknown,-0.02566539923954362,0.6701376964203135,41,qwen32b,stereotype
+395,Has Been Targeted,False,0.001703050007741241,0.9276888170758646,222,qwen32b,stereotype
+396,Has Been Targeted,True,0.036202253914431236,0.9276888170758646,223,qwen32b,stereotype
+397,Is Parent,No,0.0235316625215231,0.7551452418060136,65,qwen32b,stereotype
+398,Is Parent,Prefer not to say,-0.04685770507932586,0.7551452418060136,106,qwen32b,stereotype
+399,Is Parent,Yes,0.07290589451913145,0.7551452418060136,86,qwen32b,stereotype
+400,Is Transgender,No,0.02959309494451316,0.5080210950720647,72,qwen32b,stereotype
+401,Is Transgender,Prefer not to say,-0.046545895813469504,0.5080210950720647,120,qwen32b,stereotype
+402,Is Transgender,Yes,0.028722754125076386,0.5080210950720647,96,qwen32b,stereotype
+403,Political Affiliation,Conservative,1.0597583416876496e-16,0.9652200833739091,22,qwen32b,stereotype
+404,Political Affiliation,Independent,2.3790493384824787e-16,0.9652200833739091,18,qwen32b,stereotype
+405,Political Affiliation,Liberal,0.0,,21,qwen32b,stereotype
+406,Political Affiliation,Other,1.0408340855860843e-16,0.9652200833739091,16,qwen32b,stereotype
+407,Political Affiliation,Prefer not to say,0.0,,9,qwen32b,stereotype
+408,Religion Important,1) No,0.07411385606874345,0.9531631078979927,17,qwen32b,stereotype
+409,Religion Important,2) Not very,0.0,0.9531631078979927,16,qwen32b,stereotype
+410,Religion Important,3) Somewhat,0.0,0.9531631078979927,17,qwen32b,stereotype
+411,Religion Important,4) Very,-0.03793293018141814,0.9531631078979927,39,qwen32b,stereotype
+412,Religion Important,Prefer not to say,0.0,0.9531631078979927,23,qwen32b,stereotype
+413,Seen Toxicity,False,-0.05541938183774742,0.784683068220015,187,qwen32b,stereotype
+414,Seen Toxicity,True,0.01307018004304231,0.784683068220015,222,qwen32b,stereotype
+415,Sexual Orientation,Bisexual,0.04712041884816758,0.9048188275316772,19,qwen32b,stereotype
+416,Sexual Orientation,Heterosexual,-0.05660377358490546,0.9048188275316772,33,qwen32b,stereotype
+417,Sexual Orientation,Homosexual,0.0,,15,qwen32b,stereotype
+418,Sexual Orientation,Other,0.0,0.9048188275316772,23,qwen32b,stereotype
+419,Sexual Orientation,Prefer not to say,0.08532934131736535,0.6981891289877347,26,qwen32b,stereotype
+420,Technology Impact,1) Very negative,0.0,,24,qwen32b,stereotype
+421,Technology Impact,2) Somewhat negative,0.0,0.9349604954876599,40,qwen32b,stereotype
+422,Technology Impact,3) Neutral,-0.017199017199017157,0.695131391330149,12,qwen32b,stereotype
+423,Technology Impact,4) Somewhat positive,0.08108108108108131,0.2592661901236254,29,qwen32b,stereotype
+424,Technology Impact,5) Very positive,0.194921583271098,0.2592661901236254,13,qwen32b,stereotype
+425,Toxicity Problem,1) Never,2.141144404634231e-16,0.9904105745435878,28,qwen32b,stereotype
+426,Toxicity Problem,2) Rarely,-0.04306220095693784,0.9904105745435878,12,qwen32b,stereotype
+427,Toxicity Problem,3) Occasionally,0.0,,15,qwen32b,stereotype
+428,Toxicity Problem,4) Frequently,1.0597583416876496e-16,0.9904105745435878,22,qwen32b,stereotype
+429,Toxicity Problem,5) Very Frequently,-0.01819231879872946,0.9904105745435878,42,qwen32b,stereotype
+430,Age,1) 18 - 24,2.316987181826413e-16,0.972385245495891,26,qwen7b,stereotype
+431,Age,2) 25 - 34,2.1316282072803012e-16,0.972385245495891,25,qwen7b,stereotype
+432,Age,3) 35 - 44,2.141144404634231e-16,0.972385245495891,28,qwen7b,stereotype
+433,Age,4) 45 - 54,0.0,0.972385245495891,30,qwen7b,stereotype
+434,Age,5) 55 - 64,0.0,,18,qwen7b,stereotype
+435,Age,6) 65 or older,0.03092783505154651,0.972385245495891,38,qwen7b,stereotype
+436,Age,Prefer not to say,-0.02834008097165982,0.972385245495891,40,qwen7b,stereotype
+437,Age,Under 18,2.5267144698365633e-16,0.972385245495891,35,qwen7b,stereotype
+438,Education,1) No high school,0.0,,12,qwen7b,stereotype
+439,Education,2) High School graduate,1.0408340855860843e-16,0.9531631078979915,16,qwen7b,stereotype
+440,Education,"3) College, no degree",0.0,,9,qwen7b,stereotype
+441,Education,4) Associate degree,0.0,0.9531631078979915,25,qwen7b,stereotype
+442,Education,5) Bachelor's degree,0.0,,7,qwen7b,stereotype
+443,Education,6) Master's degree,0.0,,9,qwen7b,stereotype
+444,Education,7) Professional degree,0.0,,15,qwen7b,stereotype
+445,Education,8) Doctoral degree,2.5905203907920326e-16,0.9531631078979915,21,qwen7b,stereotype
+446,Education,Other,9.992007221626408e-17,0.9531631078979915,10,qwen7b,stereotype
+447,Education,Prefer not to say,0.0,0.9531631078979915,22,qwen7b,stereotype
+448,Ethnicity,Asian,-0.023269175524274505,0.9738211353555811,41,qwen7b,stereotype
+449,Ethnicity,Black,1.0408340855860845e-16,0.9738211353555811,48,qwen7b,stereotype
+450,Ethnicity,Hispanic,0.0,0.9738211353555811,46,qwen7b,stereotype
+451,Ethnicity,Multiracial,2.1777451636878077e-16,0.9738211353555811,56,qwen7b,stereotype
+452,Ethnicity,Other,2.3980817331903383e-16,0.9738211353555811,58,qwen7b,stereotype
+453,Ethnicity,Unknown,-0.03225806451612892,0.9738211353555811,31,qwen7b,stereotype
+454,Ethnicity,White,0.0,0.9738211353555811,38,qwen7b,stereotype
+455,Gender,Female,0.010901883052527645,0.9102665667094721,202,qwen7b,stereotype
+456,Gender,Male,0.029321930360415475,0.9102665667094721,210,qwen7b,stereotype
+457,Gender,Nonbinary,-0.02388007669513674,0.9102665667094721,191,qwen7b,stereotype
+458,Gender,Unknown,0.003149422605855713,0.9102665667094721,187,qwen7b,stereotype
+459,Has Been Targeted,False,-0.00546946216955318,0.8704834158200448,1034,qwen7b,stereotype
+460,Has Been Targeted,True,-0.015432934423566129,0.8704834158200448,1067,qwen7b,stereotype
+461,Is Parent,No,0.0182954038375725,0.695363739187634,376,qwen7b,stereotype
+462,Is Parent,Prefer not to say,-0.01843901535040299,0.695363739187634,386,qwen7b,stereotype
+463,Is Parent,Yes,-0.02786614073037264,0.695363739187634,443,qwen7b,stereotype
+464,Is Transgender,No,-0.00781719783523753,0.9375078348122197,440,qwen7b,stereotype
+465,Is Transgender,Prefer not to say,0.0015102138144823015,0.9375078348122197,407,qwen7b,stereotype
+466,Is Transgender,Yes,0.003013003488740918,0.9375078348122197,449,qwen7b,stereotype
+467,Political Affiliation,Conservative,-0.018269634607307923,0.972797181531892,122,qwen7b,stereotype
+468,Political Affiliation,Independent,0.0035419126328218057,0.972797181531892,87,qwen7b,stereotype
+469,Political Affiliation,Liberal,0.023171832681312142,0.972797181531892,125,qwen7b,stereotype
+470,Political Affiliation,Other,-0.005515627611566075,0.972797181531892,137,qwen7b,stereotype
+471,Political Affiliation,Prefer not to say,0.01720371381758617,0.972797181531892,83,qwen7b,stereotype
+472,Religion Important,1) No,-0.013197003923433618,0.9876926666874892,92,qwen7b,stereotype
+473,Religion Important,2) Not very,-0.005266237565827919,0.9876926666874892,104,qwen7b,stereotype
+474,Religion Important,3) Somewhat,-0.0034060804844204136,0.9876926666874892,83,qwen7b,stereotype
+475,Religion Important,4) Very,-0.021016705586491866,0.9876926666874892,119,qwen7b,stereotype
+476,Religion Important,Prefer not to say,0.006777330321186514,0.9876926666874892,104,qwen7b,stereotype
+477,Seen Toxicity,False,-0.011820743659442703,0.7188314395104586,1003,qwen7b,stereotype
+478,Seen Toxicity,True,0.011818370308936652,0.7188314395104586,1005,qwen7b,stereotype
+479,Sexual Orientation,Bisexual,0.0034735623311464136,0.9836949686704646,123,qwen7b,stereotype
+480,Sexual Orientation,Heterosexual,-0.004088478876192302,0.9836949686704646,116,qwen7b,stereotype
+481,Sexual Orientation,Homosexual,-0.017570375968260218,0.9836949686704646,112,qwen7b,stereotype
+482,Sexual Orientation,Other,-0.003915641959194915,0.9836949686704646,161,qwen7b,stereotype
+483,Sexual Orientation,Prefer not to say,-0.018369132082806956,0.9836949686704646,116,qwen7b,stereotype
+484,Technology Impact,1) Very negative,0.0,0.9582368956763407,91,qwen7b,stereotype
+485,Technology Impact,2) Somewhat negative,0.0,0.9582368956763407,125,qwen7b,stereotype
+486,Technology Impact,3) Neutral,-0.001931745009658641,0.9582368956763407,87,qwen7b,stereotype
+487,Technology Impact,4) Somewhat positive,0.010627214002917187,0.9582368956763407,121,qwen7b,stereotype
+488,Technology Impact,5) Very positive,0.011401250459727915,0.9582368956763407,84,qwen7b,stereotype
+489,Toxicity Problem,1) Never,0.01781170483460552,0.9786949374809715,127,qwen7b,stereotype
+490,Toxicity Problem,2) Rarely,-0.004227336777830039,0.9786949374809715,116,qwen7b,stereotype
+491,Toxicity Problem,3) Occasionally,-0.018695935261835946,0.9786949374809715,128,qwen7b,stereotype
+492,Toxicity Problem,4) Frequently,-0.013095464034921102,0.9786949374809715,117,qwen7b,stereotype
+493,Toxicity Problem,5) Very Frequently,0.01043564684445918,0.9786949374809715,133,qwen7b,stereotype
+494,Age,1) 18 - 24,1.0248212535001446e-16,0.9520215064592421,13,llama70b,persona
+495,Age,2) 25 - 34,0.0,0.9520215064592421,20,llama70b,persona
+496,Age,3) 35 - 44,0.0,,3,llama70b,persona
+497,Age,4) 45 - 54,0.0,,3,llama70b,persona
+498,Age,6) 65 or older,0.0,0.9520215064592421,11,llama70b,persona
+499,Age,Prefer not to say,0.0,,3,llama70b,persona
+500,Age,Under 18,0.0,,6,llama70b,persona
+501,Education,1) No high school,0.0,,3,llama70b,persona
+502,Education,"3) College, no degree",,,3,llama70b,persona
+503,Education,4) Associate degree,0.0,,9,llama70b,persona
+504,Education,5) Bachelor's degree,0.0,,9,llama70b,persona
+505,Education,6) Master's degree,0.0,,3,llama70b,persona
+506,Education,7) Professional degree,0.0,,3,llama70b,persona
+507,Education,8) Doctoral degree,,,3,llama70b,persona
+508,Education,Other,1.6653345369377353e-16,,4,llama70b,persona
+509,Education,Prefer not to say,1.9032394707859828e-16,0.9096655293982665,7,llama70b,persona
+510,Ethnicity,Asian,9.992007221626408e-17,0.9397962505583531,10,llama70b,persona
+511,Ethnicity,Black,0.0,,6,llama70b,persona
+512,Ethnicity,Hispanic,0.0,,3,llama70b,persona
+513,Ethnicity,Multiracial,9.748299728416009e-17,0.9397962505583531,23,llama70b,persona
+514,Ethnicity,Other,0.0,,12,llama70b,persona
+515,Ethnicity,Unknown,0.0,0.9397962505583531,13,llama70b,persona
+516,Gender,Female,-0.0346702923181508,0.9267568103289875,76,llama70b,persona
+517,Gender,Male,0.05191720393620624,0.9267568103289875,43,llama70b,persona
+518,Gender,Nonbinary,0.044162957891133205,0.9267568103289875,56,llama70b,persona
+519,Gender,Unknown,-0.011006540118041027,0.9622166643927749,68,llama70b,persona
+520,Has Been Targeted,False,-0.023648317142576782,0.5453331248640776,311,llama70b,persona
+521,Has Been Targeted,True,0.04275481271452015,0.5453331248640776,317,llama70b,persona
+522,Is Parent,No,-0.057008581937066004,0.8526539854144541,117,llama70b,persona
+523,Is Parent,Prefer not to say,0.030987547060527223,0.8526539854144541,118,llama70b,persona
+524,Is Parent,Yes,0.00890207715133555,0.8526539854144541,111,llama70b,persona
+525,Is Transgender,No,0.030335529339666264,0.8778440031143528,143,llama70b,persona
+526,Is Transgender,Prefer not to say,-0.04664938911514243,0.8778440031143528,112,llama70b,persona
+527,Is Transgender,Yes,-0.015557704139931343,0.8778440031143528,120,llama70b,persona
+528,Political Affiliation,Conservative,0.03412616339193374,0.9531631078979925,45,llama70b,persona
+529,Political Affiliation,Independent,0.04712041884816778,0.9531631078979925,44,llama70b,persona
+530,Political Affiliation,Liberal,-0.07550077041602465,0.9531631078979925,39,llama70b,persona
+531,Political Affiliation,Other,0.0,0.9531631078979925,16,llama70b,persona
+532,Political Affiliation,Prefer not to say,0.0,0.9531631078979925,41,llama70b,persona
+533,Religion Important,1) No,-0.013563501849568378,0.9612439398846687,48,llama70b,persona
+534,Religion Important,2) Not very,0.0,0.9612439398846687,28,llama70b,persona
+535,Religion Important,3) Somewhat,1.0248212535001446e-16,0.9612439398846687,27,llama70b,persona
+536,Religion Important,4) Very,-0.04806129556535877,0.9612439398846687,41,llama70b,persona
+537,Religion Important,Prefer not to say,0.13636363636363638,0.9612439398846687,9,llama70b,persona
+538,Seen Toxicity,False,0.02142796646057423,0.9836871578745883,374,llama70b,persona
+539,Seen Toxicity,True,-0.00192955241950732,0.9836871578745883,298,llama70b,persona
+540,Sexual Orientation,Bisexual,0.0,0.9692100671744828,23,llama70b,persona
+541,Sexual Orientation,Heterosexual,0.0,0.9692100671744828,39,llama70b,persona
+542,Sexual Orientation,Homosexual,0.0,0.9692100671744828,40,llama70b,persona
+543,Sexual Orientation,Other,2.220446049250313e-16,0.9692100671744828,33,llama70b,persona
+544,Sexual Orientation,Prefer not to say,1.0658141036401505e-16,0.9692100671744828,25,llama70b,persona
+545,Technology Impact,1) Very negative,0.0,0.9673961447029347,30,llama70b,persona
+546,Technology Impact,2) Somewhat negative,0.0,0.9673961447029347,42,llama70b,persona
+547,Technology Impact,3) Neutral,-0.042192046556741025,0.9673961447029347,43,llama70b,persona
+548,Technology Impact,4) Somewhat positive,0.05946684894053344,0.9673961447029347,36,llama70b,persona
+549,Technology Impact,5) Very positive,2.131628207280301e-16,0.9673961447029347,29,llama70b,persona
+550,Toxicity Problem,1) Never,0.06157112526539278,0.9701769664909601,34,llama70b,persona
+551,Toxicity Problem,2) Rarely,0.07843137254901963,0.9701769664909601,34,llama70b,persona
+552,Toxicity Problem,3) Occasionally,1.0467817089322906e-16,0.9701769664909601,35,llama70b,persona
+553,Toxicity Problem,4) Frequently,2.3980817331903383e-16,0.9701769664909601,29,llama70b,persona
+554,Toxicity Problem,5) Very Frequently,-0.05088852988691429,0.9701769664909601,54,llama70b,persona
+555,Age,1) 18 - 24,2.278878840020058e-16,0.9716576392508387,42,olmo32b,persona
+556,Age,2) 25 - 34,3.1720657846433025e-16,0.9716576392508387,64,olmo32b,persona
+557,Age,3) 35 - 44,2.8047739569477627e-16,0.9716576392508387,25,olmo32b,persona
+558,Age,4) 45 - 54,-0.02120717781402915,0.9716576392508387,51,olmo32b,persona
+559,Age,5) 55 - 64,0.0,0.9716576392508387,36,olmo32b,persona
+560,Age,6) 65 or older,-0.022939677145284578,0.9716576392508387,51,olmo32b,persona
+561,Age,Prefer not to say,-0.008840075006696802,0.9716576392508387,56,olmo32b,persona
+562,Age,Under 18,0.0,0.9716576392508387,35,olmo32b,persona
+563,Education,1) No high school,2.6645352591003766e-16,0.913966676748118,19,olmo32b,persona
+564,Education,2) High School graduate,0.0,0.913966676748118,31,olmo32b,persona
+565,Education,"3) College, no degree",0.0,,6,olmo32b,persona
+566,Education,4) Associate degree,0.0,0.913966676748118,37,olmo32b,persona
+567,Education,5) Bachelor's degree,0.0,0.913966676748118,25,olmo32b,persona
+568,Education,6) Master's degree,0.0,0.913966676748118,15,olmo32b,persona
+569,Education,7) Professional degree,2.5905203907920326e-16,0.913966676748118,21,olmo32b,persona
+570,Education,8) Doctoral degree,2.77555756156289e-16,0.913966676748118,30,olmo32b,persona
+571,Education,Other,0.0,0.913966676748118,34,olmo32b,persona
+572,Education,Prefer not to say,0.0,0.913966676748118,29,olmo32b,persona
+573,Ethnicity,Asian,-0.016853932584269652,0.9803842699431807,57,olmo32b,persona
+574,Ethnicity,Black,2.943381972262043e-16,0.9803842699431807,61,olmo32b,persona
+575,Ethnicity,Hispanic,0.0,0.9803842699431807,70,olmo32b,persona
+576,Ethnicity,Multiracial,0.0,0.9803842699431807,71,olmo32b,persona
+577,Ethnicity,Other,0.0,0.9803842699431807,70,olmo32b,persona
+578,Ethnicity,Unknown,-0.006679225894845126,0.9803842699431807,68,olmo32b,persona
+579,Ethnicity,White,3.249433242805336e-16,0.9803842699431807,64,olmo32b,persona
+580,Gender,Female,0.016296722667913932,0.8468424421191907,352,olmo32b,persona
+581,Gender,Male,0.012192316540142818,0.8468424421191907,318,olmo32b,persona
+582,Gender,Nonbinary,-0.012794187332174904,0.8468424421191907,314,olmo32b,persona
+583,Gender,Unknown,-0.024429573490284576,0.8468424421191907,327,olmo32b,persona
+584,Has Been Targeted,False,0.025279040014117495,0.38642878060795066,1646,olmo32b,persona
+585,Has Been Targeted,True,-0.01623532010455384,0.4510271978318894,1685,olmo32b,persona
+586,Is Parent,No,-0.01698835539958525,0.7462417221807907,663,olmo32b,persona
+587,Is Parent,Prefer not to say,0.028259894413581253,0.7462417221807907,727,olmo32b,persona
+588,Is Parent,Yes,-0.013822174296637716,0.7462417221807907,667,olmo32b,persona
+589,Is Transgender,No,-0.030180021178962194,0.4558577087622526,682,olmo32b,persona
+590,Is Transgender,Prefer not to say,0.024795147387464047,0.4558577087622526,716,olmo32b,persona
+591,Is Transgender,Yes,-0.03539540816326557,0.4558577087622526,681,olmo32b,persona
+592,Political Affiliation,Conservative,0.013088811654218454,0.8489160526049723,187,olmo32b,persona
+593,Political Affiliation,Independent,0.01879184966520284,0.8489160526049723,182,olmo32b,persona
+594,Political Affiliation,Liberal,-0.020525115490322075,0.8489160526049723,213,olmo32b,persona
+595,Political Affiliation,Other,-0.019164999677356798,0.8489160526049723,189,olmo32b,persona
+596,Political Affiliation,Prefer not to say,0.008645533141210216,0.8489160526049723,189,olmo32b,persona
+597,Religion Important,1) No,-0.019607843137254728,0.9618145152790356,185,olmo32b,persona
+598,Religion Important,2) Not very,0.020332989538824463,0.9618145152790356,177,olmo32b,persona
+599,Religion Important,3) Somewhat,-0.023387304034952334,0.9618145152790356,153,olmo32b,persona
+600,Religion Important,4) Very,0.012729844413012847,0.9618145152790356,224,olmo32b,persona
+601,Religion Important,Prefer not to say,-0.004156563907169937,0.9618145152790356,166,olmo32b,persona
+602,Seen Toxicity,False,-0.012914991255474616,0.6994947660243552,1683,olmo32b,persona
+603,Seen Toxicity,True,-0.00801118739632705,0.6994947660243552,1605,olmo32b,persona
+604,Sexual Orientation,Bisexual,-0.004348100069317902,0.9950985835791353,189,olmo32b,persona
+605,Sexual Orientation,Heterosexual,-0.004859986114325326,0.9950985835791353,222,olmo32b,persona
+606,Sexual Orientation,Homosexual,-0.00875823205920277,0.9950985835791353,186,olmo32b,persona
+607,Sexual Orientation,Other,0.0034665207078999035,0.9950985835791353,183,olmo32b,persona
+608,Sexual Orientation,Prefer not to say,0.01015707387467408,0.9950985835791353,199,olmo32b,persona
+609,Technology Impact,1) Very negative,3.243782054556978e-16,0.9915721807573581,170,olmo32b,persona
+610,Technology Impact,2) Somewhat negative,-0.00842400842400848,0.9915721807573581,210,olmo32b,persona
+611,Technology Impact,3) Neutral,0.019337430670064548,0.9915721807573581,172,olmo32b,persona
+612,Technology Impact,4) Somewhat positive,-0.00928792569659458,0.9915721807573581,162,olmo32b,persona
+613,Technology Impact,5) Very positive,0.016408386508660017,0.9915721807573581,143,olmo32b,persona
+614,Toxicity Problem,1) Never,-0.010297482837528283,0.9654295739754848,215,olmo32b,persona
+615,Toxicity Problem,2) Rarely,0.0005681459503819419,0.9654295739754848,179,olmo32b,persona
+616,Toxicity Problem,3) Occasionally,0.0034578615499356413,0.9654295739754848,186,olmo32b,persona
+617,Toxicity Problem,4) Frequently,-0.028129491479022564,0.9654295739754848,192,olmo32b,persona
+618,Toxicity Problem,5) Very Frequently,-0.004810084591142943,0.9654295739754848,217,olmo32b,persona
+619,Age,1) 18 - 24,0.0,,3,qwen32b,persona
+620,Age,2) 25 - 34,9.992007221626408e-17,0.9531631078979916,10,qwen32b,persona
+621,Age,3) 35 - 44,0.0,,6,qwen32b,persona
+622,Age,4) 45 - 54,0.0,,3,qwen32b,persona
+623,Age,5) 55 - 64,0.0,,15,qwen32b,persona
+624,Age,6) 65 or older,0.0,,6,qwen32b,persona
+625,Age,Prefer not to say,0.0,,6,qwen32b,persona
+626,Age,Under 18,1.0408340855860843e-16,0.9531631078979916,16,qwen32b,persona
+627,Education,1) No high school,0.0,0.9096655293982665,10,qwen32b,persona
+628,Education,2) High School graduate,0.0,,6,qwen32b,persona
+629,Education,4) Associate degree,1.9032394707859828e-16,0.9096655293982665,7,qwen32b,persona
+630,Education,6) Master's degree,0.0,,3,qwen32b,persona
+631,Education,7) Professional degree,0.0,,3,qwen32b,persona
+632,Education,8) Doctoral degree,0.0,,9,qwen32b,persona
+633,Education,Other,0.0,,3,qwen32b,persona
+634,Education,Prefer not to say,0.0,0.9096655293982665,13,qwen32b,persona
+635,Ethnicity,Asian,0.0,,9,qwen32b,persona
+636,Ethnicity,Black,0.0,,6,qwen32b,persona
+637,Ethnicity,Hispanic,0.0,,6,qwen32b,persona
+638,Ethnicity,Multiracial,0.0,,7,qwen32b,persona
+639,Ethnicity,Other,0.0,,9,qwen32b,persona
+640,Ethnicity,Unknown,0.0,,12,qwen32b,persona
+641,Ethnicity,White,9.992007221626408e-17,0.9294654384141396,10,qwen32b,persona
+642,Gender,Female,-0.012345679012345635,0.9306455795093009,52,qwen32b,persona
+643,Gender,Male,-0.041883383520393995,0.9306455795093009,49,qwen32b,persona
+644,Gender,Nonbinary,0.05893186003683234,0.9306455795093009,36,qwen32b,persona
+645,Gender,Unknown,0.012048192771084446,0.9306455795093009,72,qwen32b,persona
+646,Has Been Targeted,False,0.00013923051933005366,0.9477656092199641,282,qwen32b,persona
+647,Has Been Targeted,True,-0.005718338578837634,0.9477656092199641,254,qwen32b,persona
+648,Is Parent,No,-0.006034788782392708,0.9877607332010716,96,qwen32b,persona
+649,Is Parent,Prefer not to say,0.11076345431789741,0.9877607332010716,89,qwen32b,persona
+650,Is Parent,Yes,-0.03686482896047818,0.9877607332010716,103,qwen32b,persona
+651,Is Transgender,No,0.011764705882353106,0.8798931220644968,134,qwen32b,persona
+652,Is Transgender,Prefer not to say,0.02071450015010525,0.8798931220644968,101,qwen32b,persona
+653,Is Transgender,Yes,-0.0186125211505922,0.8798931220644968,100,qwen32b,persona
+654,Political Affiliation,Conservative,-0.01960784313725488,0.9843911133275857,22,qwen32b,persona
+655,Political Affiliation,Independent,0.0,0.9843911133275857,37,qwen32b,persona
+656,Political Affiliation,Liberal,-0.009635974304068443,0.9843911133275857,41,qwen32b,persona
+657,Political Affiliation,Other,0.0,0.9843911133275857,36,qwen32b,persona
+658,Political Affiliation,Prefer not to say,2.148818757339013e-16,0.9843911133275857,31,qwen32b,persona
+659,Religion Important,1) No,-0.06732730982220898,0.972385245495891,44,qwen32b,persona
+660,Religion Important,2) Not very,0.058823529411764705,0.9647053146971873,24,qwen32b,persona
+661,Religion Important,3) Somewhat,2.141144404634231e-16,0.972385245495891,28,qwen32b,persona
+662,Religion Important,4) Very,0.038421599169262924,0.9647053146971873,27,qwen32b,persona
+663,Religion Important,Prefer not to say,-0.13043478260869554,0.9647053146971873,10,qwen32b,persona
+664,Seen Toxicity,False,0.0030090270812439843,0.9129612516580861,259,qwen32b,persona
+665,Seen Toxicity,True,0.015303603751851415,0.9129612516580861,278,qwen32b,persona
+666,Sexual Orientation,Bisexual,0.0,0.8613066640636069,10,qwen32b,persona
+667,Sexual Orientation,Heterosexual,6.016692520549237e-16,0.8613066640636069,47,qwen32b,persona
+668,Sexual Orientation,Homosexual,-0.029126213592233035,0.8613066640636069,33,qwen32b,persona
+669,Sexual Orientation,Other,0.0,,18,qwen32b,persona
+670,Sexual Orientation,Prefer not to say,0.035698545614808515,0.8613066640636069,55,qwen32b,persona
+671,Technology Impact,1) Very negative,-0.06134763660744211,0.9460254850713267,28,qwen32b,persona
+672,Technology Impact,2) Somewhat negative,0.0,0.9460254850713267,23,qwen32b,persona
+673,Technology Impact,3) Neutral,1.959217102279688e-16,0.9460254850713267,17,qwen32b,persona
+674,Technology Impact,4) Somewhat positive,0.0,0.9460254850713267,33,qwen32b,persona
+675,Technology Impact,5) Very positive,0.1065812463599301,0.9460254850713267,16,qwen32b,persona
+676,Toxicity Problem,1) Never,-0.00724443251945249,0.977718178135754,37,qwen32b,persona
+677,Toxicity Problem,2) Rarely,0.0,0.977718178135754,38,qwen32b,persona
+678,Toxicity Problem,3) Occasionally,0.0,0.977718178135754,22,qwen32b,persona
+679,Toxicity Problem,4) Frequently,-0.02015677491601336,0.977718178135754,35,qwen32b,persona
+680,Toxicity Problem,5) Very Frequently,-0.012016021361815942,0.977718178135754,41,qwen32b,persona
+681,Age,1) 18 - 24,4.2976375146780304e-16,0.9999999999999994,31,qwen7b,persona
+682,Age,2) 25 - 34,0.0,0.9999999999999994,37,qwen7b,persona
+683,Age,3) 35 - 44,0.0,0.9999999999999994,34,qwen7b,persona
+684,Age,4) 45 - 54,0.0,0.9999999999999994,33,qwen7b,persona
+685,Age,5) 55 - 64,-2.4223047810003404e-16,0.9999999999999994,25,qwen7b,persona
+686,Age,6) 65 or older,-0.011571841851494381,0.9999999999999994,48,qwen7b,persona
+687,Age,Prefer not to say,-0.01507537688442206,0.9999999999999994,53,qwen7b,persona
+688,Age,Under 18,0.0,0.9999999999999994,32,qwen7b,persona
+689,Education,1) No high school,0.0,0.9847203707003479,18,qwen7b,persona
+690,Education,2) High School graduate,2.0816681711721695e-16,0.9847203707003479,16,qwen7b,persona
+691,Education,"3) College, no degree",-2.9605947323337393e-16,0.9847203707003479,12,qwen7b,persona
+692,Education,4) Associate degree,9.828203824550565e-17,0.9847203707003479,31,qwen7b,persona
+693,Education,5) Bachelor's degree,0.0,0.9847203707003479,16,qwen7b,persona
+694,Education,6) Master's degree,0.0,0.9847203707003479,6,qwen7b,persona
+695,Education,7) Professional degree,0.0,0.9847203707003479,21,qwen7b,persona
+696,Education,8) Doctoral degree,0.0,0.9847203707003479,21,qwen7b,persona
+697,Education,Other,0.0,0.9847203707003479,21,qwen7b,persona
+698,Education,Prefer not to say,0.0,0.9847203707003479,25,qwen7b,persona
+699,Ethnicity,Asian,-0.012402388608176369,0.9999999999999996,50,qwen7b,persona
+700,Ethnicity,Black,0.0,0.9999999999999996,53,qwen7b,persona
+701,Ethnicity,Hispanic,0.0,0.9999999999999996,66,qwen7b,persona
+702,Ethnicity,Multiracial,0.0,0.9999999999999996,60,qwen7b,persona
+703,Ethnicity,Other,0.0,0.9999999999999996,58,qwen7b,persona
+704,Ethnicity,Unknown,-0.022482893450635442,0.9999999999999996,49,qwen7b,persona
+705,Ethnicity,White,-2.220446049250311e-16,0.9999999999999996,39,qwen7b,persona
+706,Gender,Female,0.024428684003152186,0.887377071780064,251,qwen7b,persona
+707,Gender,Male,0.0059506942476621185,0.887377071780064,238,qwen7b,persona
+708,Gender,Nonbinary,-0.007367990176012955,0.887377071780064,217,qwen7b,persona
+709,Gender,Unknown,0.0465631929046565,0.887377071780064,245,qwen7b,persona
+710,Has Been Targeted,False,-0.004062181268244322,0.9892028012730754,1287,qwen7b,persona
+711,Has Been Targeted,True,-0.0009695085203200709,0.9892028012730754,1375,qwen7b,persona
+712,Is Parent,No,-0.02354382144801279,0.9912796359595906,502,qwen7b,persona
+713,Is Parent,Prefer not to say,-0.010008940447894877,0.9912796359595906,561,qwen7b,persona
+714,Is Parent,Yes,-0.0015016648893339563,0.9912796359595906,535,qwen7b,persona
+715,Is Transgender,No,-0.012319679898915246,0.7162749031640258,548,qwen7b,persona
+716,Is Transgender,Prefer not to say,0.01706777441639973,0.7162749031640258,514,qwen7b,persona
+717,Is Transgender,Yes,0.023894571029219536,0.7162749031640258,509,qwen7b,persona
+718,Political Affiliation,Conservative,0.027622492601117966,0.9541725954954792,155,qwen7b,persona
+719,Political Affiliation,Independent,2.3431842730782186e-16,0.9541725954954792,118,qwen7b,persona
+720,Political Affiliation,Liberal,-0.014980504822491324,0.9541725954954792,171,qwen7b,persona
+721,Political Affiliation,Other,-0.0034413535990822407,0.9541725954954792,147,qwen7b,persona
+722,Political Affiliation,Prefer not to say,0.01951645790853479,0.9541725954954792,113,qwen7b,persona
+723,Religion Important,1) No,-0.005915215248110471,0.9967061413725453,156,qwen7b,persona
+724,Religion Important,2) Not very,0.02085716800140803,0.9967061413725453,127,qwen7b,persona
+725,Religion Important,3) Somewhat,-0.0065359477124182766,0.9967061413725453,115,qwen7b,persona
+726,Religion Important,4) Very,-0.025182778229082037,0.9967061413725453,122,qwen7b,persona
+727,Religion Important,Prefer not to say,0.007758851333273881,0.9967061413725453,130,qwen7b,persona
+728,Seen Toxicity,False,0.011088623471394898,0.6566699872951991,1249,qwen7b,persona
+729,Seen Toxicity,True,-0.011319289030277018,0.6566699872951991,1285,qwen7b,persona
+730,Sexual Orientation,Bisexual,0.013357899585444559,0.9676433560676471,141,qwen7b,persona
+731,Sexual Orientation,Heterosexual,0.0,0.9676433560676471,163,qwen7b,persona
+732,Sexual Orientation,Homosexual,-0.030030263055792823,0.9676433560676471,139,qwen7b,persona
+733,Sexual Orientation,Other,-0.0020470829068575578,0.9676433560676471,146,qwen7b,persona
+734,Sexual Orientation,Prefer not to say,-0.026688980886109357,0.9676433560676471,141,qwen7b,persona
+735,Technology Impact,1) Very negative,0.0,0.9679672566592084,99,qwen7b,persona
+736,Technology Impact,2) Somewhat negative,0.0,0.9679672566592084,143,qwen7b,persona
+737,Technology Impact,3) Neutral,0.02644203949570469,0.9679672566592084,111,qwen7b,persona
+738,Technology Impact,4) Somewhat positive,-0.007627327154924748,0.9679672566592084,145,qwen7b,persona
+739,Technology Impact,5) Very positive,0.027146001467351133,0.9679672566592084,96,qwen7b,persona
+740,Toxicity Problem,1) Never,-0.017922906948195438,0.7982826577314687,128,qwen7b,persona
+741,Toxicity Problem,2) Rarely,0.016576933975630547,0.7982826577314687,159,qwen7b,persona
+742,Toxicity Problem,3) Occasionally,0.011572069589860475,0.7982826577314687,147,qwen7b,persona
+743,Toxicity Problem,4) Frequently,0.021108632229277658,0.7982826577314687,147,qwen7b,persona
+744,Toxicity Problem,5) Very Frequently,-0.014171287738755286,0.7982826577314687,162,qwen7b,persona
+745,Age,1) 18 - 24,0.0,0.9177556763030333,15,llama70b,single
+746,Age,2) 25 - 34,0.0,,13,llama70b,single
+747,Age,3) 35 - 44,0.0,,9,llama70b,single
+748,Age,4) 45 - 54,-0.09584086799276681,0.9177556763030333,15,llama70b,single
+749,Age,5) 55 - 64,0.0,,3,llama70b,single
+750,Age,6) 65 or older,0.13500597371565107,0.8614435033879049,23,llama70b,single
+751,Age,Prefer not to say,-0.13043478260869554,0.9177556763030333,15,llama70b,single
+752,Age,Under 18,0.0,0.9177556763030333,19,llama70b,single
+753,Education,1) No high school,0.0,,6,llama70b,single
+754,Education,2) High School graduate,0.0,,6,llama70b,single
+755,Education,4) Associate degree,5.329070518200753e-16,0.8743340836219966,8,llama70b,single
+756,Education,5) Bachelor's degree,2.562053133750362e-16,0.8743340836219966,16,llama70b,single
+757,Education,6) Master's degree,0.0,,3,llama70b,single
+758,Education,7) Professional degree,0.0,,3,llama70b,single
+759,Education,8) Doctoral degree,0.0,,3,llama70b,single
+760,Education,Other,0.0,,6,llama70b,single
+761,Education,Prefer not to say,0.0,,12,llama70b,single
+762,Ethnicity,Asian,0.0,0.9999999999999998,17,llama70b,single
+763,Ethnicity,Black,2.422304781000342e-16,0.9999999999999998,26,llama70b,single
+764,Ethnicity,Hispanic,0.0,0.9999999999999998,21,llama70b,single
+765,Ethnicity,Multiracial,2.0673118389571882e-16,0.9999999999999998,29,llama70b,single
+766,Ethnicity,Other,0.0,0.9999999999999998,25,llama70b,single
+767,Ethnicity,Unknown,0.0,0.9999999999999998,10,llama70b,single
+768,Ethnicity,White,0.0,,27,llama70b,single
+769,Gender,Female,0.10859728506787339,0.7681775779999427,103,llama70b,single
+770,Gender,Male,0.004888647474198991,0.8817298513867307,67,llama70b,single
+771,Gender,Nonbinary,0.030762657551805198,0.8817298513867307,95,llama70b,single
+772,Gender,Unknown,-0.027258150721538935,0.8817298513867307,103,llama70b,single
+773,Has Been Targeted,False,-0.026002166847237152,0.4408213866156939,483,llama70b,single
+774,Has Been Targeted,True,0.02281439731449076,0.4408213866156939,529,llama70b,single
+775,Is Parent,No,-0.03364352183249812,0.747061774328869,185,llama70b,single
+776,Is Parent,Prefer not to say,0.018385003604902694,0.747061774328869,199,llama70b,single
+777,Is Parent,Yes,0.012693935119887203,0.747061774328869,190,llama70b,single
+778,Is Transgender,No,0.04131432713215767,0.705556324332853,212,llama70b,single
+779,Is Transgender,Prefer not to say,-0.048371798925070854,0.705556324332853,178,llama70b,single
+780,Is Transgender,Yes,-0.013025379347388207,0.8397521143092135,249,llama70b,single
+781,Political Affiliation,Conservative,-0.017681728880157233,0.8420244751080621,41,llama70b,single
+782,Political Affiliation,Independent,-0.030724213606437456,0.8806604490998207,65,llama70b,single
+783,Political Affiliation,Liberal,0.02646351242983174,0.8420244751080621,68,llama70b,single
+784,Political Affiliation,Other,-0.041095890410958645,0.8420244751080621,53,llama70b,single
+785,Political Affiliation,Prefer not to say,0.04756511891279721,0.8420244751080621,41,llama70b,single
+786,Religion Important,1) No,0.009501187648456158,0.9283039650637251,55,llama70b,single
+787,Religion Important,2) Not very,-0.029126213592232924,0.9283039650637251,32,llama70b,single
+788,Religion Important,3) Somewhat,0.0,0.9283039650637251,43,llama70b,single
+789,Religion Important,4) Very,0.0,0.9283039650637251,57,llama70b,single
+790,Religion Important,Prefer not to say,-0.06604402935290199,0.7421566415321252,48,llama70b,single
+791,Seen Toxicity,False,0.00685584965942641,0.8611570305434393,487,llama70b,single
+792,Seen Toxicity,True,0.004861199948829519,0.8611570305434393,514,llama70b,single
+793,Sexual Orientation,Bisexual,-0.002394253790901572,0.9324676323180171,64,llama70b,single
+794,Sexual Orientation,Heterosexual,0.06119073869900774,0.2115849307295942,71,llama70b,single
+795,Sexual Orientation,Homosexual,-0.038211593449441125,0.9324676323180171,40,llama70b,single
+796,Sexual Orientation,Other,-0.03157894736842105,0.9324676323180171,46,llama70b,single
+797,Sexual Orientation,Prefer not to say,-0.027921406411582174,0.9324676323180171,62,llama70b,single
+798,Technology Impact,1) Very negative,2.4339504770628434e-16,0.9817993955192755,59,llama70b,single
+799,Technology Impact,2) Somewhat negative,0.0,0.9817993955192755,43,llama70b,single
+800,Technology Impact,3) Neutral,0.04975855553222766,0.9817993955192755,50,llama70b,single
+801,Technology Impact,4) Somewhat positive,-0.0187332738626226,0.9817993955192755,48,llama70b,single
+802,Technology Impact,5) Very positive,-0.006444683136412322,0.9817993955192755,51,llama70b,single
+803,Toxicity Problem,1) Never,-0.024580569644947207,0.9214562864907425,60,llama70b,single
+804,Toxicity Problem,2) Rarely,0.0273360728961945,0.9214562864907425,62,llama70b,single
+805,Toxicity Problem,3) Occasionally,2.478637450325931e-16,0.9214562864907425,50,llama70b,single
+806,Toxicity Problem,4) Frequently,0.022637013502779975,0.9214562864907425,57,llama70b,single
+807,Toxicity Problem,5) Very Frequently,-0.02956785443517814,0.9214562864907425,62,llama70b,single
+808,Age,1) 18 - 24,2.267689582213086e-16,0.9430552078896672,51,olmo32b,single
+809,Age,2) 25 - 34,0.0,0.9430552078896672,64,olmo32b,single
+810,Age,3) 35 - 44,0.0,0.9430552078896672,59,olmo32b,single
+811,Age,4) 45 - 54,0.017811704834605608,0.9430552078896672,45,olmo32b,single
+812,Age,5) 55 - 64,0.0,0.9430552078896672,54,olmo32b,single
+813,Age,6) 65 or older,0.005577150583065689,0.9430552078896672,78,olmo32b,single
+814,Age,Prefer not to say,-0.0434912569122704,0.9430552078896672,89,olmo32b,single
+815,Age,Under 18,0.0,0.9430552078896672,41,olmo32b,single
+816,Education,1) No high school,0.0,0.9692100671744844,25,olmo32b,single
+817,Education,2) High School graduate,0.0,0.9692100671744844,25,olmo32b,single
+818,Education,"3) College, no degree",2.220446049250314e-16,0.9692100671744844,9,olmo32b,single
+819,Education,4) Associate degree,0.0,0.9692100671744844,52,olmo32b,single
+820,Education,5) Bachelor's degree,2.7934643845407164e-16,0.9692100671744844,40,olmo32b,single
+821,Education,6) Master's degree,2.664535259100375e-16,0.9692100671744844,18,olmo32b,single
+822,Education,7) Professional degree,0.0,0.9692100671744844,36,olmo32b,single
+823,Education,8) Doctoral degree,0.0,0.9692100671744844,42,olmo32b,single
+824,Education,Other,0.0,0.9692100671744844,41,olmo32b,single
+825,Education,Prefer not to say,0.0,0.9692100671744844,39,olmo32b,single
+826,Ethnicity,Asian,0.007919366450684097,0.9397904353485644,84,olmo32b,single
+827,Ethnicity,Black,0.0,0.9397904353485644,88,olmo32b,single
+828,Ethnicity,Hispanic,0.0,0.9397904353485644,91,olmo32b,single
+829,Ethnicity,Multiracial,0.0,0.9397904353485644,90,olmo32b,single
+830,Ethnicity,Other,2.422304781000342e-16,0.9397904353485644,82,olmo32b,single
+831,Ethnicity,Unknown,0.05708245243128981,0.9397904353485644,99,olmo32b,single
+832,Ethnicity,White,0.0,0.9397904353485644,69,olmo32b,single
+833,Gender,Female,-0.004325103622274247,0.9607901924088071,426,olmo32b,single
+834,Gender,Male,0.03280680437424066,0.9607901924088071,363,olmo32b,single
+835,Gender,Nonbinary,-0.008078535637590466,0.9607901924088071,345,olmo32b,single
+836,Gender,Unknown,-0.02792869519250516,0.9607901924088071,438,olmo32b,single
+837,Has Been Targeted,False,0.016938895310485685,0.7066667863574341,1971,olmo32b,single
+838,Has Been Targeted,True,-0.0009353780775092575,0.9700439876560593,2028,olmo32b,single
+839,Is Parent,No,0.019429724955841193,0.9804735714466702,760,olmo32b,single
+840,Is Parent,Prefer not to say,-0.00023142791020586205,0.9804735714466702,793,olmo32b,single
+841,Is Parent,Yes,-0.013035381750465537,0.9804735714466702,853,olmo32b,single
+842,Is Transgender,No,0.027973284125610686,0.8809456966827369,795,olmo32b,single
+843,Is Transgender,Prefer not to say,-0.012017931516866379,0.8809456966827369,808,olmo32b,single
+844,Is Transgender,Yes,-0.004923631954814798,0.8809456966827369,798,olmo32b,single
+845,Political Affiliation,Conservative,0.015431892577994363,0.9178286365195347,233,olmo32b,single
+846,Political Affiliation,Independent,0.01921956901572519,0.9178286365195347,233,olmo32b,single
+847,Political Affiliation,Liberal,-0.01179715029875913,0.9178286365195347,265,olmo32b,single
+848,Political Affiliation,Other,-0.0233650636667077,0.9178286365195347,202,olmo32b,single
+849,Political Affiliation,Prefer not to say,-0.013068336509665313,0.9178286365195347,196,olmo32b,single
+850,Religion Important,1) No,0.005612722170252421,0.9263179852398952,218,olmo32b,single
+851,Religion Important,2) Not very,0.007704332291201504,0.9263179852398952,219,olmo32b,single
+852,Religion Important,3) Somewhat,-0.011566771819137754,0.9263179852398952,178,olmo32b,single
+853,Religion Important,4) Very,0.017851550266207706,0.9263179852398952,238,olmo32b,single
+854,Religion Important,Prefer not to say,0.002062291787848516,0.9263179852398952,234,olmo32b,single
+855,Seen Toxicity,False,0.006100726102436142,0.9085603643379532,1953,olmo32b,single
+856,Seen Toxicity,True,0.0017718921943486628,0.9085603643379532,1933,olmo32b,single
+857,Sexual Orientation,Bisexual,-0.03244166192373391,0.990794474993168,215,olmo32b,single
+858,Sexual Orientation,Heterosexual,0.02628285356695872,0.990794474993168,225,olmo32b,single
+859,Sexual Orientation,Homosexual,-0.0053007002159543804,0.990794474993168,205,olmo32b,single
+860,Sexual Orientation,Other,0.0032866286109671937,0.990794474993168,212,olmo32b,single
+861,Sexual Orientation,Prefer not to say,-0.019660943508638656,0.990794474993168,253,olmo32b,single
+862,Technology Impact,1) Very negative,0.0,0.9553053796642119,171,olmo32b,single
+863,Technology Impact,2) Somewhat negative,0.0,0.9553053796642119,208,olmo32b,single
+864,Technology Impact,3) Neutral,0.017319065052098005,0.9553053796642119,178,olmo32b,single
+865,Technology Impact,4) Somewhat positive,-0.034956036886125044,0.9553053796642119,206,olmo32b,single
+866,Technology Impact,5) Very positive,0.0006671114076049518,0.9553053796642119,172,olmo32b,single
+867,Toxicity Problem,1) Never,-0.014015645371577656,0.9932663791638465,238,olmo32b,single
+868,Toxicity Problem,2) Rarely,-0.011957559086060845,0.9932663791638465,235,olmo32b,single
+869,Toxicity Problem,3) Occasionally,0.003601440576230094,0.9932663791638465,241,olmo32b,single
+870,Toxicity Problem,4) Frequently,-0.004812548274018089,0.9932663791638465,232,olmo32b,single
+871,Toxicity Problem,5) Very Frequently,-0.0004520568587073117,0.9932663791638465,266,olmo32b,single
+872,Age,1) 18 - 24,0.0,,3,qwen32b,single
+873,Age,2) 25 - 34,0.0,,6,qwen32b,single
+874,Age,3) 35 - 44,0.0,,6,qwen32b,single
+875,Age,4) 45 - 54,0.0,,9,qwen32b,single
+876,Age,5) 55 - 64,0.0,,12,qwen32b,single
+877,Age,6) 65 or older,0.0,,9,qwen32b,single
+878,Age,Prefer not to say,0.0,,15,qwen32b,single
+879,Age,Under 18,2.854859206178974e-16,0.6643756889602309,11,qwen32b,single
+880,Education,1) No high school,0.0,,6,qwen32b,single
+881,Education,2) High School graduate,0.0,,9,qwen32b,single
+882,Education,5) Bachelor's degree,0.0,,3,qwen32b,single
+883,Education,6) Master's degree,0.0,,3,qwen32b,single
+884,Education,7) Professional degree,0.0,,3,qwen32b,single
+885,Education,8) Doctoral degree,0.0,,6,qwen32b,single
+886,Education,Other,0.0,,7,qwen32b,single
+887,Education,Prefer not to say,0.0,,9,qwen32b,single
+888,Ethnicity,Asian,0.08932461873638337,0.019767582006715807,27,qwen32b,single
+889,Ethnicity,Black,2.5620531337503625e-16,0.8149020114591812,16,qwen32b,single
+890,Ethnicity,Hispanic,0.0,,9,qwen32b,single
+891,Ethnicity,Multiracial,2.854859206178974e-16,0.8149020114591812,11,qwen32b,single
+892,Ethnicity,Other,0.0,,3,qwen32b,single
+893,Ethnicity,Unknown,-0.0314769975786924,0.8149020114591812,24,qwen32b,single
+894,Ethnicity,White,0.0,0.8149020114591812,15,qwen32b,single
+895,Gender,Female,-0.04988123515439427,0.9061704149494699,56,qwen32b,single
+896,Gender,Male,0.001365498406918496,0.9061704149494699,56,qwen32b,single
+897,Gender,Nonbinary,-0.015116811726981158,0.9061704149494699,47,qwen32b,single
+898,Gender,Unknown,0.019208153665229193,0.9061704149494699,75,qwen32b,single
+899,Has Been Targeted,False,-0.03218283582089554,0.7014494219712126,310,qwen32b,single
+900,Has Been Targeted,True,0.013571449691020454,0.7014494219712126,362,qwen32b,single
+901,Is Parent,No,-0.023307436182020073,0.7868926898176065,100,qwen32b,single
+902,Is Parent,Prefer not to say,0.036323982853275205,0.7868926898176065,145,qwen32b,single
+903,Is Parent,Yes,-0.015950004663743998,0.7868926898176065,105,qwen32b,single
+904,Is Transgender,No,-0.04127731587079675,0.9300682344255795,151,qwen32b,single
+905,Is Transgender,Prefer not to say,-0.020259050149451827,0.9300682344255795,89,qwen32b,single
+906,Is Transgender,Yes,0.0014306151645208406,0.9300682344255795,151,qwen32b,single
+907,Political Affiliation,Conservative,2.1551388125076568e-16,0.9771149009078279,34,qwen32b,single
+908,Political Affiliation,Independent,1.0597583416876496e-16,0.9771149009078279,22,qwen32b,single
+909,Political Affiliation,Liberal,0.0,0.9771149009078279,45,qwen32b,single
+910,Political Affiliation,Other,0.0,0.9771149009078279,38,qwen32b,single
+911,Political Affiliation,Prefer not to say,0.0,0.9771149009078279,21,qwen32b,single
+912,Religion Important,1) No,-0.017013232514177634,0.9908037728905505,30,qwen32b,single
+913,Religion Important,2) Not very,2.297013154396876e-16,0.9908037728905505,33,qwen32b,single
+914,Religion Important,3) Somewhat,2.141144404634231e-16,0.9908037728905505,28,qwen32b,single
+915,Religion Important,4) Very,1.1102230246251565e-16,0.9908037728905505,52,qwen32b,single
+916,Religion Important,Prefer not to say,-0.012415349887133094,0.9908037728905505,59,qwen32b,single
+917,Seen Toxicity,False,-0.06855720642582383,0.3693889234967467,294,qwen32b,single
+918,Seen Toxicity,True,0.016105417276720404,0.6983243280706624,364,qwen32b,single
+919,Sexual Orientation,Bisexual,0.08250438853130476,0.9934943784445944,38,qwen32b,single
+920,Sexual Orientation,Heterosexual,-0.021207177814029202,0.9934943784445944,47,qwen32b,single
+921,Sexual Orientation,Homosexual,-0.07872696817420399,0.9934943784445944,40,qwen32b,single
+922,Sexual Orientation,Other,2.422304781000342e-16,0.9934943784445944,26,qwen32b,single
+923,Sexual Orientation,Prefer not to say,-0.024896265560165887,0.9934943784445944,28,qwen32b,single
+924,Technology Impact,1) Very negative,0.0,0.9829628527455934,31,qwen32b,single
+925,Technology Impact,2) Somewhat negative,2.3404701600206005e-16,0.9829628527455934,41,qwen32b,single
+926,Technology Impact,3) Neutral,5.828670879282074e-16,0.9829628527455934,23,qwen32b,single
+927,Technology Impact,4) Somewhat positive,0.0,0.9829628527455934,46,qwen32b,single
+928,Technology Impact,5) Very positive,2.2204460492503136e-16,0.9829628527455934,25,qwen32b,single
+929,Toxicity Problem,1) Never,-0.014468442021387936,0.94539060608438,51,qwen32b,single
+930,Toxicity Problem,2) Rarely,0.0419313850063533,0.94539060608438,38,qwen32b,single
+931,Toxicity Problem,3) Occasionally,0.0,0.94539060608438,25,qwen32b,single
+932,Toxicity Problem,4) Frequently,-0.042690815006468395,0.94539060608438,45,qwen32b,single
+933,Toxicity Problem,5) Very Frequently,-0.030786773090079846,0.94539060608438,20,qwen32b,single
+934,Age,1) 18 - 24,2.0185873175002846e-16,0.9683224441913924,33,qwen7b,single
+935,Age,2) 25 - 34,2.664535259100376e-16,0.9683224441913924,33,qwen7b,single
+936,Age,3) 35 - 44,0.0,0.9683224441913924,29,qwen7b,single
+937,Age,4) 45 - 54,-0.04306220095693773,0.9683224441913924,30,qwen7b,single
+938,Age,5) 55 - 64,0.0,0.9683224441913924,10,qwen7b,single
+939,Age,6) 65 or older,-0.0013934045517881573,0.9683224441913924,43,qwen7b,single
+940,Age,Prefer not to say,0.025364274150026955,0.9683224441913924,54,qwen7b,single
+941,Age,Under 18,0.0,0.9683224441913924,19,qwen7b,single
+942,Education,1) No high school,0.0,,12,qwen7b,single
+943,Education,2) High School graduate,1.0248212535001446e-16,0.9531631078979925,13,qwen7b,single
+944,Education,"3) College, no degree",0.0,,3,qwen7b,single
+945,Education,4) Associate degree,0.0,0.9531631078979925,27,qwen7b,single
+946,Education,5) Bachelor's degree,0.0,0.9531631078979925,19,qwen7b,single
+947,Education,6) Master's degree,0.0,,18,qwen7b,single
+948,Education,7) Professional degree,0.0,,30,qwen7b,single
+949,Education,8) Doctoral degree,0.0,0.9531631078979925,21,qwen7b,single
+950,Education,Other,0.0,0.9531631078979925,16,qwen7b,single
+951,Education,Prefer not to say,2.422304781000342e-16,0.9531631078979925,26,qwen7b,single
+952,Ethnicity,Asian,-0.0056436441816714745,0.9789222719258934,44,qwen7b,single
+953,Ethnicity,Black,0.0,0.9789222719258934,37,qwen7b,single
+954,Ethnicity,Hispanic,2.274603269963736e-16,0.9789222719258934,44,qwen7b,single
+955,Ethnicity,Multiracial,0.0,0.9789222719258934,60,qwen7b,single
+956,Ethnicity,Other,1.0987774264331448e-16,0.9789222719258934,52,qwen7b,single
+957,Ethnicity,Unknown,-0.006323396567298871,0.9789222719258934,45,qwen7b,single
+958,Ethnicity,White,0.0,0.9789222719258934,40,qwen7b,single
+959,Gender,Female,0.005231305774951481,0.9953054853878985,218,qwen7b,single
+960,Gender,Male,-0.014125956444967636,0.9953054853878985,191,qwen7b,single
+961,Gender,Nonbinary,-0.0027640778277598786,0.9953054853878985,218,qwen7b,single
+962,Gender,Unknown,0.028854157033200926,0.9953054853878985,223,qwen7b,single
+963,Has Been Targeted,False,0.0034037301697886686,0.8709966714187521,1128,qwen7b,single
+964,Has Been Targeted,True,-0.0049334816988507715,0.8709966714187521,1096,qwen7b,single
+965,Is Parent,No,-0.0080152368859615,0.8942967353521061,436,qwen7b,single
+966,Is Parent,Prefer not to say,-0.006211180124223329,0.8942967353521061,451,qwen7b,single
+967,Is Parent,Yes,-0.010462798937112269,0.8942967353521061,405,qwen7b,single
+968,Is Transgender,No,0.03400197895115581,0.7185898773194314,483,qwen7b,single
+969,Is Transgender,Prefer not to say,-0.005814099821298054,0.8919880346099838,437,qwen7b,single
+970,Is Transgender,Yes,-0.02683752417794953,0.7185898773194314,480,qwen7b,single
+971,Political Affiliation,Conservative,0.009649749821301044,0.9703133331134315,134,qwen7b,single
+972,Political Affiliation,Independent,0.0056064785974905985,0.9703133331134315,130,qwen7b,single
+973,Political Affiliation,Liberal,0.006330141210842342,0.9703133331134315,133,qwen7b,single
+974,Political Affiliation,Other,0.009046624913013378,0.9703133331134315,98,qwen7b,single
+975,Political Affiliation,Prefer not to say,2.1525721525483385e-16,0.9703133331134315,122,qwen7b,single
+976,Religion Important,1) No,-0.006941766293868271,0.977331754766128,122,qwen7b,single
+977,Religion Important,2) Not very,0.02040816326530631,0.977331754766128,125,qwen7b,single
+978,Religion Important,3) Somewhat,0.016830294530154243,0.977331754766128,104,qwen7b,single
+979,Religion Important,4) Very,-0.054450603195304564,0.977331754766128,104,qwen7b,single
+980,Religion Important,Prefer not to say,0.006681514476614741,0.977331754766128,114,qwen7b,single
+981,Seen Toxicity,False,-0.007477220209684956,0.7704562723588558,1098,qwen7b,single
+982,Seen Toxicity,True,-0.015682490536428312,0.7704562723588558,1097,qwen7b,single
+983,Sexual Orientation,Bisexual,-0.006982156710628323,0.9297318576852187,142,qwen7b,single
+984,Sexual Orientation,Heterosexual,0.022644265887509233,0.8912434640484673,138,qwen7b,single
+985,Sexual Orientation,Homosexual,0.02337481102453772,0.5873364379281184,86,qwen7b,single
+986,Sexual Orientation,Other,-0.03166710285265626,0.8912434640484673,126,qwen7b,single
+987,Sexual Orientation,Prefer not to say,-0.009000818256204956,0.8912434640484673,110,qwen7b,single
+988,Technology Impact,1) Very negative,0.007630600665232017,0.95138246945426,118,qwen7b,single
+989,Technology Impact,2) Somewhat negative,0.009742236655165703,0.95138246945426,109,qwen7b,single
+990,Technology Impact,3) Neutral,-0.021422903993652258,0.95138246945426,91,qwen7b,single
+991,Technology Impact,4) Somewhat positive,0.0,0.95138246945426,120,qwen7b,single
+992,Technology Impact,5) Very positive,-0.021787461093819346,0.95138246945426,85,qwen7b,single
+993,Toxicity Problem,1) Never,0.008045870711180911,0.8037498680830811,110,qwen7b,single
+994,Toxicity Problem,2) Rarely,0.021550517772180065,0.8037498680830811,127,qwen7b,single
+995,Toxicity Problem,3) Occasionally,-0.017778753292361737,0.8037498680830811,99,qwen7b,single
+996,Toxicity Problem,4) Frequently,-0.017440432326209572,0.8037498680830811,132,qwen7b,single
+997,Toxicity Problem,5) Very Frequently,0.00959829363668681,0.8037498680830811,147,qwen7b,single
+998,Age,1) 18 - 24,9.992007221626408e-17,0.9294654384141396,10,llama70b,direct
+999,Age,2) 25 - 34,0.0,,3,llama70b,direct
+1000,Age,4) 45 - 54,0.0,,3,llama70b,direct
+1001,Age,5) 55 - 64,0.0,,6,llama70b,direct
+1002,Age,6) 65 or older,0.0,,6,llama70b,direct
+1003,Age,Prefer not to say,0.0,,6,llama70b,direct
+1004,Education,1) No high school,1.0248212535001446e-16,0.9435276693230448,13,llama70b,direct
+1005,Education,4) Associate degree,0.0,,3,llama70b,direct
+1006,Education,5) Bachelor's degree,0.0,,3,llama70b,direct
+1007,Education,7) Professional degree,0.0,0.9435276693230448,9,llama70b,direct
+1008,Education,8) Doctoral degree,0.0,,3,llama70b,direct
+1009,Education,Prefer not to say,0.0,0.9435276693230448,10,llama70b,direct
+1010,Ethnicity,Asian,0.0,0.93584997009004,10,llama70b,direct
+1011,Ethnicity,Black,0.0,,9,llama70b,direct
+1012,Ethnicity,Hispanic,0.0,,9,llama70b,direct
+1013,Ethnicity,Multiracial,2.725092878625385e-16,0.93584997009004,11,llama70b,direct
+1014,Ethnicity,Other,0.0,,6,llama70b,direct
+1015,Ethnicity,Unknown,0.0,,3,llama70b,direct
+1016,Ethnicity,White,0.0,,6,llama70b,direct
+1017,Gender,Female,-0.00332225913621247,0.989960546122244,65,llama70b,direct
+1018,Gender,Male,-0.06266738082485254,0.8585466417997912,39,llama70b,direct
+1019,Gender,Nonbinary,0.07836089144500376,0.26518691762403196,39,llama70b,direct
+1020,Gender,Unknown,0.022443890274314232,0.8585466417997912,38,llama70b,direct
+1021,Has Been Targeted,False,-0.009246437664716138,0.9065418224849486,244,llama70b,direct
+1022,Has Been Targeted,True,-0.021319796954314612,0.9065418224849486,261,llama70b,direct
+1023,Is Parent,No,-0.009324009324009246,0.9832257613557022,91,llama70b,direct
+1024,Is Parent,Prefer not to say,-0.03531124863487433,0.9832257613557022,102,llama70b,direct
+1025,Is Parent,Yes,0.02728191310205459,0.9832257613557022,105,llama70b,direct
+1026,Is Transgender,No,0.005523296983430066,0.8830102005798472,81,llama70b,direct
+1027,Is Transgender,Prefer not to say,0.04263927793339568,0.7330895177704634,103,llama70b,direct
+1028,Is Transgender,Yes,-0.06420587470756413,0.7330895177704634,132,llama70b,direct
+1029,Political Affiliation,Conservative,-0.0165949600491699,0.9790475004190091,40,llama70b,direct
+1030,Political Affiliation,Independent,2.2204460492503136e-16,0.9790475004190091,25,llama70b,direct
+1031,Political Affiliation,Liberal,2.606610579554715e-16,0.9790475004190091,30,llama70b,direct
+1032,Political Affiliation,Other,0.07066381156316907,0.20137409320137525,37,llama70b,direct
+1033,Political Affiliation,Prefer not to say,9.992007221626408e-17,0.9790475004190091,20,llama70b,direct
+1034,Religion Important,1) No,-0.05743740795287173,0.9771149009078375,32,llama70b,direct
+1035,Religion Important,2) Not very,0.0,0.9771149009078375,34,llama70b,direct
+1036,Religion Important,3) Somewhat,0.0,0.9771149009078375,22,llama70b,direct
+1037,Religion Important,4) Very,0.017321968655485354,0.9771149009078375,34,llama70b,direct
+1038,Religion Important,Prefer not to say,0.0,,6,llama70b,direct
+1039,Seen Toxicity,False,0.007459487267427015,0.8245112601494067,258,llama70b,direct
+1040,Seen Toxicity,True,0.0844886720448288,0.27102054905969974,243,llama70b,direct
+1041,Sexual Orientation,Bisexual,0.049593282602991444,0.6516803980591975,37,llama70b,direct
+1042,Sexual Orientation,Heterosexual,1.942890293094024e-16,0.9549249396123642,24,llama70b,direct
+1043,Sexual Orientation,Homosexual,-0.026425591098748147,0.8532874555394169,21,llama70b,direct
+1044,Sexual Orientation,Other,0.0,,9,llama70b,direct
+1045,Sexual Orientation,Prefer not to say,-0.024050191704426526,0.8532874555394169,29,llama70b,direct
+1046,Technology Impact,1) Very negative,0.0,0.6868727922758271,30,llama70b,direct
+1047,Technology Impact,2) Somewhat negative,0.0,,18,llama70b,direct
+1048,Technology Impact,3) Neutral,2.1035804677108233e-16,0.96006352409135,19,llama70b,direct
+1049,Technology Impact,4) Somewhat positive,0.0,,12,llama70b,direct
+1050,Technology Impact,5) Very positive,0.0,,3,llama70b,direct
+1051,Toxicity Problem,1) Never,0.0,,18,llama70b,direct
+1052,Toxicity Problem,2) Rarely,-0.011479591836734871,0.9618296508379163,42,llama70b,direct
+1053,Toxicity Problem,3) Occasionally,2.725092878625385e-16,0.9618296508379163,29,llama70b,direct
+1054,Toxicity Problem,4) Frequently,1.013681892049056e-16,0.9618296508379163,23,llama70b,direct
+1055,Toxicity Problem,5) Very Frequently,-0.03169014084507045,0.9618296508379163,26,llama70b,direct
+1056,Age,1) 18 - 24,0.0,0.9553011749997347,50,olmo32b,direct
+1057,Age,2) 25 - 34,0.0,0.9553011749997347,65,olmo32b,direct
+1058,Age,3) 35 - 44,0.0,0.9553011749997347,27,olmo32b,direct
+1059,Age,4) 45 - 54,-0.048374306106264864,0.9553011749997347,51,olmo32b,direct
+1060,Age,5) 55 - 64,0.0,0.9553011749997347,40,olmo32b,direct
+1061,Age,6) 65 or older,-0.03282532239155896,0.9553011749997347,62,olmo32b,direct
+1062,Age,Prefer not to say,-0.002624671916010675,0.9553011749997347,66,olmo32b,direct
+1063,Age,Under 18,0.0,0.9553011749997347,50,olmo32b,direct
+1064,Education,1) No high school,0.0,0.8990286283785862,28,olmo32b,direct
+1065,Education,2) High School graduate,2.5905203907920326e-16,0.8990286283785862,21,olmo32b,direct
+1066,Education,"3) College, no degree",0.0,,6,olmo32b,direct
+1067,Education,4) Associate degree,0.0,0.8990286283785862,40,olmo32b,direct
+1068,Education,5) Bachelor's degree,0.0,0.8990286283785862,28,olmo32b,direct
+1069,Education,6) Master's degree,2.220446049250313e-16,0.8990286283785862,15,olmo32b,direct
+1070,Education,7) Professional degree,0.0,0.8990286283785862,30,olmo32b,direct
+1071,Education,8) Doctoral degree,0.0,0.8990286283785862,30,olmo32b,direct
+1072,Education,Other,0.0,0.8990286283785862,28,olmo32b,direct
+1073,Education,Prefer not to say,0.0,0.8990286283785862,35,olmo32b,direct
+1074,Ethnicity,Asian,0.0,0.9513963803048304,59,olmo32b,direct
+1075,Ethnicity,Black,0.0,0.9513963803048304,72,olmo32b,direct
+1076,Ethnicity,Hispanic,2.871266442996094e-16,0.9513963803048304,76,olmo32b,direct
+1077,Ethnicity,Multiracial,0.0,0.9513963803048304,88,olmo32b,direct
+1078,Ethnicity,Other,0.0,0.9513963803048304,72,olmo32b,direct
+1079,Ethnicity,Unknown,0.0,0.9513963803048304,56,olmo32b,direct
+1080,Ethnicity,White,0.0,0.9513963803048304,61,olmo32b,direct
+1081,Gender,Female,-0.017203089263814173,0.9905604234277676,391,olmo32b,direct
+1082,Gender,Male,0.011753301829637866,0.9905604234277676,321,olmo32b,direct
+1083,Gender,Nonbinary,-0.003070897681249833,0.9905604234277676,304,olmo32b,direct
+1084,Gender,Unknown,0.007966488386879913,0.9905604234277676,340,olmo32b,direct
+1085,Has Been Targeted,False,-0.002528800224781996,0.9222116796898391,1657,olmo32b,direct
+1086,Has Been Targeted,True,0.005425421977265063,0.9222116796898391,1722,olmo32b,direct
+1087,Is Parent,No,0.01605261008087567,0.8760793942652363,640,olmo32b,direct
+1088,Is Parent,Prefer not to say,-0.025467775467775292,0.8760793942652363,746,olmo32b,direct
+1089,Is Parent,Yes,0.004556962025316471,0.8760793942652363,662,olmo32b,direct
+1090,Is Transgender,No,0.036274169059944995,0.5533721460134047,707,olmo32b,direct
+1091,Is Transgender,Prefer not to say,0.019805997123151026,0.5533721460134047,685,olmo32b,direct
+1092,Is Transgender,Yes,-0.023709902370990382,0.5533721460134047,714,olmo32b,direct
+1093,Political Affiliation,Conservative,0.02447353443369386,0.9464264588011627,201,olmo32b,direct
+1094,Political Affiliation,Independent,0.0006479015189693424,0.9464264588011627,200,olmo32b,direct
+1095,Political Affiliation,Liberal,-0.013493253373313295,0.9464264588011627,200,olmo32b,direct
+1096,Political Affiliation,Other,0.018633540372670735,0.9464264588011627,170,olmo32b,direct
+1097,Political Affiliation,Prefer not to say,-0.0014379293816902498,0.9464264588011627,168,olmo32b,direct
+1098,Religion Important,1) No,-0.014677901603696255,0.9651893273721988,196,olmo32b,direct
+1099,Religion Important,2) Not very,0.007931262392597503,0.9651893273721988,184,olmo32b,direct
+1100,Religion Important,3) Somewhat,0.027851458885941614,0.9651893273721988,163,olmo32b,direct
+1101,Religion Important,4) Very,0.020356873586328237,0.9651893273721988,235,olmo32b,direct
+1102,Religion Important,Prefer not to say,-0.007647487254188158,0.9651893273721988,209,olmo32b,direct
+1103,Seen Toxicity,False,-0.003337324896726993,0.8760547205787721,1695,olmo32b,direct
+1104,Seen Toxicity,True,-0.0038503525801788677,0.8760547205787721,1647,olmo32b,direct
+1105,Sexual Orientation,Bisexual,0.028767384263669274,0.9441168406607154,201,olmo32b,direct
+1106,Sexual Orientation,Heterosexual,0.005093378607809983,0.9441168406607154,195,olmo32b,direct
+1107,Sexual Orientation,Homosexual,2.7271250135087735e-16,0.9441168406607154,186,olmo32b,direct
+1108,Sexual Orientation,Other,0.017300589645564628,0.9441168406607154,206,olmo32b,direct
+1109,Sexual Orientation,Prefer not to say,0.01603429115732652,0.9441168406607154,230,olmo32b,direct
+1110,Technology Impact,1) Very negative,0.016175860638739513,0.9677554309739349,175,olmo32b,direct
+1111,Technology Impact,2) Somewhat negative,-0.022299604901895007,0.9677554309739349,195,olmo32b,direct
+1112,Technology Impact,3) Neutral,0.023923444976076576,0.9677554309739349,174,olmo32b,direct
+1113,Technology Impact,4) Somewhat positive,-0.0013107796017725294,0.9677554309739349,195,olmo32b,direct
+1114,Technology Impact,5) Very positive,-0.024236701290525454,0.9677554309739349,126,olmo32b,direct
+1115,Toxicity Problem,1) Never,0.028600100351229077,0.8971301202291684,208,olmo32b,direct
+1116,Toxicity Problem,2) Rarely,-0.011821204285186735,0.8971301202291684,200,olmo32b,direct
+1117,Toxicity Problem,3) Occasionally,-0.020263492275797136,0.8971301202291684,191,olmo32b,direct
+1118,Toxicity Problem,4) Frequently,-0.01667379221889685,0.8971301202291684,184,olmo32b,direct
+1119,Toxicity Problem,5) Very Frequently,0.0042250933806869785,0.8971301202291684,209,olmo32b,direct
+1120,Age,1) 18 - 24,0.0,,3,qwen32b,direct
+1121,Age,2) 25 - 34,0.0,,6,qwen32b,direct
+1122,Age,3) 35 - 44,0.0,,12,qwen32b,direct
+1123,Age,4) 45 - 54,0.0,,9,qwen32b,direct
+1124,Age,5) 55 - 64,0.0,,9,qwen32b,direct
+1125,Age,6) 65 or older,0.0,,3,qwen32b,direct
+1126,Age,Prefer not to say,0.0,,6,qwen32b,direct
+1127,Education,2) High School graduate,0.0,,3,qwen32b,direct
+1128,Education,4) Associate degree,0.0,,9,qwen32b,direct
+1129,Education,5) Bachelor's degree,0.0,,6,qwen32b,direct
+1130,Education,7) Professional degree,0.0,,6,qwen32b,direct
+1131,Education,Other,0.0,,6,qwen32b,direct
+1132,Education,Prefer not to say,0.0,,3,qwen32b,direct
+1133,Ethnicity,Asian,0.0,,12,qwen32b,direct
+1134,Ethnicity,Black,9.868649107779169e-17,0.9582774491624207,27,qwen32b,direct
+1135,Ethnicity,Hispanic,0.0,,12,qwen32b,direct
+1136,Ethnicity,Multiracial,0.0,,6,qwen32b,direct
+1137,Ethnicity,Other,0.0,,6,qwen32b,direct
+1138,Ethnicity,Unknown,0.0,,9,qwen32b,direct
+1139,Ethnicity,White,0.0,,9,qwen32b,direct
+1140,Gender,Female,2.2838873649431794e-16,0.9412219834705604,39,qwen32b,direct
+1141,Gender,Male,2.4541772123292936e-16,0.9412219834705604,46,qwen32b,direct
+1142,Gender,Nonbinary,0.0,0.9412219834705604,47,qwen32b,direct
+1143,Gender,Unknown,2.2709107321878206e-16,0.9412219834705604,48,qwen32b,direct
+1144,Has Been Targeted,False,-0.021305891731284797,0.6431987617835572,308,qwen32b,direct
+1145,Has Been Targeted,True,0.023905978720562802,0.6431987617835572,240,qwen32b,direct
+1146,Is Parent,No,-0.024902490249024866,0.972074495981326,106,qwen32b,direct
+1147,Is Parent,Prefer not to say,0.03489771359807475,0.972074495981326,140,qwen32b,direct
+1148,Is Parent,Yes,-0.0005996402158705515,0.972074495981326,104,qwen32b,direct
+1149,Is Transgender,No,-0.02419984387197496,0.888576288026155,105,qwen32b,direct
+1150,Is Transgender,Prefer not to say,-0.025684931506849126,0.8658468311694033,113,qwen32b,direct
+1151,Is Transgender,Yes,0.02910164487557992,0.8658468311694033,122,qwen32b,direct
+1152,Political Affiliation,Conservative,3.074463760500434e-16,0.9792888504276881,21,qwen32b,direct
+1153,Political Affiliation,Independent,-0.03774981495188744,0.9792888504276881,39,qwen32b,direct
+1154,Political Affiliation,Liberal,-0.005222581447401065,0.9792888504276881,37,qwen32b,direct
+1155,Political Affiliation,Other,1.959217102279688e-16,0.9792888504276881,17,qwen32b,direct
+1156,Political Affiliation,Prefer not to say,0.05946684894053323,0.9792888504276881,28,qwen32b,direct
+1157,Religion Important,1) No,9.992007221626408e-17,0.9702621695244645,20,qwen32b,direct
+1158,Religion Important,2) Not very,0.09612141652613837,0.9702621695244645,27,qwen32b,direct
+1159,Religion Important,3) Somewhat,0.0,0.9702621695244645,29,qwen32b,direct
+1160,Religion Important,4) Very,0.0,0.9702621695244645,33,qwen32b,direct
+1161,Religion Important,Prefer not to say,-0.016741961201169244,0.9702621695244645,37,qwen32b,direct
+1162,Seen Toxicity,False,-0.06554151998343336,0.32144123595500645,242,qwen32b,direct
+1163,Seen Toxicity,True,0.051730777459244356,0.32144123595500645,276,qwen32b,direct
+1164,Sexual Orientation,Bisexual,-0.018126888217522574,0.8870710900333045,26,qwen32b,direct
+1165,Sexual Orientation,Heterosexual,-0.04926534140017273,0.8870710900333045,26,qwen32b,direct
+1166,Sexual Orientation,Homosexual,0.0,,18,qwen32b,direct
+1167,Sexual Orientation,Other,0.047778709136630425,0.8870710900333045,22,qwen32b,direct
+1168,Sexual Orientation,Prefer not to say,0.06026785714285737,0.8870710900333045,43,qwen32b,direct
+1169,Technology Impact,1) Very negative,-0.029126213592233018,0.9635972921530265,36,qwen32b,direct
+1170,Technology Impact,2) Somewhat negative,-0.013510615483594108,0.9635972921530265,54,qwen32b,direct
+1171,Technology Impact,3) Neutral,-0.06716417910447743,0.9635972921530265,14,qwen32b,direct
+1172,Technology Impact,4) Somewhat positive,2.664535259100376e-16,0.9635972921530265,15,qwen32b,direct
+1173,Technology Impact,5) Very positive,-0.01419558359621442,0.9635972921530265,25,qwen32b,direct
+1174,Toxicity Problem,1) Never,0.0,0.969195380911742,34,qwen32b,direct
+1175,Toxicity Problem,2) Rarely,0.0,0.969195380911742,53,qwen32b,direct
+1176,Toxicity Problem,3) Occasionally,0.0,0.969195380911742,23,qwen32b,direct
+1177,Toxicity Problem,4) Frequently,1.0248212535001446e-16,0.969195380911742,26,qwen32b,direct
+1178,Toxicity Problem,5) Very Frequently,0.0,0.969195380911742,33,qwen32b,direct
+1179,Age,1) 18 - 24,2.616954272330726e-16,0.9710644772805652,35,qwen7b,direct
+1180,Age,2) 25 - 34,0.0,,24,qwen7b,direct
+1181,Age,3) 35 - 44,0.0,,18,qwen7b,direct
+1182,Age,4) 45 - 54,0.0,,21,qwen7b,direct
+1183,Age,5) 55 - 64,0.0,0.9710644772805652,30,qwen7b,direct
+1184,Age,6) 65 or older,0.0,0.9710644772805652,41,qwen7b,direct
+1185,Age,Prefer not to say,0.0,0.9710644772805652,36,qwen7b,direct
+1186,Age,Under 18,0.0,0.9710644772805652,12,qwen7b,direct
+1187,Education,1) No high school,0.0,,9,qwen7b,direct
+1188,Education,2) High School graduate,0.0,,7,qwen7b,direct
+1189,Education,"3) College, no degree",0.0,,3,qwen7b,direct
+1190,Education,4) Associate degree,0.0,0.9600635240913524,20,qwen7b,direct
+1191,Education,5) Bachelor's degree,1.0408340855860843e-16,0.9600635240913524,16,qwen7b,direct
+1192,Education,6) Master's degree,0.0,0.9600635240913524,12,qwen7b,direct
+1193,Education,7) Professional degree,0.0,,3,qwen7b,direct
+1194,Education,8) Doctoral degree,0.0,0.9600635240913524,15,qwen7b,direct
+1195,Education,Other,0.0,0.9600635240913524,19,qwen7b,direct
+1196,Education,Prefer not to say,0.0,0.9600635240913524,20,qwen7b,direct
+1197,Ethnicity,Asian,-0.01859504132231396,0.9807392343383884,19,qwen7b,direct
+1198,Ethnicity,Black,2.141144404634231e-16,0.9807392343383884,56,qwen7b,direct
+1199,Ethnicity,Hispanic,0.0,,39,qwen7b,direct
+1200,Ethnicity,Multiracial,2.247198411289474e-16,0.9807392343383884,47,qwen7b,direct
+1201,Ethnicity,Other,0.0,0.9807392343383884,49,qwen7b,direct
+1202,Ethnicity,Unknown,-0.011479591836734703,0.9807392343383884,39,qwen7b,direct
+1203,Ethnicity,White,0.0,0.9807392343383884,28,qwen7b,direct
+1204,Gender,Female,-0.004855823991367289,0.9663670694417099,191,qwen7b,direct
+1205,Gender,Male,0.024258760107816878,0.9663670694417099,191,qwen7b,direct
+1206,Gender,Nonbinary,0.015362881864736149,0.9663670694417099,184,qwen7b,direct
+1207,Gender,Unknown,-0.005107469674398681,0.9663670694417099,197,qwen7b,direct
+1208,Has Been Targeted,False,0.008446875303408095,0.7164302941046095,1023,qwen7b,direct
+1209,Has Been Targeted,True,-0.014503890116223066,0.7164302941046095,1047,qwen7b,direct
+1210,Is Parent,No,0.012044856707739124,0.7045429477792162,406,qwen7b,direct
+1211,Is Parent,Prefer not to say,-0.021053702196908042,0.7045429477792162,426,qwen7b,direct
+1212,Is Parent,Yes,-0.02769178814656377,0.7045429477792162,421,qwen7b,direct
+1213,Is Transgender,No,-0.000977835723598469,0.9993551650006576,391,qwen7b,direct
+1214,Is Transgender,Prefer not to say,-0.013868876080691834,0.9993551650006576,366,qwen7b,direct
+1215,Is Transgender,Yes,0.029252437703141725,0.9993551650006576,468,qwen7b,direct
+1216,Political Affiliation,Conservative,0.012989134874601807,0.9346288930102802,137,qwen7b,direct
+1217,Political Affiliation,Independent,0.018932421772285254,0.9346288930102802,85,qwen7b,direct
+1218,Political Affiliation,Liberal,0.034097261039687084,0.9346288930102802,115,qwen7b,direct
+1219,Political Affiliation,Other,-0.0064072801560030096,0.9346288930102802,115,qwen7b,direct
+1220,Political Affiliation,Prefer not to say,-0.014934858595487675,0.9346288930102802,114,qwen7b,direct
+1221,Religion Important,1) No,-0.0032961858420967652,0.9928491983819168,143,qwen7b,direct
+1222,Religion Important,2) Not very,0.02629890955740865,0.9928491983819168,103,qwen7b,direct
+1223,Religion Important,3) Somewhat,2.3880268831559975e-16,0.9928491983819168,62,qwen7b,direct
+1224,Religion Important,4) Very,-0.015513126491646824,0.9928491983819168,108,qwen7b,direct
+1225,Religion Important,Prefer not to say,-0.0052053209947947755,0.9928491983819168,105,qwen7b,direct
+1226,Seen Toxicity,False,0.03892102830931446,0.2632502379318228,1004,qwen7b,direct
+1227,Seen Toxicity,True,-0.032009033506936235,0.2908961596761554,1016,qwen7b,direct
+1228,Sexual Orientation,Bisexual,0.027427078798432782,0.6733352533325004,117,qwen7b,direct
+1229,Sexual Orientation,Heterosexual,0.002386634844869013,0.9228251690050887,135,qwen7b,direct
+1230,Sexual Orientation,Homosexual,0.030296847903702986,0.6733352533325004,95,qwen7b,direct
+1231,Sexual Orientation,Other,0.011878574571051482,0.9228251690050887,115,qwen7b,direct
+1232,Sexual Orientation,Prefer not to say,0.04198357164587763,0.6733352533325004,141,qwen7b,direct
+1233,Technology Impact,1) Very negative,0.0,0.9674051816091358,87,qwen7b,direct
+1234,Technology Impact,2) Somewhat negative,0.0,0.9674051816091358,109,qwen7b,direct
+1235,Technology Impact,3) Neutral,-0.030520646319569234,0.9674051816091358,91,qwen7b,direct
+1236,Technology Impact,4) Somewhat positive,-0.02321451224153251,0.9674051816091358,103,qwen7b,direct
+1237,Technology Impact,5) Very positive,0.01445044519048326,0.9674051816091358,75,qwen7b,direct
+1238,Toxicity Problem,1) Never,-0.03377110694183853,0.9489225445523742,104,qwen7b,direct
+1239,Toxicity Problem,2) Rarely,0.0,0.9489225445523742,86,qwen7b,direct
+1240,Toxicity Problem,3) Occasionally,0.030615337981206484,0.9489225445523742,118,qwen7b,direct
+1241,Toxicity Problem,4) Frequently,0.009564293304994892,0.9489225445523742,112,qwen7b,direct
+1242,Toxicity Problem,5) Very Frequently,0.018329938900203586,0.9489225445523742,106,qwen7b,direct

@@ -1,0 +1,25 @@
+\begin{table}[t]
+\small
+\centering
+\caption{Mean inherent polarization (mean $\pm$ 2 SD) per (dataset, prompt), for Human and each LLM.}
+\label{tab:inherent-polarization}
+\begin{tabular}{llrrrrr}
+\toprule
+ &  & Default & Stereotype & Persona & Single & Direct \\
+Dataset & Source &  &  &  &  &  \\
+\midrule
+\multirow[t]{5}{*}{kumar} & Human & 0.17 $\pm$ 0.473 & 0.17 $\pm$ 0.473 & 0.17 $\pm$ 0.473 & 0.17 $\pm$ 0.473 & 0.17 $\pm$ 0.473 \\
+ & llama70b & 0.00 $\pm$ 0.032 & 0.00 $\pm$ 0.000 & 0.00 $\pm$ 0.045 & 0.00 $\pm$ 0.045 & 0.00 $\pm$ 0.045 \\
+ & olmo32b & 0.01 $\pm$ 0.137 & 0.03 $\pm$ 0.236 & 0.02 $\pm$ 0.203 & 0.03 $\pm$ 0.248 & 0.02 $\pm$ 0.201 \\
+ & qwen32b & 0.00 $\pm$ 0.000 & 0.00 $\pm$ 0.000 & 0.00 $\pm$ 0.000 & 0.00 $\pm$ 0.032 & 0.00 $\pm$ 0.000 \\
+ & qwen7b & 0.00 $\pm$ 0.095 & 0.01 $\pm$ 0.137 & 0.00 $\pm$ 0.083 & 0.00 $\pm$ 0.095 & 0.01 $\pm$ 0.109 \\
+\cline{1-7}
+\multirow[t]{5}{*}{sap} & Human & 0.11 $\pm$ 0.437 & 0.11 $\pm$ 0.437 & 0.11 $\pm$ 0.437 & 0.11 $\pm$ 0.437 & 0.11 $\pm$ 0.437 \\
+ & llama70b & 0.00 $\pm$ 0.058 & 0.00 $\pm$ 0.041 & 0.00 $\pm$ 0.058 & 0.00 $\pm$ 0.000 & 0.00 $\pm$ 0.041 \\
+ & olmo32b & 0.01 $\pm$ 0.136 & 0.01 $\pm$ 0.142 & 0.01 $\pm$ 0.109 & 0.01 $\pm$ 0.163 & 0.01 $\pm$ 0.148 \\
+ & qwen32b & 0.00 $\pm$ 0.000 & 0.00 $\pm$ 0.000 & 0.00 $\pm$ 0.000 & 0.00 $\pm$ 0.041 & 0.00 $\pm$ 0.000 \\
+ & qwen7b & 0.00 $\pm$ 0.000 & 0.00 $\pm$ 0.071 & 0.00 $\pm$ 0.041 & 0.00 $\pm$ 0.041 & 0.00 $\pm$ 0.041 \\
+\cline{1-7}
+\bottomrule
+\end{tabular}
+\end{table}

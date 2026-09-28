@@ -692,3 +692,582 @@
 	pages = "3474--3491",
 	abstract = "In subjective NLP tasks, where a single ground truth does not exist, the inclusion of diverse annotators becomes crucial as their unique perspectives significantly influence the annotations. In realistic scenarios, the annotation budget often becomes the main determinant of the number of perspectives (i.e., annotators) included in the data and subsequent modeling. We introduce a novel framework for annotation collection and modeling in subjective tasks that aims to minimize the annotation budget while maximizing the predictive performance for each annotator. Our framework has a two-stage design: first, we rely on a small set of annotators to build a multitask model, and second, we augment the model for a new perspective by strategically annotating a few samples per annotator. To test our framework at scale, we introduce and release a unique dataset, Moral Foundations Subjective Corpus, of 2000 Reddit posts annotated by 24 annotators for moral sentiment. We demonstrate that our framework surpasses the previous SOTA in capturing the annotators' individual perspectives with as little as 25{\%} of the original annotation budget on two datasets. Furthermore, our framework results in more equitable models, reducing the performance disparity among annotators."
 }
+
+@misc{GDPR,
+	date       = {2016-05-04},
+	location   = {OJ L 119, 4.5.2016, p. 1--88},
+	title      = {Regulation ({EU}) 2016/679 of the {European} {Parliament} and of the {Council}},
+	url        = {https://data.europa.eu/eli/reg/2016/679/oj},
+	titleaddon = {of 27 {April} 2016 on the protection of natural persons with regard to the processing of personal data and on the free movement of such data, and repealing {Directive} 95/46/{EC} ({General} {Data} {Protection} {Regulation})},
+	abstract   = {The General Data Protection Regulation (2016/679, "GDPR") is a Regulation in European Union (EU) law on data protection and privacy in the EU and the European Economic Area (EEA).},
+	author       = {{European Union}},
+	organization = {European Parliament and Council of the European Union},
+	keywords   = {access consumer data data-processing freedom gdpr information justice law personal privacy protection security verification},
+	urldate    = {2023-04-13},
+	year="2016"
+}
+
+@misc{eu_ai_act,
+	title        = {Regulation (EU) 2024/1689 of the European Parliament and of the Council of 13 June 2024 laying down harmonised rules on artificial intelligence (Artificial Intelligence Act)},
+	author       = {{European Union}},
+	organization = {European Parliament and Council of the European Union},
+	year         = {2024},
+	url          = {https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng},
+	note         = {Official Journal of the European Union, L 2024/1689},
+	howpublished = {\url{https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng}},
+	institution  = {European Union},
+	keywords     = {EU law, AI regulation, Artificial Intelligence Act},
+}
+
+@inproceedings{groeneveld-etal-2024-olmo,
+	title = "{OLM}o: Accelerating the Science of Language Models",
+	author = "Groeneveld, Dirk  and others",
+	booktitle = "Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)",
+	month = {aug},
+	year = "2024",
+	address = "Bangkok, Thailand",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/2024.acl-long.841/",
+	doi = "10.18653/v1/2024.acl-long.841",
+	pages = "15789--15809",
+	abstract = "Language models (LMs) have become ubiquitous in both NLP research and in commercial product offerings. As their commercial importance has surged, the most powerful models have become closed off, gated behind proprietary interfaces, with important details of their training data, architectures, and development undisclosed. Given the importance of these details in scientifically studying these models, including their biases and potential risks, we believe it is essential for the research community to have access to powerful, truly open LMs. To this end, we have built OLMo, a competitive, truly Open Language Model, to enable the scientific study of language models. Unlike most prior efforts that have only released model weights and inference code, we release OLMo alongside open training data and training and evaluation code. We hope this release will empower the open research community and inspire a new wave of innovation."
+}
+
+@misc{qwen2025qwen25technicalreport,
+	title={Qwen2.5 Technical Report}, 
+	author={An Yang and others},
+	year={2025},
+	eprint={2412.15115},
+	archivePrefix={arXiv},
+	primaryClass={cs.CL},
+	url={https://arxiv.org/abs/2412.15115}, 
+}
+
+@misc{grattafiori2024llama3herdmodels,
+	title={The Llama 3 Herd of Models}, 
+	author={Aaron Grattafiori and others},
+	year={2024},
+	eprint={2407.21783},
+	archivePrefix={arXiv},
+	primaryClass={cs.AI},
+	url={https://arxiv.org/abs/2407.21783}, 
+}
+
+@misc{olmo2026olmo3,
+	title={Olmo 3}, 
+	author={Team Olmo},
+	year={2026},
+	eprint={2512.13961},
+	archivePrefix={arXiv},
+	primaryClass={cs.CL},
+	url={https://arxiv.org/abs/2512.13961}, 
+}
+
+@InProceedings{razavi_sensitivity,
+	author="Razavi, Amirhossein
+	and Soltangheis, Mina
+	and Arabzadeh, Negar
+	and Salamat, Sara
+	and Zihayat, Morteza
+	and Bagheri, Ebrahim",
+	editor="Hauff, Claudia
+	and Macdonald, Craig
+	and Jannach, Dietmar
+	and Kazai, Gabriella
+	and Nardini, Franco Maria
+	and Pinelli, Fabio
+	and Silvestri, Fabrizio
+	and Tonellotto, Nicola",
+	title="Benchmarking Prompt Sensitivity in Large Language Models",
+	booktitle="Advances in Information Retrieval",
+	year="2025",
+	publisher="Springer Nature Switzerland",
+	address="Cham",
+	pages="303--313",
+	abstract="Large language Models (LLMs) are highly sensitive to variations in prompt formulation, which can significantly impact their ability to generate accurate responses. In this paper, we introduce a new task, Prompt Sensitivity Prediction, and a dataset PromptSET designed to investigate the effects of slight prompt variations on LLM performance. Using TriviaQA and HotpotQA datasets as the foundation of our work, we generate prompt variations and evaluate their effectiveness across multiple LLMs. We benchmark the prompt sensitivity prediction task employing state-of-the-art methods from related tasks, including LLM-based self-evaluation, text classification, and query performance prediction techniques. Our findings reveal that existing methods struggle to effectively address prompt sensitivity prediction, underscoring the need to understand how information needs should be phrased for accurate LLM responses.",
+	isbn="978-3-031-88714-7"
+}
+
+@inproceedings{lutz-etal-2025-prompt,
+	title = "The Prompt Makes the Person(a): A Systematic Evaluation of Sociodemographic Persona Prompting for Large Language Models",
+	author = "Lutz, Marlene  and
+	Sen, Indira  and
+	Ahnert, Georg  and
+	Rogers, Elisa  and
+	Strohmaier, Markus",
+	editor = "Christodoulopoulos, Christos  and
+	Chakraborty, Tanmoy  and
+	Rose, Carolyn  and
+	Peng, Violet",
+	booktitle = "Findings of the Association for Computational Linguistics: EMNLP 2025",
+	month = nov,
+	year = "2025",
+	address = "Suzhou, China",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/2025.findings-emnlp.1261/",
+	doi = "10.18653/v1/2025.findings-emnlp.1261",
+	pages = "23212--23237",
+	ISBN = "979-8-89176-335-7",
+	abstract = "Persona prompting is increasingly used in large language models (LLMs) to simulate views of various sociodemographic groups. However, how a persona prompt is formulated can significantly affect outcomes, raising concerns about the fidelity of such simulations. Using five open-source LLMs, we systematically examine how different persona prompt strategies, specifically role adoption formats and demographic priming strategies, influence LLM simulations across 15 intersectional demographic groups in both open- and closed-ended tasks. Our findings show that LLMs struggle to simulate marginalized groups but that the choice of demographic priming and role adoption strategy significantly impacts their portrayal. Specifically, we find that prompting in an interview-style format and name-based priming can help reduce stereotyping and improve alignment. Surprisingly, smaller models like OLMo-2-7B outperform larger ones such as Llama-3.3-70B.Our findings offer actionable guidance for designing sociodemographic persona prompts in LLM-based simulation studies."
+}
+
+@inproceedings{gupta2024bias,
+	title={Bias runs deep: Implicit reasoning biases in persona-assigned llms},
+	author={Gupta, Shashank and Shrivastava, Vaishnavi and Deshpande, Ameet and Kalyan, Ashwin and Clark, Peter and Sabharwal, Ashish and Khot, Tushar},
+	booktitle={International Conference on Learning Representations},
+	volume={2024},
+	pages={21849--21874},
+	year={2024}
+}
+
+@inproceedings{shu-etal-2024-dont,
+	title = "You don{'}t need a personality test to know these models are unreliable: Assessing the Reliability of Large Language Models on Psychometric Instruments",
+	author = "Shu, Bangzhao  and
+	Zhang, Lechen  and
+	Choi, Minje  and
+	Dunagan, Lavinia  and
+	Logeswaran, Lajanugen  and
+	Lee, Moontae  and
+	Card, Dallas  and
+	Jurgens, David",
+	editor = "Duh, Kevin  and
+	Gomez, Helena  and
+	Bethard, Steven",
+	booktitle = "Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers)",
+	month = jun,
+	year = "2024",
+	address = "Mexico City, Mexico",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/2024.naacl-long.295/",
+	doi = "10.18653/v1/2024.naacl-long.295",
+	pages = "5263--5281",
+	abstract = "The versatility of Large Language Models (LLMs) on natural language understanding tasks has made them popular for research in social sciences. To properly understand the properties and innate personas of LLMs, researchers have performed studies that involve using prompts in the form of questions that ask LLMs about particular opinions. In this study, we take a cautionary step back and examine whether the current format of prompting LLMs elicits responses in a consistent and robust manner. We first construct a dataset that contains 693 questions encompassing 39 different instruments of persona measurement on 115 persona axes. Additionally, we design a set of prompts containing minor variations and examine LLMs' capabilities to generate answers, as well as prompt variations to examine their consistency with respect to content-level variations such as switching the order of response options or negating the statement. Our experiments on 17 different LLMs reveal that even simple perturbations significantly downgrade a model{'}s question-answering ability, and that most LLMs have low negation consistency. Our results suggest that the currently widespread practice of prompting is insufficient to accurately and reliably capture model perceptions, and we therefore discuss potential alternatives to improve these issues."
+}
+
+@article{kovavc2024stick,
+	title={Stick to your role! stability of personal values expressed in large language models},
+	author={Kova{\v{c}}, Grgur and Portelas, R{\'e}my and Sawayama, Masataka and Dominey, Peter Ford and Oudeyer, Pierre-Yves},
+	journal={Plos one},
+	volume={19},
+	number={8},
+	pages={e0309114},
+	year={2024},
+	publisher={Public Library of Science San Francisco, CA USA}
+}
+
+@inproceedings{liu-etal-2024-evaluating-large,
+	title = "Evaluating Large Language Model Biases in Persona-Steered Generation",
+	author = "Liu, Andy  and
+	Diab, Mona  and
+	Fried, Daniel",
+	editor = "Ku, Lun-Wei  and
+	Martins, Andre  and
+	Srikumar, Vivek",
+	booktitle = "Findings of the Association for Computational Linguistics: ACL 2024",
+	month = aug,
+	year = "2024",
+	address = "Bangkok, Thailand",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/2024.findings-acl.586/",
+	doi = "10.18653/v1/2024.findings-acl.586",
+	pages = "9832--9850",
+	abstract = "The task of persona-steered text generation requires large language models (LLMs) to generate text that reflects the distribution of views that an individual fitting a persona could have. People have multifaceted personas, but prior work on bias in LLM-generated opinions has only explored multiple-choice settings or one-dimensional personas. We define an incongruous persona as a persona with multiple traits where one trait makes its other traits less likely in human survey data, e.g. political liberals who support increased military spending. We find that LLMs are 9.7{\%} less steerable towards incongruous personas than congruous ones, sometimes generating the stereotypical stance associated with its demographic rather than the target stance. Models that we evaluate that are fine-tuned with Reinforcement Learning from Human Feedback (RLHF) are more steerable, especially towards stances associated with political liberals and women, but present significantly less diverse views of personas. We also find variance in LLM steerability that cannot be predicted from multiple-choice opinion evaluation. Our results show the importance of evaluating models in open-ended text generation, as it can surface new LLM opinion biases. Moreover, such a setup can shed light on our ability to steer models toward a richer and more diverse range of viewpoints."
+}
+
+@inproceedings{dong-etal-2024-llm,
+	title = "Can {LLM} be a Personalized Judge?",
+	author = "Dong, Yijiang River  and
+	Hu, Tiancheng  and
+	Collier, Nigel",
+	editor = "Al-Onaizan, Yaser  and
+	Bansal, Mohit  and
+	Chen, Yun-Nung",
+	booktitle = "Findings of the Association for Computational Linguistics: EMNLP 2024",
+	month = nov,
+	year = "2024",
+	address = "Miami, Florida, USA",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/2024.findings-emnlp.592/",
+	doi = "10.18653/v1/2024.findings-emnlp.592",
+	pages = "10126--10141",
+	abstract = "As large language models (LLMs) gain widespread adoption, ensuring they cater to diverse user needs has become increasingly important. While many researchers have studied LLM personalization and role-playing, they primarily use LLM-as-a-Judge for evaluation without thoroughly examining its validity. This paper investigates the reliability of LLM-as-a-Personalized-Judge{---}asking LLMs to judge user preferences based on persona. Our results suggest that LLM-as-a-Personalized-Judge is less reliable for personalization than previously believed, showing low agreement with human ground truth. We observed that the personas provided to the LLM often have limited predictive power for the tasks, leading us to introduce verbal uncertainty estimation. We find that powerful LLMs are aware of the certainty of their prediction and can achieve high agreement with ground truth on high-certainty samples, indicating a promising approach for building reliable and scalable proxies for evaluating LLM personalization. Our human annotation reveals that third-person crowd worker evaluations of personalized preferences are even worse than LLM predictions, highlighting the challenges of evaluating LLM personalization."
+}
+
+@inproceedings{gomez-etal-2024-algorithmic,
+	author = {Gomez, Juan Felipe and Machado, Caio and Paes, Lucas Monteiro and Calmon, Flavio},
+	title = {Algorithmic Arbitrariness in Content Moderation},
+	year = {2024},
+	isbn = {9798400704505},
+	publisher = {Association for Computing Machinery},
+	address = {New York, NY, USA},
+	url = {https://doi.org/10.1145/3630106.3659036},
+	doi = {10.1145/3630106.3659036},
+	abstract = {Machine learning (ML) is widely used to moderate online content. Despite its scalability relative to human moderation, the use of ML introduces unique challenges to content moderation. One such challenge is predictive multiplicity: multiple competing models for content classification may perform equally well on average, yet assign conflicting predictions to the same content. This multiplicity can result from seemingly innocuous choices made during training, which do not meaningfully change the accuracy of the ML model, but can nevertheless change what the model gets wrong. We experimentally demonstrate how content moderation tools can arbitrarily classify samples as “toxic,” leading to arbitrary restrictions on speech. We use the principles set by the International Covenant on Civil and Political Rights (ICCPR), namely freedom of expression, non-discrimination, and procedural justice to interpret the effects of these findings in terms of Human Rights. We analyze (i) the extent of predictive multiplicity among popular state-of-the-art LLMs used for detecting “toxic” content; (ii) the disparate impact of this arbitrariness across social groups; and (iii) the magnitude of model multiplicity on content that is unanimously recognized as toxic by human annotators. Our findings indicate that the up-scaled algorithmic moderation risks legitimizing an “algorithmic leviathan”, where an algorithm disproportionately manages human rights. To mitigate such risks, our study underscores the need to identify and increase the transparency of arbitrariness in content moderation applications. Our findings have implications to content moderation and intermediary liability laws being discussed and passed in many countries, such as the Digital Services Act in the European Union, the Online Safety Act in the United Kingdom, and the recent TSE resolutions in Brazil.},
+	booktitle = {Proceedings of the 2024 ACM Conference on Fairness, Accountability, and Transparency},
+	pages = {2234–2253},
+	numpages = {20},
+	keywords = {Rashomon effect, content moderation, predictive multiplicity},
+	location = {Rio de Janeiro, Brazil},
+	series = {FAccT '24}
+}
+
+@inproceedings{masud-etal-2024-hate,
+	title = "Hate Personified: Investigating the role of {LLM}s in content moderation",
+	author = "Masud, Sarah  and
+	Singh, Sahajpreet  and
+	Hangya, Viktor  and
+	Fraser, Alexander  and
+	Chakraborty, Tanmoy",
+	editor = "Al-Onaizan, Yaser  and
+	Bansal, Mohit  and
+	Chen, Yun-Nung",
+	booktitle = "Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing",
+	month = nov,
+	year = "2024",
+	address = "Miami, Florida, USA",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/2024.emnlp-main.886/",
+	doi = "10.18653/v1/2024.emnlp-main.886",
+	pages = "15847--15863",
+	abstract = "For subjective tasks such as hate detection, where people perceive hate differently, the Large Language Model{'}s (LLM) ability to represent diverse groups is unclear. By including additional context in prompts, we comprehensively analyze LLM{'}s sensitivity to geographical priming, persona attributes, and numerical information to assess how well the needs of various groups are reflected. Our findings on two LLMs, five languages, and six datasets reveal that mimicking persona-based attributes leads to annotation variability. Meanwhile, incorporating geographical signals leads to better regional alignment. We also find that the LLMs are sensitive to numerical anchors, indicating the ability to leverage community-based flagging efforts and exposure to adversaries. Our work provides preliminary guidelines and highlights the nuances of applying LLMs in culturally sensitive cases."
+}
+
+@inproceedings{weeber-etal-2026-one,
+	title = "\textit{One} Persona, \textit{Many} Cues, \textit{Different} Results: How Sociodemographic Cues Impact {LLM} Personalization",
+	author = "Weeber, Franziska  and
+	Neplenbroek, Vera  and
+	Batzner, Jan  and
+	Pad{\'o}, Sebastian",
+	editor = "Liakata, Maria  and
+	Moreira, Viviane P.  and
+	Zhang, Jiajun  and
+	Jurgens, David",
+	booktitle = "Proceedings of the 64th Annual Meeting of the {A}ssociation for {C}omputational {L}inguistics (Volume 1: Long Papers)",
+	month = jul,
+	year = "2026",
+	address = "San Diego, California, United States",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/2026.acl-long.2079/",
+	doi = "10.18653/v1/2026.acl-long.2079",
+	pages = "44892--44921",
+	ISBN = "979-8-89176-390-6",
+	abstract = "Personalization of LLMs by sociodemographic subgroup often improves user experience, but can also introduce or amplify biases and unfair outcomes across groups. Prior work has employed so-called personas, sociodemographic user attributes conveyed to a model, to study bias in LLMs by relying on a single cue to prompt a persona, such as user names or explicit attribute mentions. This disregards LLM sensitivity to prompt variation and the rarity of some cues in real interactions (external validity). We compare six commonly used persona cues across seven open and proprietary LLMs on four writing and advice tasks. While cues are overall highly correlated, they produce substantial variance in responses across personas that can change findings on persona-induced differences and bias. We therefore caution against claims based on single persona cues, especially when they are overly explicit and have low external validity."
+}
+
+@inproceedings{kapania-etal-2025-examining,
+	author = {Kapania, Shivani and Ballard, Stephanie and Kessler, Alex and Vaughan, Jennifer Wortman},
+	title = {Examining the Expanding Role of Synthetic Data Throughout the AI Development Pipeline},
+	year = {2025},
+	isbn = {9798400714825},
+	publisher = {Association for Computing Machinery},
+	address = {New York, NY, USA},
+	url = {https://doi.org/10.1145/3715275.3732005},
+	doi = {10.1145/3715275.3732005},
+	abstract = {Alongside the growth of generative AI, we are witnessing a surge in the use of synthetic data across all stages of the AI development pipeline. It is now common practice for researchers and practitioners to use one large generative model (which we refer to as an auxiliary model) to generate synthetic data that is used to train or evaluate another, reconfiguring AI workflows and reshaping the very nature of data. While scholars have raised concerns over the risks of synthetic data, policy guidance and best practices for its responsible use have not kept up with these rapidly evolving industry trends, in part because we lack a clear picture of current practices and challenges. Our work aims to address this gap. Through 29 interviews with AI practitioners and responsible AI experts, we examine the expanding role of synthetic data in AI development. Our findings reveal how auxiliary models are now widely used across the AI development pipeline. Practitioners describe synthetic data as crucial for addressing data scarcity and providing a competitive edge, noting that evaluation of generative AI systems at scale would be infeasible without auxiliary models. However, they face challenges controlling the outputs of auxiliary models, generating data that accurately depict underrepresented groups, and scaling data validation practices that are based primarily on manual inspection. We detail general limitations of and ethical considerations for synthetic data and conclude with a proposal of concrete steps towards the development of best practices for its responsible use.},
+	booktitle = {Proceedings of the 2025 ACM Conference on Fairness, Accountability, and Transparency},
+	pages = {45–60},
+	numpages = {16},
+	location = {
+	},
+	series = {FAccT '25}
+}
+
+@inproceedings{sharma_rlaif,
+	author = {Sharma, Archit and Keh, Sedrick and Mitchell, Eric and Finn, Chelsea and Arora, Kushal and Kollar, Thomas},
+	booktitle = {Advances in Neural Information Processing Systems},
+	doi = {10.52202/079017-0919},
+	editor = {A. Globerson and L. Mackey and D. Belgrave and A. Fan and U. Paquet and J. Tomczak and C. Zhang},
+	pages = {29166--29190},
+	publisher = {Curran Associates, Inc.},
+	title = {A Critical Evaluation of AI Feedback for Aligning Large Language Models},
+	url = {https://proceedings.neurips.cc/paper_files/paper/2024/file/33870b3e099880cd8e705cd07173ac27-Paper-Conference.pdf},
+	volume = {37},
+	year = {2024}
+}
+
+@article{davani-etal-2022-dealing,
+	title = "Dealing with Disagreements: Looking Beyond the Majority Vote in Subjective Annotations",
+	author = "Mostafazadeh Davani, Aida  and
+	D{\'i}az, Mark  and
+	Prabhakaran, Vinodkumar",
+	editor = "Roark, Brian  and
+	Nenkova, Ani",
+	journal = "Transactions of the Association for Computational Linguistics",
+	volume = "10",
+	year = "2022",
+	address = "Cambridge, MA",
+	publisher = "MIT Press",
+	url = "https://aclanthology.org/2022.tacl-1.6/",
+	doi = "10.1162/tacl_a_00449",
+	pages = "92--110",
+	abstract = "Majority voting and averaging are common approaches used to resolve annotator disagreements and derive single ground truth labels from multiple annotations. However, annotators may systematically disagree with one another, often reflecting their individual biases and values, especially in the case of subjective tasks such as detecting affect, aggression, and hate speech. Annotator disagreements may capture important nuances in such tasks that are often ignored while aggregating annotations to a single ground truth. In order to address this, we investigate the efficacy of multi-annotator models. In particular, our multi-task based approach treats predicting each annotators' judgements as separate subtasks, while sharing a common learned representation of the task. We show that this approach yields same or better performance than aggregating labels in the data prior to training across seven different binary classification tasks. Our approach also provides a way to estimate uncertainty in predictions, which we demonstrate better correlate with annotation disagreements than traditional methods. Being able to model uncertainty is especially useful in deployment scenarios where knowing when not to make a prediction is important."
+}
+
+@inproceedings{leonardelli-etal-2023-semeval,
+	title = "{S}em{E}val-2023 Task 11: Learning with Disagreements ({L}e{W}i{D}i)",
+	author = "Leonardelli, Elisa  and
+	Abercrombie, Gavin  and
+	Almanea, Dina  and
+	Basile, Valerio  and
+	Fornaciari, Tommaso  and
+	Plank, Barbara  and
+	Rieser, Verena  and
+	Uma, Alexandra  and
+	Poesio, Massimo",
+	editor = {Ojha, Atul Kr.  and
+	Do{\u{g}}ru{\"o}z, A. Seza  and
+	Da San Martino, Giovanni  and
+	Tayyar Madabushi, Harish  and
+	Kumar, Ritesh  and
+	Sartori, Elisa},
+	booktitle = "Proceedings of the 17th International Workshop on Semantic Evaluation (SemEval-2023)",
+	month = jul,
+	year = "2023",
+	address = "Toronto, Canada",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/2023.semeval-1.314/",
+	doi = "10.18653/v1/2023.semeval-1.314",
+	pages = "2304--2318",
+	abstract = "NLP datasets annotated with human judgments are rife with disagreements between the judges. This is especially true for tasks depending on subjective judgments such as sentiment analysis or offensive language detection. Particularly in these latter cases, the NLP community has come to realize that the common approach of reconciling' these different subjective interpretations risks misrepresenting the evidence. Many NLP researchers have therefore concluded that rather than eliminating disagreements from annotated corpora, we should preserve themindeed, some argue that corpora should aim to preserve all interpretations produced by annotators. But this approach to corpus creation for NLP has not yet been widely accepted. The objective of the Le-Wi-Di series of shared tasks is to promote this approach to developing NLP models by providing a unified framework for training and evaluating with such datasets. We report on the second such shared task, which differs from the first edition in three crucial respects: (i) it focuses entirely on NLP, instead of both NLP and computer vision tasks in its first edition; (ii) it focuses on subjective tasks, instead of covering different types of disagreements as training with aggregated labels for subjective NLP tasks is in effect a misrepresentation of the data; and (iii) for the evaluation, we concentrated on soft approaches to evaluation. This second edition of Le-Wi-Di attracted a wide array of partici- pants resulting in 13 shared task submission papers."
+}
+
+@ARTICLE{uma_2022_scaling,
+	
+	AUTHOR={Uma, Alexandra  and Almanea, Dina  and Poesio, Massimo },
+	
+	TITLE={Scaling and Disagreements: Bias, Noise, and Ambiguity},
+	
+	JOURNAL={Frontiers in Artificial Intelligence},
+	
+	VOLUME={Volume 5 - 2022},
+	
+	YEAR={2022},
+	
+	URL={https://www.frontiersin.org/journals/artificial-intelligence/articles/10.3389/frai.2022.818451},
+	
+	DOI={10.3389/frai.2022.818451},
+	
+	ISSN={2624-8212},
+	
+	ABSTRACT={Crowdsourced data are often rife with disagreement, whether because of genuine item ambiguity, overlapping labels,  subjectivity or annotator error.  Hence,  a variety of methods have been developed for learning from data containing disagreement. One of the observations emerging from this work is that different methods appear to work best depending on characteristics of the6dataset such as the level of noise. In this paper, we investigate the use of an approach developed to estimate noise, temperature scaling, in learning from data containing disagreements. We find that temperature scaling works with data in which the disagreements are the result of label overlap, but not with data in which the disagreements are due to annotator bias, as in, e.g., subjective tasks such as labelling an item as offensive or not. We also find that disagreements due to ambiguity do not fit perfectly in either category.}}
+	
+	@inproceedings{abercrombie-etal-2025-consistency,
+		title = "Consistency is Key: Disentangling Label Variation in Natural Language Processing with Intra-Annotator Agreement",
+		author = "Abercrombie, Gavin  and
+		Dinkar, Tanvi  and
+		Cercas Curry, Amanda  and
+		Rieser, Verena  and
+		Hovy, Dirk",
+		editor = "Abercrombie, Gavin  and
+		Basile, Valerio  and
+		Frenda, Simona  and
+		Tonelli, Sara  and
+		Dudy, Shiran",
+		booktitle = "Proceedings of the The 4th Workshop on Perspectivist Approaches to NLP",
+		month = nov,
+		year = "2025",
+		address = "Suzhou, China",
+		publisher = "Association for Computational Linguistics",
+		url = "https://aclanthology.org/2025.nlperspectives-1.6/",
+		doi = "10.18653/v1/2025.nlperspectives-1.6",
+		pages = "63--74",
+		ISBN = "979-8-89176-350-0",
+		abstract = "We commonly use agreement measures to assess the utility of judgements made by human annotators in Natural Language Processing (NLP) tasks. While inter-annotator agreement is frequently used as an indication of label reliability by measuring consistency between annotators, we argue for the additional use of intra-annotator agreement to measure label stability (and annotator consistency) over time. However, in a systematic review, we find that the latter is rarely reported in this field. Calculating these measures can act as important quality control and could provide insights into why annotators disagree. We conduct exploratory annotation experiments to investigate the relationships between these measures and perceptions of subjectivity and ambiguity in text items, finding that annotators provide inconsistent responses around 25{\%} of the time across four different NLP tasks."
+	}
+	
+	@inproceedings{vitsakis-etal-2023-ilab,
+		title = "i{L}ab at {S}em{E}val-2023 Task 11 Le-Wi-Di: Modelling Disagreement or Modelling Perspectives?",
+		author = "Vitsakis, Nikolas  and
+		Parekh, Amit  and
+		Dinkar, Tanvi  and
+		Abercrombie, Gavin  and
+		Konstas, Ioannis  and
+		Rieser, Verena",
+		editor = {Ojha, Atul Kr.  and
+		Do{\u{g}}ru{\"o}z, A. Seza  and
+		Da San Martino, Giovanni  and
+		Tayyar Madabushi, Harish  and
+		Kumar, Ritesh  and
+		Sartori, Elisa},
+		booktitle = "Proceedings of the 17th International Workshop on Semantic Evaluation (SemEval-2023)",
+		month = jul,
+		year = "2023",
+		address = "Toronto, Canada",
+		publisher = "Association for Computational Linguistics",
+		url = "https://aclanthology.org/2023.semeval-1.231/",
+		doi = "10.18653/v1/2023.semeval-1.231",
+		pages = "1660--1669",
+		abstract = "There are two competing approaches for modelling annotator disagreement: distributional soft-labelling approaches (which aim to capture the level of disagreement) or modelling perspectives of individual annotators or groups thereof. We adapt a multi-task architecture which has previously shown success in modelling perspectives to evaluate its performance on the SEMEVAL Task 11. We do so by combining both approaches, i.e. predicting individual annotator perspectives as an interim step towards predicting annotator disagreement. Despite its previous success, we found that a multi-task approach performed poorly on datasets which contained distinct annotator opinions, suggesting that this approach may not always be suitable when modelling perspectives. Furthermore, our results explain that while strongly perspectivist approaches might not achieve state-of-the-art performance according to evaluation metrics used by distributional approaches, our approach allows for a more nuanced understanding of individual perspectives present in the data. We argue that perspectivist approaches are preferable because they enable decision makers to amplify minority views, and that it is important to re-evaluate metrics to reflect this goal."
+	}
+	
+	@inproceedings{vitsakis-etal-2024-voices,
+		title = "Voices in a Crowd: Searching for clusters of unique perspectives",
+		author = "Vitsakis, Nikolas  and
+		Parekh, Amit  and
+		Konstas, Ioannis",
+		editor = "Al-Onaizan, Yaser  and
+		Bansal, Mohit  and
+		Chen, Yun-Nung",
+		booktitle = "Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing",
+		month = nov,
+		year = "2024",
+		address = "Miami, Florida, USA",
+		publisher = "Association for Computational Linguistics",
+		url = "https://aclanthology.org/2024.emnlp-main.696/",
+		doi = "10.18653/v1/2024.emnlp-main.696",
+		pages = "12517--12539",
+		abstract = "Language models have been shown to reproduce underlying biases existing in their training data, which is the majority perspective by default. Proposed solutions aim to capture minority perspectives by either modelling annotator disagreements or grouping annotators based on shared metadata, both of which face significant challenges. We propose a framework that trains models without encoding annotator metadata, extracts latent embeddings informed by annotator behaviour, and creates clusters of similar opinions, that we refer to as voices. Resulting clusters are validated post-hoc via internal and external quantitative metrics, as well a qualitative analysis to identify the type of voice that each cluster represents. Our results demonstrate the strong generalisation capability of our framework, indicated by resulting clusters being adequately robust, while also capturing minority perspectives based on different demographic factors throughout two distinct datasets."
+	}
+	
+	@article{davani-etal-2023-hate,
+		title = "Hate Speech Classifiers Learn Normative Social Stereotypes",
+		author = "Davani, Aida Mostafazadeh  and
+		Atari, Mohammad  and
+		Kennedy, Brendan  and
+		Dehghani, Morteza",
+		journal = "Transactions of the Association for Computational Linguistics",
+		volume = "11",
+		year = "2023",
+		address = "Cambridge, MA",
+		publisher = "MIT Press",
+		url = "https://aclanthology.org/2023.tacl-1.18/",
+		doi = "10.1162/tacl_a_00550",
+		pages = "300--319",
+		abstract = "Social stereotypes negatively impact individuals' judgments about different groups and may have a critical role in understanding language directed toward marginalized groups. Here, we assess the role of social stereotypes in the automated detection of hate speech in the English language by examining the impact of social stereotypes on annotation behaviors, annotated datasets, and hate speech classifiers. Specifically, we first investigate the impact of novice annotators' stereotypes on their hate-speech-annotation behavior. Then, we examine the effect of normative stereotypes in language on the aggregated annotators' judgments in a large annotated corpus. Finally, we demonstrate how normative stereotypes embedded in language resources are associated with systematic prediction errors in a hate-speech classifier. The results demonstrate that hate-speech classifiers reflect social stereotypes against marginalized groups, which can perpetuate social inequalities when propagated at scale. This framework, combining social-psychological and computational-linguistic methods, provides insights into sources of bias in hate-speech moderation, informing ongoing debates regarding machine learning fairness."
+	}
+	
+	@inproceedings{rottger-etal-2022-two,
+		title = "Two Contrasting Data Annotation Paradigms for Subjective {NLP} Tasks",
+		author = {R{\"o}ttger, Paul  and
+		Vidgen, Bertie  and
+		Hovy, Dirk  and
+		Pierrehumbert, Janet},
+		editor = "Carpuat, Marine  and
+		de Marneffe, Marie-Catherine  and
+		Meza Ruiz, Ivan Vladimir",
+		booktitle = "Proceedings of the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies",
+		month = jul,
+		year = "2022",
+		address = "Seattle, United States",
+		publisher = "Association for Computational Linguistics",
+		url = "https://aclanthology.org/2022.naacl-main.13/",
+		doi = "10.18653/v1/2022.naacl-main.13",
+		pages = "175--190",
+		abstract = "Labelled data is the foundation of most natural language processing tasks. However, labelling data is difficult and there often are diverse valid beliefs about what the correct data labels should be. So far, dataset creators have acknowledged annotator subjectivity, but rarely actively managed it in the annotation process. This has led to partly-subjective datasets that fail to serve a clear downstream use. To address this issue, we propose two contrasting paradigms for data annotation. The descriptive paradigm encourages annotator subjectivity, whereas the prescriptive paradigm discourages it. Descriptive annotation allows for the surveying and modelling of different beliefs, whereas prescriptive annotation enables the training of models that consistently apply one belief. We discuss benefits and challenges in implementing both paradigms, and argue that dataset creators should explicitly aim for one or the other to facilitate the intended use of their dataset. Lastly, we conduct an annotation experiment using hate speech data that illustrates the contrast between the two paradigms."
+	}
+	
+	@inproceedings{fleisig-etal-2023-majority,
+		title = "When the Majority is Wrong: Modeling Annotator Disagreement for Subjective Tasks",
+		author = "Fleisig, Eve  and
+		Abebe, Rediet  and
+		Klein, Dan",
+		editor = "Bouamor, Houda  and
+		Pino, Juan  and
+		Bali, Kalika",
+		booktitle = "Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing",
+		month = dec,
+		year = "2023",
+		address = "Singapore",
+		publisher = "Association for Computational Linguistics",
+		url = "https://aclanthology.org/2023.emnlp-main.415/",
+		doi = "10.18653/v1/2023.emnlp-main.415",
+		pages = "6715--6726",
+		abstract = "Though majority vote among annotators is typically used for ground truth labels in machine learning, annotator disagreement in tasks such as hate speech detection may reflect systematic differences in opinion across groups, not noise. Thus, a crucial problem in hate speech detection is determining if a statement is offensive to the demographic group that it targets, when that group may be a small fraction of the annotator pool. We construct a model that predicts individual annotator ratings on potentially offensive text and combines this information with the predicted target group of the text to predict the ratings of target group members. We show gains across a range of metrics, including raising performance over the baseline by 22{\%} at predicting individual annotators' ratings and by 33{\%} at predicting variance among annotators, which provides a metric for model uncertainty downstream. We find that annotators' ratings can be predicted using their demographic information as well as opinions on online content, and that non-invasive questions on annotators' online experiences minimize the need to collect demographic information when predicting annotators' opinions."
+	}
+	
+	@inproceedings{gupta_2023_same,
+		author = {Gupta, Soumyajit and Lee, Sooyong and De-Arteaga, Maria and Lease, Matthew},
+		title = {Same Same, But Different: Conditional Multi-Task Learning for Demographic-Specific Toxicity Detection},
+		year = {2023},
+		isbn = {9781450394161},
+		publisher = {Association for Computing Machinery},
+		address = {New York, NY, USA},
+		url = {https://doi.org/10.1145/3543507.3583290},
+		doi = {10.1145/3543507.3583290},
+		abstract = {Algorithmic bias often arises as a result of differential subgroup validity, in which predictive relationships vary across groups. For example, in toxic language detection, comments targeting different demographic groups can vary markedly across groups. In such settings, trained models can be dominated by the relationships that best fit the majority group, leading to disparate performance. We propose framing toxicity detection as multi-task learning (MTL), allowing a model to specialize on the relationships that are relevant to each demographic group while also leveraging shared properties across groups. With toxicity detection, each task corresponds to identifying toxicity against a particular demographic group. However, traditional MTL requires labels for all tasks to be present for every data point. To address this, we propose Conditional MTL (CondMTL), wherein only training examples relevant to the given demographic group are considered by the loss function. This lets us learn group specific representations in each branch which are not cross contaminated by irrelevant labels. Results on synthetic and real data show that using CondMTL improves predictive recall over various baselines in general and for the minority demographic group in particular, while having similar overall accuracy.},
+		booktitle = {Proceedings of the ACM Web Conference 2023},
+		pages = {3689–3700},
+		numpages = {12},
+		keywords = {Multi-task learning, conditional loss, differential subgroup validity},
+		location = {Austin, TX, USA},
+		series = {WWW '23}
+	}
+	
+	@inproceedings{lee-etal-2023-large,
+		title = "Can Large Language Models Capture Dissenting Human Voices?",
+		author = "Lee, Noah  and
+		An, Na Min  and
+		Thorne, James",
+		editor = "Bouamor, Houda  and
+		Pino, Juan  and
+		Bali, Kalika",
+		booktitle = "Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing",
+		month = dec,
+		year = "2023",
+		address = "Singapore",
+		publisher = "Association for Computational Linguistics",
+		url = "https://aclanthology.org/2023.emnlp-main.278/",
+		doi = "10.18653/v1/2023.emnlp-main.278",
+		pages = "4569--4585",
+		abstract = "Large language models (LLMs) have shown impressive achievements in solving a broad range of tasks. Augmented by instruction fine-tuning, LLMs have also been shown to generalize in zero-shot settings as well. However, whether LLMs closely align with the human disagreement distribution has not been well-studied, especially within the scope of natural language inference (NLI). In this paper, we evaluate the performance and alignment of LLM distribution with humans using two different techniques to estimate the multinomial distribution: Monte Carlo Estimation (MCE) and Log Probability Estimation (LPE). As a result, we show LLMs exhibit limited ability in solving NLI tasks and simultaneously fail to capture human disagreement distribution. The inference and human alignment performances plunge even further on data samples with high human disagreement levels, raising concerns about their natural language understanding (NLU) ability and their representativeness to a larger human population."
+	}
+	
+@article{arstein2008,
+	author = {Artstein, Ron and Poesio, Massimo},
+	title = {Inter-Coder Agreement for Computational Linguistics},
+	journal = {Computational Linguistics},
+	volume = {34},
+	number = {4},
+	pages = {555-596},
+	year = {2008},
+	month = {12},
+	abstract = {This article is a survey of methods for measuring agreement among corpus annotators. It exposes the mathematics and underlying assumptions of agreement coefficients, covering Krippendorff's alpha as well as Scott's pi and Cohen's kappa; discusses the use of coefficients in several annotation tasks; and argues that weighted, alpha-like coefficients, traditionally less used than kappa-like measures in computational linguistics, may be more appropriate for many corpus annotation tasks—but that their use makes the interpretation of the value of the coefficient even harder.},
+	issn = {0891-2017},
+	doi = {10.1162/coli.07-034-R2},
+	url = {https://doi.org/10.1162/coli.07-034-R2},
+	eprint = {https://direct.mit.edu/coli/article-pdf/34/4/555/1808947/coli.07-034-r2.pdf},
+}
+
+@article{vandereijk2001,
+	author = {Cees Eijk},
+	title = {Measuring Agreement in Ordered Rating Scales},
+	journal = {Quality and Quantity},
+	volume = {35},
+	pages = {325--341},
+	year = {2001},
+	doi = {10.1023/A:1010374114305}
+	}
+	
+
+@inproceedings{ding2025casualtalk,
+	title = "A Multi-Level Benchmark for Causal Language Understanding in Social Media Discourse",
+	author = "Ding, Xiaohan  and
+	Ping, Kaike  and
+	{\c{C}}ar{\i}k, Buse  and
+	Rho, Eugenia",
+	editor = "Christodoulopoulos, Christos  and
+	Chakraborty, Tanmoy  and
+	Rose, Carolyn  and
+	Peng, Violet",
+	booktitle = "Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing",
+	month = nov,
+	year = "2025",
+	address = "Suzhou, China",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/2025.emnlp-main.1464/",
+	doi = "10.18653/v1/2025.emnlp-main.1464",
+	pages = "28776--28790",
+	ISBN = "979-8-89176-332-6",
+	abstract = "Understanding causal language in informal discourse is a core yet underexplored challenge in NLP. Existing datasets largely focus on explicit causality in structured text, providing limited support for detecting implicit causal expressions, particularly those found in informal, user-generated social media posts. We introduce CausalTalk, a multi-level dataset of five years of Reddit posts (2020{--}2024) discussing public health related to the COVID-19 pandemic, among which 10,120 posts are annotated across four causal tasks: (1) binary causal classification, (2) explicit vs. implicit causality, (3) cause{--}effect span extraction, and (4) causal gist generation. Annotations comprise both gold-standard labels created by domain experts and silver-standard labels generated by GPT-4o and verified by human annotators.CausalTalk bridges fine-grained causal detection and gist-based reasoning over informal text. It enables benchmarking across both discriminative and generative models, and provides a rich resource for studying causal reasoning in social media contexts."
+}
+
+@article{uma2021,
+	author = {Uma, Alexandra and Fornaciari, Tommaso and Hovy, Dirk and Paun, Silviu and Plank, Barbara and Poesio, Massimo},
+	year = {2021},
+	month = {12},
+	pages = {1385-1470},
+	title = {Learning from Disagreement: A Survey},
+	volume = {72},
+	journal = {Journal of Artificial Intelligence Research},
+	doi = {10.1613/jair.1.12752}
+}

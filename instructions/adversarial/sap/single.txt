@@ -1,0 +1,7 @@
+Your assigned characteristic set is {{persona}}. Identify the single, most influential trait from your persona (e.g., 'Intolerance for X,' 'Sensitivity to Y,' 'Strong belief in Z').
+
+Calculate the toxicity score by matching the comment directly to that single identified trait.
+
+Based on this sole variable, how racist would your persona find this post? Use a scale ranging from “not at all” (1) to “very much so” (5).
+
+Reply with a single number only.
