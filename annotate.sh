@@ -20,7 +20,6 @@ instruction_keys=("sap" "kumar")
 all_models=(
   "unsloth/OLMo-2-0325-32B-Instruct-unsloth-bnb-4bit"
   "unsloth/Qwen2.5-32B-Instruct-bnb-4bit"
-  "unsloth/Llama-3.3-70B-Instruct-bnb-4bit"
   "unsloth/Olmo-3-7B-Instruct-unsloth-bnb-4bit"
   "unsloth/Qwen2.5-7B-Instruct-bnb-4bit"
   "unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit"
@@ -28,7 +27,6 @@ all_models=(
 all_pseudos=(
   "olmo32b"
   "qwen32b"
-  "llama70b"
   "olmo7b"
   "qwen7b"
   "llama8b"
@@ -44,12 +42,14 @@ adv_models=(
 adv_pseudos=(
   "olmo32b"
   "qwen32b"
-  "llama70b"
   "qwen7b"
 )
 
+# batch size = num of annotators at max value as anything more will be wasted
+declare -A batch_sizes=( [olmo32b]=60 [qwen32b]=60 [llama70b]=8 [olmo7b]=60 [qwen7b]=60 [llama8b]=60 )
+
 # Datasets that also get adversarial annotation (indices into the main arrays)
-adv_dataset_indices=(2 3)   # sap, kumar
+adv_dataset_indices=(0 1)   # sap, kumar
 
 # ============================================================
 # Directory configuration
@@ -116,6 +116,7 @@ run_annotation() {
     --instruction-prompt-path "$instruction_path"
     --model-name      "$model"
     --output-path     "$output_path"
+    --batch-size "${batch_sizes[$pseudo]}"
   )
   [ -n "$sample_fraction" ] && cmd+=(--sample-fraction "$sample_fraction")
 

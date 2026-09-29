@@ -18,7 +18,7 @@ from ..lib.preprocessing import (
 )
 
 SEED = 42
-N_PERSONAS_PER_COMMENT = 60
+N_PERSONAS_PER_COMMENT = 20
 MAX_NEW_TOKENS = 3
 MAX_CTX_TOKENS = 512
 
@@ -41,6 +41,7 @@ def main(
     instruction_prompt_path: Path,
     model_name: str,
     output_path: Path,
+    batch_size: int,
     sample_fraction: float | None = None,
 ):
     # Toggle to True if VRAM is under durress
@@ -92,6 +93,7 @@ def main(
                 model_name=model_name,
                 prompt_name=instruction_prompt_path.name,
                 rng=rng,
+                batch_size=batch_size
             )
         )
 
@@ -116,8 +118,12 @@ def load_generator(model_name: str):
         model=model_name,
         device_map="auto",
     )
-    if generator.tokenizer.pad_token is None:
-        generator.tokenizer.pad_token = generator.tokenizer.eos_token
+    tok = generator.tokenizer
+    if tok.pad_token is None:
+        tok.pad_token = tok.eos_token
+    tok.padding_side = (
+        "left"  # required for correct batched decoder-only generation
+    )
     return generator
 
 
@@ -190,7 +196,7 @@ def sample_personas(value_pools, n, rng):
     total = _count_possible_personas(value_pools)
     n = min(n, total)
 
-    #if more than 1000 combinations, use the rejection sampling approach
+    # if more than 1000 combinations, use the rejection sampling approach
     if total <= 1000:
         return _sample_personas_exhaustive(
             value_pools=value_pools, columns=columns, n=n, rng=rng
@@ -199,8 +205,6 @@ def sample_personas(value_pools, n, rng):
         return _sample_personas_rejection(
             value_pools=value_pools, columns=columns, n=n, rng=rng
         )
-
-    return personas
 
 
 def format_persona(persona: dict[str, str]) -> str:
@@ -220,23 +224,32 @@ def build_messages(
     ]
 
 
-def generate_annotation(generator, messages: list[dict]) -> str:
-    # no need to supply cuda device due to accelerate
+def generate_annotations(
+    generator,
+    batch_of_messages: list[list[dict]],
+    batch_size: int,
+) -> list[str]:
     with torch.inference_mode():
-        output = generator(
-            messages,
+        outputs = generator(
+            batch_of_messages,
             max_new_tokens=MAX_NEW_TOKENS,
             do_sample=True,
+            batch_size=batch_size,
+            return_full_text=False,  # only the newly generated text
         )
 
-    reply = output[0]["generated_text"]
-
-    # Chat-formatted input makes the pipeline return the full conversation
-    # (as a list of role/content dicts); pull out the assistant's reply.
-    if isinstance(reply, list):
-        reply = reply[-1]["content"]
-
-    return reply.strip()
+    results = []
+    for out in outputs:
+        # each element is a list with one dict per returned sequence
+        reply = (
+            out[0]["generated_text"]
+            if isinstance(out, list)
+            else out["generated_text"]
+        )
+        if isinstance(reply, list):  # fallback if a full chat comes back
+            reply = reply[-1]["content"]
+        results.append(reply.strip())
+    return results
 
 
 def annotate_comment(
@@ -248,42 +261,35 @@ def annotate_comment(
     model_name: str,
     prompt_name: str,
     rng: np.random.Generator,
+    batch_size: int,
 ) -> list[dict]:
     """
-    Sample N_PERSONAS_PER_COMMENT distinct personas for this comment,
-    then generate one annotation for each persona.
+    Sample up to N_PERSONAS_PER_COMMENT distinct personas for this comment,
+    then generate one annotation per persona in batches.
     """
-    rows = []
     personas = sample_personas(
         value_pools=value_pools,
         n=N_PERSONAS_PER_COMMENT,
         rng=rng,
     )
 
-    for persona in personas:
-        messages = build_messages(
-            template=template,
-            persona=persona,
-            text=text,
-        )
+    batch = [
+        build_messages(template=template, persona=p, text=text)
+        for p in personas
+    ]
+    annotations = generate_annotations(generator, batch, batch_size)
 
-        annotation = generate_annotation(
-            generator,
-            messages,
-        )
-
-        rows.append(
-            {
-                "model": model_name,
-                "instruction_prompt": prompt_name,
-                "text_id": text_id,
-                "text": text,
-                **persona,
-                "annotation": annotation,
-            }
-        )
-
-    return rows
+    return [
+        {
+            "model": model_name,
+            "instruction_prompt": prompt_name,
+            "text_id": text_id,
+            "text": text,
+            **persona,
+            "annotation": annotation,
+        }
+        for persona, annotation in zip(personas, annotations)
+    ]
 
 
 if __name__ == "__main__":
@@ -345,6 +351,13 @@ if __name__ == "__main__":
         ),
     )
 
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=16,
+        help="Number of persona prompts per forward pass.",
+    )
+
     args = parser.parse_args()
 
     main(
@@ -354,4 +367,5 @@ if __name__ == "__main__":
         model_name=args.model_name,
         output_path=Path(args.output_path),
         sample_fraction=args.sample_fraction,
+        batch_size=args.batch_size,
     )
