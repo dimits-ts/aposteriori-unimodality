@@ -1,17 +1,14 @@
-% !TeX program = pdflatex
+% !TeX program = lualatex
 
-\documentclass{article} % For LaTeX2e
-\usepackage{iclr2027_conference,times}
-\input{math_commands.tex}
+\documentclass[manuscript,screen,review,anonymous]{acmart}
 
+%TODO: check compliance
 %  ==================== MY PACKAGES ====================
 \usepackage[T1]{fontenc}
 
 \usepackage{graphicx}%
 \usepackage{multirow}%
-\usepackage{amsmath,amssymb,amsfonts}%
 \usepackage{amsthm}%
-\usepackage{xcolor}%
 \usepackage{booktabs}%
 \usepackage{float}%
 \usepackage{acronym}
@@ -20,35 +17,33 @@
 \usepackage{url}
 \usepackage{colortbl}
 \usepackage{siunitx}
-\usepackage[export]{adjustbox}
 \usepackage{multicol}
 \usepackage{longtable}
-\usepackage{placeins}
 \usepackage{censor}
 \usepackage[inline]{enumitem}
 \usepackage{nicefrac}
+\usepackage{libertinus} % fix encoding issues, same font family
 
 
 %  ==================== MY COMMANDS ====================
-\theoremstyle{definition}
-
-\newtheorem{definition}{Definition}
-\newtheorem{hypothesis}{Hypothesis}
-
-\theoremstyle{plain}
-\newtheorem{finding}{Finding}
-
-\newtheoremstyle{researchquestionstyle}
-{} % Space above
-{} % Space below
-{\normalfont} % Body font: Use normal/upright font for the main text
-{} % Indent amount
-{\bfseries} % Head font: Use bold font for the title and optional argument
-{?} % Punctuation after head
-{ } % Space after theorem head
-{\thmname{#1}\thmnumber{ #2}:\thmnote{ \textbf{#3}}}
-\theoremstyle{researchquestionstyle}
-\newtheorem{researchquestion}{RQ}
+\AtEndPreamble{%
+	\newtheorem{hypothesis}{Hypothesis}
+	
+	\theoremstyle{acmplain}
+	\newtheorem{finding}{Finding}
+	
+	\newtheoremstyle{researchquestionstyle}
+	{} % Space above
+	{} % Space below
+	{\normalfont} % Body font: Use normal/upright font for the main text
+	{} % Indent amount
+	{} % Head font: Use bold font for the title and optional argument
+	{?} % Punctuation after head
+	{ } % Space after theorem head
+	{\thmname{#1}\thmnumber{ #2}:\thmnote{ \emph{#3}}}
+	\theoremstyle{researchquestionstyle}
+	\newtheorem{researchquestion}{RQ}
+}
 
 \newcommand{\librarylink}{ \url{https://anonymous.4open.science/r/apunim-5F70}}
 \newcommand{\doclink}{\url{https://anonymous.4open.science/r/apunim-page}}
@@ -58,26 +53,84 @@
 
 \graphicspath{ {../graphs} {graphs}  }
 
-\title{Polarization Without Groups}
+\title[When Silver Isn't Gold]{When Silver Isn't Gold: Quantifying and Auditing Group-Based Disagreement in Human and LLM Annotation}
 
 \author{Anonymous}
 
+
 \begin{document}
-\maketitle
 
 \begin{abstract}
-	LLM-as-judge systems are increasingly used as scalable substitutes for human annotators, including in polarized, subjective tasks where human annotators systematically disagree along group lines. Whether these systems reproduce, ignore, or distort human polarization patterns is largely untested, in part because existing methods for attributing this disagreement are unreliable. In this work, we find that their unreliability partially rests on the faulty assumption that all systematic disagreement can be attributed to at least one annotator group, and on the fact that the direction of a group's disagreement can vary from item to item. Instead of using statistical methodologies, we develop a method following a clustering approach that resolves both failure modes, enabling this to be quantifiably attributed to any annotator group without training. Using this method, we audit LLM-as-judge systems against real human annotation datasets and find that their attribution patterns are largely disconnected from those of human annotators, a gap that persists even when models are explicitly prompted to condition on persona characteristics. We validate the underlying method on simulated data, showing it remains reliable under group-size imbalance and disagreement with conflicting directions that degrade current approaches. Overall, our results suggest that persona-conditioning alone is insufficient for LLM judges to replicate the structure of human disagreement.
+	LLM-as-judge systems are increasingly used as scalable substitutes for human annotators, including in polarized, subjective tasks where human annotators systematically disagree along group lines. Whether these systems reproduce, ignore, or distort human polarization patterns is largely untested, in part because existing methods for attributing this disagreement may be unreliable in realistic and subjective annotation settings. In this work, we find that their unreliability partially rests on the faulty assumptions that all systematic disagreement can be attributed to at least one annotator group and that each such group has a uniform bias across items . Instead of using these methodologies, we develop a method following a clustering approach that resolves both failure modes, enabling this to be quantifiably attributed to any annotator group. Using this method, we audit LLM-as-judge systems against real human annotation datasets and find that their disagreement patterns are largely disconnected from those of human annotators, a gap that persists even when models are explicitly prompted to condition on persona characteristics. We validate the underlying method on simulated data, showing it remains reliable under group-size imbalance and disagreement with conflicting directions that degrade current approaches. Overall, our results suggest that persona-conditioning alone is insufficient for LLM judges to replicate the structure of human disagreement.
 \end{abstract}
+
+\begin{CCSXML}
+	<ccs2012>
+	<concept>
+	<concept_id>10010147.10010178.10010179</concept_id>
+	<concept_desc>Computing methodologies~Natural language processing</concept_desc>
+	<concept_significance>500</concept_significance>
+	</concept>
+	<concept>
+	<concept_id>10010147.10010257.10010258.10010260</concept_id>
+	<concept_desc>Computing methodologies~Unsupervised learning</concept_desc>
+	<concept_significance>500</concept_significance>
+	</concept>
+	<concept>
+	<concept_id>10003120.10003130.10011762</concept_id>
+	<concept_desc>Human-centered computing~Empirical studies in collaborative and social computing</concept_desc>
+	<concept_significance>500</concept_significance>
+	</concept>
+	<concept>
+	<concept_id>10003456.10010927.10003611</concept_id>
+	<concept_desc>Social and professional topics~Race and ethnicity</concept_desc>
+	<concept_significance>300</concept_significance>
+	</concept>
+	<concept>
+	<concept_id>10003456.10010927.10003613</concept_id>
+	<concept_desc>Social and professional topics~Gender</concept_desc>
+	<concept_significance>300</concept_significance>
+	</concept>
+	<concept>
+	<concept_id>10003456.10010927.10003614</concept_id>
+	<concept_desc>Social and professional topics~Sexual orientation</concept_desc>
+	<concept_significance>100</concept_significance>
+	</concept>
+	<concept>
+	<concept_id>10003456.10010927.10010930</concept_id>
+	<concept_desc>Social and professional topics~Age</concept_desc>
+	<concept_significance>100</concept_significance>
+	</concept>
+	<concept>
+	<concept_id>10010147.10010178.10010179.10010186</concept_id>
+	<concept_desc>Computing methodologies~Language resources</concept_desc>
+	<concept_significance>100</concept_significance>
+	</concept>
+	</ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Computing methodologies~Natural language processing}
+\ccsdesc[500]{Computing methodologies~Unsupervised learning}
+\ccsdesc[500]{Human-centered computing~Empirical studies in collaborative and social computing}
+\ccsdesc[300]{Social and professional topics~Race and ethnicity}
+\ccsdesc[300]{Social and professional topics~Gender}
+\ccsdesc[100]{Social and professional topics~Sexual orientation}
+\ccsdesc[100]{Social and professional topics~Age}
+\ccsdesc[100]{Computing methodologies~Language resources}
+
+\keywords{Polarization, Clustering, Annotation, Sociodemographic Characteristics, Persona-Prompting}
+
+\maketitle
 
 
 \section{Introduction}
 \label{sec:intro}
 
-As human annotation is generally expensive,  LLM-as-judge systems are increasingly deployed as scalable substitutes for human annotators \citep{rossi_2024, kapania-etal-2025-examining} to acquire a cheaper, ``silver'' supervision signal in place of human-annotated ``gold'' labels. Recent work \citep{pavlopoulos-likas-2024, davani-etal-2022-dealing, fleisig-etal-2023-majority}  shows that ignoring disagreement in human annotations may provide us with the wrong signal, which can lead to significant misconfiguration in trained AI systems \citep{uma2021} (e.g., toxicity models disproportionately marking \ac{aa} speech as ``toxic''~\citep{sap-etal-2019-risk}, or ignoring minority opinions \citep{quaranto2022dog}). It is therefore imperative that systematic disagreements by human annotators be preserved by LLMs whose annotations by default gravitate toward the statistical average \citep{bisbee_2023}. Persona-prompting is sometimes used to bypass this limitation, but suffers from its own challenges such as stereotyping and inconsistent annotations \citep{lutz-etal-2025-prompt, liu-etal-2024-evaluating-large}. However, whether current LLM-as-judge systems reproduce, ignore, or distort these human disagreement patterns is largely untested. We show that this is in part because the tools available for measuring group-based disagreement attribution are themselves unreliable.
+As human annotation is generally expensive,  LLM-as-judge systems are increasingly deployed as scalable substitutes for human annotators \citep{rossi_2024, kapania-etal-2025-examining} to acquire a cheaper, ``silver'' supervision signal in place of human-annotated ``gold'' labels. Recent work \citep{pavlopoulos-likas-2024, davani-etal-2022-dealing, fleisig-etal-2023-majority}  shows that ignoring disagreement in human annotations may provide us with the wrong signal, which can lead to significant misconfiguration in trained AI systems \citep{uma2021}. For example, toxicity models have disproportionately marked \ac{aa} speech as ``toxic'' \citep{sap-etal-2019-risk}, or systematically ignored minority opinions \citep{quaranto2022dog} in the past. It is therefore imperative that systematic disagreements by human annotators be preserved by LLMs whose annotations by default gravitate toward the statistical average \citep{bisbee_2023}. Persona-prompting is sometimes used to bypass this limitation, but suffers from its own challenges such as stereotyping and inconsistent annotations \citep{lutz-etal-2025-prompt, liu-etal-2024-evaluating-large}. However, whether current LLM-as-judge systems reproduce, ignore, or distort these human disagreement patterns is largely untested. We show that this is in part because the tools available for measuring group-based disagreement attribution are themselves unreliable.
 
 In subjective tasks such as content moderation, toxicity, and \acf{hs} detection, many approaches attempt to distinguish between general and systematic disagreement (Fig.~\ref{fig:disagreement-vs-polarization}), as research has shown that the latter may be caused by different points-of-view between groups \citep{davani-etal-2022-dealing, uma2021, goyal2022your}. This distinction typically relies on \ac{iaa} \citep{ivey-etal-2025-nutmeg, petra_2022_handling, van_der_Velden}, although other methods have been proposed \citep{checco_2017, pavlopoulos-likas-2024}. These systematic, fundamental disagreements are related to the phenomenon of \emph{polarization}, where opinions are split between two conflicting groups. 
 
-Prior work has framed the question of LLM annotation reliability in terms of human-LLM agreement \citep{dong-etal-2024-llm, gomez-etal-2024-algorithmic, masud-etal-2024-hate} or task-specific performance \citep{gupta2024bias}. Instead, we posit that in order for the silver LLM signal to be representative of the gold human signal, the fundamental, systematic disagreements in the annotations should be similar. Thus, we ask the following \textbf{Main Research Question (MRQ): To what extent are the disagreements in LLM annotation consistent with those of human annotators?} We attempt to answer this question irrespective of whether this disagreement corresponds to the annotators' actual group identities; we instead explore it through the following sub-questions:
+Prior work has framed the question of LLM annotation reliability in terms of human-LLM agreement \citep{dong-etal-2024-llm, gomez-etal-2024-algorithmic, masud-etal-2024-hate} or task-specific performance \citep{gupta2024bias}. Instead, we posit that in order for the silver LLM signal to be representative of the gold human signal, the fundamental, systematic disagreements in the annotations should be similar. Thus, we ask the following \textbf{Main Research Question (MRQ): To what extent do LLMs follow human disagreement patterns in subjective annotation tasks?} We attempt to answer this question irrespective of whether this disagreement corresponds to the annotators' actual group identities; we instead explore it through the following sub-questions:
 
 \begin{figure}[t]
 	\centering
@@ -103,14 +156,14 @@ Prior work has framed the question of LLM annotation reliability in terms of hum
 
 Our work makes the following contributions:
 \begin{enumerate*}
-	\item The identification and diagnosis of severe issues present in prior methodologies.
-	\item A new attribution metric that disambiguates systematic from general disagreement and is robust to small annotator counts, realistic subgroup disagreement effects and minority group splits.
-	\item An evaluation on LLM disagreements using persona prompting in subjective annotation scenarios.
+	\item The identification and diagnosis of some previously unknown severe issues present in prior disagreement attribution methodologies.
+	\item A new attribution metric that disambiguates systematic from general disagreement and is robust to small annotator counts, realistic subgroup disagreement effects and imbalanced group splits which are common when analyzing minority annotations.
+	\item An evaluation on LLM disagreement patterns attributable to \acp{pc} included in their persona prompts in subjective annotation scenarios.
 \end{enumerate*}
 We also release a PyPI library implementing our metric to aid future research in this topic.
 
 \begin{center}
-	\noindent\textcolor{red}{\textbf{Content Warning: Controversial and potentially harmful speech used for demonstration.}}
+	\noindent\textcolor{ACMRed}{\textbf{Content Warning: Controversial and potentially harmful speech used for demonstration.}}
 \end{center}
 
 
@@ -120,7 +173,7 @@ We also release a PyPI library implementing our metric to aid future research in
 \paragraph{Terminology} We distinguish three related definitions used throughout this work.
 \begin{enumerate*}
 	\item \textbf{Disagreement} represents any variance among annotators' ratings for the same item, regardless of its source.
-	\item  \textbf{Systematic disagreement} is the subset of disagreement that is non-random and recurring, which in this work is assumed to be caused by group identity.
+	\item  \textbf{Systematic disagreement} is the subset of disagreement that is non-random and recurring, which in this work is assumed to be caused by differences in group identity (e.g., background, cultural context, sociodemographic characteristics).
 	\item  \textbf{Polarization} is the underlying societal phenomenon describing genuinely conflicting, opposed viewpoints on the same item.
 \end{enumerate*}
 
@@ -234,8 +287,8 @@ We can confirm the persistence of this issue using \ac{ndfu} \citep{pavlopoulos-
 
 \begin{figure}[t]
 	\centering
-	\includegraphics[width=0.65\linewidth, valign=t]{ndfu_combined.png}
-	\includegraphics[width=0.3\linewidth, valign=t]{apriori.png}
+	\includegraphics[width=0.65\linewidth]{ndfu_combined.png}
+	\includegraphics[width=0.3\linewidth]{apriori.png}
 	\caption{\textbf{Left:} Simulated experiment describing a polarizing comment where men and women agree between themselves, but disagree with the opposite gender. \textbf{Right:} \ac{ip} across our datasets (\S\ref{sec:datasets}). Contrary to assumptions made in prior work, \ac{ip} is commonly non-zero and can even reach $\textit{nDFU} = 1$ in datasets with low annotator counts.}
 	\label{fig:inherent}
 \end{figure}
@@ -297,7 +350,6 @@ Apunim thus measures the degree to which an annotator group contributes to overa
 	\centering
 	\setlength{\tabcolsep}{4pt}
 	\begin{minipage}[t]{0.485\linewidth}
-		\vspace*{0mm} % vertically align tables
 		\begin{tabularx}{\linewidth}{X r r}
 			\toprule
 			\textbf{Group} & \textbf{Apunim} & \textbf{Support} \\
@@ -326,7 +378,6 @@ Apunim thus measures the degree to which an annotator group contributes to overa
 	\end{minipage}
 	\hfill
 	\begin{minipage}[t]{0.485\linewidth}
-		\vspace*{0mm} % vertically align tables
 		\begin{tabularx}{\linewidth}{X r r}
 			\toprule
 			\textbf{Group} & \textbf{Apunim} & \textbf{Support} \\
@@ -414,10 +465,7 @@ We stress that our metric functions strictly as a diagnostic warning signal. Any
 
 \paragraph{Prompts Used} This study uses adversarial prompts which explicitly instruct the model to change its outputs according to their persona prompts. The purpose of these prompts is to test the LLMs under an extreme case of prompt engineering and are not to be used for generalized usage. The use of these prompts may degrade model performance, increase the risk of stereotyping and produce misleading results.
 
-\bibliographystyle{iclr2027_conference}
-\bibliography{refs}
 
-\FloatBarrier
 \appendix
 
 \section {Acronyms}
@@ -1163,5 +1211,8 @@ Rate the degree of racism expressed in the post using the following scale:
 Use the wording and meaning of the post as the basis for your assessment. Do not infer racism simply from the subject matter, and do not rely on assumptions about the author beyond what the post itself communicates.
 
 Output only the selected number: 1, 2, 3, 4, or 5.
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{refs}
 
 \end{document}
