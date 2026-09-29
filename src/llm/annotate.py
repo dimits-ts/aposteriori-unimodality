@@ -1,7 +1,8 @@
 import argparse
 import os
+import math
 from pathlib import Path
-from typing import Optional
+from itertools import product
 
 import numpy as np
 import pandas as pd
@@ -13,12 +14,11 @@ from transformers import pipeline
 from ..lib.preprocessing import (
     SapDataset,
     KumarDataset,
-    DicesDataset,
     Dataset,
 )
 
 SEED = 42
-N_PERSONAS_PER_COMMENT = 6
+N_PERSONAS_PER_COMMENT = 60
 MAX_NEW_TOKENS = 3
 MAX_CTX_TOKENS = 512
 
@@ -41,7 +41,7 @@ def main(
     instruction_prompt_path: Path,
     model_name: str,
     output_path: Path,
-    sample_fraction: Optional[float] = None,
+    sample_fraction: float | None = None,
 ):
     # Toggle to True if VRAM is under durress
     os.environ.setdefault(
@@ -156,11 +156,22 @@ def sample_texts(
     return [(keys[i], texts[i]) for i in idx]
 
 
-def sample_personas(value_pools, n, rng):
-    columns = list(value_pools.keys())
-    seen = set()
-    personas = []
+def _count_possible_personas(value_pools: dict[str, list]) -> int:
+    return math.prod(len(v) for v in value_pools.values())
 
+
+def _sample_personas_exhaustive(
+    value_pools: dict[str, list], columns, n: int, rng: np.random.Generator
+):
+    all_combos = list(product(*(value_pools[c] for c in columns)))
+    idx = rng.choice(len(all_combos), size=n, replace=False)
+    return [dict(zip(columns, all_combos[i])) for i in idx]
+
+
+def _sample_personas_rejection(
+    value_pools: dict[str, list], columns, n: int, rng: np.random.Generator
+):
+    seen, personas = set(), []
     while len(personas) < n:
         candidate = tuple(
             value_pools[col][rng.integers(len(value_pools[col]))]
@@ -169,6 +180,25 @@ def sample_personas(value_pools, n, rng):
         if candidate not in seen:
             seen.add(candidate)
             personas.append(dict(zip(columns, candidate)))
+    return personas
+
+
+def sample_personas(value_pools, n, rng):
+    """Sample n distinct personas. If n exceeds the number of possible
+    combinations, returns all of them (in random order)."""
+    columns = list(value_pools.keys())
+    total = _count_possible_personas(value_pools)
+    n = min(n, total)
+
+    #if more than 1000 combinations, use the rejection sampling approach
+    if total <= 1000:
+        return _sample_personas_exhaustive(
+            value_pools=value_pools, columns=columns, n=n, rng=rng
+        )
+    else:
+        return _sample_personas_rejection(
+            value_pools=value_pools, columns=columns, n=n, rng=rng
+        )
 
     return personas
 
@@ -224,7 +254,6 @@ def annotate_comment(
     then generate one annotation for each persona.
     """
     rows = []
-
     personas = sample_personas(
         value_pools=value_pools,
         n=N_PERSONAS_PER_COMMENT,
