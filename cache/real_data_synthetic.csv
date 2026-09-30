@@ -1,0 +1,117 @@
+dataset,sdb_feature,method,stat,pvalue,detected
+DICES-350,Age,apunim,-0.015589280828275336,0.7830954631806352,0
+DICES-350,Age,Krippendorff delta-alpha,0.0009976266984348392,0.26865671641791045,0
+DICES-350,Age,aposteriori unimodality (2024),0.0,1.0,0
+DICES-350,Age,chi-squared (Akhtar et al. 2019),52.512095836759805,1.077968714216703e-10,1
+DICES-350,Education,apunim,0.026271086996608194,0.008041961981588037,1
+DICES-350,Education,Krippendorff delta-alpha,0.01377021925414923,0.04975124378109453,1
+DICES-350,Education,aposteriori unimodality (2024),0.0,1.0,0
+DICES-350,Education,chi-squared (Akhtar et al. 2019),65.18276391845984,2.354889475345233e-13,1
+DICES-350,Gender,apunim,0.017170943653561036,0.13309990529111038,0
+DICES-350,Gender,Krippendorff delta-alpha,0.006106879555208777,0.004975124378109453,1
+DICES-350,Gender,aposteriori unimodality (2024),0.0,1.0,0
+DICES-350,Gender,chi-squared (Akhtar et al. 2019),155.43030321493507,1.7731215029559627e-34,1
+DICES-350,Race,apunim,-0.045091536268456925,3.0027563736801065e-05,1
+DICES-350,Race,Krippendorff delta-alpha,0.01626571739642277,0.004975124378109453,1
+DICES-350,Race,aposteriori unimodality (2024),0.0,1.0,0
+DICES-350,Race,chi-squared (Akhtar et al. 2019),291.1616540282928,3.127456803167304e-58,1
+DICES-990,Age,apunim,-0.05033362214233708,8.62439137674251e-48,1
+DICES-990,Age,Krippendorff delta-alpha,-0.00982567055249265,1.0,0
+DICES-990,Age,aposteriori unimodality (2024),0.0,1.0,0
+DICES-990,Age,chi-squared (Akhtar et al. 2019),355.7144537153474,1.0235152124106112e-75,1
+DICES-990,Education,apunim,0.05458768297433049,2.830041537610722e-53,1
+DICES-990,Education,Krippendorff delta-alpha,0.019265935966530534,0.004975124378109453,1
+DICES-990,Education,aposteriori unimodality (2024),0.0,1.0,0
+DICES-990,Education,chi-squared (Akhtar et al. 2019),183.7161474613267,1.2780429838797638e-40,1
+DICES-990,Gender,apunim,-0.03852140055997943,1.6651355098823802e-29,1
+DICES-990,Gender,Krippendorff delta-alpha,0.0037217966310175155,0.004975124378109453,1
+DICES-990,Gender,aposteriori unimodality (2024),0.0,1.0,0
+DICES-990,Gender,chi-squared (Akhtar et al. 2019),717.1281156004154,1.224994666706773e-151,1
+DICES-990,Race,apunim,-0.11351401376033335,1.2733043544044673e-162,1
+DICES-990,Race,Krippendorff delta-alpha,-0.004457152246190324,0.9502487562189055,0
+DICES-990,Race,aposteriori unimodality (2024),0.0,1.0,0
+DICES-990,Race,chi-squared (Akhtar et al. 2019),1545.3990481295846,0.0,1
+Sap et al. 2022,Age,apunim,-0.16701607267644988,0.028983735178263678,1
+Sap et al. 2022,Age,Krippendorff delta-alpha,-0.11280798878040174,0.945273631840796,0
+Sap et al. 2022,Age,aposteriori unimodality (2024),0.044722719141323794,0.6831683168316832,0
+Sap et al. 2022,Age,chi-squared (Akhtar et al. 2019),371.17078965571204,2.727761200805407e-75,1
+Sap et al. 2022,Ethnicity,apunim,-0.0006744705792837351,0.9982685913429448,0
+Sap et al. 2022,Ethnicity,Krippendorff delta-alpha,-0.13320311801930018,1.0,0
+Sap et al. 2022,Ethnicity,aposteriori unimodality (2024),0.0035778175313059034,1.0,0
+Sap et al. 2022,Ethnicity,chi-squared (Akhtar et al. 2019),431.75130112500625,7.900200462499513e-82,1
+Sap et al. 2022,Gender,apunim,0.26130526581161573,1.3894420719777325e-17,1
+Sap et al. 2022,Gender,Krippendorff delta-alpha,0.06682781599457221,0.004975124378109453,1
+Sap et al. 2022,Gender,aposteriori unimodality (2024),0.017889087656529516,0.7326732673267327,0
+Sap et al. 2022,Gender,chi-squared (Akhtar et al. 2019),140.88502901609806,1.5530347504421464e-26,1
+Kumar et al. 2021,Age,apunim,0.15524608324101918,1.0,0
+Kumar et al. 2021,Age,Krippendorff delta-alpha,0.005882534564934094,0.417910447761194,0
+Kumar et al. 2021,Age,aposteriori unimodality (2024),0.1804629266378972,0.6435643564356436,0
+Kumar et al. 2021,Age,chi-squared (Akhtar et al. 2019),91.02100799126342,1.372100733556977e-08,1
+Kumar et al. 2021,Education,apunim,-0.004007444792836356,1.0,0
+Kumar et al. 2021,Education,Krippendorff delta-alpha,0.11666427137526919,0.029850746268656716,1
+Kumar et al. 2021,Education,aposteriori unimodality (2024),0.18948607296979209,0.5742574257425742,0
+Kumar et al. 2021,Education,chi-squared (Akhtar et al. 2019),388.6975394041104,1.0908759365806598e-58,1
+Kumar et al. 2021,Ethnicity,apunim,-3.8061743760359365e-06,1.0,0
+Kumar et al. 2021,Ethnicity,Krippendorff delta-alpha,0.06913115274093445,0.32338308457711445,0
+Kumar et al. 2021,Ethnicity,aposteriori unimodality (2024),0.08160062769713614,0.12871287128712872,0
+Kumar et al. 2021,Ethnicity,chi-squared (Akhtar et al. 2019),331.2803209403631,7.992911607437582e-56,1
+Kumar et al. 2021,Gender,apunim,0.004677554341435454,1.0,0
+Kumar et al. 2021,Gender,Krippendorff delta-alpha,-0.08145540262889903,0.4527363184079602,0
+Kumar et al. 2021,Gender,aposteriori unimodality (2024),0.029423303256178895,0.45544554455445546,0
+Kumar et al. 2021,Gender,chi-squared (Akhtar et al. 2019),36.1598300995538,0.00030537131571010994,1
+Kumar et al. 2021,Has Been Targeted,apunim,-0.000196694634227529,1.0,0
+Kumar et al. 2021,Has Been Targeted,Krippendorff delta-alpha,0.008780977560462089,0.0945273631840796,0
+Kumar et al. 2021,Has Been Targeted,aposteriori unimodality (2024),0.03962338171832091,0.009900990099009901,1
+Kumar et al. 2021,Has Been Targeted,chi-squared (Akhtar et al. 2019),188.7636704325758,9.771369764094721e-40,1
+Kumar et al. 2021,Is Parent,apunim,-0.0011297551371192397,1.0,0
+Kumar et al. 2021,Is Parent,Krippendorff delta-alpha,-0.28976025039104886,0.9253731343283582,0
+Kumar et al. 2021,Is Parent,aposteriori unimodality (2024),0.02236171047469596,0.9306930693069307,0
+Kumar et al. 2021,Is Parent,chi-squared (Akhtar et al. 2019),203.13878847096743,1.3931545715328263e-39,1
+Kumar et al. 2021,Is Transgender,apunim,0.0,0.9907997482246182,0
+Kumar et al. 2021,Is Transgender,Krippendorff delta-alpha,0.06431806692318515,0.11940298507462686,0
+Kumar et al. 2021,Is Transgender,aposteriori unimodality (2024),0.01647704982346018,0.009900990099009901,1
+Kumar et al. 2021,Is Transgender,chi-squared (Akhtar et al. 2019),271.5232451302595,4.66968883575789e-54,1
+Kumar et al. 2021,Political Affiliation,apunim,0.010129263489262316,1.0,0
+Kumar et al. 2021,Political Affiliation,Krippendorff delta-alpha,-0.05624115141013303,0.4129353233830846,0
+Kumar et al. 2021,Political Affiliation,aposteriori unimodality (2024),0.11494703805413888,0.42574257425742573,0
+Kumar et al. 2021,Political Affiliation,chi-squared (Akhtar et al. 2019),135.76618005323635,4.843097065257911e-21,1
+Kumar et al. 2021,Religion Important,apunim,0.0007154276225721489,1.0,0
+Kumar et al. 2021,Religion Important,Krippendorff delta-alpha,-0.16499958291766295,0.7910447761194029,0
+Kumar et al. 2021,Religion Important,aposteriori unimodality (2024),0.1490780698313064,0.06930693069306931,0
+Kumar et al. 2021,Religion Important,chi-squared (Akhtar et al. 2019),599.7046542836033,2.64200666947195e-117,1
+Kumar et al. 2021,Seen Toxicity,apunim,0.001006065449976053,1.0,0
+Kumar et al. 2021,Seen Toxicity,Krippendorff delta-alpha,-0.026882759294025893,0.945273631840796,0
+Kumar et al. 2021,Seen Toxicity,aposteriori unimodality (2024),0.036877206747744216,0.009900990099009901,1
+Kumar et al. 2021,Seen Toxicity,chi-squared (Akhtar et al. 2019),122.80637297121085,1.3432031592242949e-25,1
+Kumar et al. 2021,Sexual Orientation,apunim,0.0,1.0,0
+Kumar et al. 2021,Sexual Orientation,Krippendorff delta-alpha,-0.0454150812417195,0.31840796019900497,0
+Kumar et al. 2021,Sexual Orientation,aposteriori unimodality (2024),0.0557081208316987,0.009900990099009901,1
+Kumar et al. 2021,Sexual Orientation,chi-squared (Akhtar et al. 2019),370.88382439563236,2.1836897413946653e-66,1
+Kumar et al. 2021,Technology Impact,apunim,-0.003557668177322485,1.0,0
+Kumar et al. 2021,Technology Impact,Krippendorff delta-alpha,-0.021020506610624795,0.7910447761194029,0
+Kumar et al. 2021,Technology Impact,aposteriori unimodality (2024),0.10749313456257356,0.21782178217821782,0
+Kumar et al. 2021,Technology Impact,chi-squared (Akhtar et al. 2019),175.53394050639383,6.604195070533548e-29,1
+Kumar et al. 2021,Toxicity Problem,apunim,0.001819160111711796,1.0,0
+Kumar et al. 2021,Toxicity Problem,Krippendorff delta-alpha,0.03545895685037692,0.04477611940298507,1
+Kumar et al. 2021,Toxicity Problem,aposteriori unimodality (2024),0.1753628874068262,0.009900990099009901,1
+Kumar et al. 2021,Toxicity Problem,chi-squared (Akhtar et al. 2019),255.4196177270481,3.9971517469580355e-45,1
+POPQUORN,Age,apunim,0.03593395921010045,1.0,0
+POPQUORN,Age,Krippendorff delta-alpha,-0.029555184189215822,0.9353233830845771,0
+POPQUORN,Age,aposteriori unimodality (2024),0.1643730886850153,0.18811881188118812,0
+POPQUORN,Age,chi-squared (Akhtar et al. 2019),360.2333957252961,4.096782788603775e-55,1
+POPQUORN,Education,apunim,0.05046595754979337,0.0005009163881597797,1
+POPQUORN,Education,Krippendorff delta-alpha,-0.05936282267352144,0.5074626865671642,0
+POPQUORN,Education,aposteriori unimodality (2024),0.022935779816513763,0.24752475247524752,0
+POPQUORN,Education,chi-squared (Akhtar et al. 2019),87.12235063796453,8.449542218018829e-12,1
+POPQUORN,Gender,apunim,-0.01768544315945174,0.29620027373409724,0
+POPQUORN,Gender,Krippendorff delta-alpha,0.007120981399229176,0.2885572139303483,0
+POPQUORN,Gender,aposteriori unimodality (2024),0.0015290519877675841,1.0,0
+POPQUORN,Gender,chi-squared (Akhtar et al. 2019),55.44593595935144,3.6159096277841597e-09,1
+POPQUORN,Occupation,apunim,0.10894567813126188,0.20103601778895192,0
+POPQUORN,Occupation,Krippendorff delta-alpha,0.04832457871283674,0.13930348258706468,0
+POPQUORN,Occupation,aposteriori unimodality (2024),0.047400611620795105,0.9306930693069307,0
+POPQUORN,Occupation,chi-squared (Akhtar et al. 2019),116.45552176359229,4.132175352504951e-14,1
+POPQUORN,Race,apunim,-0.16625796959293754,2.3019757830308655e-06,1
+POPQUORN,Race,Krippendorff delta-alpha,-0.04426904043172239,0.5074626865671642,0
+POPQUORN,Race,aposteriori unimodality (2024),0.035168195718654434,0.019801980198019802,1
+POPQUORN,Race,chi-squared (Akhtar et al. 2019),209.08745702732918,1.7775904728859213e-33,1
