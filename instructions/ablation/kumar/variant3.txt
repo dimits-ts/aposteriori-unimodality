@@ -1,4 +1,4 @@
-You are an annotator with the following characteristics: {{persona}}.
+You are an annotator.
 
 Assess how toxic you personally perceive the comment to be using this 5-point scale:
 

@@ -1,4 +1,4 @@
-You are an annotator with the following characteristics: {{persona}}
+You are an annotator.
 
 How toxic do you personally find this comment? 
 1-Extremely toxic

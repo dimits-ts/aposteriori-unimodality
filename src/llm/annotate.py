@@ -1,6 +1,7 @@
 import argparse
 import os
 import math
+import copy
 from pathlib import Path
 from itertools import product
 
@@ -10,6 +11,7 @@ import torch
 import transformers
 from tqdm.auto import tqdm
 from transformers import pipeline
+from transformers import DynamicCache, pipeline
 
 from ..lib.preprocessing import (
     SapDataset,
@@ -18,7 +20,6 @@ from ..lib.preprocessing import (
 )
 
 SEED = 42
-N_PERSONAS_PER_COMMENT = 20
 MAX_NEW_TOKENS = 3
 MAX_CTX_TOKENS = 512
 
@@ -33,6 +34,9 @@ DATASET_LOADERS = {
     ),
     "sap": lambda p: SapDataset(dataset_path=p),
 }
+PERSONA_SUFFIX = (
+    "\n\nAnnotate as a person with these characteristics: {persona}"
+)
 
 
 def main(
@@ -42,6 +46,7 @@ def main(
     model_name: str,
     output_path: Path,
     batch_size: int,
+    num_annotators: int,
     sample_fraction: float | None = None,
 ):
     # Toggle to True if VRAM is under durress
@@ -54,6 +59,14 @@ def main(
 
     ds = load_dataset(dataset_key, dataset_path)
     template = instruction_prompt_path.read_text()
+    # in case I forget
+    if "{persona}" in template:
+        raise ValueError(
+            "Template still contains {persona}. For prefix caching the persona "
+            "must come last, so remove it from the template; it is appended to "
+            "the user message via PERSONA_SUFFIX."
+        )
+
     value_pools = get_subgroup_value_pools(ds)
     generator = load_generator(model_name)
 
@@ -93,7 +106,8 @@ def main(
                 model_name=model_name,
                 prompt_name=instruction_prompt_path.name,
                 rng=rng,
-                batch_size=batch_size
+                batch_size=batch_size,
+                num_annotators=num_annotators
             )
         )
 
@@ -121,9 +135,6 @@ def load_generator(model_name: str):
     tok = generator.tokenizer
     if tok.pad_token is None:
         tok.pad_token = tok.eos_token
-    tok.padding_side = (
-        "left"  # required for correct batched decoder-only generation
-    )
     return generator
 
 
@@ -216,11 +227,125 @@ def build_messages(
     persona: dict[str, str],
     text: str,
 ) -> list[dict]:
-    system_content = template.format(persona=format_persona(persona))
-
     return [
-        {"role": "system", "content": system_content},
-        {"role": "user", "content": text},
+        {"role": "system", "content": template},
+        {
+            "role": "user",
+            "content": text
+            + PERSONA_SUFFIX.format(persona=format_persona(persona)),
+        },
+    ]
+
+
+def _tokenize_prompts(
+    tok, batch_of_messages: list[list[dict]]
+) -> list[list[int]]:
+    """Render each conversation with the chat template and tokenize it.
+    Working at token level guarantees the cached tokens match exactly."""
+    prompts = [
+        tok.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True
+        )
+        for messages in batch_of_messages
+    ]
+    return [tok(p, add_special_tokens=False)["input_ids"] for p in prompts]
+
+
+def _common_prefix_length(all_ids: list[list[int]]) -> int:
+    """Length of the longest shared token prefix, leaving at least one
+    token per prompt so every suffix is non-empty."""
+    min_len = min(len(ids) for ids in all_ids)
+    n = 0
+    while n < min_len - 1 and all(ids[n] == all_ids[0][n] for ids in all_ids):
+        n += 1
+    assert (
+        n > 0
+    ), "No shared prefix found; check the chat template / prompt layout."
+    return n
+
+
+def _prefill_prefix(model, prefix_ids: torch.Tensor) -> DynamicCache:
+    """Run the shared prefix through the model once and return its KV cache."""
+    cache = DynamicCache()
+    with torch.inference_mode():
+        model(
+            input_ids=prefix_ids.to(model.device),
+            past_key_values=cache,
+            use_cache=True,
+        )
+    return cache
+
+
+def _left_pad_suffixes(
+    suffixes: list[list[int]], pad_id: int
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Left-pad suffix token lists into an (ids, mask) tensor pair."""
+    b = len(suffixes)
+    max_s = max(len(s) for s in suffixes)
+    ids = torch.full((b, max_s), pad_id, dtype=torch.long)
+    mask = torch.zeros((b, max_s), dtype=torch.long)
+    for i, s in enumerate(suffixes):
+        ids[i, max_s - len(s) :] = torch.tensor(s)
+        mask[i, max_s - len(s) :] = 1
+    return ids, mask
+
+
+def _build_batch_inputs(
+    prefix_ids: torch.Tensor,
+    suffixes: list[list[int]],
+    pad_id: int,
+    device,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Concatenate prefix + padded suffixes into full input_ids and attention
+    mask. The padding sits between prefix and suffix, which is fine because
+    the attention mask hides it and generate() derives position_ids from it."""
+    b = len(suffixes)
+    prefix_len = prefix_ids.shape[1]
+    suffix_ids, suffix_mask = _left_pad_suffixes(suffixes, pad_id)
+
+    input_ids = torch.cat([prefix_ids.expand(b, -1), suffix_ids], dim=1)
+    attention_mask = torch.cat(
+        [torch.ones(b, prefix_len, dtype=torch.long), suffix_mask], dim=1
+    )
+    return input_ids.to(device), attention_mask.to(device)
+
+
+def _expand_cache(prefix_cache: DynamicCache, batch_size: int) -> DynamicCache:
+    """generate() mutates the cache, so work on a copy expanded to batch size."""
+    cache = copy.deepcopy(prefix_cache)
+    cache.batch_repeat_interleave(batch_size)
+    return cache
+
+
+def _generate_batch(
+    generator,
+    prefix_ids: torch.Tensor,
+    prefix_cache: DynamicCache,
+    suffixes: list[list[int]],
+) -> list[str]:
+    """Generate one annotation per suffix on top of the cached prefix."""
+    tok, model = generator.tokenizer, generator.model
+    pad_id = tok.pad_token_id
+
+    input_ids, attention_mask = _build_batch_inputs(
+        prefix_ids, suffixes, pad_id, model.device
+    )
+    cache = _expand_cache(prefix_cache, len(suffixes))
+
+    with torch.inference_mode():
+        out = model.generate(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            past_key_values=cache,
+            max_new_tokens=MAX_NEW_TOKENS,
+            do_sample=True,
+            pad_token_id=pad_id,
+        )
+
+    new_tokens = out[:, input_ids.shape[1] :]
+    return [
+        t.strip()
+        for t in tok.batch_decode(new_tokens, skip_special_tokens=True)
     ]
 
 
@@ -229,26 +354,23 @@ def generate_annotations(
     batch_of_messages: list[list[dict]],
     batch_size: int,
 ) -> list[str]:
-    with torch.inference_mode():
-        outputs = generator(
-            batch_of_messages,
-            max_new_tokens=MAX_NEW_TOKENS,
-            do_sample=True,
-            batch_size=batch_size,
-            return_full_text=False,  # only the newly generated text
-        )
+    """Prefill the shared prefix (instructions + comment) once, then run the
+    per-persona suffixes in batches on top of a copy of that cache."""
+    all_ids = _tokenize_prompts(generator.tokenizer, batch_of_messages)
+    prefix_len = _common_prefix_length(all_ids)
 
+    prefix_ids = torch.tensor([all_ids[0][:prefix_len]])
+    prefix_cache = _prefill_prefix(generator.model, prefix_ids)
+
+    chunks = [
+        all_ids[i : i + batch_size] for i in range(0, len(all_ids), batch_size)
+    ]
     results = []
-    for out in outputs:
-        # each element is a list with one dict per returned sequence
-        reply = (
-            out[0]["generated_text"]
-            if isinstance(out, list)
-            else out["generated_text"]
+    for chunk in chunks:
+        suffixes = [ids[prefix_len:] for ids in chunk]
+        results.extend(
+            _generate_batch(generator, prefix_ids, prefix_cache, suffixes)
         )
-        if isinstance(reply, list):  # fallback if a full chat comes back
-            reply = reply[-1]["content"]
-        results.append(reply.strip())
     return results
 
 
@@ -262,14 +384,15 @@ def annotate_comment(
     prompt_name: str,
     rng: np.random.Generator,
     batch_size: int,
+    num_annotators: int
 ) -> list[dict]:
     """
-    Sample up to N_PERSONAS_PER_COMMENT distinct personas for this comment,
+    Sample up to n distinct personas for this comment,
     then generate one annotation per persona in batches.
     """
     personas = sample_personas(
         value_pools=value_pools,
-        n=N_PERSONAS_PER_COMMENT,
+        n=num_annotators,
         rng=rng,
     )
 
@@ -299,20 +422,17 @@ if __name__ == "__main__":
             "sociodemographic characteristics."
         )
     )
-
     parser.add_argument(
         "--dataset",
         required=True,
         choices=sorted(DATASET_LOADERS.keys()),
         help="Which dataset to sample comments from.",
     )
-
     parser.add_argument(
         "--dataset-path",
         required=True,
         help="Path to the raw dataset file for the chosen --dataset.",
     )
-
     parser.add_argument(
         "--instruction-prompt-path",
         required=True,
@@ -322,19 +442,16 @@ if __name__ == "__main__":
             "the comment text is sent separately as the user message."
         ),
     )
-
     parser.add_argument(
         "--model-name",
         required=True,
         help="Hugging Face transformers model name or path.",
     )
-
     parser.add_argument(
         "--output-path",
         required=True,
         help="Path to write the resulting annotations CSV to.",
     )
-
     parser.add_argument(
         "--sample-fraction",
         type=float,
@@ -350,11 +467,16 @@ if __name__ == "__main__":
             "keeping their outputs directly comparable."
         ),
     )
-
     parser.add_argument(
         "--batch-size",
         type=int,
-        default=16,
+        required=True,
+        help="Number of persona prompts per forward pass.",
+    )
+    parser.add_argument(
+        "--num-annotators",
+        type=int,
+        required=True,
         help="Number of persona prompts per forward pass.",
     )
 
@@ -368,4 +490,5 @@ if __name__ == "__main__":
         output_path=Path(args.output_path),
         sample_fraction=args.sample_fraction,
         batch_size=args.batch_size,
+        num_annotators=args.num_annotators,
     )

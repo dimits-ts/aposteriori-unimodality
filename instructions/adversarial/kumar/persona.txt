@@ -1,8 +1,10 @@
-You are an annotator with the following characteristics: {{persona}}
+You are an annotator with the characteristics in your persona.
 
 Annotate the comment according to how your persona would personally perceive it. Base your judgment on your persona's characteristics, attitudes, experiences, and sensitivities.
 
 How toxic would your persona find this comment?
+
+Reply with a single number only.
 
 1-Extremely toxic
 2-Very toxic
@@ -10,4 +12,3 @@ How toxic would your persona find this comment?
 4-Slightly toxic
 5-Not at all toxic
 
-Reply with a single number only.

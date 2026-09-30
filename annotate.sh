@@ -1,6 +1,5 @@
 #!/bin/bash
-
-set -uo pipefail
+set -o pipefail
 
 # ============================================================
 # Dataset configuration
@@ -10,13 +9,13 @@ dataset_paths=(
   "data/datasets/sap.csv"
   "data/datasets/kumar.json"
 )
-# Instructions subdirectory key for each dataset; dices variants share guidelines.
+# Instructions subdirectory key for each dataset
 instruction_keys=("sap" "kumar")
 
 # ============================================================
 # Model configuration
 # ============================================================
-# Models used for main + ablation runs (all 6)
+# Models used for main + ablation runs (all 5)
 all_models=(
   "unsloth/OLMo-2-0325-32B-Instruct-unsloth-bnb-4bit"
   "unsloth/Qwen2.5-32B-Instruct-bnb-4bit"
@@ -32,11 +31,10 @@ all_pseudos=(
   "llama8b"
 )
 
-# Models used for adversarial runs (subset: 4 models, no olmo7b / llama8b)
+# Models used for adversarial runs (subset: 3 models)
 adv_models=(
   "unsloth/OLMo-2-0325-32B-Instruct-unsloth-bnb-4bit"
   "unsloth/Qwen2.5-32B-Instruct-bnb-4bit"
-  "unsloth/Llama-3.3-70B-Instruct-bnb-4bit"
   "unsloth/Qwen2.5-7B-Instruct-bnb-4bit"
 )
 adv_pseudos=(
@@ -45,8 +43,14 @@ adv_pseudos=(
   "qwen7b"
 )
 
-# batch size = num of annotators at max value as anything more will be wasted
-declare -A batch_sizes=( [olmo32b]=60 [qwen32b]=60 [llama70b]=8 [olmo7b]=60 [qwen7b]=60 [llama8b]=60 )
+# Batch size per model. Anything above the number of annotators is wasted.
+declare -A batch_sizes=(
+  [olmo32b]=20
+  [qwen32b]=20
+  [olmo7b]=20
+  [qwen7b]=20
+  [llama8b]=20
+)
 
 # Datasets that also get adversarial annotation (indices into the main arrays)
 adv_dataset_indices=(0 1)   # sap, kumar
@@ -57,16 +61,18 @@ adv_dataset_indices=(0 1)   # sap, kumar
 instructions_dir="instructions"
 adv_instructions_dir="instructions/adversarial"
 
+num_annotators=20
+
 output_dir="output/llm/annotations"
 log_dir="logs"
 log_file="${log_dir}/annotation.log"
 
 # Ablation settings
+ablation_num_annotators=6
 ablation_sample_fraction="0.1"
 ablation_n_repeats=5
+# Indexed like `datasets` (sap, kumar)
 ablation_paraphrase_dirs=(
-  "instructions/ablation/dices"
-  "instructions/ablation/dices"
   "instructions/ablation/sap"
   "instructions/ablation/kumar"
 )
@@ -85,7 +91,7 @@ mkdir -p \
 # Shared annotation runner
 # ============================================================
 # Args: dataset  dataset_path  instruction_path  model  pseudo
-#       out_dir  sample_fraction  suffix  target_log
+#       out_dir  num_annotators  sample_fraction  suffix  target_log
 run_annotation() {
   local dataset="$1"
   local dataset_path="$2"
@@ -93,9 +99,10 @@ run_annotation() {
   local model="$4"
   local pseudo="$5"
   local out_dir="$6"
-  local sample_fraction="$7"   # empty string => full dataset
-  local suffix="$8"            # empty string => no suffix
-  local target_log="$9"
+  local n_annotators="$7"
+  local sample_fraction="$8"   # empty string => full dataset
+  local suffix="$9"            # empty string => no suffix
+  local target_log="${10}"
 
   local instruction_name
   instruction_name="$(basename "$instruction_path")"
@@ -105,22 +112,29 @@ run_annotation() {
 
   if [ -f "$output_path" ]; then
     echo "Skipping (already exists): ${output_path}" | tee -a "$target_log"
-    return
+    return 0
   fi
 
   echo -e "\n=== Dataset: ${dataset} | Instruction: ${instruction_name}${suffix} x ${pseudo} (${model}) ===" >> "$target_log"
 
   local cmd=(python -m src.llm.annotate
-    --dataset         "$dataset"
-    --dataset-path    "$dataset_path"
+    --dataset                 "$dataset"
+    --dataset-path            "$dataset_path"
     --instruction-prompt-path "$instruction_path"
-    --model-name      "$model"
-    --output-path     "$output_path"
-    --batch-size "${batch_sizes[$pseudo]}"
+    --model-name              "$model"
+    --output-path             "$output_path"
+    --batch-size              "${batch_sizes[$pseudo]}"
+    --num-annotators          "$n_annotators"
   )
   [ -n "$sample_fraction" ] && cmd+=(--sample-fraction "$sample_fraction")
 
-  "${cmd[@]}" | tee -a "$target_log" 2>&1
+  "${cmd[@]}" 2>&1 | tee -a "$target_log"
+  local status=${PIPESTATUS[0]}
+
+  if [ "$status" -ne 0 ]; then
+    echo "FAILED (exit ${status}): ${dataset} - ${instruction_name}${suffix} x ${pseudo}" | tee -a "$target_log"
+    return "$status"
+  fi
 
   echo "Finished ${dataset} - ${instruction_name}${suffix} x ${pseudo}." | tee -a "$target_log"
 }
@@ -139,7 +153,7 @@ for i in "${!datasets[@]}"; do
   echo "======================================================="        >> "$log_file"
 
   # ----------------------------------------------------------
-  # 1. Main annotations (all 6 models)
+  # 1. Main annotations (all 5 models)
   # ----------------------------------------------------------
   if [ ! -d "$current_instructions_dir" ]; then
     echo "Skipping ${current_dataset}: no instructions directory at ${current_instructions_dir}" | tee -a "$log_file"
@@ -154,6 +168,7 @@ for i in "${!datasets[@]}"; do
           "${all_models[$j]}"         \
           "${all_pseudos[$j]}"        \
           "$output_dir"               \
+          "$num_annotators"           \
           ""                          \
           ""                          \
           "$log_file"
@@ -170,14 +185,15 @@ for i in "${!datasets[@]}"; do
       for j in "${!all_models[@]}"; do
         for run in $(seq 0 $((ablation_n_repeats - 1))); do
           run_annotation \
-            "$current_dataset"          \
-            "$current_dataset_path"     \
-            "$instruction_path"         \
-            "${all_models[$j]}"         \
-            "${all_pseudos[$j]}"        \
+            "$current_dataset"            \
+            "$current_dataset_path"       \
+            "$instruction_path"           \
+            "${all_models[$j]}"           \
+            "${all_pseudos[$j]}"          \
             "$ablation_repeat_output_dir" \
-            "$ablation_sample_fraction" \
-            "-run${run}"                \
+            "$ablation_num_annotators"    \
+            "$ablation_sample_fraction"   \
+            "-run${run}"                  \
             "$ablation_log_file"
         done
       done
@@ -194,14 +210,15 @@ for i in "${!datasets[@]}"; do
       [ -f "$instruction_path" ] || continue
       for j in "${!all_models[@]}"; do
         run_annotation \
-          "$current_dataset"              \
-          "$current_dataset_path"         \
-          "$instruction_path"             \
-          "${all_models[$j]}"             \
-          "${all_pseudos[$j]}"            \
+          "$current_dataset"                \
+          "$current_dataset_path"           \
+          "$instruction_path"               \
+          "${all_models[$j]}"               \
+          "${all_pseudos[$j]}"              \
           "$ablation_paraphrase_output_dir" \
-          "$ablation_sample_fraction"     \
-          ""                              \
+          "$ablation_num_annotators"        \
+          "$ablation_sample_fraction"       \
+          ""                                \
           "$ablation_log_file"
       done
     done
@@ -210,14 +227,17 @@ for i in "${!datasets[@]}"; do
   fi
 
   # ----------------------------------------------------------
-  # 4. Adversarial annotations (4-model subset, sap + kumar only)
+  # 4. Adversarial annotations (3-model subset)
   # ----------------------------------------------------------
-
+  is_adv_dataset=0
   for adv_idx in "${adv_dataset_indices[@]}"; do
-    [ "$adv_idx" -eq "$i" ] && is_adv_dataset=1 && break
+    if [ "$adv_idx" -eq "$i" ]; then
+      is_adv_dataset=1
+      break
+    fi
   done
 
-
+  if [ "$is_adv_dataset" -eq 1 ]; then
     adv_instructions_path="${adv_instructions_dir}/${instruction_keys[$i]}"
 
     echo -e "\n\n======================================================="  >> "$log_file"
@@ -237,13 +257,14 @@ for i in "${!datasets[@]}"; do
             "${adv_models[$j]}"     \
             "${adv_pseudos[$j]}"    \
             "$output_dir"           \
+            "$num_annotators"       \
             ""                      \
             ""                      \
             "$log_file"
         done
       done
     fi
-
+  fi
 done
 
 echo -e "\nAll annotation, ablation, and adversarial runs completed."
