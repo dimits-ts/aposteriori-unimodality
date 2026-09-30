@@ -12,7 +12,13 @@ from tqdm.auto import tqdm
 import apunim
 
 from ..lib import graphs
-from ..lib.preprocessing import SapDataset, KumarDataset, DicesDataset, Dataset
+from ..lib.preprocessing import (
+    SapDataset,
+    KumarDataset,
+    DicesDataset,
+    PopquornDataset,
+    Dataset,
+)
 from ..lib.util import skip_if_exists
 
 MARKERS = {
@@ -20,6 +26,7 @@ MARKERS = {
     "DICES-990": "s",
     "Kumar et al. 2021": "^",
     "Sap et al. 2022": "*",
+    "POPQUORN": "P",
 }
 
 
@@ -31,6 +38,7 @@ def main(
     kumar_path: Path,
     graph_dir: Path,
     cache_dir: Path,
+    popquorn_offensiveness_path: Path,
     min_comment_annotators: int = 3,
 ):
     graphs.graph_setup()
@@ -38,7 +46,9 @@ def main(
     dices990_ds = DicesDataset(dataset_path=dices_large_path, variant="990")
     sap_ds = SapDataset(dataset_path=sap_path)
     kumar_ds = KumarDataset(dataset_path=kumar_path, num_samples=3_000)
-    datasets = [dices350_ds, dices990_ds, sap_ds, kumar_ds]
+    datasets: list[Dataset] = [dices350_ds, dices990_ds, sap_ds, kumar_ds]
+
+    datasets.append(PopquornDataset(dataset_path=popquorn_offensiveness_path))
     Dataset.print_descriptive_statistics(datasets)
     Dataset.print_annotation_count_table(datasets)
 
@@ -339,6 +349,11 @@ if __name__ == "__main__":
         help="Path to the Kumar annotator CSV file.",
     )
     parser.add_argument(
+        "--popquorn-path",
+        required=True,
+        help=("Path to the POPQUORN offensiveness dataset."),
+    )
+    parser.add_argument(
         "--graph-output-dir", required=True, help="Directory for the graphs."
     )
     parser.add_argument(
@@ -369,4 +384,5 @@ if __name__ == "__main__":
         graph_dir=Path(args.graph_output_dir),
         cache_dir=Path(args.cache_dir),
         min_comment_annotators=args.min_comment_annotators,
+        popquorn_offensiveness_path=Path(args.popquorn_path),
     )

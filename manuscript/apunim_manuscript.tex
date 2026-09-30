@@ -206,6 +206,8 @@ Others attempt to solve this problem by framing disagreement as a cluster identi
 \label{sec:datasets}
 
 \begin{table}[ht]
+	\caption{Datasets used in this study.}
+	\label{tab:datasets}
 	\centering
 	\begin{tabular}{lrrrr}
 		\toprule
@@ -222,13 +224,24 @@ Others attempt to solve this problem by framing disagreement as a cluster identi
 		
 		DICES-990~\citep{dices}
 		& 990  & 70--76 & 4  & Hate Speech\\
+		
+		POPQUORN~\citep{pei-jurgens-2023-annotator}
+		& 1500 &7--9 & 5 & Hate Speech\\
 		\bottomrule
 	\end{tabular}
-	\caption{Datasets used in this study.}
-	\label{tab:datasets}
 \end{table}
 
-We use four datasets from current NLP research that contain \ac{pc} information at the level of individual annotators. Specifically, we use the \textit{Kumar} dataset \citep{kumar-et-al-2021} and the \textit{Sap} ``Breadth of Posts'' dataset with the ``\textit{toyou}'' labels \citep{sap-etal-2022-annotators}, which address Toxicity and \ac{hs} detection, respectively. Additionally, we examine the \textit{DICES-350} (\textit{Q3\_bias\_targeting\_inherited\_attributes} label) and DICES-990 (\textit{Q3\_bias\_incites\_hatred} label) datasets \citep{dices}, which pertain to LLM response safety. Our choice of labels allows us to reframe these datasets as \ac{hs} datasets, capturing conceptually similar dimensions despite the lack of shared label names across the datasets. A brief overview of the dataset characteristics is provided in Table \ref{tab:datasets}. The Kumar dataset is notable for its large scale, featuring over 100,000 annotated items and 10 distinct \ac{pc} dimensions. In contrast, the DICES datasets have fewer annotated items but involve more than an order of magnitude more annotators per item than the others. Further details on the annotations, including overall levels of observed polarization (\ac{ndfu}), are available in App. \ref{app:ann_details}. For a discussion on the importance of high annotator counts per item, as opposed to generally high annotator counts, see App.~\ref{app:ideal-dataset}. 
+We use five datasets from current NLP research that contain \ac{pc} information at the level of individual annotators. 
+\begin{itemize}
+	\item The \textit{Kumar} dataset \citep{kumar-et-al-2021} which contains annotations for Toxicity detection.
+	\item The \textit{Sap} ``Breadth of Posts'' dataset with the ``\textit{toyou}'' labels \citep{sap-etal-2022-annotators} for \ac{hs} detection.
+	\item The \textit{DICES-350} (\textit{Q3\_bias\_targeting\_inherited\_attributes} label) and \textit{ DICES-990} (\textit{Q3\_bias\_incites\_hatred} label) datasets \citep{dices}, which pertain to LLM response safety. Our choice of labels allows us to reframe these datasets as \ac{hs} datasets, capturing conceptually similar dimensions despite the lack of shared label names across the datasets.
+	\item The POPQUORN \citep{pei-jurgens-2023-annotator} dataset using the ``offensiveness'' label for \ac{hs} detection.\footnote{While the dataset also contains ``politeness'' labels, these may not directly translate to toxicity detection; comments can simultaneously be toxic and phrased politely. Indeed, toxicity is not mentioned in the methodology of the original POPQUORN dataset and is considered a separate \ac{nlp} task in other work \citep{ziems2024can, lukito-etal-2024-comparing}.}
+\end{itemize}
+
+A brief overview of the dataset characteristics is provided in Table \ref{tab:datasets}. The Kumar dataset is notable for its large scale, featuring over 100,000 annotated items and 10 distinct \ac{pc} dimensions. In contrast, the DICES datasets have fewer annotated items but involve more than an order of magnitude more annotators per item than the others. The POPQUORN dataset presents a modest number of annotators per item (7-9) and
+
+Further details on the annotations, including overall levels of observed polarization (\ac{ndfu}), are available in App. \ref{app:ann_details} and a discussion on the importance of high annotator counts per item, as opposed to generally high annotator counts can be found in App.~\ref{app:ideal-dataset}. 
 
 The full datasets are used for the human annotation analysis in \S\ref{sec:apunim} and their \ac{pc} labels and texts as input for the LLM annotation in \S\ref{sec:llms}. In order to allow for a full comparison between human and LLM annotations, we use a sample of 1{,}000 items from the Kumar dataset. Our results remain consistent for both different samples and differently-sized samples (App.~\ref{app:ablation}).
 
@@ -346,6 +359,8 @@ Apunim thus measures the degree to which an annotator group contributes to overa
 \subsection{How Are Humans Polarized?}
 
 \begin{table}[t]
+	\caption{Statistically significant ($p<0.05$) apunim results across the Sap and DICES datasets. Gray rows show \texttt{Ethnicity} and \texttt{Gender} groups. ``Support'' refers to number of annotations. Consult App.~\ref{app:full} for the full results.}
+	\label{tab:apunim-main}
 	\small
 	\centering
 	\setlength{\tabcolsep}{4pt}
@@ -393,19 +408,26 @@ Apunim thus measures the degree to which an annotator group contributes to overa
 			\multicolumn{3}{c}{\textbf{Sap}} \\
 			\midrule
 			\rowcolor{gray!15}
-			Gender=man & 0.0907 & 1439 \\
+			Gender=Man & 0.0907 & 1439 \\
 			\rowcolor{gray!15}
-			Gender=woman & -0.2442 & 877 \\
+			Gender=Woman & -0.2442 & 877 \\
+			\midrule
+			\multicolumn{3}{c}{\textbf{POPQUORN}} \\
+			\midrule
+			\rowcolor{gray!15}
+			Gender=Man & 0.0081 & 2720 \\
+			\rowcolor{gray!15}
+			Race=Black & -0.1572 & 222 \\
+			Education=College & 0.0496& 2388 \\
+			Education=Graduate & -0.0808 & 468 \\
 			\bottomrule
 		\end{tabularx}
 	\end{minipage}
-	\caption{Statistically significant ($p<0.05$) apunim results across the Sap and DICES datasets. Gray rows show \texttt{Ethnicity} and \texttt{Gender} groups. ``Support'' refers to number of annotations. Consult App.~\ref{app:full} for the full results.}
-	\label{tab:apunim-main}
 \end{table}
 
 Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can explain the systematic disagreements shown in the four datasets (\S\ref{sec:datasets}). Statistically significant results are presented in Table~\ref{tab:apunim-main}.\footnote{The results are not necessarily contingent on a reliable p-value estimation, as non-statistically significant results have very low ($<0.01$) apunim values. A threshold on the apunim values would produce similar tables.} Note that the lack of rich annotation data prevents us from analyzing how different annotator groups interact and thus our analysis is necessarily uni-dimensional. See App.~\ref{app:software} for details on other parameters and execution times, and App.~\ref{app:full} for the full results. 
 
-\emph{Systematic disagreements are consistently attributed to \textbf{ethnicity} across both DICES datasets}, confirming prior work suggesting that it is a systematic source of annotator disagreement in \ac{hs} tasks~\citep{goyal2022your}.\footnote{Note that the apunim values do not have a consistent direction across datasets, which we believe to be caused by studies using different ethnic subgroups allowing detection but distorting attribution.} Additionally, in both DICES-990 and Sap, \emph{\textbf{women} are a consistent source of systematic disagreement} (positive values), while \textbf{men} disagree among themselves (negative values), which is consistent with previous findings~\citep{wojatzki2018women, binns2017like}. None of the Kumar dimensions show statistically significant values, but this is expected, as our methodology requires at least six annotators per item to work reliably.
+\emph{Systematic disagreements are consistently attributed to \textbf{ethnicity}} across all datasets excluding DICES-330, confirming prior work suggesting that it is a systematic source of annotator disagreement in \ac{hs} tasks~\citep{goyal2022your}.\footnote{Note that the apunim values do not have a consistent direction across datasets, which we believe to be caused by studies using different ethnic subgroups allowing detection but distorting attribution.} Additionally, in both DICES-990, Sap and POPQUORN, \emph{\textbf{men} are a consistent source of systematic disagreement} (positive values), while in the two former datasets  \textbf{women} disagree among themselves (positive values), which is consistent with previous findings~\citep{wojatzki2018women, binns2017like}. None of the Kumar dimensions show statistically significant values, but this is expected, as our methodology requires at least six annotators per item to work reliably.
 
 \begin{finding}
 	\label{finding:human}
@@ -491,10 +513,12 @@ The number of annotators per item for all datasets presented in \S\ref{sec:datas
 
 
 \begin{figure}[t]
+	\centering
 	\includegraphics[width=0.48\linewidth]{sap.png}
 	\includegraphics[width=0.48\linewidth]{kumar_sample.png}
 	\includegraphics[width=0.48\linewidth]{dices-350.png}
 	\includegraphics[width=0.48\linewidth]{dices-990.png}
+	\includegraphics[width=0.48\linewidth]{popquorn.png}
 	\caption{Boxplots of dataset polarization for the human datasets considered in this paper for all groups in each examined \ac{pc} dimension.}
 	\label{fig:dataset-polarization}
 \end{figure}
@@ -507,23 +531,27 @@ The number of annotators per item for all datasets presented in \S\ref{sec:datas
 	\label{fig:ann_counts}
 \end{figure}
 
-\begin{table}
+%TODO: Export these automatically pls
+\begin{table*}[t]
 	\centering
+	\caption{Descriptive statistics for the number of annotations per comment, grouped by dataset.}
+	\label{tab:num-annot}
 	\begin{tabular}{lrrrrrrrr}
 		\toprule
-		\textbf{Dataset} & count & mean & \ac{sd} & min & 25\% & 50\% & 75\% & max \\
+		& count & mean & std & min & 25\% & 50\% & 75\% & max \\
 		\midrule
 		DICES-350 & 350 & 123 & 0 & 123 & 123 & 123 & 123 & 123 \\
-		DICES-990 & 990 & 72.8& 1.17 & 69 & 72 & 73 & 74 & 76 \\
-		Sap & 585 & 5.6 & .78 & 3 & 6 & 6 & 6 & 12 \\
-		Kumar  & 2998 & 5.02 & .34 & 5 & 5 & 5 & 5 & 10 \\
+		DICES-990 & 990 & 72.8313 & 1.1652 & 69 & 72 & 73 & 74 & 76 \\
+		Sap et al. 2022 & 585 & 5.6359 & 0.7713 & 3 & 6 & 6 & 6 & 12 \\
+		Kumar et al. 2021 & 2998 & 5.0233 & 0.3409 & 5 & 5 & 5 & 5 & 10 \\
+		POPQUORN & 1500 & 8.6573 & 0.9087 & 5 & 8 & 9 & 9 & 10 \\
 		\bottomrule
 	\end{tabular}
-	\caption{Number of annotations per item in each of the four datasets used in this study.}
-	\label{tab:num-annot}
-\end{table}
+\end{table*}
 
 \begin{table}[t]
+	\caption{Subgroup Counts for DICES-990 (left) and DICES-350 (right). ``Support'' refers to annotation count.}
+	\label{tab:dices-stats}
 	\small
 	\centering
 	\begin{minipage}[t]{0.485\linewidth}
@@ -575,36 +603,81 @@ The number of annotators per item for all datasets presented in \S\ref{sec:datas
 				\bottomrule
 			\end{tabular}
 	\end{minipage}
-	\caption{Subgroup Counts for DICES-990 (left) and DICES-350 (right). ``Support'' refers to annotation count.}
-	\label{tab:dices-stats}
 \end{table}
 
 \begin{table}[t]
-	\centering
-	\begin{tabular}{llc}
-		\toprule
-		\textbf{Category} & \textbf{Subgroup} & \textbf{Support}\\
-		\midrule
-		Age& Gen. Z & 252 \\
-		& Millennial & 2259 \\
-		& Gen. X+ & 786 \\
-		\midrule
-		Ethnicity & white & 2168 \\
-		& black & 1091 \\
-		& hisp & 32 \\
-		& other & 5 \\
-		& middleEastern & 1 \\
-		\midrule
-		Gender & man & 1859 \\
-		& woman & 1412 \\
-		& nonBinary & 26 \\
-		\bottomrule
-	\end{tabular}
-		\caption{Subgroup Counts for Sap et al. 2022. ``Support'' refers to annotation count.}
+	\caption{Subgroup Counts for the Sap (left) and POPQUORN (right) datasets. ``Support'' refers to annotation count.}
 	\label{tab:sap-stats}
+	\centering
+	\begin{minipage}[t]{0.45\linewidth}
+		\begin{tabular}{llc}
+			\toprule
+			\textbf{Category} & \textbf{Subgroup} & \textbf{Support}\\
+			\midrule
+			Age& Gen. Z & 252 \\
+			& Millennial & 2259 \\
+			& Gen. X+ & 786 \\
+			\midrule
+			Race & White & 2168 \\
+			& Black & 1091 \\
+			& Hisp & 32 \\
+			& Other & 5 \\
+			& MiddleEastern & 1 \\
+			\midrule
+			Gender & man & 1859 \\
+			& woman & 1412 \\
+			& nonBinary & 26 \\
+			\bottomrule
+		\end{tabular}
+	\end{minipage}
+	\begin{minipage}[t]{0.485\linewidth}
+		\begin{tabular}{llc}
+			\toprule
+			\textbf{Category} & \textbf{Subgroup} & \textbf{Count}\\
+			\midrule
+			Gender & Woman & 6470 \\
+			& Man & 6166 \\
+			& Non-binary & 350 \\
+			\midrule
+			Race & White & 9754 \\
+			& Black & 1685 \\
+			& Asian & 949 \\
+			& Native American & 299 \\
+			& Hispanic & 250 \\
+			& Arab American & 49 \\
+			\midrule
+			Age & 18-24 & 1545 \\
+			& 25-29 & 1236 \\
+			& 30-34 & 1494 \\
+			& 35-39 & 1547 \\
+			& 40-44 & 1142 \\
+			& 45-49 & 1091 \\
+			& 50-54 & 947 \\
+			& 54-59 & 1793 \\
+			& 60-64 & 747 \\
+			& >65 & 1444 \\
+			\midrule
+			Education & No high school & 237 \\
+			& High school & 3934 \\
+			& College degree & 6036 \\
+			& Graduate degree & 2481 \\
+			& Other & 298 \\
+			\midrule
+			Occupation & Student & 995 \\
+			& Homemaker & 594 \\
+			& Retired & 1446 \\
+			& Employed & 6325 \\
+			& Self-employed & 1692 \\
+			& Unemployed & 1684 \\
+			& Other & 250 \\
+			\bottomrule
+		\end{tabular}
+	\end{minipage}
 \end{table}
 
 \begin{table}[t]
+	\caption{Subgroup Counts for the Kumar dataset. ``Support'' refers to annotation count.}
+	\label{tab:kumar-stats}
 	\small
 	\centering
 	\begin{minipage}[t]{0.45\linewidth}
@@ -699,8 +772,6 @@ The number of annotators per item for all datasets presented in \S\ref{sec:datas
 			\bottomrule
 		\end{tabular}
 	\end{minipage}
-	\caption{Subgroup Counts for the Kumar dataset. ``Support'' refers to annotation count.}
-	\label{tab:kumar-stats}
 \end{table}
 
 
@@ -778,6 +849,8 @@ Both of these explanations are plausible and reflect known limitations of most \
 The fact that the DICES datasets (featuring 70+ annotators per item) exhibit zero \ac{ip} in all items may initially seem to validate either of the above hypotheses. However, even when repeating the experiment using random annotator subsets (ranging from 5 to 50 annotators) and taking the maximum across ten random samples for each subset size, \emph{we still observed zero \ac{ip}} (App.~\ref{app:ideal-dataset}). This finding indicates that the DICES datasets may be structurally different. This explanation is plausible given that the annotation targets are LLM texts, which may be relatively unsubtle compared to human items, as supported by low overall polarization (Fig.~\ref{fig:dataset-polarization}; App~\ref{app:ann_details}). Although a definitive answer to this question eludes us due to the lack of other datasets with high annotator counts per item, the indication that the DICES datasets may not feature similar polarization patterns is noteworthy. 
 
 \begin{table}[t]
+	\caption{Sample of comments from the Sap dataset and their \ac{ip}. Note that unambiguously toxic comments can be assigned with zero \ac{ip}, while more nuanced cases tend to have higher values.}
+	\label{tab:inherent-examples}
 	\begin{tabularx}{\linewidth}{X c}
 		\toprule
 		\multicolumn{2}{c}{\textcolor{red}{\textbf{Content Warning: Slurs, offensive, toxic and hateful speech.}}} \\
@@ -803,8 +876,6 @@ The fact that the DICES datasets (featuring 70+ annotators per item) exhibit zer
 		stop talking you fucking n\censor{igg}er ! & 0 \\
 		\bottomrule
 	\end{tabularx}
-	\caption{Sample of comments from the Sap dataset and their \ac{ip}. Note that unambiguously toxic comments can be assigned with zero \ac{ip}, while more nuanced cases tend to have higher values.}
-	\label{tab:inherent-examples}
 \end{table}
 
 \paragraph{How Does it Look Like?}
@@ -864,6 +935,8 @@ Astute readers may notice that some variability does exist across differently si
 We use only open-source models, as proprietary models such as OpenAI's GPT-5 yield much less reproducible results~\citep{bisbee_2023}. Furthermore, the use of open-source models requires much fewer resources, enabling research on this task with a less demanding budget, as well as scalable deployment in real-world settings~\citep{rossi_2024}. It is also worth noting that since the datasets used are not publicly licensed, we can not risk leaking the data contained within to proprietary models. Generally, the use of local models protects the personal data of the users contained in our datasets, ensures that our research can be replicated in domains where anonymity must be maintained, and renders our work compatible with existing legislation~\citep{eu_ai_act, GDPR}. Table~\ref{tab:llm-details} shows details on the LLMs used for this study. We specifically use 4-bit quantized versions from the \texttt{unsloth huggingface} repository.
 
 \begin{table}[ht]
+	\caption{LLMs used in this study.}
+	\label{tab:llm-details}
 	\centering
 	\begin{tabular}{l l l}
 		\toprule
@@ -871,14 +944,11 @@ We use only open-source models, as proprietary models such as OpenAI's GPT-5 yie
 		\midrule
 		\texttt{OLMo}~\citep{groeneveld-etal-2024-olmo} & \texttt{2 (0325)} & 32B \\
 		\texttt{Qwen}~\citep{qwen2025qwen25technicalreport} & \texttt{2.5} & 32B \\
-		\texttt{LLaMa}~\citep{grattafiori2024llama3herdmodels} & \texttt{3.3} & 70B \\
 		\texttt{OLMo}~\citep{olmo2026olmo3} & \texttt{3} & 7B \\
 		\texttt{Qwen}~\citep{qwen2025qwen25technicalreport} & \texttt{2.5} & 7B \\
 		\texttt{LLaMa}~\citep{grattafiori2024llama3herdmodels} & \texttt{3.1} & 8B \\
 		\bottomrule
 	\end{tabular}
-	\caption{LLMs used in this study.}
-	\label{tab:llm-details}
 \end{table}
 
 
@@ -948,6 +1018,7 @@ We examine the following conditions for selecting models and datasets for our LL
 \input{generated/llm-apunim-by-prompt-sap.tex}
 \endgroup
 
+
 \section{The Ideal Subjective Dataset}
 \label{app:ideal-dataset}
 
@@ -972,12 +1043,13 @@ We briefly discuss the type of data most suited for our proposed methodology, an
 \section{Full Results}
 \label{app:full}
 
-Tables~\ref{tab:kumar-results},\ref{tab:sap-results},\ref{tab:dices-990-results} and \ref{tab:dices-350-results} show the full apunim results for the Kumar, Sap, DICES-350 and DICES-990 datasets respectively. Note that the results for Kumar are unreliable since they rely on a small minority of items where annotation counts happened to be over five, while our methodology requires six annotators per item to be reliable (see \S\ref{sec:apunim}). We nevertheless provide the full results.
+Tables~\ref{tab:kumar-results},\ref{tab:sap-results},\ref{tab:dices-990-results},\ref{tab:dices-350-results} and \ref{tab:popquorn-results} show the full apunim results for the Kumar, Sap, DICES-350, DICES-990 and POPQUORN datasets respectively. Note that the results for Kumar are unreliable since they rely on a small minority of items where annotation counts happened to be over five, while our methodology requires six annotators per item to be reliable (see \S\ref{sec:apunim}). We nevertheless provide the full results.
 
 \input{generated/kumar-results.tex}
 \input{generated/sap-results.tex}
 \input{generated/dices-350-results.tex}
 \input{generated/dices-990-results.tex}
+\input{generated/popquorn-results.tex}
 
 
 \section{Prompts Used}

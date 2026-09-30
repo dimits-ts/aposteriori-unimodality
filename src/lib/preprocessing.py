@@ -574,3 +574,125 @@ class SapDataset(Dataset):
                 gens.append("1) Gen. X+")
 
         return gens if len(gens) > 0 else None
+
+
+class PopquornDataset(Dataset):
+    """
+    POPQUORN (Pei & Jurgens, 2023):
+    https://github.com/Jiaxin-Pei/potato-prolific-dataset
+
+    Only the two rating tasks are supported (the question-answering and
+    email-rewriting tasks have free-text outputs, not per-annotator labels):
+
+    - ``offensiveness``: 1-5 offensiveness rating
+    - ``politeness_rating``: 1-5 politeness rating
+
+    Each task is exposed as its own dataset, analogous to the DICES variants.
+    Annotations carrying a "Prefer not to disclose" value in any SDB column
+    are dropped, mirroring how SapDataset drops "na" values.
+    """
+
+    UNDISCLOSED = "Prefer not to disclose"
+
+    def __init__(self, dataset_path: Path):
+        self.df = self._base_df(dataset_path)
+
+    def get_name(self) -> str:
+        return "POPQUORN"
+
+    def get_dataset(self) -> pd.DataFrame:
+        return self.df
+
+    def get_sdb_columns(self) -> list[str]:
+        return ["Gender", "Race", "Age", "Education", "Occupation"]
+
+    def get_comment_key_column(self) -> str:
+        return "instance_id"
+
+    def get_text_column(self) -> str:
+        return "text"
+
+    def get_annotation_column(self) -> str:
+        return "Rating"
+
+    def _base_df(self, dataset_path: Path) -> pd.DataFrame:
+        label = "offensiveness"
+        df = pd.read_csv(dataset_path)
+        df = df.loc[
+            :,
+            [
+                "instance_id",
+                "text",
+                label,
+                "gender",
+                "race",
+                "age",
+                "education",
+                "occupation",
+            ],
+        ]
+        df = df.rename(
+            columns={
+                label: "Rating",
+                "gender": "Gender",
+                "race": "Race",
+                "age": "Age",
+                "education": "Education",
+                "occupation": "Occupation",
+            }
+        )
+
+        sdb_cols = self.get_sdb_columns()
+        df[sdb_cols] = df[sdb_cols].replace(self.UNDISCLOSED, None)
+        df = df.dropna()
+        df["Rating"] = df["Rating"].astype(int)
+
+        df["Race"] = df["Race"].replace(
+            {
+                "Black or African American": "Black",
+                "Hispanic or Latino": "Hispanic",
+                "Native Hawaiian or Pacific Islander": "Pacific Islander",
+                # typo in the politeness task; same group as offensiveness'
+                "American India or Alaska Native": "Native American",
+            }
+        )
+
+        # Ordinal prefixes (zero-padded so they sort correctly) keep the
+        # ordering in exports; "Other" is left unprefixed and sorts last.
+        age_ranking = [
+            "18-24",
+            "25-29",
+            "30-34",
+            "35-39",
+            "40-44",
+            "45-49",
+            "50-54",
+            "54-59",  # sic, as in the source data
+            "60-64",
+            ">65",
+        ]
+        df["Age"] = df["Age"].replace(
+            {a: f"{i + 1:02d}) {a}" for i, a in enumerate(age_ranking)}
+        )
+
+        education_ranking = [
+            "Less than a high school diploma",
+            "High school diploma or equivalent",
+            "College degree",
+            "Graduate degree",
+        ]
+        short_education = {
+            "Less than a high school diploma": "No high school",
+            "High school diploma or equivalent": "High school",
+        }
+        df["Education"] = df["Education"].replace(
+            {
+                e: f"{i + 1}) {short_education.get(e, e)}"
+                for i, e in enumerate(education_ranking)
+            }
+        )
+
+        agg = {col: list for col in ["Rating", *sdb_cols]}
+        agg["text"] = "first"
+        df = df.groupby("instance_id").agg(agg).reset_index()
+        return df
