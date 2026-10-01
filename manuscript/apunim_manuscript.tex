@@ -6,11 +6,11 @@
 %  ==================== MY PACKAGES ====================
 \usepackage[T1]{fontenc}
 
-\usepackage{graphicx}%
-\usepackage{multirow}%
-\usepackage{amsthm}%
-\usepackage{booktabs}%
-\usepackage{float}%
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{pifont}
+\usepackage{booktabs}
+\usepackage{float}
 \usepackage{acronym}
 \usepackage{tabularx}
 \usepackage{hyperref}
@@ -252,7 +252,7 @@ The full datasets are used for the human annotation analysis in \S\ref{sec:apuni
 \section{Why Do Current Methods Fail?}
 \label{sec:methods}
 
-\subsection{Method Comparison}
+\subsection{On Synthetic Data}
 
 \begin{figure}[t]
 	\centering
@@ -271,6 +271,15 @@ Annotations are generated according to $y_{ij} = b_j + g_i p_j + \epsilon_{ij}$,
 \end{enumerate*}
 
 As shown in Fig.~\ref{fig:metrics}, \emph{both the $\chi^2$ and GMM methods generally fail} at attributing systematic disagreements to the correct group. \ac{iaa} remains competitive when many annotators are available, but underperforms in cases where the examined group is a minority and when a few annotators are available per item (a common case among \ac{nlp} datasets---see \S\ref{sec:datasets}).\footnote{Ablations with $k=\{3,5,10\}$ groups can be found in App.~\ref{app:ablation}; Fig.~\ref{fig:metrics-multiple}.}
+
+
+\subsection{On Real Data}
+
+\input{generated/real_data_comparison.tex}
+
+Table~\ref{tab:real-data-methods} shows a comparison between the different methods when applied to the five datasets introduced in \S\ref{sec:datasets}. The GMM method is not run, as it requires the exact same annotators to annotate the items in each dataset, which is not the case for any of our datasets. This limitation makes the test extremely restrictive in realistic annotation settings. We explain our own method in \S\ref{sec:apunim}, as the focus of this experiment is the behavior of other metrics on real data.
+
+We find that the \ac{au} method completely fails to attribute polarization to any group, while the $\chi^2$ method attributes it to all groups. The latter can be explained by the assumptions made by the test; namely that annotations can be pooled across items (discussed in the next section), as well as the power of the test which inflates p-values when $N_{observations}$ is large enough.\footnote{Some of these issues could be fixed by modifying the original test used in \citet{akhtar_2019}, but is outside the scope of this work.} Out of all prior methodologies, \ac{iaa} using Krippendorff's $\alpha$ seems to be the only way of obtaining any results for only a subset of datasets.
 
 \begin{finding}
 	\label{finding:comparison}
@@ -356,7 +365,7 @@ Specifically, we define apriori polarization for an item $c$ as $\mathrm{Pol}_{a
 \end{equation}
 \noindent where $Pol_g$ is the observed \ac{ndfu} in the annotations of an item $c$ created by annotators belonging to group $g$.
 
-Apunim thus measures the degree to which an annotator group contributes to overall polarization in a set of items. As demonstrated in \S\ref{sec:methods}; Fig.~\ref{fig:metrics}, our metric is robust to the number of annotators per item, opposing systematic disagreement effects, and minority groups, validating our initial motivation. We include a perturbation-based p-value estimation, which tests whether the observed apunim value of a group $g$ statistically surpasses that of random groups in App.~\ref{app:pvalue}.
+Apunim thus measures the degree to which an annotator group contributes to overall polarization in a set of items. As demonstrated in \S\ref{sec:methods}; Fig.~\ref{fig:metrics}, our metric is robust to the number of annotators per item, opposing systematic disagreement effects, and minority groups, validating our initial motivation. Furthermore, unlike some prior methods \citep{akhtar_2019, checco_2017}, apunim allows us to attribute systematic disagreement to a specific group, not a \ac{pc} dimension, allowing fine-grained analysis. We include a perturbation-based p-value estimation, which tests whether the observed apunim value of a group $g$ statistically surpasses that of random groups in App.~\ref{app:pvalue}.
 
 
 \subsection{How Are Humans Polarized?}
@@ -428,9 +437,9 @@ Apunim thus measures the degree to which an annotator group contributes to overa
 	\end{minipage}
 \end{table}
 
-Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can explain the systematic disagreements shown in the four datasets (\S\ref{sec:datasets}). Statistically significant results are presented in Table~\ref{tab:apunim-main}.\footnote{The results are not necessarily contingent on a reliable p-value estimation, as non-statistically significant results have very low ($<0.01$) apunim values. A threshold on the apunim values would produce similar tables.} Note that the lack of rich annotation data prevents us from analyzing how different annotator groups interact and thus our analysis is necessarily uni-dimensional. See App.~\ref{app:software} for details on other parameters and execution times, and App.~\ref{app:full} for the full results. 
+Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can explain the systematic disagreements shown in the four datasets (\S\ref{sec:datasets}). Statistically significant results are presented in Table~\ref{tab:apunim-main}.\footnote{The results are not necessarily contingent on a reliable p-value estimation, as non-statistically significant results have very low ($<0.01$) apunim values. A threshold on the apunim values would produce similar tables.} Note that the lack of rich annotation data prevents us from analyzing how different annotator groups interact and thus our analysis is necessarily uni-dimensional. See App.~\ref{app:software} for details on other parameters and execution times, and App.~\ref{app:full} for the full results.
 
-\emph{Systematic disagreements are consistently attributed to \textbf{ethnicity}} across all datasets excluding DICES-330, confirming prior work suggesting that it is a systematic source of annotator disagreement in \ac{hs} tasks~\citep{goyal2022your}.\footnote{Note that the apunim values do not have a consistent direction across datasets, which we believe to be caused by studies using different ethnic subgroups allowing detection but distorting attribution.} Additionally, in both DICES-990, Sap and POPQUORN, \emph{\textbf{men} are a consistent source of systematic disagreement} (positive values), while in the two former datasets  \textbf{women} disagree among themselves (positive values), which is consistent with previous findings~\citep{wojatzki2018women, binns2017like}. None of the Kumar dimensions show statistically significant values, but this is expected, as our methodology requires at least six annotators per item to work reliably.
+\emph{Systematic disagreements are consistently attributed to \textbf{ethnicity}} across all datasets excluding DICES-330, confirming prior work suggesting that it is a systematic source of annotator disagreement in \ac{hs} tasks~\citep{goyal2022your}.\footnote{Note that the apunim values do not have a consistent direction across datasets, which we believe to be caused by studies using different ethnic subgroups allowing detection but distorting attribution.} Additionally, in both DICES-990, Sap and POPQUORN, \emph{\textbf{men} are a consistent source of systematic disagreement} (positive values), while in the two former datasets  \textbf{women} disagree among themselves (positive values), which is consistent with previous findings~\citep{wojatzki2018women, binns2017like}. None of the Kumar dimensions show statistically significant values, but this is expected, as our methodology requires at least six annotators per item to work reliably. Our results similar to those produced by \ac{iaa}, as was shown in Table~\ref{tab:real-data-methods}, although unlike apunim, the latter could not attribute \emph{any} disagreement to the POPQUORN dataset.
 
 \begin{finding}
 	\label{finding:human}
@@ -438,7 +447,7 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 \end{finding}
 
 
-\section{What Polarization Patterns Do LLM Annotators Exhibit?}
+\subsection{How Are LLMs Polarized?}
 \label{sec:llms}
   
  \input{generated/inherent-polarization.tex}
@@ -451,7 +460,6 @@ Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided
 	\item Apunim values for each group.
 \end{enumerate*}
 See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations.
-
 
 \paragraph{Are LLMs Polarized by Default?} We first examine whether persona prompting with standard instructions leads to polarized annotations. Our results show \emph{no statistically significant attribution effects} and very small \emph{apunim} values for all groups in all models and datasets (App.~\ref{app:llms}; Table~\ref{tab:llm-apunim-by-prompt-kumar},~\ref{tab:llm-apunim-by-prompt-sap}). Unlike human annotations, we observe no \ac{ip} (Table~\ref{tab:inherent-polarization}) and only two of the four models showing any non-zero apunim values (App.~\ref{app:llms}; Fig.~\ref{fig:llm-polarization-adversarial}).
 

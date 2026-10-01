@@ -1,0 +1,54 @@
+% Tick and cross from rotated rules (needs graphicx).
+\providecommand{\sigstroke}[4]{\hspace{#1}\makebox[0pt]{\raisebox{#2}{%
+  \rotatebox[origin=c]{#3}{\rule[-0.5\dimexpr#4\relax]{0.18ex}{#4}}}}%
+  \hspace{-#1}}
+\DeclareRobustCommand{\sigyes}{\makebox[1.3ex][l]{\hspace{0.58ex}%
+  \sigstroke{-0.26ex}{0.26ex}{45}{0.72ex}%
+  \sigstroke{0.47ex}{0.68ex}{-33}{1.62ex}\hspace{0.85ex}}}
+\DeclareRobustCommand{\signo}{\makebox[1.3ex][c]{\raisebox{0.07ex}{%
+  \sigstroke{0ex}{0.65ex}{45}{1.5ex}\sigstroke{0ex}{0.65ex}{-45}{1.5ex}}}}
+\begin{table}
+\caption{Statistical significance of each \ac{pc} feature per method. \sigyes: significant at $p<0.05$ after Bonferroni correction across the features of the dataset; \signo: not significant.}
+\label{tab:real-data-methods}
+\begin{tabular}{llcccc}
+\toprule
+ &  & apunim & Krippendorff $\Delta\alpha$ & aposteriori unim. & $\chi^2$ \\
+ & \ac{pc} &  &  &  &  \\
+\midrule
+\multirow[t]{4}{*}{DICES-350} & Age & \signo & \signo & \signo & \sigyes \\
+ & Education & \sigyes & \signo & \signo & \sigyes \\
+ & Gender & \signo & \sigyes & \signo & \sigyes \\
+ & Race & \sigyes & \sigyes & \signo & \sigyes \\
+\cline{1-6}
+\multirow[t]{4}{*}{DICES-990} & Age & \sigyes & \signo & \signo & \sigyes \\
+ & Education & \sigyes & \sigyes & \signo & \sigyes \\
+ & Gender & \sigyes & \sigyes & \signo & \sigyes \\
+ & Race & \sigyes & \signo & \signo & \sigyes \\
+\cline{1-6}
+\multirow[t]{3}{*}{Sap et al. 2022} & Age & \signo & \signo & \signo & \sigyes \\
+ & Ethnicity & \signo & \signo & \signo & \sigyes \\
+ & Gender & \sigyes & \sigyes & \signo & \sigyes \\
+\cline{1-6}
+\multirow[t]{13}{*}{Kumar et al. 2021} & Age & \signo & \signo & \signo & \sigyes \\
+ & Education & \signo & \signo & \signo & \sigyes \\
+ & Ethnicity & \signo & \signo & \signo & \sigyes \\
+ & Gender & \signo & \signo & \signo & \sigyes \\
+ & Has Been Targeted & \signo & \signo & \signo & \sigyes \\
+ & Is Parent & \signo & \signo & \signo & \sigyes \\
+ & Is Transgender & \signo & \signo & \signo & \sigyes \\
+ & Political Affiliation & \signo & \signo & \signo & \sigyes \\
+ & Religion Important & \signo & \signo & \signo & \sigyes \\
+ & Seen Toxicity & \signo & \signo & \signo & \sigyes \\
+ & Sexual Orientation & \signo & \signo & \signo & \sigyes \\
+ & Technology Impact & \signo & \signo & \signo & \sigyes \\
+ & Toxicity Problem & \signo & \signo & \signo & \sigyes \\
+\cline{1-6}
+\multirow[t]{5}{*}{POPQUORN} & Age & \signo & \signo & \signo & \sigyes \\
+ & Education & \sigyes & \signo & \signo & \sigyes \\
+ & Gender & \signo & \signo & \signo & \sigyes \\
+ & Occupation & \signo & \signo & \signo & \sigyes \\
+ & Race & \sigyes & \signo & \signo & \sigyes \\
+\cline{1-6}
+\bottomrule
+\end{tabular}
+\end{table}

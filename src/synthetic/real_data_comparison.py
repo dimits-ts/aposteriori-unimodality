@@ -17,6 +17,9 @@ GMM clustering is not included: it clusters per-annotator mean ratings, which
 requires annotators to be identifiable across comments. The real datasets only
 store annotations per comment.
 
+A LaTeX table (ticks / crosses per method and SDB feature, Bonferroni-
+corrected across the features of each dataset) is exported from the cache.
+
 The methods in shared.py expect a dense annotators x items matrix. Real data
 is ragged (each comment has its own annotators), so this module contains
 long-format versions of the methods:
@@ -29,6 +32,7 @@ long-format versions of the methods:
 """
 
 import argparse
+import functools
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
@@ -46,7 +50,7 @@ from ..lib.preprocessing import (
     SapDataset,
 )
 from ..lib.util import skip_if_exists
-from .shared import ALPHA, _alpha, _seed
+from .shared import ALPHA, LEGEND_LABEL, METHOD_ORDER, _alpha, _seed
 
 KUMAR_NUM_SAMPLES = 3_000
 
@@ -60,12 +64,30 @@ N_PERM_ORIGINAL_AU = 100
 
 COLUMNS = ["dataset", "sdb_feature", "method", "stat", "pvalue", "detected"]
 
+# LaTeX table symbols. Font symbols (\checkmark, \ding) fail silently when
+# the TeX install lacks the font files, so the tick and cross are instead
+# drawn from rotated rules. Only graphicx is needed, no symbol font.
+TICK = r"\sigyes"
+CROSS = r"\signo"
+SYMBOL_DEFINITIONS = r"""% Tick and cross from rotated rules (needs graphicx).
+\providecommand{\sigstroke}[4]{\hspace{#1}\makebox[0pt]{\raisebox{#2}{%
+  \rotatebox[origin=c]{#3}{\rule[-0.5\dimexpr#4\relax]{0.18ex}{#4}}}}%
+  \hspace{-#1}}
+\DeclareRobustCommand{\sigyes}{\makebox[1.3ex][l]{\hspace{0.58ex}%
+  \sigstroke{-0.26ex}{0.26ex}{45}{0.72ex}%
+  \sigstroke{0.47ex}{0.68ex}{-33}{1.62ex}\hspace{0.85ex}}}
+\DeclareRobustCommand{\signo}{\makebox[1.3ex][c]{\raisebox{0.07ex}{%
+  \sigstroke{0ex}{0.65ex}{45}{1.5ex}\sigstroke{0ex}{0.65ex}{-45}{1.5ex}}}}
+"""
+NOT_COMPUTED = "---"
+
 
 # --------------------------------------------------------------------- main
 
 
 def main(
     cache_path: Path,
+    latex_output_path: Path,
     dices_small_path: Path,
     dices_large_path: Path,
     sap_path: Path,
@@ -88,7 +110,65 @@ def main(
             workers,
         )
 
-    return pd.read_csv(cache_path)
+    df = pd.read_csv(cache_path)
+    export_latex_table(df, latex_output_path)
+
+    return df
+
+
+# -------------------------------------------------------------------- table
+
+
+def export_latex_table(df: pd.DataFrame, output_path: Path) -> None:
+    """
+    Table of which method finds which SDB feature significant, grouped by
+    dataset.
+
+    The cached p-values are Bonferroni-corrected across the SDB features of
+    each dataset, separately for every method. Features for which a method
+    produced no statistic are not counted as tests and are shown as ---.
+    """
+    df = df.copy()
+    df["dataset"] = df["dataset"].str.replace("_", r"\_", regex=False)
+    df["sdb_feature"] = df["sdb_feature"].str.replace("_", r"\_", regex=False)
+
+    computed = df["stat"].notna()
+    n_tests = computed.groupby([df["dataset"], df["method"]]).transform("sum")
+    significant = (df["pvalue"] * n_tests) < ALPHA
+
+    df["symbol"] = np.where(significant, TICK, CROSS)
+    df.loc[~computed, "symbol"] = NOT_COMPUTED
+
+    table = df.pivot(
+        index=["dataset", "sdb_feature"], columns="method", values="symbol"
+    )
+    # pivot sorts the index; restore the dataset order of the results.
+    table = table.reindex(
+        pd.MultiIndex.from_frame(
+            df[["dataset", "sdb_feature"]].drop_duplicates()
+        )
+    )
+    methods = [m for m in METHOD_ORDER if m in table.columns]
+    table = table[methods].rename(columns=LEGEND_LABEL)
+    table.columns.name = None
+    table.index.names = [None, r"\ac{pc}"]
+
+    latex_str = table.to_latex(
+        caption=(
+            "Statistical significance of each \\ac{pc} feature per method. "
+            f"{TICK}: significant at $p<{ALPHA}$ after Bonferroni correction "
+            "across the features of the dataset; "
+            f"{CROSS}: not significant."
+        ),
+        label="tab:real-data-methods",
+        escape=False,
+        multirow=True,
+        column_format="ll" + "c" * len(methods),
+    )
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(SYMBOL_DEFINITIONS + latex_str)
+    print(f"Table exported to {output_path.resolve()}")
 
 
 # ------------------------------------------------------------------- runner
@@ -404,6 +484,11 @@ if __name__ == "__main__":
         help="Path for the output CSV cache.",
     )
     parser.add_argument(
+        "--latex-output-path",
+        required=True,
+        help="Path for the output LaTeX table.",
+    )
+    parser.add_argument(
         "--dices-small-path",
         required=True,
         help="Path to the DICES-350 CSV file.",
@@ -434,6 +519,7 @@ if __name__ == "__main__":
 
     main(
         Path(args.cache_path),
+        Path(args.latex_output_path),
         Path(args.dices_small_path),
         Path(args.dices_large_path),
         Path(args.sap_path),
