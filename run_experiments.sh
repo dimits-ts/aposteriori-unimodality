@@ -16,7 +16,7 @@ export -f run_and_log
 mkdir -p logs
 
 JOBS=(
-'variance_analysis|python -m src.human.variance_analysis --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --graph-output-dir=graphs --cache-dir=cache --latex-output-dir=manuscript/generated --popquorn-path=data/datasets/popquorn_offensiveness.csv'
+'variance_analysis|python -m src.human.variance_analysis --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --graph-output-dir=graphs --cache-dir=cache --popquorn-path=data/datasets/popquorn_offensiveness.csv'
 
 'explanation|python -m src.synthetic.explanation --graph-output-dir=graphs'
 
@@ -43,4 +43,9 @@ printf "%s\n" "${JOBS[@]}" |
 python -m src.human.export_results \
     --results-dir=output/human/main \
     --latex-output-dir=manuscript/generated \
-    --graph-output-dir=graphs
+    --graph-output-dir=graphs \
+    --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv \
+    --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv \
+    --sap-path=data/datasets/sap.csv \
+    --popquorn-path=data/datasets/popquorn_offensiveness.csv \
+    --kumar-path=data/datasets/kumar.json
