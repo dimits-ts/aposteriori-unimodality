@@ -24,10 +24,6 @@
 \usepackage{nicefrac}
 \usepackage{libertinus} % fix encoding issues, same font family
 
-%TODO: Unlike other methods, apunim operates on the factor-level, not feature-level
-%TODO: Unlike other methods, GMM assumes the same annotators
-%TODO: Include survey https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0243300 in dataset section
-
 %  ==================== MY COMMANDS ====================
 \AtEndPreamble{%
 	\newtheorem{hypothesis}{Hypothesis}
@@ -345,10 +341,10 @@ Formally, the \ac{ip} for a single item $c$ is the minimum \ac{ndfu} exhibited b
 \end{finding}
 
 
-\section{Quantifying Attribution to Annotator Groups}
+\section{Comparing Human and LLM Polarization}
 \label{sec:apunim}
 
-\subsection{Our Methodology}
+\subsection{Quantifying Attribution to Annotator Groups}
 Instead of using \ac{ip}, which represents the minimum possible systematic disagreement exhibited by any group, we calculate the \emph{expected} (average). Therefore, we do not test whether the group is polarized against the whole; nor whether the group explains \emph{some polarization} (as would be the case if we used Eq.~\ref{eq:inherent}), but rather whether the group explains polarization \emph{more than other groups}. 
 
 Specifically, we define apriori polarization for an item $c$ as $\mathrm{Pol}_{apr}(c) = \mathbb{E}_{S \sim \mathcal{G}_c} \left[ \mathrm{nDFU}(S) \right]$, which is averaged across items for a dataset $\mathcal{D}$. Intuitively, a high $\mathrm{Pol}_{apr}(c)$ score means that much of the polarization is likely not driven by any single group. We compare this quantity with the average observed \ac{ndfu} of all items, which yields our normalized metric, \emph{apunim} (Eq.~\ref{eq:apunim}). We explain why defining $\mathrm{Pol}_{apr}(c)$ in this way is preferable to alternatives in App.~\ref{app:design}. The \emph{sign} of apunim carries information agreement-based attribution does not:
@@ -469,6 +465,39 @@ See App.~\ref{app:llms} for the ablation experimental procedure, full results, m
 	\label{finding:llms}
 	LLMs with persona-prompting do not produce annotations with detectable \ac{ip}, nor apunim values across any group, while only a few exhibit any multimodal annotations at all. This effect can not be reliably remedied with prompt engineering.
 \end{finding}
+
+
+\section{Discussion}
+\label{app:ideal-dataset}
+
+\paragraph{The Ideal Subjective Dataset} As discussed in \S\ref{sec:datasets}, there is a severe lack of datasets containing annotator metadata for subjective tasks. Given that the creation of these datasets is difficult, expensive and time-consuming, it is important to acknowledge and prioritize certain properties that are necessary for analyzing subjectivity across annotator groups. In this work, we distinguish three main desirable properties, discuss their merits and provide recommendations for future resources based on our experiences and relevant literature.
+
+\begin{itemize}
+	\item \textbf{Data Coverage}, which refers to the number of \emph{items} in a dataset. Due to the focus on training and benchmarking datasets in \ac{nlp}, this property is usually the one with the most focus and importance \citep{rossi_2024}.
+	
+	\item \textbf{Annotator Coverage}, which refers to the overall number of \emph{annotators} and their distribution across \ac{pc} dimensions. A large annotator pool is required to get sufficient coverage on the examined groups and allows both higher fidelity of each \ac{pc} dimension and more such dimensions to be examined.
+	
+	\item \textbf{Annotation Depth}, which refers to the number of \emph{annotators per item}. This property is often neglected in practice, with many datasets assuming ``gold labels'' can be inferred by three annotators. %TODO: which
+\end{itemize}
+
+We posit that for the purposes of analyzing social phenomena such as polarization, Data Coverage should not be the main focus of dataset creation for three main reasons. 
+\begin{enumerate*}
+	\item Very large datasets can be computationally expensive for many disagreement analysis methodologies and may present errors in statistical tests due to the extremely large number of observations.
+	\item As the cost and time needed to create such a dataset is necessarily a function of the number of items, annotators and annotators per item, very large Data Coverage comes at the expense of the other two (arguably more important) qualities.
+	\item There is an argument to be made that subjective datasets should be designed according to specific uses \citep{vidgen_2021_directions}. When it comes to social science work, smaller datasets may be preferable \citep{rossi_2024}. For classifier training, some research has shown that extensive Data Coverage is the only way to establish training pipelines with sufficient linguistic diversity . However, using these datasets without rigorous evaluation on systematic disagreements can lead to misconfigured and biased classifiers \citep{sap-etal-2019-risk}, which means that Annotation Depth should not be compromised in these cases.
+\end{enumerate*}
+
+Indeed, the Kumar dataset used in this study features impressive Data and Annotator Coverage, but the lack of Annotation Depth renders the use of disagreement metrics impossible (Table~\ref{tab:real-data-methods}). It may be the case then that the \emph{easiest-to-use resource for LLM and traditional classifier training is also the riskiest one}, since we can not reliably understand meaningful, systematic disagreements between annotators, which may be discarded. We instead recommend that datasets be created first with the necessary Annotation Depth, selecting annotators such that Annotator Coverage is sufficient across underrepresented groups and finally time and monetary budgets deciding Data Coverage.
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=\linewidth]{pol_obs_subsampling_robustness.png}
+	\caption{\ac{sd} of $pol_{obs}$ across items, averaged across $1000$ runs. Shaded areas represent two \acp{sd}. Pol. estimates benefit from more annotators up to $n=20$, at which point they begin to plateau.}
+	\label{fig:std_error}
+\end{figure}
+
+\paragraph{How Does Apunim Adapt to Current Datasets?}
+Our methodology does not directly require numerous annotators overall, only a sufficient number per item---indeed, statistically significant results can be obtained with as little as four annotations (see POPQUORN-\ac{aa}; Table~\ref{tab:apunim-main}).  It is also designed to work with smaller datasets common in \ac{nlp}; three of the four datasets in the study feature low (300--600) item counts, while the Kumar dataset has been subsampled to 1\% of its original size. %TODO: Examplin fig
 
 
 \section*{Conclusion}
@@ -1030,31 +1059,10 @@ We examine the following conditions for selecting models and datasets for our LL
 \endgroup
 
 
-\section{The Ideal Subjective Dataset}
-\label{app:ideal-dataset}
-
-\begin{figure}[t]
-	\centering
-	\includegraphics[width=\linewidth]{pol_obs_subsampling_robustness.png}
-	\caption{\ac{sd} of $pol_{obs}$ across items, averaged across $1000$ runs. Shaded areas represent two \acp{sd}. Pol. estimates benefit from more annotators up to $n=20$, at which point they begin to plateau.}
-	\label{fig:std_error}
-\end{figure}
-
-We briefly discuss the type of data most suited for our proposed methodology, and connect it with current \ac{nlp} datasets.
-
-\paragraph{How Many Annotators?} Our methodology does not directly require numerous annotators overall, only a sufficient number per item---indeed, statistically significant results can be obtained with as little as four annotations (see Sap-\ac{aa}; Table~\ref{tab:apunim-main}). A large annotator pool however is required to get sufficient coverage on the examined groups. More annotators allow both higher fidelity of each \ac{pc} dimension, and more such dimensions.
-
-\paragraph{How Many Annotators per item?} We investigate observed polarization against varying numbers of annotators. Specifically, for every item, we repeatedly sampled $n$ annotators with replacement, calculated $pol_{obs}$ for each sample and measured \ac{sd}, averaging it across 1000 same-sized samples. As shown in Fig.~\ref{fig:std_error}, $pol_{obs}$ exhibits a clear, inverse relationship with the number of annotators, attributed to better histogram estimation provided by \ac{ndfu} (\S\ref{sec:apunim}), though the rate of gain substantially diminishes after 20 annotators. Interestingly, some variability persists even with a very high annotator count.
-
-\paragraph{How Many Items?} Our methodology is designed to work with smaller datasets common in \ac{nlp}. Three of the four datasets in the study feature low (300--600) item counts, while the Kumar dataset has been subsampled to 3\% of its original size. Large datasets should be used only to provide larger coverage on the target domain, since a much better representation of individual groups can be achieved with more annotators per item, rather than more items. Smaller datasets may also be more practical for social science analysis~\citep{rossi_2024}.
-
-\paragraph{Filtering Datasets with Desirable Levels of Subjectivity} In order to investigate whether the numerous annotators per items can explain the lack of \ac{ip} in the DICES datasets (\S\ref{sec:methods}) we gradually subsample the annotators for each item randomly with replacement, starting from five annotators per item, and scaling up to the full complement of annotators in the dataset with a step of two. For each such step, we choose ten annotator samples and compute the maximum \ac{ip} across all runs. Even with annotator counts similar to the Kumar and DICES datasets, \ac{ip} remains zero, suggesting that the absence of \ac{ip} can not be attributed to annotator number alone---rather, it is plausibly a pattern attributable to the DICES datasets themselves. This kind of analysis may be used in the exploratory phase of dataset selection in order to filter out datasets without enough group-specific subjectivity.
-
-
 \section{Full Results}
 \label{app:full}
 
-Tables~\ref{tab:kumar-results},\ref{tab:sap-results},\ref{tab:dices-990-results},\ref{tab:dices-350-results} and \ref{tab:popquorn-results} show the full apunim results for the Kumar, Sap, DICES-350, DICES-990 and POPQUORN datasets respectively. Note that the results for Kumar are unreliable since they rely on a small minority of items where annotation counts happened to be over five, while our methodology requires six annotators per item to be reliable (see \S\ref{sec:apunim}). We nevertheless provide the full results.
+Tables~\ref{tab:kumar-results},\ref{tab:sap-results},\ref{tab:dices-350-results},\ref{tab:dices-990-results} and \ref{tab:popquorn-results} show the full apunim results for the Kumar, Sap, DICES-350, DICES-990 and POPQUORN datasets respectively. Note that the results for Kumar are unreliable since they rely on a small minority of items where annotation counts happened to be over five, while our methodology requires six annotators per item to be reliable (see \S\ref{sec:apunim}). We nevertheless provide the full results.
 
 \input{generated/kumar-results.tex}
 \input{generated/sap-results.tex}
