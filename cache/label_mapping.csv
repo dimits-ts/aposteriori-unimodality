@@ -1,0 +1,45 @@
+feature,dataset,label_in_dataset,harmonized,annotations
+gender,DICES-350,Woman,Woman,21700
+gender,DICES-350,Man,Man,21350
+gender,DICES-990,Woman,Woman,36050
+gender,DICES-990,Man,Man,35392
+gender,DICES-990,Nonbinary,Non-binary,331
+gender,DICES-990,Other,Other,330
+gender,Sap et al. 2022,man,Man,1859
+gender,Sap et al. 2022,woman,Woman,1412
+gender,Sap et al. 2022,nonBinary,Non-binary,26
+gender,Kumar et al. 2021,Female,Woman,2710
+gender,Kumar et al. 2021,Male,Man,2234
+gender,Kumar et al. 2021,Unknown,(dropped),35
+gender,Kumar et al. 2021,Nonbinary,Non-binary,31
+gender,POPQUORN,Woman,Woman,6470
+gender,POPQUORN,Man,Man,6166
+gender,POPQUORN,Non-binary,Non-binary,350
+ethnicity,DICES-350,White,White,10500
+ethnicity,DICES-350,African Am.,Black,10150
+ethnicity,DICES-350,Asian,Asian,9100
+ethnicity,DICES-350,Latino,Hispanic,7700
+ethnicity,DICES-350,Multiracial,Multiracial,5600
+ethnicity,DICES-990,Other,Other,26394
+ethnicity,DICES-990,Asian,Asian,19885
+ethnicity,DICES-990,White,White,12322
+ethnicity,DICES-990,Latino,Hispanic,7170
+ethnicity,DICES-990,African Am.,Black,6332
+ethnicity,Sap et al. 2022,white,White,2168
+ethnicity,Sap et al. 2022,black,Black,1091
+ethnicity,Sap et al. 2022,hisp,Hispanic,32
+ethnicity,Sap et al. 2022,other,Other,5
+ethnicity,Sap et al. 2022,middleEastern,Other,1
+ethnicity,Kumar et al. 2021,White,White,3554
+ethnicity,Kumar et al. 2021,Black,Black,649
+ethnicity,Kumar et al. 2021,Asian,Asian,288
+ethnicity,Kumar et al. 2021,Multiracial,Multiracial,241
+ethnicity,Kumar et al. 2021,Hispanic,Hispanic,134
+ethnicity,Kumar et al. 2021,Other,Other,84
+ethnicity,Kumar et al. 2021,Unknown,(dropped),60
+ethnicity,POPQUORN,White,White,9754
+ethnicity,POPQUORN,Black,Black,1685
+ethnicity,POPQUORN,Asian,Asian,949
+ethnicity,POPQUORN,Native American,Other,299
+ethnicity,POPQUORN,Hispanic,Hispanic,250
+ethnicity,POPQUORN,Arab American,Other,49
