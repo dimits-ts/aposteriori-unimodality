@@ -407,15 +407,8 @@ def plot_variance_curve(
 
             # titles on the top row, x labels on the bottom row only
             ax.set_title(ds_name if row == 0 else "")
-            ax.set_xlabel(
-                r"\# Annotators sampled per comment"
-                if row == nrows - 1
-                else ""
-            )
-            # row label on the first column only
-            ax.set_ylabel(
-                f"{feature.capitalize()}\napunim" if col == 0 else ""
-            )
+            ax.set_ylabel(feature.capitalize() if col == 0 else "")
+            ax.set_xlabel("")
 
         # each feature has its own levels, so each row gets its own legend
         handles = [
@@ -432,13 +425,16 @@ def plot_variance_curve(
             handles=handles,
             loc="center left",
             bbox_to_anchor=(1.02, 0.5),
-            title=feature.capitalize(),
+            title=False
         )
 
     fig.suptitle(
         "Effect of annotator sample size on apunim "
-        r"(mean $\pm$ 2 SD across resamples)"
+        fr"(mean $\pm$ 2 SD across {RESAMPLE_ITERS} resamples)"
     )
+    fig.supxlabel(r"\# Annotators sampled per comment")
+    fig.supxlabel(r"\# Annotators sampled per comment")
+    fig.supylabel("apunim")
     fig.tight_layout()
 
     graphs.save_plot(graph_path)

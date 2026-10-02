@@ -1335,3 +1335,95 @@
 	number = {12},
 	
 }
+
+@inproceedings{mulki-etal-2019-l,
+	title = "{L}-{HSAB}: A {L}evantine {T}witter Dataset for Hate Speech and Abusive Language",
+	author = "Mulki, Hala  and
+	Haddad, Hatem  and
+	Bechikh Ali, Chedi  and
+	Alshabani, Halima",
+	editor = "Roberts, Sarah T.  and
+	Tetreault, Joel  and
+	Prabhakaran, Vinodkumar  and
+	Waseem, Zeerak",
+	booktitle = "Proceedings of the Third Workshop on Abusive Language Online",
+	month = aug,
+	year = "2019",
+	address = "Florence, Italy",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/W19-3512/",
+	doi = "10.18653/v1/W19-3512",
+	pages = "111--118",
+	abstract = "Hate speech and abusive language have become a common phenomenon on Arabic social media. Automatic hate speech and abusive detection systems can facilitate the prohibition of toxic textual contents. The complexity, informality and ambiguity of the Arabic dialects hindered the provision of the needed resources for Arabic abusive/hate speech detection research. In this paper, we introduce the first publicly-available Levantine Hate Speech and Abusive (L-HSAB) Twitter dataset with the objective to be a benchmark dataset for automatic detection of online Levantine toxic contents. We, further, provide a detailed review of the data collection steps and how we design the annotation guidelines such that a reliable dataset annotation is guaranteed. This has been later emphasized through the comprehensive evaluation of the annotations as the annotation agreement metrics of Cohen{'}s Kappa (k) and Krippendorff{'}s alpha ({\ensuremath{\alpha}}) indicated the consistency of the annotations."
+}
+
+@misc{das2024investigatingannotatorbiaslarge,
+	title={Investigating Annotator Bias in Large Language Models for Hate Speech Detection}, 
+	author={Amit Das and Zheng Zhang and Najib Hasan and Souvika Sarkar and Fatemeh Jamshidi and Tathagata Bhattacharya and Mostafa Rahgouy and Nilanjana Raychawdhary and Dongji Feng and Vinija Jain and Aman Chadha and Mary Sandage and Lauramarie Pope and Gerry Dozier and Cheryl Seals},
+	year={2024},
+	eprint={2406.11109},
+	archivePrefix={arXiv},
+	primaryClass={cs.CL},
+	url={https://arxiv.org/abs/2406.11109}, 
+}
+
+@inproceedings{tonneau-etal-2024-languages,
+	title = "From Languages to Geographies: Towards Evaluating Cultural Bias in Hate Speech Datasets",
+	author = {Tonneau, Manuel  and
+	Liu, Diyi  and
+	Fraiberger, Samuel  and
+	Schroeder, Ralph  and
+	Hale, Scott A.  and
+	R{\"o}ttger, Paul},
+	editor = {Chung, Yi-Ling  and
+	Talat, Zeerak  and
+	Nozza, Debora  and
+	Plaza-del-Arco, Flor Miriam  and
+	R{\"o}ttger, Paul  and
+	Mostafazadeh Davani, Aida  and
+	Calabrese, Agostina},
+	booktitle = "Proceedings of the 8th Workshop on Online Abuse and Harms (WOAH 2024)",
+	month = jun,
+	year = "2024",
+	address = "Mexico City, Mexico",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/2024.woah-1.23/",
+	doi = "10.18653/v1/2024.woah-1.23",
+	pages = "283--311",
+	abstract = "Perceptions of hate can vary greatly across cultural contexts. Hate speech (HS) datasets, however, have traditionally been developed by language. This hides potential cultural biases, as one language may be spoken in different countries home to different cultures. In this work, we evaluate cultural bias in HS datasets by leveraging two interrelated cultural proxies: language and geography. We conduct a systematic survey of HS datasets in eight languages and confirm past findings on their English-language bias, but also show that this bias has been steadily decreasing in the past few years. For three geographically-widespread languages{---}English, Arabic and Spanish{---}we then leverage geographical metadata from tweets to approximate geo-cultural contexts by pairing language and country information. We find that HS datasets for these languages exhibit a strong geo-cultural bias, largely overrepresenting a handful of countries (e.g., US and UK for English) relative to their prominence in both the broader social media population and the general population speaking these languages. Based on these findings, we formulate recommendations for the creation of future HS datasets."
+}
+
+@misc{kumar2021tweetblmhatespeechdataset,
+title={TweetBLM: A Hate Speech Dataset and Analysis of Black Lives Matter-related Microblogs on Twitter}, 
+author={Sumit Kumar and Raj Ratn Pranesh},
+year={2021},
+eprint={2108.12521},
+archivePrefix={arXiv},
+primaryClass={cs.CL},
+url={https://arxiv.org/abs/2108.12521}, 
+}
+
+@inproceedings{tonneau-etal-2025-hateday,
+	title = "{H}ate{D}ay: Insights from a Global Hate Speech Dataset Representative of a Day on {T}witter",
+	author = {Tonneau, Manuel  and
+	Liu, Diyi  and
+	Malhotra, Niyati  and
+	Hale, Scott A.  and
+	Fraiberger, Samuel  and
+	Orozco-Olvera, Victor  and
+	R{\"o}ttger, Paul},
+	editor = "Che, Wanxiang  and
+	Nabende, Joyce  and
+	Shutova, Ekaterina  and
+	Pilehvar, Mohammad Taher",
+	booktitle = "Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)",
+	month = jul,
+	year = "2025",
+	address = "Vienna, Austria",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/2025.acl-long.115/",
+	doi = "10.18653/v1/2025.acl-long.115",
+	pages = "2297--2321",
+	ISBN = "979-8-89176-251-0",
+	abstract = "To address the global challenge of online hate speech, prior research has developed detection models to flag such content on social media. However, due to systematic biases in evaluation datasets, the real-world effectiveness of these models remains unclear, particularly across geographies. We introduce HateDay, the first global hate speech dataset representative of social media settings, constructed from a random sample of all tweets posted on September 21, 2022 and covering eight languages and four English-speaking countries. Using HateDay, we uncover substantial variation in the prevalence and composition of hate speech across languages and regions. We show that evaluations on academic datasets greatly overestimate real-world detection performance, which we find is very low, especially for non-European languages. Our analysis identifies key drivers of this gap, including models' difficulty to distinguish hate from offensive speech and a mismatch between the target groups emphasized in academic datasets and those most frequently targeted in real-world settings. We argue that poor model performance makes public models ill-suited for automatic hate speech moderation and find that high moderation rates are only achievable with substantial human oversight. Our results underscore the need to evaluate detection systems on data that reflects the complexity and diversity of real-world social media."
+}
