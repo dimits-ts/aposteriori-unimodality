@@ -797,7 +797,9 @@ The number of annotators per item for all datasets presented in \S\ref{sec:datas
 \end{table}
 
 
-\section{Statistical Estimation}
+\section{Apunim Details}
+
+\subsection{Statistical Estimation}
 \label{app:pvalue}
 
 Since annotation histograms may be noisy, we additionally assess whether the observed apunim value could arise by chance. To assess statistical significance, we construct a null distribution of apunim values from the randomized partitions and compare the observed apunim against this distribution using a one-sample Student-\(t\) test. Thus, the null hypothesis states that the observed polarization is indistinguishable from polarization induced by random annotator assignments:
@@ -817,32 +819,32 @@ Since annotation histograms may be noisy, we additionally assess whether the obs
 \end{equation}
 \noindent where \(\bar{\textit{apunim}}_{\mathrm{rand}}(d,g)\) denotes the average apunim values obtained from $t$ randomized annotator partitions.
 
-We account for the presence of multiple subgroups in each \ac{pc} dimension using a multiple-hypothesis correction. Since our test is parametric (App.~\ref{app:pvalue}), it assumes that there exist (1) enough data-points to reliably run the means-test, (2) enough annotations per \ac{pc} group to estimate \acp{ndfu}, (3) the apunim values of the random partitions are independent and identically distributed. Condition (1) can be safely assumed for most datasets, because they feature enough items to reliably assume normal residuals (see \S\ref{sec:datasets}). We discuss condition (2) in App.~\ref{app:ideal-dataset}. Condition (3) is partly fulfilled; the partitions are identically distributed, but may be dependent on the sample distribution. 
+We account for the presence of multiple subgroups in each \ac{pc} dimension using a multiple-hypothesis correction. Since our test is parametric (App.~\ref{app:pvalue}), it assumes that there exist (1) enough data-points to reliably run the means-test, (2) enough annotations per \ac{pc} group to estimate \acp{ndfu}, (3) the apunim values of the random partitions are independent and identically distributed. Condition (1) can be safely assumed for most datasets, because they feature enough items to reliably assume normal residuals (see \S\ref{sec:datasets}). We discuss condition (2) in \S\ref{sec:discussion}. Condition (3) is partly fulfilled; the partitions are identically distributed, but may be dependent on the sample distribution. 
 
 Replacing the parametric means test with a non-parametric alternative would relax assumptions about the underlying distribution but would not resolve the potential dependence between the random apunims. We initially attempted to implement a permutation test on the empirical (random apunim) distribution, but this resulted in excessive computational costs.
 
 While the test operates on a single group in principle, in practice we often want to test polarization for all subgroups of a specific dimension. Since we are simultaneously considering multiple hypotheses, we apply a multiple comparison correction to the resulting p-values---specifically the Holms method~\citep{holms}. The test is parameterized by the confidence level of our test, which is used to tune the strength of the correction; we can increase this value to make our test more conservative towards multiple hypotheses~\citep{ChenFengYi2017}).
 
 
-\section{Software}
+\subsection{Software}
 \label{app:software}
 
-\subsection{Installation and Usage}
+\paragraph{Installation and Usage}
 We release the \texttt{apunim} package, which is a Python library that implements both the \ac{ndfu} and apunim calculations, as well as its statistical test. The software is available on PyPi We also provide high-level documentation in HTML format that includes an introduction, guide, and full low-level documentation for each of the two provided functions (\doclink).
 
 We use version \texttt{1.0.6} of the \texttt{apunim} library for our experiments. We use 100 random iterations for the apriori value calculation and the p-value estimation (App.~\ref{app:pvalue}), and set a confidence level of $\alpha=0.05$. The relative library setup is provided as a \texttt{conda} environment file to ensure reproducibility. The code is open-source, licensed under the \ac{gpl} and can be found on the project's repository (\explink). The library is cross-platform, works for any Python 3 version, and requires very few dependencies (namely \texttt{numpy, scipy, statsmodels}).
 
-\subsection{Implementation Details}
+\paragraph{Implementation Details}
 By default, the computation of the apunim values happens on a single thread. In cases of serious computational cost, we recommend running the apunim calculation on multiple concurrent processes, since all operations are CPU-bound and thread-safe. This may be useful in cases where there are multiple \ac{pc} dimensions, each of which is computationally expensive. In order to lower the computational cost required, we re-use the random partitions, which are originally calculated to obtain the apriori polarization values, for the p-value calculations (App.~\ref{app:pvalue}). This means that in our current implementation, the number of groups for estimating apriori polarization, and the number of apunim values used in the p-value calculation have to be the same.
 
-While the library efficiently handles large numbers of annotators through vectorized operations, performance degrades significantly when processing a high volume of items, particularly when annotators belong to multiple distinct groups. For instance, while experiments across all datasets in \S\ref{sec:datasets} complete within a minute, the Kumar dataset necessitates approximately one hour of computation using commercial hardware. Furthermore, the annotator variance analysis detailed in App.~\ref{app:ideal-dataset} required over ten hours. While this latter time requirement is anticipated due to the inherently demanding nature and non-standard application of our library, it demonstrates the existence of a potential scaling bottleneck. The same applies to a lesser extent for the subsampling experiments on the DICES datasets, taking collectively three hours of computation.
+While the library efficiently handles large numbers of annotators through vectorized operations, performance degrades significantly when processing a high volume of items, particularly when annotators belong to multiple distinct groups. For instance, while experiments across all datasets in \S\ref{sec:datasets} complete within a minute, the Kumar dataset necessitates approximately one hour of computation using commercial hardware. Furthermore, the annotator variance analysis detailed in Fig.~\ref{fig:std_error} required over ten hours. While this latter time requirement is anticipated due to the inherently demanding nature and non-standard application of our library, it demonstrates the existence of a potential scaling bottleneck. The same applies to a lesser extent for the subsampling experiments on the DICES datasets, taking collectively three hours of computation.
 
 We hypothesize that this bottleneck is likely caused by repeated creation of numpy arrays, resulting in repeated memory allocations for each subgroup, in each item, for each \ac{pc} dimension. We plan on profiling and addressing it in the next releases of our software. Until then, we suggest either using multiprocessing for each \ac{pc} subgroup, or running the different experiments in parallel (indeed, we use the \texttt{gnu-parallel} package~\citep{tange_2025_16944306} for our own experiments). We also note that the Kumar dataset also requires substantial RAM resources, estimated around 42--46GB of dedicated RAM should the whole dataset be considered (this is not a requirement for loading the sample used in this study). The CPU-bound experiments require approximately 3 hours to run, assuming a computer capable of efficient multiprocessing.
 
 Finally, we note that in Fig.~\ref{fig:std_error}, we removed values where there was a lack of items annotated by the specified number of annotators (e.g., only 7\% of items in DICES-990 were annotated by more than 73 annotators---see App.~\ref{app:ann_details}).
 
 
-\section{Apunim Design Decisions}
+\subsection{Design Decisions}
 \label{app:design}
 
 \paragraph{Defining Apriori Polarization} In \S\ref{sec:apunim}, we explained how our methodology needs to compare the polarization between the set of all annotations and those made by a specific group $g$. Direct comparisons are not advisable, since we would be comparing statistics between a set and its subset---in this case, standard practice dictates comparing the subset with its complement; i.e., the in-group vs. the out-group instead of the in-group vs. all the annotations. However, this also would not work; if we apply the subset-vs-complement method in the example of Fig.~\ref{fig:inherent}, left, we would end up subtracting the \acp{ndfu} of men and women, which are similar as they are both unimodal distributions, falsely concluding that there is no polarization present.
@@ -850,7 +852,7 @@ Finally, we note that in Fig.~\ref{fig:std_error}, we removed values where there
 \paragraph{Filtering Ineligible items} Because \textit{apunim} is fundamentally designed to quantify polarization, we exclude items that exhibit no measurable polarization ($nDFU(c)=0$). Furthermore, we also exclude items annotated exclusively by a single group (i.e., items where there are no two groups with at least three annotators each), since we require valid histograms for the non-parametric estimation of \ac{ndfu} (see Eq.~\ref{eq:ndfu}). This is an unfortunately common scenario, since many \ac{nlp} datasets feature only $5-6$ annotations per item. In a best-case scenario of 5 annotators split evenly between two groups, we would get a 3-2 split.
 
 
-\section{What is UnPol?}
+\section{Exploring UnPol}
 \label{app:inpol}
 
 \paragraph{Why Does it Exist?}
@@ -866,9 +868,10 @@ Unlike disagreement, \ac{ip} does not provide any information, but rather repres
 	\ac{ip} may arise from the presence of partially represented groups within the annotator pool which may go undetected if they are represented by only one or two annotators, as \ac{ndfu} is undefined for these groups. 
 \end{hypothesis}
 
-Both of these explanations are plausible and reflect known limitations of most \ac{nlp} datasets. Unfortunately, we can not confirm any of these hypotheses
+Both of these explanations are plausible and reflect known limitations of most \ac{nlp} datasets. Unfortunately, we can not confirm any of these hypotheses.
 
-The fact that the DICES datasets (featuring 70+ annotators per item) exhibit zero \ac{ip} in all items may initially seem to validate either of the above hypotheses. However, even when repeating the experiment using random annotator subsets (ranging from 5 to 50 annotators) and taking the maximum across ten random samples for each subset size, \emph{we still observed zero \ac{ip}} (App.~\ref{app:ideal-dataset}). This finding indicates that the DICES datasets may be structurally different. This explanation is plausible given that the annotation targets are LLM texts, which may be relatively unsubtle compared to human items, as supported by low overall polarization (Fig.~\ref{fig:dataset-polarization}; App~\ref{app:ann_details}). Although a definitive answer to this question eludes us due to the lack of other datasets with high annotator counts per item, the indication that the DICES datasets may not feature similar polarization patterns is noteworthy. 
+\paragraph{Why Do DICES not Exhibit UnPol?} 
+In order to investigate whether the numerous annotators per items can explain the lack of \ac{ip} in the DICES datasets (\S\ref{sec:methods}) we gradually subsample the annotators for each item randomly with replacement, starting from five annotators per item, and scaling up to the full complement of annotators in the dataset with a step of two. For each such step, we choose ten annotator samples and compute the maximum \ac{ip} across all runs. Even with annotator counts similar to the Kumar and DICES datasets, \ac{ip} remains zero, suggesting that the absence of \ac{ip} can not be attributed to annotator number alone---rather, it is plausibly a pattern attributable to the DICES datasets themselves. This kind of analysis may be used in the exploratory phase of dataset selection in order to filter out datasets without enough group-specific subjectivity.
 
 \begin{table}[t]
 	\caption{Sample of comments from the Sap dataset and their \ac{ip}. Note that unambiguously toxic comments can be assigned with zero \ac{ip}, while more nuanced cases tend to have higher values.}
@@ -904,7 +907,9 @@ The fact that the DICES datasets (featuring 70+ annotators per item) exhibit zer
 Table~\ref{tab:inherent-examples} shows a random sample of items taken from the Sap dataset and their respective \ac{ip} values (\S\ref{sec:methods}). Note that explicitly toxic or racist items tend to have \ac{ip} values of zero, alongside clearly unproblematic items. Inversely, more ambiguous and less comprehensible items tend to have larger \ac{ip} values. This pattern may suggest that \ac{ip} may be tied to the overall ambiguity of the statements, especially in cases where items may either be interpreted as very toxic, or non-toxic, which agrees with the overall goal of \ac{ndfu} (\S\ref{sec:related}). We include the \ac{ip} values for each individual item for all four datasets in the supplementary material.
  
 
-\section{Synthetic Experiments}
+\section{Experiments}
+
+\subsection{Synthetic Examples}
 \label{app:experiments}
 
 This appendix details the synthetic experiments used to illustrate the functionality and behavior of \ac{ndfu}. In all simulations, the bin size is set to $N_{bins}=10$.
@@ -919,11 +924,8 @@ We simulate the distribution of toxicity annotations in Fig.~\ref{fig:inherent},
 We examine \ac{ndfu} scores for three specific textual examples presented in Fig.~\ref{fig:ndfu_discussion}. For the individual items, $N_{annotators}=200$ for each group. In the first case (misogynist item), Men's scores are modeled with $\text{loc}=6$, while Women's scores are modeled with $\text{loc}=2$. In the second case (misandrist item), the roles are reversed. The third visualization combines distributions for men and women derived from the respective single-item distributions.
 
 
-\section{Experiment Ablations}
+\subsection{Ablations}
 \label{app:ablation}
-
-\paragraph{Why Do DICES not Exhibit UnPol?} 
-In order to investigate whether the numerous annotators per items can explain the lack of \ac{ip} in the DICES datasets (\S\ref{sec:methods}) we gradually subsample the annotators for each item randomly with replacement, starting from five annotators per item, and scaling up to the full complement of annotators in the dataset with a step of two. For each such step, we choose ten annotator samples and compute the maximum \ac{ip} across all runs. Even with annotator counts similar to the Kumar and DICES datasets, \ac{ip} remains zero, suggesting that the absence of \ac{ip} can not be attributed to annotator number alone---rather, it is plausibly a pattern attributable to the DICES datasets themselves. This kind of analysis may be used in the exploratory phase of dataset selection in order to filter out datasets without enough group-specific subjectivity.
 
 \begin{figure}[t]
 	\includegraphics[width=\linewidth]{metric_comparison_multiple.png}
