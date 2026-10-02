@@ -1,10 +1,9 @@
 import argparse
-from os import path
+import re
 from pathlib import Path
 
 import pandas as pd
 import numpy as np
-from scipy.sparse import data
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -73,8 +72,16 @@ def main(
         sap_ds,
     ]
 
-    Dataset.print_descriptive_statistics(datasets)
-    Dataset.print_annotation_count_table(datasets)
+    ann_size_df = get_annotator_counts_df(datasets)
+    stats_df = get_statistics_df(ann_size_df)
+    annotation_count_table_to_latex(
+        stats_df=stats_df,
+        output_path=latex_output_dir / "annotation_count_table.tex",
+    )
+    subgroup_counts_to_latex(
+        datasets=datasets,
+        latex_output_dir=latex_output_dir,
+    )
 
     ann_size_df = get_annotator_counts_df(datasets)
     stats_df = get_statistics_df(ann_size_df)
@@ -259,7 +266,7 @@ def get_statistics_df(all_df: pd.DataFrame) -> pd.DataFrame:
     is a statistic from `describe()` applied to annotator counts.
     """
     return (
-        all_df.groupby("dataset")["n_annotators"]
+        all_df.groupby("dataset", sort=False)["n_annotators"]
         .describe()  # computes count, mean, std, min, 25%, 50%, 75%, max
         .rename_axis(index=None)  # optional: cleaner row index name
     )
@@ -277,6 +284,100 @@ def csv_to_latex(result_paths: list[Path], latex_output_dir: Path) -> None:
                 dataset_name=dataset_name,
                 table_label=f"tab:{dataset_name}",
             )
+
+
+def _fmt_num(x: float) -> str:
+    """Formats a float to 4 decimal places, stripping trailing zeros
+    (and a trailing decimal point) so whole numbers print cleanly."""
+    return f"{x:.4f}".rstrip("0").rstrip(".")
+
+
+def _slug(name: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+
+
+def annotation_count_table_to_latex(
+    stats_df: pd.DataFrame, output_path: Path
+) -> None:
+    """
+    Write a LaTeX table* summarizing the distribution of the number of
+    annotations per comment (one row per dataset), from the output of
+    `get_statistics_df`.
+    """
+    lines = [
+        "\\begin{table*}[t]",
+        "\t\\centering",
+        "\t\\caption{Descriptive statistics for the number of "
+        "annotations per comment, grouped by dataset.}",
+        "\t\\label{tab:num-annot}",
+        "\t\\begin{tabular}{lrrrrrrrr}",
+        "\t\t\\toprule",
+        "\t\t& count & mean & std & min & 25\\% & 50\\% & 75\\% & max \\\\",
+        "\t\t\\midrule",
+    ]
+    for name, row in stats_df.iterrows():
+        lines.append(
+            f"\t\t{name} & {int(row['count'])} & "
+            f"{_fmt_num(row['mean'])} & "
+            f"{_fmt_num(row['std'])} & "
+            f"{_fmt_num(row['min'])} & "
+            f"{_fmt_num(row['25%'])} & "
+            f"{_fmt_num(row['50%'])} & "
+            f"{_fmt_num(row['75%'])} & "
+            f"{_fmt_num(row['max'])} \\\\"
+        )
+    lines += [
+        "\t\t\\bottomrule",
+        "\t\\end{tabular}",
+        "\\end{table*}",
+    ]
+    output_path.write_text("\n".join(lines) + "\n")
+    print(f"Table exported to {output_path.resolve()}")
+
+
+def get_subgroup_counts(ds: Dataset) -> dict[str, pd.Series]:
+    """
+    For each SDB column, flatten the per-comment lists of annotator
+    characteristics and count how many annotations come from each subgroup.
+    """
+    df = ds.get_dataset()
+    return {
+        col: df[col].explode().value_counts().sort_index()
+        for col in ds.get_sdb_columns()
+    }
+
+
+def subgroup_counts_to_latex(
+    datasets: list[Dataset], latex_output_dir: Path
+) -> None:
+    """
+    Write one LaTeX table per dataset with the number of annotations in each
+    subgroup of every personal characteristic (SDB) dimension.
+    """
+    for ds in datasets:
+        counts = pd.concat(
+            get_subgroup_counts(ds), names=["SDB feature", "Value"]
+        ).to_frame("Count")
+
+        latex_str = counts.to_latex(
+            caption=(
+                f"Number of annotations per subgroup for the {ds.get_name()} "
+                "dataset."
+            ),
+            label=f"tab:subgroups-{_slug(ds.get_name())}",
+            escape=True,
+            position="t",
+            index=True,
+            multirow=False,
+            longtable=len(counts) > 40,
+        )
+        latex_str = center_table_latex(latex_str=latex_str)
+
+        output_path = (
+            latex_output_dir / f"{_slug(ds.get_name())}_subgroup_counts.tex"
+        )
+        output_path.write_text(latex_str)
+        print(f"Table exported to {output_path.resolve()}")
 
 
 def _results_to_latex(
