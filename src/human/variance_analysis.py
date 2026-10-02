@@ -1,7 +1,4 @@
-# Revised script with syntactically-correct caching and dynamic sample sizes.
-
 import re
-import math
 import typing
 import argparse
 import warnings
@@ -17,8 +14,6 @@ import apunim
 
 from ..lib import graphs, run_helper
 from ..lib.preprocessing import (
-    SapDataset,
-    KumarDataset,
     DicesDataset,
     PopquornDataset,
     Dataset,
@@ -63,6 +58,73 @@ _UNDISCLOSED = {
     "prefer not to say",
     "prefer not to answer",
 }
+
+
+# Kumar can not be subsampled down from 5
+def main(
+    dices_small_path: Path,
+    dices_large_path: Path,
+    latex_output_dir: Path,
+    popquorn_offensiveness_path: Path,
+    graph_dir: Path,
+    cache_dir: Path,
+    min_comment_annotators: int = 3,
+):
+    graphs.graph_setup()
+    dices350_ds = DicesDataset(dataset_path=dices_small_path, variant="350")
+    dices990_ds = DicesDataset(dataset_path=dices_large_path, variant="990")
+    popquorn_ds = PopquornDataset(dataset_path=popquorn_offensiveness_path)
+    datasets: list[Dataset] = [dices350_ds, dices990_ds, popquorn_ds]
+
+    Dataset.print_descriptive_statistics(datasets)
+    Dataset.print_annotation_count_table(datasets)
+
+    ann_size_df = get_annotator_counts_df(datasets)
+    stats_df = get_statistics_df(ann_size_df)
+    stats_df.to_latex(
+        latex_output_dir / "ann_stats.tex",
+        caption=(
+            "Descriptive statistics for the number of annotations per dataset."
+        ),
+        label="tab:num-annot",
+        position="ht",
+        index=True,
+        float_format="%.4f",
+        escape=True,
+    )
+
+    plot_annotator_count_histogram_from_datasets(
+        datasets=datasets,
+        graph_path=graph_dir / "annotator_count_histogram.png",
+    )
+
+    label_audit(datasets, cache_dir / "label_mapping.csv")
+
+    variance_dfs = {}
+    for feature in FEATURES:
+        variance_df_ls = []
+        for dataset in datasets:
+            res_df = get_dataset_variance(
+                dataset,
+                feature,
+                cache_dir,
+                min_comment_annotators=min_comment_annotators,
+            )
+            res_df["dataset"] = dataset.get_name()
+            variance_df_ls.append(res_df)
+
+        variance_df = pd.concat(variance_df_ls, ignore_index=True)
+
+        if variance_df.empty:
+            print(f"No apunim values could be computed for {feature}.")
+            continue
+
+        variance_dfs[feature] = variance_df
+
+    plot_variance_curve(
+        variance_dfs,
+        graph_path=graph_dir / "apunim_subsampling_robustness.png",
+    )
 
 
 def harmonize_ethnicity(label) -> typing.Optional[str]:
@@ -169,75 +231,6 @@ def label_audit(datasets: list[Dataset], out_path: Path) -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     audit.to_csv(out_path, index=False)
     print(audit.to_string(index=False))
-
-
-def main(
-    dices_small_path: Path,
-    dices_large_path: Path,
-    latex_output_dir: Path,
-    sap_path: Path,
-    kumar_path: Path,
-    graph_dir: Path,
-    cache_dir: Path,
-    popquorn_offensiveness_path: Path,
-    min_comment_annotators: int = 3,
-):
-    graphs.graph_setup()
-    dices350_ds = DicesDataset(dataset_path=dices_small_path, variant="350")
-    dices990_ds = DicesDataset(dataset_path=dices_large_path, variant="990")
-    sap_ds = SapDataset(dataset_path=sap_path)
-    kumar_ds = KumarDataset(dataset_path=kumar_path, num_samples=1_000)
-    datasets: list[Dataset] = [dices350_ds, dices990_ds, sap_ds, kumar_ds]
-
-    datasets.append(PopquornDataset(dataset_path=popquorn_offensiveness_path))
-    Dataset.print_descriptive_statistics(datasets)
-    Dataset.print_annotation_count_table(datasets)
-
-    ann_size_df = get_annotator_counts_df(datasets)
-    stats_df = get_statistics_df(ann_size_df)
-    stats_df.to_latex(
-        latex_output_dir / "ann_stats.tex",
-        caption=(
-            "Descriptive statistics for the number of annotations per dataset."
-        ),
-        label="tab:num-annot",
-        position="ht",
-        index=True,
-        float_format="%.4f",
-        escape=True,
-    )
-
-    plot_annotator_count_histogram_from_datasets(
-        datasets=datasets,
-        graph_path=graph_dir / "annotator_count_histogram.png",
-    )
-
-    label_audit(datasets, cache_dir / "label_mapping.csv")
-
-    for feature in FEATURES:
-        variance_df_ls = []
-        for dataset in datasets:
-            res_df = get_dataset_variance(
-                dataset,
-                feature,
-                cache_dir,
-                min_comment_annotators=min_comment_annotators,
-            )
-            res_df["dataset"] = dataset.get_name()
-            variance_df_ls.append(res_df)
-
-        variance_df = pd.concat(variance_df_ls, ignore_index=True)
-
-        if variance_df.empty:
-            print(f"No apunim values could be computed for {feature}.")
-            continue
-
-        plot_variance_curve(
-            variance_df,
-            graph_path=graph_dir
-            / f"apunim_subsampling_robustness_{feature}.png",
-            feature=feature,
-        )
 
 
 def apunim_vs_sample_size(
@@ -371,85 +364,103 @@ def _tex(text: str) -> str:
 
 
 def plot_variance_curve(
-    results_df: pd.DataFrame, graph_path: Path, feature: str, ncols: int = 3
+    results_by_feature: dict[str, pd.DataFrame], graph_path: Path
 ):
-    """One panel per dataset, one line per group level (mean, +-2 SD)."""
-    datasets = list(results_df["dataset"].unique())
+    """One row per feature, one column per dataset, one line per group level
+    (mean, +-2 SD)."""
+    features = list(results_by_feature)
+    datasets = list(
+        dict.fromkeys(
+            ds
+            for df in results_by_feature.values()
+            for ds in df["dataset"].unique()
+        )
+    )
 
-    present = results_df["level"].unique()
-    levels = [g for g in FEATURES[feature][1] if g in present]
-
-    colors = {
-        level: graphs.COLORBLIND_PALETTE[i % len(graphs.COLORBLIND_PALETTE)]
-        for i, level in enumerate(levels)
-    }
-    markers = {
-        level: graphs.MARKERS[i % len(graphs.MARKERS)]
-        for i, level in enumerate(levels)
-    }
-
-    nrows = math.ceil(len(datasets) / ncols)
+    nrows, ncols = len(features), len(datasets)
     fig, axes = plt.subplots(
         nrows,
         ncols,
-        sharey=True,
+        sharex="col",
+        sharey="row",  # gender and ethnicity can have different ranges
         squeeze=False,
         figsize=(5 * ncols, 3.5 * nrows),
     )
 
-    for i, (ax, ds_name) in enumerate(zip(axes.flat, datasets)):
-        ds_df = results_df[results_df["dataset"] == ds_name]
+    for row, feature in enumerate(features):
+        results_df = results_by_feature[feature]
+        present = results_df["level"].unique()
+        levels = [g for g in FEATURES[feature][1] if g in present]
 
-        for level in levels:
-            level_df = ds_df[ds_df["level"] == level].sort_values(
-                "sample_size"
+        colors = {
+            level: graphs.COLORBLIND_PALETTE[
+                i % len(graphs.COLORBLIND_PALETTE)
+            ]
+            for i, level in enumerate(levels)
+        }
+        markers = {
+            level: graphs.MARKERS[i % len(graphs.MARKERS)]
+            for i, level in enumerate(levels)
+        }
+
+        for col, ds_name in enumerate(datasets):
+            ax = axes[row, col]
+            ds_df = results_df[results_df["dataset"] == ds_name]
+
+            for level in levels:
+                level_df = ds_df[ds_df["level"] == level].sort_values(
+                    "sample_size"
+                )
+                if level_df.empty:
+                    continue
+
+                sns.lineplot(
+                    data=level_df,
+                    x="sample_size",
+                    y="apunim",
+                    errorbar=("sd", 2),
+                    err_kws={"alpha": 0.12},
+                    color=colors[level],
+                    marker=markers[level],
+                    ax=ax,
+                )
+
+            # apunim = 0: polarization is explained by chance
+            ax.axhline(0, color="grey", linewidth=0.8, linestyle="--")
+
+            # titles on the top row, x labels on the bottom row only
+            ax.set_title(ds_name if row == 0 else "")
+            ax.set_xlabel(
+                r"\# Annotators sampled per comment"
+                if row == nrows - 1
+                else ""
             )
-            if level_df.empty:
-                continue
+            # row label on the first column only
+            ax.set_ylabel(
+                f"{feature.capitalize()}\napunim" if col == 0 else ""
+            )
 
-            sns.lineplot(
-                data=level_df,
-                x="sample_size",
-                y="apunim",
-                errorbar=("sd", 2),
-                err_kws={"alpha": 0.12},
+        # each feature has its own levels, so each row gets its own legend
+        handles = [
+            Line2D(
+                [0],
+                [0],
                 color=colors[level],
                 marker=markers[level],
-                ax=ax,
+                label=_tex(level),
             )
-
-        # apunim = 0: polarization is explained by chance
-        ax.axhline(0, color="grey", linewidth=0.8, linestyle="--")
-        ax.set_title(ds_name)
-        # axis labels only on the outer panels
-        has_panel_below = i + ncols < len(datasets)
-        ax.set_xlabel(
-            "" if has_panel_below else r"\# Annotators sampled per comment"
+            for level in levels
+        ]
+        axes[row, -1].legend(
+            handles=handles,
+            loc="center left",
+            bbox_to_anchor=(1.02, 0.5),
+            title=feature.capitalize(),
         )
-        ax.set_ylabel("apunim" if i % ncols == 0 else "")
 
-    for ax in axes.flat[len(datasets) :]:
-        ax.set_visible(False)
-
-    handles = [
-        Line2D(
-            [0],
-            [0],
-            color=colors[level],
-            marker=markers[level],
-            label=_tex(level),
-        )
-        for level in levels
-    ]
-    fig.legend(
-        handles=handles,
-        loc="upper center",
-        bbox_to_anchor=(0.5, 0.0),
-        ncol=len(handles),
-    )
     fig.suptitle(
-        f"Effect of annotator sample size on apunim ({feature}; mean "
-        r"$\pm$ 2 SD across resamples)"
+        "Effect of annotator sample size on apunim "
+        r"(mean $\pm$ 2 SD across resamples)"
     )
     fig.tight_layout()
 
@@ -483,7 +494,7 @@ def get_dataset_variance(
         annotation_col=dataset.get_annotation_column(),
         group_col=_group_column(dataset, feature),
         bins=None,
-        min_size=3,
+        min_size=6,
         max_size=None,
         step=1,
         iters=RESAMPLE_ITERS,
@@ -609,16 +620,6 @@ if __name__ == "__main__":
         help="Path to the DICES 990 annotator CSV file.",
     )
     parser.add_argument(
-        "--sap-path",
-        required=True,
-        help="Path to the Sap annotator CSV file.",
-    )
-    parser.add_argument(
-        "--kumar-path",
-        required=True,
-        help="Path to the Kumar annotator CSV file.",
-    )
-    parser.add_argument(
         "--popquorn-path",
         required=True,
         help=("Path to the POPQUORN offensiveness dataset."),
@@ -649,8 +650,6 @@ if __name__ == "__main__":
         dices_small_path=Path(args.dices_small_path),
         dices_large_path=Path(args.dices_large_path),
         latex_output_dir=Path(args.latex_output_dir),
-        sap_path=Path(args.sap_path),
-        kumar_path=Path(args.kumar_path),
         graph_dir=Path(args.graph_output_dir),
         cache_dir=Path(args.cache_dir),
         min_comment_annotators=args.min_comment_annotators,
