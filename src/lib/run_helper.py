@@ -225,8 +225,6 @@ def _run_aposteriori(
     return results
 
 
-
-
 def _compute_bins(
     annotations: np.ndarray,
     num_bins: int | None,
@@ -324,9 +322,17 @@ def _compute_comment_polarization(
     group_generator_fn,
     max_annotators: int,
     num_bins: int | None = None,
+    show_progress: bool = False,
+    progress_position: int = 0,
+    progress_desc: str | None = None,
 ) -> pd.Series:
     """
     Shared engine for polarization computation.
+
+    If `show_progress` is True, a tqdm bar over the comments is shown at
+    row `progress_position` (so it can be nested under other bars) and is
+    cleared when finished. Off by default, so existing callers are
+    unaffected.
 
     Returns
     -------
@@ -352,7 +358,14 @@ def _compute_comment_polarization(
     comment_mins = []
     all_group_values = {}
 
-    for cid in unique_comments:
+    comment_iter = tqdm(
+        unique_comments,
+        desc=progress_desc or "comments",
+        position=progress_position,
+        leave=False,
+        disable=not show_progress,
+    )
+    for cid in comment_iter:
         mask = comments == cid
 
         comm_ann = np.concatenate(
@@ -396,9 +409,15 @@ def compute_inherent_polarization_exhaustive(
     dataset: preprocessing.Dataset,
     num_bins: int | None = None,
     max_annotators: int = 420,
+    show_progress: bool = False,
+    progress_position: int = 0,
+    progress_desc: str | None = None,
 ) -> pd.Series:
     """
     Exhaustively evaluates ALL possible annotator groups.
+
+    `show_progress`, `progress_position` and `progress_desc` control an
+    optional per-comment tqdm bar (see _compute_comment_polarization).
 
     Returns
     -------
@@ -415,6 +434,9 @@ def compute_inherent_polarization_exhaustive(
         group_generator_fn=_iter_exhaustive_groups,
         num_bins=num_bins,
         max_annotators=max_annotators,
+        show_progress=show_progress,
+        progress_position=progress_position,
+        progress_desc=progress_desc,
     )
 
 
@@ -424,9 +446,15 @@ def compute_inherent_polarization_random(
     max_annotators: int = 420,
     iterations: int = 1000,
     seed: int = 42,
+    show_progress: bool = False,
+    progress_position: int = 0,
+    progress_desc: str | None = None,
 ) -> pd.Series:
     """
     Randomly samples annotator groups.
+
+    `show_progress`, `progress_position` and `progress_desc` control an
+    optional per-comment tqdm bar (see _compute_comment_polarization).
 
     Returns
     -------
@@ -445,4 +473,7 @@ def compute_inherent_polarization_random(
         ),
         num_bins=num_bins,
         max_annotators=max_annotators,
+        show_progress=show_progress,
+        progress_position=progress_position,
+        progress_desc=progress_desc,
     )

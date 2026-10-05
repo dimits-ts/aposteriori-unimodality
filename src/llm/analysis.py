@@ -31,8 +31,8 @@ The following are produced:
    table per dataset -- one row per (SDB Feature, Value, Model), one
    column per prompt (default/stereotype/persona) -- rather than
    per-(dataset, model) "-results.csv"/"-inherent.csv" files. Restricted
-   to the datasets the stereotype/persona prompts were actually run on
-   (kumar, sap) and to the models run on all three prompts (see
+   to the datasets the adversarial prompts were actually run on
+   (shared.PROMPT_COMPARISON_DATASET_KEYS) and to the models run on all three prompts (see
    PROMPT_COMPARISON_DATASET_KEYS / APUNIM_TABLE_EXCLUDE_MODELS).
 
 4. A single composite figure (llm_apunim_grid.png) with one subplot per
@@ -74,6 +74,7 @@ def main(
     graph_output_dir: Path,
     latex_output_dir: Path,
     cache_dir: Path,
+    human_results_dir: Path,
     exclude_models: list[str],
     prompt_name: str = "default",
 ):
@@ -119,7 +120,12 @@ def main(
     run_apunim_grid_steps(human_datasets, annotations_dir, graph_output_dir)
 
     run_inherent_polarization_step(
-        human_datasets, annotations_dir, latex_output_dir, exclude_models
+        human_datasets,
+        annotations_dir,
+        latex_output_dir,
+        exclude_models,
+        human_results_dir=human_results_dir,
+        cache_dir=cache_dir,
     )
 
     stats_path = cache_dir / "polarization_by_instruction_anova.csv"
@@ -141,7 +147,7 @@ def main(
         in \ac{ndfu} between the default and each adversarial instruction
         prompt for each of the groups of both datasets and across all models.""",
         label="tab:cohens-d",
-        by_model=True
+        by_model=True,
     )
     stats.run_exploratory_stats(res_df)
 
@@ -155,6 +161,7 @@ def run_histogram_step(
         annotations_dir=annotations_dir,
         output_path=output_path,
         prompt_name=prompt_name,
+        dataset_keys=shared.MAIN_DATASET_KEYS,
     )
 
 
@@ -168,6 +175,7 @@ def run_prompt_diff_step(
         output_path=output_path,
         prompt_names=shared.MAIN_PROMPT_NAMES,
         exclude_models=exclude_models,
+        dataset_keys=shared.MAIN_DATASET_KEYS,
     )
 
 
@@ -180,6 +188,7 @@ def run_cross_model_consistency_step(
             human_datasets=human_datasets,
             annotations_dir=annotations_dir,
             prompt_name=prompt_name,
+            dataset_keys=shared.MAIN_DATASET_KEYS,
         ),
         output_path=output_path,
         caption=(
@@ -209,6 +218,7 @@ def _run_cross_model_consistency_excluding_step(
             annotations_dir=annotations_dir,
             prompt_name=prompt_name,
             exclude_models=exclude_models,
+            dataset_keys=shared.MAIN_DATASET_KEYS,
         ),
         output_path=output_path,
         caption=(
@@ -226,7 +236,9 @@ def run_variant_consistency_step(
     output_path = latex_output_dir / "llm-consistency-variants.tex"
     stats.export_latex_table(
         stats.per_model_variant_consistency_table(
-            human_datasets=human_datasets, paraphrase_dir=paraphrase_dir
+            human_datasets=human_datasets,
+            paraphrase_dir=paraphrase_dir,
+            dataset_keys=shared.ABLATION_DATASET_KEYS,
         ),
         output_path=output_path,
         caption=(
@@ -246,6 +258,7 @@ def run_repeat_consistency_step(
             human_datasets=human_datasets,
             repeat_dir=repeat_dir,
             prompt_name=prompt_name,
+            dataset_keys=shared.ABLATION_DATASET_KEYS,
         ),
         output_path=output_path,
         caption=(
@@ -295,8 +308,8 @@ def run_apunim_prompt_table_step(
     latex_output_dir: Path,
     cache_dir: Path,
 ):
-    # Restricted to the datasets the paraphrase/stereotype/persona prompts
-    # were actually run on (kumar, sap).
+    # Restricted to the datasets the adversarial prompts were run on
+    # (shared.PROMPT_COMPARISON_DATASET_KEYS).
     for key in shared.PROMPT_COMPARISON_DATASET_KEYS:
         if key in human_datasets:
             _run_apunim_prompt_table_for_dataset(
@@ -333,27 +346,35 @@ def run_apunim_grid_steps(human_datasets, annotations_dir, graph_output_dir):
 
 
 def run_inherent_polarization_step(
-    human_datasets, annotations_dir, latex_output_dir, exclude_models
+    human_datasets,
+    annotations_dir,
+    latex_output_dir,
+    exclude_models,
+    human_results_dir: Path,
+    cache_dir: Path,
 ):
-    # Deliberately separate from latex_output_dir: these caches are shared
-    # with sap.py/kumar.py/dices.py's own "-inherent.csv" outputs.
-    human_results_dir = Path("output/main")
-    apunim_output_dir = Path("output/apunim")
+    # human_results_dir holds the human scripts' own "<dataset>-inherent.csv"
+    # outputs (e.g. output/human/main), which are reused as-is. The per-
+    # (dataset, prompt, model) LLM values are cached separately under
+    # cache_dir/inherent. Delete that folder to force a recompute.
+    llm_inherent_cache_dir = cache_dir / "inherent"
 
-    output_path = latex_output_dir / "inherent-polarization.tex"
     inherent_df = polarization.compute_inherent_polarization_comparison(
         human_datasets=human_datasets,
         annotations_dir=annotations_dir,
-        apunim_output_dir=apunim_output_dir,
+        apunim_output_dir=llm_inherent_cache_dir,
         human_results_dir=human_results_dir,
-        dataset_keys=shared.DATASET_KEYS[2:],
+        dataset_keys=shared.MAIN_DATASET_KEYS,
         prompt_names=shared.MAIN_PROMPT_NAMES,
         exclude_models=set(exclude_models),
+        use_monte_carlo=True,
     )
     inherent_table_df = polarization.build_inherent_polarization_table(
         long_df=inherent_df,
         prompt_names=shared.MAIN_PROMPT_NAMES,
     )
+
+    output_path = latex_output_dir / "inherent-polarization.tex"
     polarization.export_inherent_polarization_table(
         df=inherent_table_df,
         output_path=output_path,
@@ -430,6 +451,14 @@ if __name__ == "__main__":
         help="Directory for cached apunim computations.",
     )
     parser.add_argument(
+        "--human-results-dir",
+        required=True,
+        help=(
+            "Directory with the human <dataset>-inherent.csv files "
+            "written by the human analysis scripts, e.g. output/human/main."
+        ),
+    )
+    parser.add_argument(
         "--exclude-models",
         nargs="+",
         default=[],
@@ -453,5 +482,6 @@ if __name__ == "__main__":
         latex_output_dir=Path(args.latex_output_dir),
         prompt_name="default",
         cache_dir=Path(args.cache_dir),
+        human_results_dir=Path(args.human_results_dir),
         exclude_models=args.exclude_models,
     )

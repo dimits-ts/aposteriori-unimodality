@@ -65,10 +65,18 @@ MODEL_DISPLAY_ORDER = [
 # that "stereotype"/"persona" are compared against.
 MAIN_PROMPT_NAMES = ["default", "stereotype", "persona", "single", "direct"]
 
-# Datasets for which all three MAIN_PROMPT_NAMES were actually run (the
-# DICES datasets only have the "default" prompt) -- used for both the
-# prompt mean-diff plot and the apunim-by-prompt LaTeX table.
-PROMPT_COMPARISON_DATASET_KEYS = ["kumar", "sap"]
+# Datasets used for the main annotation runs (default + adversarial
+# prompts). The DICES datasets are deliberately excluded: they were only
+# run for the ablations below.
+MAIN_DATASET_KEYS = ["sap", "kumar"]
+
+# Datasets used for the ablations (paraphrase variants, repeated runs).
+ABLATION_DATASET_KEYS = DATASET_KEYS
+
+# Datasets for which all MAIN_PROMPT_NAMES were run -- used for the prompt
+# mean-diff plot, the apunim-by-prompt LaTeX table and grids, and the
+# prompt-sensitivity ANOVA.
+PROMPT_COMPARISON_DATASET_KEYS = MAIN_DATASET_KEYS
 
 # The "adversarial" instruction prompts (instructions/adversarial/<dataset>/,
 # run by annotate_adversarial.sh) -- every MAIN_PROMPT_NAMES entry besides

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
+from tqdm.auto import tqdm
 
 from ..lib import run_helper
 from ..lib.preprocessing import Dataset
@@ -27,6 +28,15 @@ from .shared import (
 # ---------------------------------------------------------------------------
 # 5. Inherent-polarization comparison (Human vs. LLM), default + adversarial
 # ---------------------------------------------------------------------------
+#
+# Progress is reported with three nested tqdm bars:
+#   position 0: datasets
+#   position 1: prompts within the current dataset
+#   position 2: sources (Human, then each model) within the current prompt
+#   position 3: comments within the current source (only shown when the
+#               values are actually computed, not read from a cache)
+
+COMMENT_BAR_POSITION = 3
 
 
 def _human_inherent_polarization(
@@ -34,6 +44,7 @@ def _human_inherent_polarization(
     human_ds: Dataset,
     sample_ids: set,
     human_results_dir: Path,
+    use_monte_carlo: bool = False,
 ) -> pd.Series:
     """
     Human inherent-polarization values, restricted to `sample_ids`.
@@ -49,10 +60,15 @@ def _human_inherent_polarization(
 
     fn = (
         run_helper.compute_inherent_polarization_random
-        if dataset_key.startswith("dices")
+        if use_monte_carlo
         else run_helper.compute_inherent_polarization_exhaustive
     )
-    return fn(human_ds).dropna()
+    return fn(
+        human_ds,
+        show_progress=True,
+        progress_position=COMMENT_BAR_POSITION,
+        progress_desc=f"    {dataset_key} Human: comments",
+    ).dropna()
 
 
 def _llm_inherent_polarization(
@@ -64,7 +80,8 @@ def _llm_inherent_polarization(
 ) -> pd.Series:
     """
     LLM inherent-polarization values for a single (dataset, prompt, model).
-    Reuses a precomputed CSV when present; otherwise computes exhaustively.
+    Reuses a cached CSV in `apunim_output_dir` when present; otherwise
+    computes exhaustively and writes the result there.
     """
     cached_path = (
         apunim_output_dir
@@ -78,7 +95,19 @@ def _llm_inherent_polarization(
 
     df = load_llm_df(path)
     ds = LLMAnnotationDataset(df, dataset_key, pseudo, prompt_name)
-    return run_helper.compute_inherent_polarization_exhaustive(ds).dropna()
+    series = run_helper.compute_inherent_polarization_exhaustive(
+        ds,
+        show_progress=True,
+        progress_position=COMMENT_BAR_POSITION,
+        progress_desc=f"    {dataset_key}/{prompt_name}/{pseudo}: comments",
+    )
+
+    # Write-through cache so the next run can skip this computation.
+    cached_path.parent.mkdir(parents=True, exist_ok=True)
+    series.rename("inherent_polarization").rename_axis("comment").to_csv(
+        cached_path
+    )
+    return series.dropna()
 
 
 def _records_from_series(
@@ -102,15 +131,20 @@ def _inherent_records_for_models(
     models: list[str],
     files: dict[str, Path],
     apunim_output_dir: Path,
+    progress: tqdm | None = None,
 ) -> list[dict]:
     records = []
     for pseudo in models:
+        if progress is not None:
+            progress.set_postfix_str(pseudo)
         series = _llm_inherent_polarization(
             dataset_key, prompt_name, pseudo, files[pseudo], apunim_output_dir
         )
         records.extend(
             _records_from_series(series, dataset_key, prompt_name, pseudo)
         )
+        if progress is not None:
+            progress.update(1)
     return records
 
 
@@ -122,6 +156,7 @@ def _inherent_records_for_prompt(
     apunim_output_dir: Path,
     human_results_dir: Path,
     exclude_models: set[str],
+    use_monte_carlo: bool,
 ) -> list[dict]:
     files = find_annotation_files(annotations_dir, key, prompt_name)
     models = _order_models(set(files) - exclude_models)
@@ -133,19 +168,33 @@ def _inherent_records_for_prompt(
         ds_human, annotations_dir, key, prompt_name
     )
 
+    n_sources = len(models) + (1 if human_ds is not None else 0)
     records = []
-    if human_ds is not None:
-        human_series = _human_inherent_polarization(
-            key, human_ds, sample_ids, human_results_dir
-        )
+    with tqdm(
+        total=n_sources,
+        desc=f"  {prompt_name}: sources",
+        position=2,
+        leave=False,
+    ) as progress:
+        if human_ds is not None:
+            progress.set_postfix_str("Human")
+            human_series = _human_inherent_polarization(
+                key, human_ds, sample_ids, human_results_dir, use_monte_carlo
+            )
+            records.extend(
+                _records_from_series(human_series, key, prompt_name, "Human")
+            )
+            progress.update(1)
         records.extend(
-            _records_from_series(human_series, key, prompt_name, "Human")
+            _inherent_records_for_models(
+                key,
+                prompt_name,
+                models,
+                files,
+                apunim_output_dir,
+                progress=progress,
+            )
         )
-    records.extend(
-        _inherent_records_for_models(
-            key, prompt_name, models, files, apunim_output_dir
-        )
-    )
     return records
 
 
@@ -157,10 +206,16 @@ def _inherent_records_for_dataset(
     apunim_output_dir: Path,
     human_results_dir: Path,
     exclude_models: set[str],
+    use_monte_carlo: bool,
 ) -> list[dict]:
     ds_human = human_datasets[key]
     records = []
-    for prompt_name in prompt_names:
+    for prompt_name in tqdm(
+        prompt_names,
+        desc=f" {key}: prompts",
+        position=1,
+        leave=False,
+    ):
         records.extend(
             _inherent_records_for_prompt(
                 key,
@@ -170,6 +225,7 @@ def _inherent_records_for_dataset(
                 apunim_output_dir,
                 human_results_dir,
                 exclude_models,
+                use_monte_carlo,
             )
         )
     return records
@@ -180,6 +236,7 @@ def compute_inherent_polarization_comparison(
     annotations_dir: Path,
     apunim_output_dir: Path,
     human_results_dir: Path,
+    use_monte_carlo: bool,
     dataset_keys: list[str] = DATASET_KEYS,
     prompt_names: list[str] = MAIN_PROMPT_NAMES,
     exclude_models: set[str] | None = None,
@@ -191,7 +248,13 @@ def compute_inherent_polarization_comparison(
     """
     exclude_models = set(exclude_models or ())
     records = []
-    for key in _available_dataset_keys(human_datasets, dataset_keys):
+    available_keys = _available_dataset_keys(human_datasets, dataset_keys)
+    for key in tqdm(
+        available_keys,
+        desc="Inherent polarization: datasets",
+        position=0,
+        leave=True,
+    ):
         records.extend(
             _inherent_records_for_dataset(
                 human_datasets,
@@ -201,6 +264,7 @@ def compute_inherent_polarization_comparison(
                 apunim_output_dir,
                 human_results_dir,
                 exclude_models,
+                use_monte_carlo,
             )
         )
     return pd.DataFrame(records)
