@@ -17,22 +17,21 @@ from ..lib.preprocessing import (
     SapDataset,
     KumarDataset,
     Dataset,
+    DicesDataset
 )
 
 SEED = 42
 MAX_NEW_TOKENS = 3
 MAX_CTX_TOKENS = 512
 
-SAMPLES_PER_DATASET = {
-    "kumar": 1000,
-    "sap": 585,
-}
 
 DATASET_LOADERS = {
     "kumar": lambda p: KumarDataset(
         dataset_path=p, num_samples=SAMPLES_PER_DATASET["kumar"]
     ),
     "sap": lambda p: SapDataset(dataset_path=p),
+    "dices-350": lambda p: DicesDataset(dataset_path=p, variant="350"),
+    "dices-990": lambda p: DicesDataset(dataset_path=p, variant="990"),
 }
 PERSONA_SUFFIX = (
     "\n\nAnnotate as a person with these characteristics: {persona}"
@@ -70,7 +69,7 @@ def main(
     value_pools = get_subgroup_value_pools(ds)
     generator = load_generator(model_name)
 
-    base_n = SAMPLES_PER_DATASET[dataset_key]
+    base_n = len(ds.get_dataset())
     if sample_fraction is not None:
         n_samples = max(1, int(round(base_n * sample_fraction)))
     else:

@@ -4,13 +4,15 @@ set -o pipefail
 # ============================================================
 # Dataset configuration
 # ============================================================
-datasets=("sap" "kumar")
+datasets=("sap" "kumar" "dices-350" "dices-990")
 dataset_paths=(
   "data/datasets/sap.csv"
   "data/datasets/kumar.json"
+  "data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv"
+  "data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv"
 )
 # Instructions subdirectory key for each dataset
-instruction_keys=("sap" "kumar")
+instruction_keys=("sap" "kumar" "dices-350" "dices-990")
 
 # ============================================================
 # Model configuration
@@ -75,6 +77,8 @@ ablation_n_repeats=5
 ablation_paraphrase_dirs=(
   "instructions/ablation/sap"
   "instructions/ablation/kumar"
+  "instructions/ablation/dices-350"
+  "instructions/ablation/dices-990"
 )
 ablation_output_dir="output/llm/ablations"
 ablation_repeat_output_dir="${ablation_output_dir}/repeat"
@@ -152,29 +156,7 @@ for i in "${!datasets[@]}"; do
   echo "STARTING ANNOTATIONS FOR DATASET: ${current_dataset}"          >> "$log_file"
   echo "======================================================="        >> "$log_file"
 
-  # ----------------------------------------------------------
-  # 1. Main annotations (all 5 models)
-  # ----------------------------------------------------------
-  if [ ! -d "$current_instructions_dir" ]; then
-    echo "Skipping ${current_dataset}: no instructions directory at ${current_instructions_dir}" | tee -a "$log_file"
-  else
-    for instruction_path in "$current_instructions_dir"/*; do
-      [ -f "$instruction_path" ] || continue
-      for j in "${!all_models[@]}"; do
-        run_annotation \
-          "$current_dataset"          \
-          "$current_dataset_path"     \
-          "$instruction_path"         \
-          "${all_models[$j]}"         \
-          "${all_pseudos[$j]}"        \
-          "$output_dir"               \
-          "$num_annotators"           \
-          ""                          \
-          ""                          \
-          "$log_file"
-      done
-    done
-  fi
+  
 
   # ----------------------------------------------------------
   # 2. Repeat ablation: same prompt N times over a 10% sub-sample
@@ -226,45 +208,7 @@ for i in "${!datasets[@]}"; do
     echo "Skipping paraphrase ablation for ${current_dataset}: no directory at ${current_paraphrase_dir}" | tee -a "$ablation_log_file"
   fi
 
-  # ----------------------------------------------------------
-  # 4. Adversarial annotations (3-model subset)
-  # ----------------------------------------------------------
-  is_adv_dataset=0
-  for adv_idx in "${adv_dataset_indices[@]}"; do
-    if [ "$adv_idx" -eq "$i" ]; then
-      is_adv_dataset=1
-      break
-    fi
-  done
-
-  if [ "$is_adv_dataset" -eq 1 ]; then
-    adv_instructions_path="${adv_instructions_dir}/${instruction_keys[$i]}"
-
-    echo -e "\n\n======================================================="  >> "$log_file"
-    echo "STARTING ADVERSARIAL ANNOTATIONS FOR DATASET: ${current_dataset}" >> "$log_file"
-    echo "======================================================="          >> "$log_file"
-
-    if [ ! -d "$adv_instructions_path" ]; then
-      echo "Skipping adversarial ${current_dataset}: no directory at ${adv_instructions_path}" | tee -a "$log_file"
-    else
-      for instruction_path in "$adv_instructions_path"/*; do
-        [ -f "$instruction_path" ] || continue
-        for j in "${!adv_models[@]}"; do
-          run_annotation \
-            "$current_dataset"      \
-            "$current_dataset_path" \
-            "$instruction_path"     \
-            "${adv_models[$j]}"     \
-            "${adv_pseudos[$j]}"    \
-            "$output_dir"           \
-            "$num_annotators"       \
-            ""                      \
-            ""                      \
-            "$log_file"
-        done
-      done
-    fi
-  fi
+  
 done
 
 echo -e "\nAll annotation, ablation, and adversarial runs completed."
