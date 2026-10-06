@@ -144,7 +144,7 @@ def main(
         human_datasets, annotations_dir, latex_output_dir, cache_dir
     )
 
-    run_inherent_polarization_step(
+    run_inherent_polarization_steps(
         human_datasets,
         annotations_dir,
         latex_output_dir,
@@ -399,35 +399,75 @@ def run_inherent_polarization_step(
     exclude_models,
     human_results_dir: Path,
     cache_dir: Path,
+    subsample: polarization.SubsampleSpec | None = None,
 ):
     # human_results_dir holds the human scripts' own "<dataset>-inherent.csv"
-    # outputs (e.g. output/human/main), which are reused as-is. The per-
-    # (dataset, prompt, model) LLM values are cached separately under
-    # cache_dir/inherent. Delete that folder to force a recompute.
-    llm_inherent_cache_dir = cache_dir / "inherent"
+    # outputs (e.g. output/human/main), which are reused as-is for the main
+    # run. The per-(dataset, prompt, model) values are cached separately
+    # under cache_dir/inherent (the subsampling ablation uses its own
+    # folder, since its values differ). Delete the folder to force a
+    # recompute.
+    suffix = "" if subsample is None else f"-{subsample.tag}"
+    caption = polarization.DEFAULT_INHERENT_CAPTION
+    if subsample is not None:
+        caption = (
+            caption.removesuffix(".")
+            + f", after repeatedly subsampling every comment down to at "
+            f"most {subsample.size} annotators ({subsample.n_repeats} "
+            "repeats)."
+        )
 
     inherent_df = polarization.compute_inherent_polarization_comparison(
         human_datasets=human_datasets,
         annotations_dir=annotations_dir,
-        apunim_output_dir=llm_inherent_cache_dir,
+        apunim_output_dir=cache_dir / f"inherent{suffix}",
         human_results_dir=human_results_dir,
         dataset_keys=shared.MAIN_DATASET_KEYS,
         prompt_names=shared.MAIN_PROMPT_NAMES,
         exclude_models=set(exclude_models),
         use_monte_carlo=True,
+        subsample=subsample,
     )
     inherent_table_df = polarization.build_inherent_polarization_table(
         long_df=inherent_df,
         prompt_names=shared.MAIN_PROMPT_NAMES,
     )
 
-    output_path = latex_output_dir / "inherent-polarization.tex"
     polarization.export_inherent_polarization_table(
         df=inherent_table_df,
-        output_path=output_path,
-        label="tab:inherent-polarization",
+        output_path=latex_output_dir / f"inherent-polarization{suffix}.tex",
+        label=f"tab:inherent-polarization{suffix}",
         float_format=".2f",
+        caption=caption,
     )
+
+
+def run_inherent_polarization_steps(
+    human_datasets,
+    annotations_dir,
+    latex_output_dir,
+    exclude_models,
+    human_results_dir: Path,
+    cache_dir: Path,
+):
+    """Main inherent-polarization run, plus the annotator-subsampling
+    ablation (same pipeline, `subsample` set)."""
+    for subsample in (
+        None,
+        polarization.SubsampleSpec(
+            size=shared.INHERENT_SUBSAMPLE_SIZE,
+            n_repeats=shared.INHERENT_SUBSAMPLE_REPEATS,
+        ),
+    ):
+        run_inherent_polarization_step(
+            human_datasets,
+            annotations_dir,
+            latex_output_dir,
+            exclude_models,
+            human_results_dir=human_results_dir,
+            cache_dir=cache_dir,
+            subsample=subsample,
+        )
 
 
 if __name__ == "__main__":

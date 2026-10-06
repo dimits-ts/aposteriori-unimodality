@@ -45,6 +45,12 @@ VARIANT_NAMES = ["variant1", "variant2", "variant3"]
 # single comment has in the LLM-annotation CSVs.
 MAX_ANNOTATORS_PER_ITEM = 6
 
+# Inherent-polarization subsampling ablation: every comment (human and LLM
+# alike) is repeatedly subsampled down to this many annotators and the
+# results averaged over this many repeats.
+INHERENT_SUBSAMPLE_SIZE = 6
+INHERENT_SUBSAMPLE_REPEATS = 10
+
 # Preferred left-to-right column order for the composite apunim grid (models
 # not in this list are appended alphabetically after it).
 MODEL_DISPLAY_ORDER = [
