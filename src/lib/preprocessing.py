@@ -32,6 +32,19 @@ class Dataset(abc.ABC):
     def get_text_column(self) -> str:
         raise NotImplementedError()
 
+    def get_subgroup_counts(self) -> dict[str, pd.Series]:
+        """
+        For each SDB column, flatten the per-comment lists of annotator
+        characteristics (or the scalar values, for datasets with one row
+        per annotation) and count how many annotations come from each
+        subgroup.
+        """
+        df = self.get_dataset()
+        return {
+            col: df[col].explode().value_counts().sort_index()
+            for col in self.get_sdb_columns()
+        }
+
 
 class SubsampledView:
     """

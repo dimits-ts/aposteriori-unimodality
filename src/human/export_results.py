@@ -336,15 +336,8 @@ def annotation_count_table_to_latex(
 
 
 def get_subgroup_counts(ds: Dataset) -> dict[str, pd.Series]:
-    """
-    For each SDB column, flatten the per-comment lists of annotator
-    characteristics and count how many annotations come from each subgroup.
-    """
-    df = ds.get_dataset()
-    return {
-        col: df[col].explode().value_counts().sort_index()
-        for col in ds.get_sdb_columns()
-    }
+    """Kept for backwards compatibility; see Dataset.get_subgroup_counts."""
+    return ds.get_subgroup_counts()
 
 
 def subgroup_counts_to_latex(

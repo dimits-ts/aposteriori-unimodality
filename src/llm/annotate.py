@@ -17,7 +17,8 @@ from ..lib.preprocessing import (
     SapDataset,
     KumarDataset,
     Dataset,
-    DicesDataset
+    DicesDataset,
+    PopquornDataset,
 )
 
 SEED = 42
@@ -32,6 +33,7 @@ DATASET_LOADERS = {
     "sap": lambda p: SapDataset(dataset_path=p),
     "dices-350": lambda p: DicesDataset(dataset_path=p, variant="350"),
     "dices-990": lambda p: DicesDataset(dataset_path=p, variant="990"),
+    "popquorn": lambda p: PopquornDataset(dataset_path=p),
 }
 PERSONA_SUFFIX = (
     "\n\nAnnotate as a person with these characteristics: {persona}"
@@ -106,7 +108,7 @@ def main(
                 prompt_name=instruction_prompt_path.name,
                 rng=rng,
                 batch_size=batch_size,
-                num_annotators=num_annotators
+                num_annotators=num_annotators,
             )
         )
 
@@ -383,7 +385,7 @@ def annotate_comment(
     prompt_name: str,
     rng: np.random.Generator,
     batch_size: int,
-    num_annotators: int
+    num_annotators: int,
 ) -> list[dict]:
     """
     Sample up to n distinct personas for this comment,

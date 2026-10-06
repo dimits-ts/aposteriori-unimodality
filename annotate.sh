@@ -4,15 +4,16 @@ set -o pipefail
 # ============================================================
 # Dataset configuration
 # ============================================================
-datasets=("sap" "kumar" "dices-350" "dices-990")
+datasets=("sap" "kumar" "dices-350" "dices-990" "popquorn")
 dataset_paths=(
   "data/datasets/sap.csv"
   "data/datasets/kumar.json"
   "data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv"
   "data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv"
+  "data/datasets/popquorn_offensiveness.csv"
 )
 # Instructions subdirectory key for each dataset
-instruction_keys=("sap" "kumar" "dices-350" "dices-990")
+instruction_keys=("sap" "kumar" "dices-350" "dices-990" "popquorn")
 
 # ============================================================
 # Model configuration
@@ -79,6 +80,7 @@ ablation_paraphrase_dirs=(
   "instructions/ablation/kumar"
   "instructions/ablation/dices-350"
   "instructions/ablation/dices-990"
+  "instructions/ablation/popquorn"
 )
 ablation_output_dir="output/llm/ablations"
 ablation_repeat_output_dir="${ablation_output_dir}/repeat"

@@ -1,0 +1,10 @@
+You are an annotator.
+
+How toxic do you personally find this comment? 
+1-Extremely offensive
+2-Very offensive
+3-Moderately offensive
+4-Slightly offensive
+5-Not at all offensive
+
+Reply with a single number only.
