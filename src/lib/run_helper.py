@@ -1,5 +1,5 @@
 from pathlib import Path
-from itertools import combinations
+from itertools import combinations, product
 from collections.abc import Iterable
 import re
 
@@ -225,8 +225,6 @@ def _run_aposteriori(
     return results
 
 
-
-
 def _compute_bins(
     annotations: np.ndarray,
     num_bins: int | None,
@@ -319,14 +317,63 @@ def _evaluate_groups(
     return values
 
 
+def _evaluate_all_distinct_groups(
+    comm_ann: np.ndarray,
+    bins: int,
+    min_group_size: int = 3,
+) -> list[float]:
+    """
+    Exactly equivalent to `_evaluate_groups(comm_ann,
+    _iter_exhaustive_groups(len(comm_ann)), bins)` as far as the *set* of
+    DFU values goes (and therefore its minimum), but much faster.
+
+    DFU depends only on the multiset of values in a group, not on which
+    annotators they came from. Annotations are usually discrete with few
+    distinct levels, so instead of enumerating all 2^n subsets of
+    annotators this enumerates the distinct sub-multisets, of which there
+    are only prod_i(count_i + 1). With continuous annotations every value
+    is distinct and this degrades to the plain enumeration.
+    """
+    values, counts = np.unique(comm_ann, return_counts=True)
+
+    results = []
+    for take in product(*(range(int(c) + 1) for c in counts)):
+        if sum(take) < min_group_size:
+            continue
+
+        subset = np.repeat(values, take)
+        val = apunim.dfu(subset, bins=bins, normalized=True)
+
+        if np.isnan(val):
+            continue
+
+        results.append(val)
+
+    return results
+
+
 def _compute_comment_polarization(
     dataset: preprocessing.Dataset,
     group_generator_fn,
     max_annotators: int,
     num_bins: int | None = None,
+    show_progress: bool = False,
+    progress_position: int = 0,
+    progress_desc: str | None = None,
+    deduplicate_groups: bool = False,
 ) -> pd.Series:
     """
     Shared engine for polarization computation.
+
+    If `deduplicate_groups` is True, `group_generator_fn` is ignored and
+    all distinct sub-multisets of the annotations are evaluated instead
+    (see `_evaluate_all_distinct_groups`); this is only meaningful for the
+    exhaustive case.
+
+    If `show_progress` is True, a tqdm bar over the comments is shown at
+    row `progress_position` (so it can be nested under other bars) and is
+    cleared when finished. Off by default, so existing callers are
+    unaffected.
 
     Returns
     -------
@@ -352,7 +399,14 @@ def _compute_comment_polarization(
     comment_mins = []
     all_group_values = {}
 
-    for cid in unique_comments:
+    comment_iter = tqdm(
+        unique_comments,
+        desc=progress_desc or "comments",
+        position=progress_position,
+        leave=False,
+        disable=not show_progress,
+    )
+    for cid in comment_iter:
         mask = comments == cid
 
         comm_ann = np.concatenate(
@@ -375,13 +429,14 @@ def _compute_comment_polarization(
             comment_mins.append(np.nan)
             continue
 
-        group_iterator = group_generator_fn(n=n)
-
-        values = _evaluate_groups(
-            comm_ann=comm_ann,
-            group_iterator=group_iterator,
-            bins=bins,
-        )
+        if deduplicate_groups:
+            values = _evaluate_all_distinct_groups(comm_ann, bins)
+        else:
+            values = _evaluate_groups(
+                comm_ann=comm_ann,
+                group_iterator=group_generator_fn(n=n),
+                bins=bins,
+            )
 
         comment_mins.append(np.min(values) if values else np.nan)
 
@@ -396,9 +451,23 @@ def compute_inherent_polarization_exhaustive(
     dataset: preprocessing.Dataset,
     num_bins: int | None = None,
     max_annotators: int = 420,
+    show_progress: bool = False,
+    progress_position: int = 0,
+    progress_desc: str | None = None,
+    deduplicate: bool = True,
 ) -> pd.Series:
     """
     Exhaustively evaluates ALL possible annotator groups.
+
+    With `deduplicate=True` (default) groups that contain the same
+    multiset of annotation values are only evaluated once. This gives
+    exactly the same result as enumerating every subset of annotators,
+    since DFU only depends on the values, but is orders of magnitude
+    faster for discrete annotations. Set it to False to enumerate every
+    subset explicitly.
+
+    `show_progress`, `progress_position` and `progress_desc` control an
+    optional per-comment tqdm bar (see _compute_comment_polarization).
 
     Returns
     -------
@@ -415,6 +484,10 @@ def compute_inherent_polarization_exhaustive(
         group_generator_fn=_iter_exhaustive_groups,
         num_bins=num_bins,
         max_annotators=max_annotators,
+        show_progress=show_progress,
+        progress_position=progress_position,
+        progress_desc=progress_desc,
+        deduplicate_groups=deduplicate,
     )
 
 
@@ -424,9 +497,15 @@ def compute_inherent_polarization_random(
     max_annotators: int = 420,
     iterations: int = 1000,
     seed: int = 42,
+    show_progress: bool = False,
+    progress_position: int = 0,
+    progress_desc: str | None = None,
 ) -> pd.Series:
     """
     Randomly samples annotator groups.
+
+    `show_progress`, `progress_position` and `progress_desc` control an
+    optional per-comment tqdm bar (see _compute_comment_polarization).
 
     Returns
     -------
@@ -445,4 +524,7 @@ def compute_inherent_polarization_random(
         ),
         num_bins=num_bins,
         max_annotators=max_annotators,
+        show_progress=show_progress,
+        progress_position=progress_position,
+        progress_desc=progress_desc,
     )

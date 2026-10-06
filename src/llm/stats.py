@@ -19,6 +19,7 @@ from ..lib.util import (
     significance_superscript,
 )
 from .shared import (
+    DATASET_KEYS,
     HumanDatasets,
     MAIN_PROMPT_NAMES,
     LLMAnnotationDataset,
@@ -123,14 +124,16 @@ def cross_model_consistency_table(
     annotations_dir: Path,
     prompt_name: str = "default",
     exclude_models: list[str] | None = None,
+    dataset_keys: list[str] = DATASET_KEYS,
 ) -> pd.DataFrame:
     """
-    For each dataset: how consistent are the different LLMs with each
-    other, when all of them are given the same (default) prompt?
+    For each dataset in `dataset_keys`: how consistent are the different
+    LLMs with each other, when all of them are given the same (default)
+    prompt?
     """
     exclude_models = set(exclude_models or [])
     rows = []
-    for key in _available_dataset_keys(human_datasets):
+    for key in _available_dataset_keys(human_datasets, dataset_keys):
         row = _cross_model_row(
             human_datasets, annotations_dir, key, prompt_name, exclude_models
         )
@@ -180,14 +183,16 @@ def per_model_variant_consistency_table(
     human_datasets: HumanDatasets,
     paraphrase_dir: Path,
     variant_names: list[str] = None,
+    dataset_keys: list[str] = DATASET_KEYS,
 ) -> pd.DataFrame:
     """
-    For each (dataset, model): how consistent is that model with itself
-    across the paraphrased prompt variants (variant1/variant2/variant3)?
+    For each (dataset in `dataset_keys`, model): how consistent is that
+    model with itself across the paraphrased prompt variants
+    (variant1/variant2/variant3)?
     """
     variant_names = variant_names or VARIANT_NAMES
     rows = []
-    for key in _available_dataset_keys(human_datasets):
+    for key in _available_dataset_keys(human_datasets, dataset_keys):
         files_by_variant = {
             v: find_annotation_files(paraphrase_dir, key, v)
             for v in variant_names
@@ -240,16 +245,14 @@ def per_model_repeat_consistency_table(
     human_datasets: HumanDatasets,
     repeat_dir: Path,
     prompt_name: str = "default",
+    dataset_keys: list[str] = DATASET_KEYS,
 ) -> pd.DataFrame:
     """
-    For each (dataset, model): how consistent is that model with itself
-    across repeated runs of the *same* prompt?
+    For each (dataset in `dataset_keys`, model): how consistent is that
+    model with itself across repeated runs of the *same* prompt?
     """
     rows = []
-    for key in _available_dataset_keys(human_datasets):
-        if "dices" in key:
-            continue
-
+    for key in _available_dataset_keys(human_datasets, dataset_keys):
         files_by_model = find_repeat_files(repeat_dir, key, prompt_name)
         if not files_by_model:
             raise ValueError(

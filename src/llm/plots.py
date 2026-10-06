@@ -10,6 +10,7 @@ import pandas as pd
 from ..lib import graphs
 from ..lib.preprocessing import Dataset
 from .shared import (
+    DATASET_KEYS,
     HumanDatasets,
     find_annotation_files,
     load_llm_df,
@@ -161,10 +162,9 @@ def plot_annotation_histograms(
     output_path: Path,
     prompt_name: str = "default",
     ncols: int = 2,
+    dataset_keys: list[str] = DATASET_KEYS,
 ) -> None:
-    dataset_keys = _available_dataset_keys(human_datasets) or list(
-        human_datasets.keys()
-    )
+    dataset_keys = _available_dataset_keys(human_datasets, dataset_keys)
     fig, axes, nrows = _subplot_grid(len(dataset_keys), ncols)
 
     for i, key in enumerate(dataset_keys):
@@ -365,15 +365,17 @@ def plot_prompt_mean_diff(
     prompt_names: list[str] = MAIN_PROMPT_NAMES,
     baseline_prompt: str = "default",
     ncols: int = 2,
+    dataset_keys: list[str] = DATASET_KEYS,
 ) -> None:
     """
-    One subplot per dataset: for each model, the mean difference (±SE)
-    between annotations under each non-baseline prompt and the baseline,
-    computed item-by-item on the same (comment, persona) pairs.
+    One subplot per dataset in `dataset_keys`: for each model, the mean
+    difference (±SE) between annotations under each non-baseline prompt
+    and the baseline, computed item-by-item on the same (comment, persona)
+    pairs.
     """
     exclude_models = set(exclude_models)
     other_prompts = [p for p in prompt_names if p != baseline_prompt]
-    dataset_keys = _available_dataset_keys(human_datasets)
+    dataset_keys = _available_dataset_keys(human_datasets, dataset_keys)
 
     records_by_dataset = _collect_prompt_diff_by_dataset(
         annotations_dir,
