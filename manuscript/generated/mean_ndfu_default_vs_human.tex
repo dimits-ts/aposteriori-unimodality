@@ -1,0 +1,21 @@
+\begin{table}[t]
+\small
+\centering
+\caption{Mean (SE) per-comment \ac{ndfu} of the human annotations
+        and of the LLM annotations under the default prompt, per dataset
+        and pooled over all datasets (All). $n$ is the number of
+        comments.}
+\label{tab:mean-ndfu-default-vs-human}
+\begin{tabular}{lrrrrrr}
+\toprule
+ & \multicolumn{2}{c}{Sap et al. 2022} & \multicolumn{2}{c}{Kumar et al. 2021} & \multicolumn{2}{c}{All} \\
+ & n & Mean (SE) & n & Mean (SE) & n & Mean (SE) \\
+Model &  &  &  &  &  &  \\
+\midrule
+Human & 585 & 0.38 (0.01) & 1000 & 0.42 (0.01) & 1585 & 0.41 (0.01) \\
+olmo32b & 585 & 0.24 (0.01) & 1000 & 0.51 (0.01) & 1585 & 0.41 (0.01) \\
+qwen32b & 585 & 0.18 (0.01) & 1000 & 0.19 (0.01) & 1585 & 0.19 (0.01) \\
+qwen7b & 585 & 0.30 (0.01) & 1000 & 0.51 (0.01) & 1585 & 0.43 (0.01) \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -74,12 +74,6 @@ ABLATION_DATASET_KEYS = DATASET_KEYS
 # prompt-sensitivity ANOVA.
 PROMPT_COMPARISON_DATASET_KEYS = MAIN_DATASET_KEYS
 
-# The "adversarial" instruction prompts (instructions/adversarial/<dataset>/,
-# run by annotate_adversarial.sh) -- every MAIN_PROMPT_NAMES entry besides
-# the "default" baseline. Each gets its own composite apunim grid (see
-# plot_apunim_grid / main()).
-ADVERSARIAL_PROMPT_NAMES = [p for p in MAIN_PROMPT_NAMES if p != "default"]
-
 # Models excluded from the apunim-by-prompt LaTeX table (they were never
 # run on the stereotype/persona prompts to begin with; listed explicitly
 # so the table is correct even if that changes).
@@ -321,13 +315,6 @@ def _human_sample_dataset(
     return SubsampledView(ds_human, restricted)
 
 
-def _limited_sdb_columns(ds: Dataset, limit: int | None) -> list[str]:
-    """Caps ds.get_sdb_columns() to the first `limit` entries (or returns
-    them unchanged if `limit` is None), without needing to mutate `ds`."""
-    cols = ds.get_sdb_columns()
-    return cols if limit is None else cols[:limit]
-
-
 # ---------------------------------------------------------------------------
 # nDFU-by-SDB-group records, shared by the composite apunim grid (plots.py)
 # and the prompt-sensitivity ANOVA (stats.py)
@@ -431,4 +418,3 @@ def _compute_ndfu_records(
     for _, row in df.iterrows():
         records.extend(row_fn(row, annotation_col, sdb_columns, bins))
     return pd.DataFrame(records)
-

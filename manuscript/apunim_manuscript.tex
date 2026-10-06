@@ -203,27 +203,27 @@ We also release a PyPI library implementing our metric to aid future research in
 \label{sec:datasets}
 
 \begin{table}[ht]
-	\caption{Datasets used in this study.}
+	\caption{Datasets used in this study. \textit{\#Ann / Item} refers to the number of annotators per item, while the \textit{Guidelines} column describers whether annotation guidelines are provided in the publication introducing the dataset. \textbf{\#\acp{pc}} refers to  the number of \ac{pc} dimensions (e.g., age, gender, education). }
 	\label{tab:datasets}
 	\centering
-	\begin{tabularx}{\linewidth}{lrrrXl}
+	\begin{tabularx}{\linewidth}{lrrrXll}
 		\toprule
-		\textbf{Dataset} & \textbf{\#Comments} & \textbf{\#Annotators / Item} & \textbf{\#\acp{pc}} & \textbf{Text Source} & \textbf{Task} \\
+		\textbf{Dataset} & \textbf{\#Items} & \textbf{\#Ann / Item} & \textbf{\#\acp{pc}} & \textbf{Text Source} & \textbf{Task} & \textbf{Guidelines}\\
 		\midrule
 		Kumar~\citep{kumar-et-al-2021}
-		& 1000 & 5   & 10 & Twitter, Reddit, 4chan & Toxicity \\
+		& 1000 & 5   & 10 & Twitter, Reddit, 4chan & Toxicity & Yes \\
 		
 		Sap~\citep{sap-etal-2022-annotators}
-		& 585       & 5--6   & 3  & Twitter & Hate Speech \\
+		& 585       & 5--6   & 3  & Twitter & Hate Speech& No  \\
 		
 		DICES-350~\citep{dices}
-		& 350   & 123    & 4  & LLM responses & Hate Speech \\
+		& 350   & 123    & 4  & LLM responses & Hate Speech & No  \\
 		
 		DICES-990~\citep{dices}
-		& 990  & 70--76 & 4 &  LLM responses & Hate Speech\\
+		& 990  & 70--76 & 4 &  LLM responses & Hate Speech& No \\
 		
 		POPQUORN~\citep{pei-jurgens-2023-annotator}
-		& 1500 &7--9 & 5 & Reddit & Hate Speech\\
+		& 1500 &7--9 & 5 & Reddit & Hate Speech & Yes \\
 		\bottomrule
 	\end{tabularx}
 \end{table}
@@ -233,12 +233,13 @@ Finding appropriate subjective datasets to test LLMs on is difficult for many re
 	\item Very few include annotator metadata \citep{vitsakis-etal-2024-voices}. 
 	\item Most include only three annotators per item (e.g., \shortcite{mulki-etal-2019-l, das2024investigatingannotatorbiaslarge, tonneau-etal-2024-languages, kumar2021tweetblmhatespeechdataset, tonneau-etal-2025-hateday}).
 	\item Many datasets are sampled from the same source, negatively impacting the breadth of possible generalizable findings \citep{vidgen_2021_directions}.
+	\item Annotation guidelines are frequently not included \citep{vidgen_2021_directions}, complicating replication.
 \end{enumerate*} 
 Additionally, we were unable to find recent surveys on subjective datasets. The ones we found \citep{Poletto2021, vidgen_2021_directions} do not give special importance to the sparsity of annotations per item, which is an important consideration for such datasets. We highlight the extent of this problem and discuss possible solutions in \S\ref{sec:discussion}. Nevertheless, given the current state of research, we aim to provide a methodology that can adapt to this challenging environment, similarly to the motivation given in prior work \citep{vitsakis-etal-2024-voices}. We use five datasets from current \ac{nlp} research that contain \ac{pc} information at the level of individual annotators and provide a satisfactory annotation density per item: 
 \begin{itemize}
 	\item The \textit{Kumar} dataset \citep{kumar-et-al-2021} which contains annotations for Toxicity detection.
 	\item The \textit{Sap} ``Breadth of Posts'' dataset with the ``\textit{toyou}'' labels \citep{sap-etal-2022-annotators} for \ac{hs} detection.
-	\item The \textit{DICES-350} (\textit{Q3\_bias\_targeting\_inherited\_attributes} label) and \textit{ DICES-990} (\textit{Q3\_bias\_incites\_hatred} label) datasets \citep{dices}, which pertain to LLM response safety. Our choice of labels allows us to use them as \ac{hs} datasets, capturing conceptually similar dimensions despite the lack of shared label names between them.
+	\item The \textit{DICES-350} (\textit{Q3\_bias\_targeting\_inherited\_attributes} label) and \textit{ DICES-990} (\textit{Q3\_bias\_incites\_hatred} label) datasets \citep{dices}, which pertain to LLM response safety. Our choice of labels allows us to use them as \ac{hs} datasets, capturing conceptually similar dimensions despite the lack of shared label names between them. There is little-to-not information around these labels, since neither a description nor the annotation guidelines are provided.
 	\item The POPQUORN \citep{pei-jurgens-2023-annotator} dataset using the \textit{``offensiveness''} label for \ac{hs} detection.\footnote{While the dataset also contains ``politeness'' labels, these may not directly translate to toxicity detection; comments can simultaneously be toxic and phrased politely. Indeed, toxicity is not mentioned in the methodology of the original POPQUORN dataset and is considered a separate \ac{nlp} task in other work \citep{ziems2024can, lukito-etal-2024-comparing}.}
 \end{itemize}
 
@@ -442,7 +443,7 @@ Apunim thus measures the degree to which an annotator group contributes to overa
 
 \paragraph{Experimental Setup} Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can explain the systematic disagreements shown in the four datasets (\S\ref{sec:datasets}). Statistically significant results are presented in Table~\ref{tab:apunim-main}.\footnote{The results are not necessarily contingent on a reliable p-value estimation, as non-statistically significant results have very low ($<0.01$) apunim values. A threshold on the apunim values would produce similar tables.} Note that the lack of rich annotation data prevents us from analyzing how different annotator groups interact and thus our analysis is necessarily uni-dimensional. See App.~\ref{app:software} for details on other parameters and execution times, and App.~\ref{app:full} for the full results.
 
-\paragraph{Results} \emph{Systematic disagreements are consistently attributed to \textbf{ethnicity}} across all datasets excluding DICES-330, confirming prior work suggesting that it is a systematic source of annotator disagreement in \ac{hs} tasks~\citep{goyal2022your}.\footnote{Note that the apunim values do not have a consistent direction across datasets, which we believe to be caused by studies using different ethnic subgroups allowing detection but distorting attribution.} Additionally, in both DICES-990, Sap and POPQUORN, \emph{\textbf{men} are a consistent source of systematic disagreement} (positive values), while in the two former datasets  \textbf{women} disagree among themselves (positive values), which is consistent with previous findings~\citep{wojatzki2018women, binns2017like}. None of the Kumar dimensions show statistically significant values, but this is expected, as our methodology requires at least six annotators per item to work reliably. 
+\paragraph{Results} \emph{Systematic disagreements are consistently attributed to \textbf{ethnicity}} across all datasets excluding DICES-330, confirming prior work suggesting that it is a systematic source of annotator disagreement in \ac{hs} tasks~\citep{goyal2022your}.\footnote{Note that \acp{aa} show differently signed apunim values in the two DICES datasets, which may be attributed to these datasets using different labels (see \S\ref{sec:datasets}) and because different ethnic group splits are considered in each dataset. Thus, while detection is constant across the two datasets, attribution is not.} Additionally, in both DICES-990, Sap and POPQUORN, \emph{\textbf{men} are a consistent source of systematic disagreement} (positive values), while in the two former datasets  \textbf{women} disagree among themselves (positive values), which is consistent with previous findings~\citep{wojatzki2018women, binns2017like}. None of the Kumar dimensions show statistically significant values, but this is expected, as our methodology requires at least six annotators per item to work reliably. 
 
 \paragraph{Robustness} \textbf{To Annotator Size:} We run an ablation experiment for datasets with more than six annotators per item (excluding Kumar and Sap), where we systematically subsample them with replacement. Fig.~\ref{fig:std_error} shows that our results are \emph{robust to small annotator counts}, corroborating the synthetic experiments in Fig.~\ref{fig:metrics}.  \textbf{To Annotator Group Splits:} Sampling annotators with replacement also uncovers a new group which systematically disagrees with the others; the Non-Binary annotators in the POPQUORN and DICES-990 datasets. This group was undetectable when partitioning annotator groups with the methodology described in Eq.~\ref{eq:apunim} since only one item is annotated by three \emph{Non-Binary} annotators in POPQUORN and none for DICES-990, but sampling with replacement uncovers a very strong attribution. Using this technique may solve this limitation of our methodology. \textbf{As Compared to Prior Methods:} Our results are similar to those produced by \ac{iaa}, as was shown in Table~\ref{tab:real-data-methods}, although unlike apunim, the latter could not attribute \emph{any} disagreement to the POPQUORN dataset.
 
@@ -454,21 +455,24 @@ Apunim thus measures the degree to which an annotator group contributes to overa
 
 \subsection{How Are LLMs Polarized?}
 \label{sec:llms}
-  
+ 
+ \input{generated/mean_ndfu_default_vs_human.tex}
  \input{generated/inherent-polarization.tex}
  \input{generated/cohens_d.tex}
 
-\paragraph{Experimental Procedure} We investigate four\footnote{We used six models, but discarded two since they proved unreliable---see ablations in App.~\ref{app:llms}.} open-source LLMs with six annotators per item\footnote{It is possible that LLMs can produce polarized patterns when scaled up to dozens or hundreds of annotators. This however is both hard to check due to exorbitant computational costs (App.~\ref{app:llms}) and hard to scale up in realistic deployment scenarios.} supplied with personas sampled from our human dataset. We test LLM polarization on three fronts:
-\begin{enumerate*}
-	\item Observed \ac{ndfu}.
-	\item Overall \ac{ip}.
-	\item Apunim values for each group.
-\end{enumerate*}
-See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations.
+\paragraph{Experimental Procedure} We investigate six open-source LLMs (two discarded because of prompt sensitivity---see App.~\ref{app:llms}; Table~\ref{tab:llm-consistency-variants}) using twenty annotators for the Kumar, Sap and POPQUORN datasets supplied with personas sampled from our human dataset. While LLM annotation can be scaled to be arbitrarily large, the choice of twenty annotators is a compromise between practical computation costs and enough annotation density to facilitate exploration. We do not annotate the DICES datasets since the annotations are wildly inconsistent (App.~\ref{app:llms}; Table~\ref{tab:llm-consistency-variants}), which we can not readily fix as their original annotation guidelines are not public (\S\ref{sec:datasets}; Table~\ref{tab:datasets}). See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations.
 
-\paragraph{Are LLMs Polarized by Default?} We first examine whether persona prompting with standard instructions leads to polarized annotations. Our results show \emph{no statistically significant attribution effects} and very small \emph{apunim} values for all groups in all models and datasets (App.~\ref{app:llms}; Table~\ref{tab:llm-apunim-by-prompt-kumar},~\ref{tab:llm-apunim-by-prompt-sap}). Unlike human annotations, we observe no \ac{ip} (Table~\ref{tab:inherent-polarization}) and only two of the four models showing any non-zero \ac{ndfu} values (App.~\ref{app:llms}; Fig.~\ref{fig:llm-polarization-adversarial}).
+\paragraph{Do LLMs Exhibit Meaningful Disagreement?} \textbf{Yes}. Table~\ref{tab:mean-ndfu-default-vs-human} shows that the \ac{ndfu} values exhibited by LLMs when under standard persona prompting can even surpass those of humans.
 
-\paragraph{Do Instructions Influence Polarization?} Since instruction prompts are known to influence the effect of personas \citep{weeber-etal-2026-one}, we also try four adversarial prompts progressively emphasizing the importance of the LLMs' personas (App.~\ref{app:prompts}). While an ANOVA test\footnote{We use a parametric test due to the abundance of observations ($N={585,1000}$). We also use a multiple hypothesis p-value correction (specifically the ``Holms-Bonferroni'' method~\citep{holms}).} shows that the choice of instruction prompt does indeed affect \ac{ndfu} scores across most models (almost all groups for OLMo-32B, half for LLaMa-70B, Qwen-7B and a single group for Qwen-32B), these effects are almost always not quantitatively significant ($<0.2$ Cohen's d), as shown in Table~\ref{tab:cohens-d}. The ``single'' prompt is the only prompt producing a sometimes notable (small-to-medium) quantitative effect exclusively on the OLMo-32B model, which is indeed significant as evidenced by App.~\ref{app:llms}; Fig.~\ref{fig:llm-polarization-adversarial}. 
+\paragraph{Do Instructions Influence the Extent of Disagreement?} \textbf{No}. We try four adversarial prompts progressively emphasizing the importance of the LLMs' personas (App.~\ref{app:prompts}). While an ANOVA test\footnote{We use a parametric test due to the abundance of observations ($N={585,1000}$). We also use a multiple hypothesis p-value correction (specifically the ``Holms-Bonferroni'' method~\citep{holms}).} shows that the choice of instruction prompt does indeed affect \ac{ndfu} scores across most models, the effect is generally small ($\lvert d \rvert \leq 0.3$) and inconsistent. The sign of the effect depends on the model: the stereotype prompt \emph{increases} \ac{ndfu} for \textsc{olmo32b} and \textsc{qwen32b} but sharply \emph{decreases} it for \textsc{qwen7b}. The effect also varies with the dataset; large shifts for \textsc{qwen7b} come entirely from Kumar, while on Sap, the same prompts have no effect. Generally, instructions can shift how much LLMs disagree, but no prompt reliably increases \ac{ndfu}, so prompting alone is not a dependable way to elicit systematic disagreement. See App.~\ref{app:full}; Table~\ref{tab:mean-ndfu-default-vs-human} for the actual mean \ac{ndfu} values by prompt.
+
+\paragraph{Is Any Such Disagreement Unattributable?} \textbf{No.} Unlike human annotations, we observe no \ac{ip} (Table~\ref{tab:inherent-polarization}) even when subsampling down to the minimum six annotators.%TODO: run
+
+\paragraph{Can Systematic Disagreement be Attributed to LLM Persona Characteristics?} \textbf{No}. 
+
+%\paragraph{Are LLMs Polarized by Default?} We first examine whether persona prompting with standard instructions leads to polarized annotations. Our results show \emph{no statistically significant attribution effects} and very small \emph{apunim} values for all groups in all models and datasets (App.~\ref{app:llms}; Table~\ref{tab:llm-apunim-by-prompt-kumar},~\ref{tab:llm-apunim-by-prompt-sap}). Unlike human annotations, we observe no \ac{ip} (Table~\ref{tab:inherent-polarization}) and only two of the four models showing any non-zero \ac{ndfu} values (App.~\ref{app:llms}; Fig.~\ref{fig:llm-polarization-adversarial}).
+
+%\paragraph{Do Instructions Influence Polarization?} Since instruction prompts are known to influence the effect of personas \citep{weeber-etal-2026-one}, we also try four adversarial prompts progressively emphasizing the importance of the LLMs' personas (App.~\ref{app:prompts}). While an ANOVA test\footnote{We use a parametric test due to the abundance of observations ($N={585,1000}$). We also use a multiple hypothesis p-value correction (specifically the ``Holms-Bonferroni'' method~\citep{holms}).} shows that the choice of instruction prompt does indeed affect \ac{ndfu} scores across most models (almost all groups for OLMo-32B, half for LLaMa-70B, Qwen-7B and a single group for Qwen-32B), these effects are almost always not quantitatively significant ($<0.2$ Cohen's d), as shown in Table~\ref{tab:cohens-d}. The ``single'' prompt is the only prompt producing a sometimes notable (small-to-medium) quantitative effect exclusively on the OLMo-32B model, which is indeed significant as evidenced by App.~\ref{app:llms}; Fig.~\ref{fig:llm-polarization-adversarial}. 
 
 \begin{finding}
 	\label{finding:llms}
@@ -539,7 +543,7 @@ We stress that our metric functions strictly as a diagnostic warning signal. Any
 	\acro{sd}[SD]{Standard Deviation}
 	\acro{dc}[DC]{Data Coverage}
 	\acro{gc}[GC]{Group Coverage}
-	\acro{ad}[AD]{Annotation Depth}
+	\acro{ad}[AD]{Annotation Density}
 \end{acronym}
 
 
@@ -1021,19 +1025,6 @@ We examine the following conditions for selecting models and datasets for our LL
 
 \subsection{LLM Annotation Results}
 
-\begin{figure*}[t]
-	\includegraphics[width=\linewidth]{llm_apunim_grid_default.png}
-	\includegraphics[width=\linewidth]{llm_apunim_grid_persona.png}
-	\includegraphics[width=\linewidth]{llm_apunim_grid_stereotype.png}
-	\includegraphics[width=\linewidth]{llm_apunim_grid_single.png}
-	\includegraphics[width=\linewidth]{llm_apunim_grid_direct.png}
-	\caption{\ac{ndfu} grouped by dataset (rows) and model family (columns) for each \ac{pc} persona dimension in the primary annotation task (blue) using different instruction prompts, compared with human annotations on the same sample (yellow).}
-	\label{fig:llm-polarization-adversarial}
-\end{figure*}
-
-\paragraph{Overall Polarization} Fig.~\ref{fig:llm-polarization-adversarial} shows the overall polarization patterns when using the different adversarial instructions. The Qwen-23B and LLaMa-70B models consistently produce no polarization, while the persona-focused prompt seems to elicit some varied polarization, even though it does not translate to higher apunim values. This pattern would indicate that the persona-focused prompt likely adds more overall variance to the persona-conditioned annotations, even though that variance is not consistent.
-
-
 \paragraph{Apunim Analysis} Tables~\ref{tab:llm-apunim-by-prompt-kumar} and~\ref{tab:llm-apunim-by-prompt-sap} show the apunim results for the LLM annotation task on the Kumar and Sap datasets respectively. Apunim values are largely model-dependent, but no other concrete pattern can be discerned. 
 
 \begingroup
@@ -1046,13 +1037,14 @@ We examine the following conditions for selecting models and datasets for our LL
 \section{Full Results}
 \label{app:full}
 
-Tables~\ref{tab:kumar-results},\ref{tab:sap-results},\ref{tab:dices-350-results},\ref{tab:dices-990-results} and \ref{tab:popquorn-results} show the full apunim results for the Kumar, Sap, DICES-350, DICES-990 and POPQUORN datasets respectively. Note that the results for Kumar are unreliable since they rely on a small minority of items where annotation counts happened to be over five, while our methodology requires six annotators per item to be reliable (see \S\ref{sec:apunim}). We nevertheless provide the full results.
+Tables~\ref{tab:kumar-results},\ref{tab:sap-results},\ref{tab:dices-350-results},\ref{tab:dices-990-results} and \ref{tab:popquorn-results} show the full apunim results for the Kumar, Sap, DICES-350, DICES-990 and POPQUORN datasets respectively. Note that the results for Kumar are unreliable since they rely on a small minority of items where annotation counts happened to be over five, while our methodology requires six annotators per item to be reliable (see \S\ref{sec:apunim}). We nevertheless provide the full results. Table~\ref{tab:mean-ndfu-by-prompt} shows the mean \ac{ndfu} of the LLM annotations for each of the four instruction prompts used in the study and those of the human annotators.
 
 \input{generated/kumar-results.tex}
 \input{generated/sap-results.tex}
 \input{generated/dices-350-results.tex}
 \input{generated/dices-990-results.tex}
 \input{generated/popquorn-results.tex}
+\input{generated/mean_ndfu_by_prompt.tex}
 
 
 \section{Prompts Used}

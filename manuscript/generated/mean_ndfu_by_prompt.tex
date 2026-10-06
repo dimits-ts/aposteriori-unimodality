@@ -1,0 +1,33 @@
+\begin{table}[t]
+\small
+\centering
+\caption{Mean (SE) per-comment \ac{ndfu} of the human annotations
+        and of the LLM annotations under each instruction prompt. Human
+        annotations do not depend on the prompt. Rows give results per
+        model, pooled over all datasets (All) and for each dataset
+        separately; $n$ is the number of comments.}
+\label{tab:mean-ndfu-by-prompt}
+\begin{tabular}{llrrrrrr}
+\toprule
+ &  & n & Default & Stereotype & Persona & Single & Direct \\
+Model & Dataset &  &  &  &  &  &  \\
+\midrule
+\multirow[t]{3}{*}{Human} & All & 1585 & \multicolumn{5}{c}{0.41 (0.01)} \\
+ & Sap et al. 2022 & 585 & \multicolumn{5}{c}{0.38 (0.01)} \\
+ & Kumar et al. 2021 & 1000 & \multicolumn{5}{c}{0.42 (0.01)} \\
+\cline{1-8}
+\multirow[t]{3}{*}{olmo32b} & All & 1585 & 0.41 (0.01) & 0.44 (0.01) & 0.39 (0.01) & 0.39 (0.01) & 0.36 (0.01) \\
+ & Sap et al. 2022 & 585 & 0.24 (0.01) & 0.26 (0.01) & 0.26 (0.01) & 0.30 (0.01) & 0.25 (0.01) \\
+ & Kumar et al. 2021 & 1000 & 0.51 (0.01) & 0.54 (0.01) & 0.48 (0.01) & 0.44 (0.01) & 0.43 (0.01) \\
+\cline{1-8}
+\multirow[t]{3}{*}{qwen32b} & All & 1585 & 0.19 (0.01) & 0.25 (0.01) & 0.24 (0.01) & 0.27 (0.01) & 0.25 (0.01) \\
+ & Sap et al. 2022 & 585 & 0.18 (0.01) & 0.28 (0.01) & 0.22 (0.01) & 0.16 (0.01) & 0.21 (0.01) \\
+ & Kumar et al. 2021 & 1000 & 0.19 (0.01) & 0.24 (0.01) & 0.25 (0.01) & 0.34 (0.01) & 0.28 (0.01) \\
+\cline{1-8}
+\multirow[t]{3}{*}{qwen7b} & All & 1585 & 0.43 (0.01) & 0.26 (0.01) & 0.28 (0.01) & 0.37 (0.01) & 0.37 (0.01) \\
+ & Sap et al. 2022 & 585 & 0.30 (0.01) & 0.30 (0.01) & 0.31 (0.01) & 0.27 (0.01) & 0.28 (0.01) \\
+ & Kumar et al. 2021 & 1000 & 0.51 (0.01) & 0.23 (0.01) & 0.26 (0.01) & 0.42 (0.01) & 0.42 (0.01) \\
+\cline{1-8}
+\bottomrule
+\end{tabular}
+\end{table}

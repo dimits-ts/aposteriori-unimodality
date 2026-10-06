@@ -35,15 +35,10 @@ The following are produced:
    (shared.PROMPT_COMPARISON_DATASET_KEYS) and to the models run on all three prompts (see
    PROMPT_COMPARISON_DATASET_KEYS / APUNIM_TABLE_EXCLUDE_MODELS).
 
-4. A single composite figure (llm_apunim_grid.png) with one subplot per
-   (dataset, model) -- an nDFU-by-SDB-group boxplot for the "default"
-   prompt -- assembled into one grid instead of many separate images, and
-   sized/fonted so it stays readable once placed in a paper (see
-   plot_apunim_grid's docstring for how that sizing works). The same grid
-   is also produced separately for each adversarial prompt (currently
-   "stereotype" and "persona", see ADVERSARIAL_PROMPT_NAMES), as
-   llm_apunim_grid_<prompt>.png, with a title that just names the prompt
-   instead of the main figure's title.
+4. Two compact LaTeX tables of the mean per-comment nDFU of the human
+   annotations and of the LLM annotations (mean_ndfu_by_prompt.tex: every
+   instruction prompt; mean_ndfu_default_vs_human.tex: default prompt
+   only), per model and dataset (see stats.build_mean_ndfu_table).
 
 Rows are matched across files (models, or prompt variants) using the
 comment id ("text_id") together with the sampled persona's characteristics,
@@ -145,7 +140,9 @@ def main(
     run_apunim_prompt_table_step(
         human_datasets, annotations_dir, latex_output_dir, cache_dir=cache_dir
     )
-    run_apunim_grid_steps(human_datasets, annotations_dir, graph_output_dir)
+    run_mean_ndfu_step(
+        human_datasets, annotations_dir, latex_output_dir, cache_dir
+    )
 
     run_inherent_polarization_step(
         human_datasets,
@@ -167,15 +164,16 @@ def main(
         )
 
     stats.export_ndfu_anova_by_prompt(result_df=res_df, output_path=stats_path)
-    summary_df = stats.compute_cohens_d_summary_table(res_df, by_model=True)
-    stats.export_cohens_d_summary_latex(
-        summary_df,
+    compact_df = stats.compute_cohens_d_compact_table(res_df)
+    stats.export_compact_prompt_table_latex(
+        compact_df,
         output_path=latex_output_dir / "cohens_d.tex",
-        caption=r"""Cohen's d statistics showing the quantitative difference
-        in \ac{ndfu} between the default and each adversarial instruction
-        prompt for each of the groups of both datasets and across all models.""",
+        caption=r"""Cohen's d between the default and each adversarial
+        instruction prompt, for the \ac{ndfu} of each group, shown as mean
+        (SD) across groups. Rows give results per model, pooled over all
+        datasets (All) and for each dataset separately; $n$ is the number of
+        groups.""",
         label="tab:cohens-d",
-        by_model=True,
     )
     stats.run_exploratory_stats(res_df)
 
@@ -349,28 +347,49 @@ def run_apunim_prompt_table_step(
             )
 
 
-def _run_apunim_grid_for_prompt(
-    human_datasets, annotations_dir, graph_output_dir, prompt_name
+def run_mean_ndfu_step(
+    human_datasets, annotations_dir, latex_output_dir, cache_dir
 ):
-    output_path = graph_output_dir / f"llm_apunim_grid_{prompt_name}.png"
-    grid_models = list(
-        set(shared.MODEL_DISPLAY_ORDER) - shared.APUNIM_TABLE_EXCLUDE_MODELS
-    )
-    plots.plot_apunim_grid(
-        human_datasets=human_datasets,
-        annotations_dir=annotations_dir,
-        output_path=output_path,
-        prompt_name=prompt_name,
-        models=grid_models,
-        title=f"{prompt_name.capitalize()} Prompt",
-    )
-
-
-def run_apunim_grid_steps(human_datasets, annotations_dir, graph_output_dir):
-    for prompt_name in shared.MAIN_PROMPT_NAMES:
-        _run_apunim_grid_for_prompt(
-            human_datasets, annotations_dir, graph_output_dir, prompt_name
+    cache_path = cache_dir / "mean_ndfu_records.csv"
+    if skip_if_exists(cache_path):
+        ndfu_df = pd.read_csv(cache_path)
+    else:
+        ndfu_df = stats.compute_mean_ndfu_records(
+            human_datasets=human_datasets,
+            annotations_dir=annotations_dir,
+            dataset_keys=shared.PROMPT_COMPARISON_DATASET_KEYS,
+            prompt_names=shared.MAIN_PROMPT_NAMES,
+            exclude_models=shared.APUNIM_TABLE_EXCLUDE_MODELS,
         )
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        ndfu_df.to_csv(cache_path, index=False)
+
+    if ndfu_df.empty:
+        print("No matched human/LLM annotations; skipping mean nDFU tables.")
+        return
+
+    stats.export_compact_prompt_table_latex(
+        stats.build_mean_ndfu_table(
+            ndfu_df, prompt_names=shared.MAIN_PROMPT_NAMES
+        ),
+        output_path=latex_output_dir / "mean_ndfu_by_prompt.tex",
+        caption=r"""Mean (SE) per-comment \ac{ndfu} of the human annotations
+        and of the LLM annotations under each instruction prompt. Human
+        annotations do not depend on the prompt. Rows give results per
+        model, pooled over all datasets (All) and for each dataset
+        separately; $n$ is the number of comments.""",
+        label="tab:mean-ndfu-by-prompt",
+    )
+
+    stats.export_default_mean_ndfu_latex(
+        stats.build_default_mean_ndfu_table(ndfu_df, prompt_name="default"),
+        output_path=latex_output_dir / "mean_ndfu_default_vs_human.tex",
+        caption=r"""Mean (SE) per-comment \ac{ndfu} of the human annotations
+        and of the LLM annotations under the default prompt, per dataset
+        and pooled over all datasets (All). $n$ is the number of
+        comments.""",
+        label="tab:mean-ndfu-default-vs-human",
+    )
 
 
 def run_inherent_polarization_step(
