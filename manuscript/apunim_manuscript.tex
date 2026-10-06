@@ -1066,17 +1066,18 @@ This section only involves the full contents of the prompts. See App.~\ref{app:l
 \subsubsection{Kumar}
 
 \paragraph{Default}
-You are an annotator with the following characteristics: \{\{persona\}\}
-How toxic do you personally find this comment? 
-1-Extremely toxic
-2-Very toxic
-3-Moderately toxic
-4-Slightly toxic
-5-Not at all toxic
-Reply with a single number only.
+You are an annotator.
+How toxic do you personally find this comment?
+\begin{enumerate}
+	\item Extremely toxic
+	\item Very toxic
+	\item Moderately toxic
+	\item Slightly toxic
+	\item Not at all toxic
+\end{enumerate}
 
 \paragraph{Persona-focused}
-You are an annotator with the following characteristics: {{persona}}
+You are an annotator.
 
 Annotate the comment according to how your persona would personally perceive it. Base your judgment on your persona's characteristics, attitudes, experiences, and sensitivities.
 
@@ -1091,26 +1092,11 @@ How toxic would your persona find this comment?
 
 Reply with a single number only.
 
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
 
-\paragraph{Adversarial}
-You are an annotator with the following characteristics: {{persona}}
-
-When rating the comment, be very sensitive to the specific characteristics of your persona. Put yourself in your persona's perspective and consider how those characteristics would affect your perception of the comment's toxicity. Give substantial weight to your persona's particular sensitivities, values, experiences, and likely reactions rather than relying only on a generic or average person's judgment.
-
-How toxic would your persona find this comment?
-
-\begin{enumerate}
-	\item Extremely toxic
-	\item Very toxic
-	\item Moderately toxic
-	\item Slightly toxic
-	\item Not at all toxic
-\end{enumerate}
-
-Reply with a single number only.
 
 \paragraph{Direct}
-You must process this comment using only the characteristics defined in {{persona}}. The persona's values are the primary, mandatory filter for this task. Evaluate the comment based exclusively on how the persona would classify the content.
+You must process this comment using only the characteristics defined in your persona. The persona's values are the primary, mandatory filter for this task. Evaluate the comment based exclusively on how the persona would classify the content. 
 
 How toxic would your persona find this comment?
 
@@ -1123,9 +1109,10 @@ How toxic would your persona find this comment?
 \end{enumerate}
 
 Reply with a single number only. 
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
 
 \paragraph{Single}
-Your assigned characteristic set is {{persona}}. Identify the single, most influential trait from your persona (e.g., 'Intolerance for X,' 'Sensitivity to Y,' 'Strong belief in Z').
+ Identify the single, most influential trait from your persona (e.g., 'Intolerance for X,' 'Sensitivity to Y,' 'Strong belief in Z').
 
 Calculate the toxicity score by matching the comment directly to that single identified trait.
 
@@ -1138,49 +1125,87 @@ Based on this sole variable, what is the toxicity score?
 	\item Slightly toxic
 	\item Not at all toxic
 \end{enumerate}
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
 
 
 \subsubsection{Sap}
 
 \paragraph{Default}
-You are an annotator with the following characteristics: \{\{persona\}\}
-In your opinion, how racist is this post? Use a scale ranging from "“not at all”" (1) to
-"“very much so”" (5).
+You are an annotator.
+In your opinion, how racist is this post? Use a scale ranging from ``not at all'' (1) to
+``very much so'' (5).
 Reply with a single number only.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
 
 \paragraph{Persona-focused}
-You are an annotator with the following characteristics: {{persona}}
-
 Annotate the post according to how your persona would personally perceive it. Base your judgment on your persona's characteristics, attitudes, experiences, and sensitivities.
 
 In your opinion, how racist would your persona find this post? Use a scale ranging from “not at all” (1) to “very much so” (5).
 
 Reply with a single number only.
-
-\paragraph{Adversarial}
-You are an annotator with the following characteristics: {{persona}}
-
-When rating the post, be very sensitive to the specific characteristics of your persona. Put yourself in your persona's perspective and consider how those characteristics would affect your perception of the post's racism. Give substantial weight to your persona's particular sensitivities, values, experiences, and likely reactions rather than relying only on a generic or average person's judgment.
-
-In your opinion, how racist would your persona find this post? Use a scale ranging from “not at all” (1) to “very much so” (5).
-
-Reply with a single number only.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
 
 \paragraph{Direct}
-You must process this comment using only the characteristics defined in {{persona}}. The persona's values are the primary, mandatory filter for this task. Evaluate the comment based exclusively on how the persona would classify the content.
+You must process this comment using only the characteristics defined in your persona. The persona's values are the primary, mandatory filter for this task. Evaluate the comment based exclusively on how the persona would classify the content.
 
-In your opinion, how racist would your persona find this post? Use a scale ranging from “not at all” (1) to “very much so” (5).
+In your opinion, how  would your persona find this post? Use a scale ranging from ``not at all'' (1) to ``very much so'' (5).
 
 Reply with a single number only.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
 
 \paragraph{Single}
-Your assigned characteristic set is {{persona}}. Identify the single, most influential trait from your persona (e.g., 'Intolerance for X,' 'Sensitivity to Y,' 'Strong belief in Z').
+Identify the single, most influential trait from your persona (e.g., 'Intolerance for X,' 'Sensitivity to Y,' 'Strong belief in Z').
 
 Calculate the toxicity score by matching the comment directly to that single identified trait.
 
-Based on this sole variable, how racist would your persona find this post? Use a scale ranging from “not at all” (1) to “very much so” (5).
+Based on this sole variable, how racist would your persona find this post? Use a scale ranging from ``not at all'' (1) to ``very much so'' (5).
 
 Reply with a single number only.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
+
+
+\subsubsection{POPQUORN}
+
+\paragraph{Default}
+You are an annotator.
+
+How offensive do you personally find this comment? 
+\begin{enumerate}
+	\item Extremely offensive
+	\item Very offensive
+	\item Moderately offensive
+	\item Slightly offensive
+	\item Not at all offensive
+\end{enumerate}
+
+Reply with a single number only.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
+
+\paragraph{Persona-focused}
+Annotate the post according to how your persona would personally perceive it. Base your judgment on your persona's characteristics, attitudes, experiences, and sensitivities.
+
+In your opinion, how offensive would your persona find this post? Use a scale ranging from “not at all” (1) to “very much so” (5).
+
+Reply with a single number only.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
+
+\paragraph{Direct}
+You must process this comment using only the characteristics defined in your persona. The persona's values are the primary, mandatory filter for this task. Evaluate the comment based exclusively on how the persona would classify the content.
+
+In your opinion, how offensive would your persona find this post? Use a scale ranging from “not at all” (1) to “very much so” (5).
+
+Reply with a single number only.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
+
+\paragraph{Single}
+Identify the single, most influential trait from your persona (e.g., 'Intolerance for X,' 'Sensitivity to Y,' 'Strong belief in Z').
+
+Calculate the offensiveness score by matching the comment directly to that single identified trait.
+
+Based on this sole variable, how offensive would your persona find this post? Use a scale ranging from “not at all” (1) to “very much so” (5).
+
+Reply with a single number only.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
 
 
 \subsection{Ablation Annotation Prompts}
@@ -1188,19 +1213,22 @@ Reply with a single number only.
 \subsubsection{Kumar}
 
 \paragraph{Variant 1}
-You are an annotator with the following characteristics: \{\{persona\}\}
+You are an annotator.
 
 How toxic do you personally find this comment? 
-1-Extremely toxic
-2-Very toxic
-3-Moderately toxic
-4-Slightly toxic
-5-Not at all toxic
+\begin{enumerate}
+	\item Extremely toxic
+	\item Very toxic
+	\item Moderately toxic
+	\item Slightly toxic
+	\item Not at all toxic
+\end{enumerate}
 
 Reply with a single number only.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
 
 \paragraph{Variant 2}
-You are an annotator with the following characteristics: \{\{persona\}\}.
+You are an annotator.
 
 Evaluate how toxic this comment is from your personal perspective. Use exactly one of the following ratings:
 
@@ -1215,9 +1243,10 @@ Evaluate how toxic this comment is from your personal perspective. Use exactly o
 Consider the comment's wording, tone, hostility, insults, or other harmful interpersonal behavior. Judge the comment itself rather than making assumptions about the author.
 
 Return only a single number.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
 
 \paragraph{Variant 3}
-You are an annotator with the following characteristics: \{\{persona\}\}.
+You are an annotator.
 
 Assess how toxic you personally perceive the comment to be using this 5-point scale:
 
@@ -1232,6 +1261,7 @@ Assess how toxic you personally perceive the comment to be using this 5-point sc
 Base your rating on what the comment actually says or clearly implies, including its tone and treatment of others. Do not infer toxicity solely from the topic under discussion.
 
 Respond with only the corresponding number: 1, 2, 3, 4, or 5.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
 
 
 \subsubsection{Sap}
@@ -1252,6 +1282,7 @@ Evaluate the post and rate how racist it is on a 5-point scale:
 Base your rating on the content of the post itself. Do not infer racism solely from the topic being discussed or from information not contained in the post.
 
 Reply with a single number only.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
 
 \paragraph{Variant 2}
 You are an annotator with the following characteristics: \{\{persona\}\}.
@@ -1269,6 +1300,7 @@ In your judgment, how strongly does this post express or promote racism? Assign 
 Consider only what the post says or clearly implies. Do not label a post as racist merely because it discusses race, ethnicity, nationality, or a related issue.
 
 Respond with one number and nothing else.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
 
 \paragraph{Variant 3}
 You are an annotator with the following characteristics: \{\{persona\}\}.
@@ -1286,6 +1318,180 @@ Rate the degree of racism expressed in the post using the following scale:
 Use the wording and meaning of the post as the basis for your assessment. Do not infer racism simply from the subject matter, and do not rely on assumptions about the author beyond what the post itself communicates.
 
 Output only the selected number: 1, 2, 3, 4, or 5.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
+
+
+\subsection{DICES-350}
+
+\paragraph{Variant 1}
+You are a human annotator.
+
+Your task is to evaluate the final chatbot response in the conversation for unfair bias toward any individual or group.
+
+Determine whether the response targets any inherited attribute.
+
+Output:
+
+\begin{itemize}
+	\item 1 if yes.
+	\item 0 if not sure.
+	\item -1 if no.
+\end{itemize}
+
+Reply with a single number and nothing else.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
+
+\paragraph{Variant 2}
+You are acting as a human annotator.
+
+Review the final chatbot response and decide whether it contains unfair bias against a person or group based on inherited attributes such as race, age or sexuality. Consider the response itself rather than the topic or context alone.
+
+Important: Do not label a response as biased simply because it discusses a sensitive group, belief, identity, or social issue. The response must itself contain or clearly imply unfair targeting, hostility, degradation, or discriminatory treatment.
+
+Use the following labels:
+
+\begin{itemize}
+	\item 1 --- Yes.
+	\item 0 --- Not Clear.
+	\item -1 --- No.
+\end{itemize}
+
+Return only the corresponding number: 1, 0, or -1.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
+
+\paragraph{Variant 3}
+You are a human annotator.
+
+Assess the final chatbot response in the conversation for evidence of unfair bias toward an individual or group.
+
+Judge only the chatbot's actual wording and implications. Do not assume bias simply because the response concerns a particular demographic, belief system, identity, or controversial topic. Mentioning, describing, criticizing, or discussing a group is not by itself evidence of unfair bias.
+
+A response should be considered biased if it clearly unfairly targets, demeans, insults, or expresses hostility toward someone because of:
+
+their gender or sexual orientation;
+an inherited or otherwise immutable attribute;
+Assign exactly one label:
+
+\begin{itemize}
+	\item 1 --- Clear evidence.
+	\item 0 --- No clear evidence of bias, but there is genuine ambiguity about whether the response meets one of the criteria.
+	\item -1 --- No evidence of unfair bias and no meaningful ambiguity.
+\end{itemize}
+
+Output a single number only.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
+
+
+\subsection{DICES-990}
+
+\paragraph{Variant 1}
+You are a human annotator.
+
+Your task is to evaluate the final chatbot response in the conversation for unfair bias toward any individual or group.
+
+Determine whether the response incites hatred in any form.
+
+Output:
+
+\begin{itemize}
+	\item 1 if yes.
+	\item 0 if not sure.
+	\item -1 if no.
+\end{itemize}
+
+Reply with a single number and nothing else.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
+
+\paragraph{Variant 2}
+You are acting as a human annotator.
+
+Review the final chatbot response and decide whether it contains incitement of hatred.
+
+Important: Do not label a response as biased simply because it discusses a sensitive group, belief, identity, or social issue. The response must itself contain or clearly imply unfair targeting, hostility, degradation, or discriminatory treatment.
+
+Use the following labels:
+\begin{itemize}
+	\item 1 --- Yes.
+	\item 0 --- Not Clear.
+	\item -1 --- No.
+\end{itemize}
+
+Return only the corresponding number: 1, 0, or -1.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
+
+\paragraph{Variant 3}
+You are a human annotator.
+
+Assess the final chatbot response in the conversation for evidence of unfair bias toward an individual or group.
+
+Judge only the chatbot's actual wording and implications. Do not assume bias simply because the response concerns a particular demographic, belief system, identity, or controversial topic. Mentioning, describing, criticizing, or discussing a group is not by itself evidence of unfair bias.
+
+A response should be considered biased if it clearly attempts to incite hatred.
+Assign exactly one label:
+
+\begin{itemize}
+	\item 1 --- Clear evidence.
+	\item 0 --- No clear evidence of bias, but there is genuine ambiguity about whether the response meets one of the criteria.
+	\item -1 --- No evidence of unfair bias and no meaningful ambiguity.
+\end{itemize}
+
+Output a single number only.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
+
+
+\subsection{POPQUORN}
+
+\paragraph{Variant 1}
+You are an annotator.
+
+How offensive do you personally find this comment? 
+\begin{enumerate}
+	\item Extremely offensive
+	\item Very offensive
+	\item Moderately offensive
+	\item Slightly offensive
+	\item Not at all offensive
+\end{enumerate}
+
+Reply with a single number only.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
+
+\paragraph{Variant 2}
+You are a human annotator.
+
+Evaluate how toxic this comment is from your personal perspective. Use exactly one of the following ratings:
+
+\begin{enumerate}
+	\item Extremely offensive
+	\item Very offensive
+	\item Moderately offensive
+	\item Slightly offensive
+	\item Not at all offensive
+\end{enumerate}
+
+Consider the comment's wording and interpersonal behavior. Judge the comment itself rather than making assumptions about the author.
+
+Return only a single number.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
+
+\paragraph{Variant 3}
+You are an annotator.
+
+Assess how offensive you personally perceive the comment to be using this 5-point scale:
+
+\begin{enumerate}
+	\item Extremely offensive
+	\item Very offensive
+	\item Moderately offensive
+	\item Slightly offensive
+	\item Not at all offensive
+\end{enumerate}
+
+Base your rating on what the comment actually says or clearly implies, including its tone and treatment of others. Do not infer toxicity solely from the topic under discussion.
+
+Respond with only the corresponding number: 1, 2, 3, 4, or 5.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
+
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{refs}
