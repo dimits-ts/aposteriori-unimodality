@@ -56,6 +56,14 @@ from pathlib import Path
 
 import pandas as pd
 
+from ..lib.preprocessing import (
+    LazyDatasetLoader,
+    DicesDataset,
+    SapDataset,
+    KumarDataset,
+    PopquornDataset,
+)
+
 from ..lib import graphs
 from ..lib.util import skip_if_exists
 from . import polarization, stats, shared, plots
@@ -68,6 +76,7 @@ def main(
     dices_large_path: Path,
     sap_path: Path,
     kumar_path: Path,
+    popquorn_path: Path,
     annotations_dir: Path,
     paraphrase_dir: Path,
     repeat_dir: Path,
@@ -82,11 +91,30 @@ def main(
     graph_output_dir.mkdir(parents=True, exist_ok=True)
     latex_output_dir.mkdir(parents=True, exist_ok=True)
 
-    human_datasets = shared.load_human_datasets(
-        dices_small_path=dices_small_path,
-        dices_large_path=dices_large_path,
-        sap_path=sap_path,
-        kumar_path=kumar_path,
+    human_datasets = shared.HumanDatasets(
+        {
+            "dices-350": LazyDatasetLoader(
+                lambda p=dices_small_path: DicesDataset(
+                    dataset_path=p, variant="350"
+                )
+            ),
+            "dices-990": LazyDatasetLoader(
+                lambda p=dices_large_path: DicesDataset(
+                    dataset_path=p, variant="990"
+                )
+            ),
+            "sap": LazyDatasetLoader(
+                lambda p=sap_path: SapDataset(dataset_path=p)
+            ),
+            "kumar": LazyDatasetLoader(
+                lambda p=kumar_path: KumarDataset(
+                    dataset_path=p, num_samples=1_000
+                )
+            ),
+            "popquorn": LazyDatasetLoader(
+                lambda p=popquorn_path: PopquornDataset(dataset_path=p)
+            ),
+        }
     )
 
     run_histogram_step(
@@ -393,21 +421,26 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dices-small-path",
-        default=None,
+        required=True,
         help="Path to the DICES-350 CSV file.",
     )
     parser.add_argument(
         "--dices-large-path",
-        default=None,
+        required=True,
         help="Path to the DICES-990 CSV file.",
     )
     parser.add_argument(
-        "--sap-path", default=None, help="Path to the Sap et al. CSV file."
+        "--sap-path", required=True, help="Path to the Sap et al. CSV file."
     )
     parser.add_argument(
         "--kumar-path",
-        default=None,
+        required=True,
         help="Path to the Kumar et al. JSON file.",
+    )
+    parser.add_argument(
+        "--popquorn-path",
+        required=True,
+        help="Path to the POPQUORN offensiveness CSV.",
     )
     parser.add_argument(
         "--annotations-dir",
@@ -475,6 +508,7 @@ if __name__ == "__main__":
         dices_large_path=Path(args.dices_large_path),
         sap_path=Path(args.sap_path),
         kumar_path=Path(args.kumar_path),
+        popquorn_path=Path(args.popquorn_path),
         annotations_dir=Path(args.annotations_dir),
         paraphrase_dir=Path(args.paraphrase_dir),
         repeat_dir=Path(args.repeat_dir),

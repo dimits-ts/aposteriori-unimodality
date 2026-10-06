@@ -10,16 +10,12 @@ and computing the per-comment nDFU values that both the apunim grid
 (plots.py) and the prompt-sensitivity ANOVA (stats.py) are built from.
 """
 
-import re
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 from ..lib.preprocessing import (
-    DicesDataset,
-    KumarDataset,
-    SapDataset,
     Dataset,
     SubsampledView,
     LazyDatasetLoader,
@@ -29,7 +25,7 @@ from ..lib.preprocessing import (
 # Constants
 # ---------------------------------------------------------------------------
 
-DATASET_KEYS = ["dices-350", "dices-990", "sap", "kumar"]
+DATASET_KEYS = ["dices-350", "dices-990", "sap", "kumar", "popquorn"]
 
 # Columns in an llm_annotate.py output CSV (plus the "annotation_clean"
 # column we add in load_llm_df) that are *not* persona/SDB attributes.
@@ -436,37 +432,3 @@ def _compute_ndfu_records(
         records.extend(row_fn(row, annotation_col, sdb_columns, bins))
     return pd.DataFrame(records)
 
-
-# ---------------------------------------------------------------------------
-# Human dataset loading
-# ---------------------------------------------------------------------------
-
-
-def load_human_datasets(
-    dices_small_path: Path,
-    dices_large_path: Path,
-    sap_path: Path,
-    kumar_path: Path,
-) -> HumanDatasets:
-    return HumanDatasets(
-        loaders={
-            "dices-350": LazyDatasetLoader(
-                lambda p=dices_small_path: DicesDataset(
-                    dataset_path=p, variant="350"
-                )
-            ),
-            "dices-990": LazyDatasetLoader(
-                lambda p=dices_large_path: DicesDataset(
-                    dataset_path=p, variant="990"
-                )
-            ),
-            "sap": LazyDatasetLoader(
-                lambda p=sap_path: SapDataset(dataset_path=p)
-            ),
-            "kumar": LazyDatasetLoader(
-                lambda p=kumar_path: KumarDataset(
-                    dataset_path=p, num_samples=1_000
-                )
-            ),
-        }
-    )
