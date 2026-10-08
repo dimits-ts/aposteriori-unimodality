@@ -4,88 +4,60 @@ set -o pipefail
 # ============================================================
 # Dataset configuration
 # ============================================================
+# All datasets get the ablation runs (repeat + paraphrase).
 datasets=("sap" "kumar" "dices-350" "dices-990" "popquorn")
-dataset_paths=(
-  "data/datasets/sap.csv"
-  "data/datasets/kumar.json"
-  "data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv"
-  "data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv"
-  "data/datasets/popquorn_offensiveness.csv"
+
+declare -A dataset_paths=(
+  [sap]="data/datasets/sap.csv"
+  [kumar]="data/datasets/kumar.json"
+  [dices-350]="data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv"
+  [dices-990]="data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv"
+  [popquorn]="data/datasets/popquorn_offensiveness.csv"
 )
-# Instructions subdirectory key for each dataset
-instruction_keys=("sap" "kumar" "dices-350" "dices-990" "popquorn")
+
+# Only these datasets get the main AND the adversarial annotation runs.
+main_annotation_datasets=("sap" "kumar" "popquorn")
 
 # ============================================================
 # Model configuration
 # ============================================================
-# Models used for main + ablation runs (all 5)
-all_models=(
-  "unsloth/OLMo-2-0325-32B-Instruct-unsloth-bnb-4bit"
-  "unsloth/Qwen2.5-32B-Instruct-bnb-4bit"
-  "unsloth/Olmo-3-7B-Instruct-unsloth-bnb-4bit"
-  "unsloth/Qwen2.5-7B-Instruct-bnb-4bit"
-  "unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit"
-)
-all_pseudos=(
-  "olmo32b"
-  "qwen32b"
-  "olmo7b"
-  "qwen7b"
-  "llama8b"
+declare -A model_ids=(
+  [olmo32b]="unsloth/OLMo-2-0325-32B-Instruct-unsloth-bnb-4bit"
+  [qwen32b]="unsloth/Qwen2.5-32B-Instruct-bnb-4bit"
+  [olmo7b]="unsloth/Olmo-3-7B-Instruct-unsloth-bnb-4bit"
+  [qwen7b]="unsloth/Qwen2.5-7B-Instruct-bnb-4bit"
+  [llama8b]="unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit"
 )
 
-# Models used for adversarial runs (subset: 3 models)
-adv_models=(
-  "unsloth/OLMo-2-0325-32B-Instruct-unsloth-bnb-4bit"
-  "unsloth/Qwen2.5-32B-Instruct-bnb-4bit"
-  "unsloth/Qwen2.5-7B-Instruct-bnb-4bit"
-)
-adv_pseudos=(
-  "olmo32b"
-  "qwen32b"
-  "qwen7b"
-)
+# Models for the main and ablation runs (all) and the adversarial runs (subset).
+all_models=("olmo32b" "qwen32b" "olmo7b" "qwen7b" "llama8b")
+adv_models=("olmo32b" "qwen32b" "qwen7b")
 
-# Batch size per model. Anything above the number of annotators is wasted.
-declare -A batch_sizes=(
-  [olmo32b]=20
-  [qwen32b]=20
-  [olmo7b]=20
-  [qwen7b]=20
-  [llama8b]=20
-)
-
-# Datasets that also get adversarial annotation (indices into the main arrays)
-adv_dataset_indices=(0 1)   # sap, kumar
+# Anything above the number of annotators is wasted.
+batch_size=20
 
 # ============================================================
-# Directory configuration
+# Directory / run configuration
 # ============================================================
-instructions_dir="instructions"
-adv_instructions_dir="instructions/adversarial"
-
-num_annotators=20
+instructions_dir="instructions/main"                 # <dir>/<dataset>/*
+adv_instructions_dir="instructions/adversarial"      # <dir>/<dataset>/*
+ablation_instructions_dir="instructions/ablation"    # <dir>/<dataset>/* (paraphrases)
 
 output_dir="output/llm/annotations"
+ablation_output_dir="output/llm/ablations"
+ablation_repeat_output_dir="${ablation_output_dir}/repeat"
+ablation_paraphrase_output_dir="${ablation_output_dir}/paraphrase"
+
 log_dir="logs"
 log_file="${log_dir}/annotation.log"
+ablation_log_file="${log_dir}/ablation.log"
+
+num_annotators=20
 
 # Ablation settings
 ablation_num_annotators=6
 ablation_sample_fraction="0.1"
 ablation_n_repeats=5
-# Indexed like `datasets` (sap, kumar)
-ablation_paraphrase_dirs=(
-  "instructions/ablation/sap"
-  "instructions/ablation/kumar"
-  "instructions/ablation/dices-350"
-  "instructions/ablation/dices-990"
-  "instructions/ablation/popquorn"
-)
-ablation_output_dir="output/llm/ablations"
-ablation_repeat_output_dir="${ablation_output_dir}/repeat"
-ablation_paraphrase_output_dir="${ablation_output_dir}/paraphrase"
-ablation_log_file="${log_dir}/ablation.log"
 
 mkdir -p \
   "$output_dir" \
@@ -94,42 +66,62 @@ mkdir -p \
   "$ablation_paraphrase_output_dir"
 
 # ============================================================
-# Shared annotation runner
+# Helpers
 # ============================================================
-# Args: dataset  dataset_path  instruction_path  model  pseudo
-#       out_dir  num_annotators  sample_fraction  suffix  target_log
+# contains <item> <list...>
+contains() {
+  local item="$1"
+  shift
+  local x
+  for x in "$@"; do
+    [ "$x" = "$item" ] && return 0
+  done
+  return 1
+}
+
+# banner <log> <text>
+banner() {
+  {
+    echo -e "\n\n======================================================="
+    echo "$2"
+    echo "======================================================="
+  } >> "$1"
+}
+
+# Run (or skip, if the output already exists) a single annotation job.
+# Args: dataset  instruction_path  model  out_dir  num_annotators
+#       sample_fraction (empty = full dataset)  suffix (may be empty)  log
 run_annotation() {
   local dataset="$1"
-  local dataset_path="$2"
-  local instruction_path="$3"
-  local model="$4"
-  local pseudo="$5"
-  local out_dir="$6"
-  local n_annotators="$7"
-  local sample_fraction="$8"   # empty string => full dataset
-  local suffix="$9"            # empty string => no suffix
-  local target_log="${10}"
+  local instruction_path="$2"
+  local model="$3"
+  local out_dir="$4"
+  local n_annotators="$5"
+  local sample_fraction="$6"
+  local suffix="$7"
+  local target_log="$8"
 
   local instruction_name
   instruction_name="$(basename "$instruction_path")"
   instruction_name="${instruction_name%.*}"
 
-  local output_path="${out_dir}/${dataset}-${instruction_name}-${pseudo}${suffix}.csv"
+  local label="${dataset} - ${instruction_name}${suffix} x ${model}"
+  local output_path="${out_dir}/${dataset}-${instruction_name}-${model}${suffix}.csv"
 
   if [ -f "$output_path" ]; then
     echo "Skipping (already exists): ${output_path}" | tee -a "$target_log"
     return 0
   fi
 
-  echo -e "\n=== Dataset: ${dataset} | Instruction: ${instruction_name}${suffix} x ${pseudo} (${model}) ===" >> "$target_log"
+  echo -e "\n=== ${label} (${model_ids[$model]}) ===" >> "$target_log"
 
   local cmd=(python -m src.llm.annotate
     --dataset                 "$dataset"
-    --dataset-path            "$dataset_path"
+    --dataset-path            "${dataset_paths[$dataset]}"
     --instruction-prompt-path "$instruction_path"
-    --model-name              "$model"
+    --model-name              "${model_ids[$model]}"
     --output-path             "$output_path"
-    --batch-size              "${batch_sizes[$pseudo]}"
+    --batch-size              "$batch_size"
     --num-annotators          "$n_annotators"
   )
   [ -n "$sample_fraction" ] && cmd+=(--sample-fraction "$sample_fraction")
@@ -138,79 +130,73 @@ run_annotation() {
   local status=${PIPESTATUS[0]}
 
   if [ "$status" -ne 0 ]; then
-    echo "FAILED (exit ${status}): ${dataset} - ${instruction_name}${suffix} x ${pseudo}" | tee -a "$target_log"
+    echo "FAILED (exit ${status}): ${label}" | tee -a "$target_log"
     return "$status"
   fi
 
-  echo "Finished ${dataset} - ${instruction_name}${suffix} x ${pseudo}." | tee -a "$target_log"
+  echo "Finished ${label}." | tee -a "$target_log"
+}
+
+# Run every instruction file in a directory for every model in a list.
+# Args: dataset  instruction_dir  models_array_name  out_dir  num_annotators
+#       sample_fraction  n_repeats (0 = run once, no suffix)  log
+run_instruction_dir() {
+  local dataset="$1"
+  local instruction_dir="$2"
+  local -n models_ref="$3"
+  local out_dir="$4"
+  local n_annotators="$5"
+  local sample_fraction="$6"
+  local n_repeats="$7"
+  local target_log="$8"
+
+  if [ ! -d "$instruction_dir" ]; then
+    echo "Skipping ${dataset}: no directory at ${instruction_dir}" | tee -a "$target_log"
+    return 0
+  fi
+
+  local instruction_path model run
+  for instruction_path in "$instruction_dir"/*; do
+    [ -f "$instruction_path" ] || continue
+    for model in "${models_ref[@]}"; do
+      if [ "$n_repeats" -gt 0 ]; then
+        for run in $(seq 0 $((n_repeats - 1))); do
+          run_annotation "$dataset" "$instruction_path" "$model" "$out_dir" \
+            "$n_annotators" "$sample_fraction" "-run${run}" "$target_log"
+        done
+      else
+        run_annotation "$dataset" "$instruction_path" "$model" "$out_dir" \
+          "$n_annotators" "$sample_fraction" "" "$target_log"
+      fi
+    done
+  done
 }
 
 # ============================================================
 # Main loop over datasets
 # ============================================================
-for i in "${!datasets[@]}"; do
-  current_dataset="${datasets[$i]}"
-  current_dataset_path="${dataset_paths[$i]}"
-  current_instructions_dir="${instructions_dir}/main/${instruction_keys[$i]}"
-  current_paraphrase_dir="${ablation_paraphrase_dirs[$i]}"
+for dataset in "${datasets[@]}"; do
+  banner "$log_file" "STARTING ANNOTATIONS FOR DATASET: ${dataset}"
 
-  echo -e "\n\n=======================================================" >> "$log_file"
-  echo "STARTING ANNOTATIONS FOR DATASET: ${current_dataset}"          >> "$log_file"
-  echo "======================================================="        >> "$log_file"
+  # 1 + 2. Main and adversarial annotations (same dataset list for both).
+  if contains "$dataset" "${main_annotation_datasets[@]}"; then
+    run_instruction_dir "$dataset" "${instructions_dir}/${dataset}" \
+      all_models "$output_dir" "$num_annotators" "" 0 "$log_file"
 
-  
-
-  # ----------------------------------------------------------
-  # 2. Repeat ablation: same prompt N times over a 10% sub-sample
-  # ----------------------------------------------------------
-  if [ -d "$current_instructions_dir" ]; then
-    for instruction_path in "$current_instructions_dir"/*; do
-      [ -f "$instruction_path" ] || continue
-      for j in "${!all_models[@]}"; do
-        for run in $(seq 0 $((ablation_n_repeats - 1))); do
-          run_annotation \
-            "$current_dataset"            \
-            "$current_dataset_path"       \
-            "$instruction_path"           \
-            "${all_models[$j]}"           \
-            "${all_pseudos[$j]}"          \
-            "$ablation_repeat_output_dir" \
-            "$ablation_num_annotators"    \
-            "$ablation_sample_fraction"   \
-            "-run${run}"                  \
-            "$ablation_log_file"
-        done
-      done
-    done
-  else
-    echo "Skipping repeat ablation for ${current_dataset}: no directory at ${current_instructions_dir}" | tee -a "$ablation_log_file"
+    banner "$log_file" "STARTING ADVERSARIAL ANNOTATIONS FOR DATASET: ${dataset}"
+    run_instruction_dir "$dataset" "${adv_instructions_dir}/${dataset}" \
+      adv_models "$output_dir" "$num_annotators" "" 0 "$log_file"
   fi
 
-  # ----------------------------------------------------------
-  # 3. Paraphrase ablation: N similar prompts, each run once
-  # ----------------------------------------------------------
-  if [ -d "$current_paraphrase_dir" ]; then
-    for instruction_path in "$current_paraphrase_dir"/*; do
-      [ -f "$instruction_path" ] || continue
-      for j in "${!all_models[@]}"; do
-        run_annotation \
-          "$current_dataset"                \
-          "$current_dataset_path"           \
-          "$instruction_path"               \
-          "${all_models[$j]}"               \
-          "${all_pseudos[$j]}"              \
-          "$ablation_paraphrase_output_dir" \
-          "$ablation_num_annotators"        \
-          "$ablation_sample_fraction"       \
-          ""                                \
-          "$ablation_log_file"
-      done
-    done
-  else
-    echo "Skipping paraphrase ablation for ${current_dataset}: no directory at ${current_paraphrase_dir}" | tee -a "$ablation_log_file"
-  fi
+  # 3. Repeat ablation: same (main) prompt N times over a sub-sample.
+  run_instruction_dir "$dataset" "${instructions_dir}/${dataset}" \
+    all_models "$ablation_repeat_output_dir" "$ablation_num_annotators" \
+    "$ablation_sample_fraction" "$ablation_n_repeats" "$ablation_log_file"
 
-  
+  # 4. Paraphrase ablation: N similar prompts, each run once.
+  run_instruction_dir "$dataset" "${ablation_instructions_dir}/${dataset}" \
+    all_models "$ablation_paraphrase_output_dir" "$ablation_num_annotators" \
+    "$ablation_sample_fraction" 0 "$ablation_log_file"
 done
 
 echo -e "\nAll annotation, ablation, and adversarial runs completed."
