@@ -378,12 +378,9 @@ def export_llm_apunim_prompt_table(
         return
     df = df.rename(columns={"SDB Feature": r"\ac{pc}"})
 
-    for number_col in MAIN_PROMPT_NAMES:
-        number_col = number_col.capitalize()
-        df[number_col] = trim_numeric_col_latex(
-            df[number_col], float_format=".3f"
-        )
-
+    # The prompt columns already hold formatted "value$^{***}$" strings (see
+    # _apunim_prompt_cell); they must not be passed through
+    # trim_numeric_col_latex, which would turn the starred cells into "---".
     df = df.replace("_", r"\_", regex=True).set_index(
         [r"\ac{pc}", "Value", "Model"]
     )
@@ -391,7 +388,8 @@ def export_llm_apunim_prompt_table(
     latex_str = df.to_latex(
         caption=(
             "Aposteriori unimodality results for the LLM annotations of "
-            f"the {dataset_name} dataset, across instruction prompts."
+            f"the {dataset_name} dataset, across instruction prompts. "
+            r"$^{*}p<0.05$, $^{**}p<0.01$, $^{***}p<0.001$."
         ),
         label=label,
         escape=False,
@@ -410,7 +408,7 @@ def _apunim_prompt_cell(row: pd.Series) -> str:
     if pd.isna(row["apunim"]):
         return "---"
     stars = significance_superscript(row["pvalue"])
-    return f"{row['apunim']:.4f}{stars}"
+    return f"{row['apunim']:.3f}{stars}"
 
 
 def build_llm_apunim_prompt_table(

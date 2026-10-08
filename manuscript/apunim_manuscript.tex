@@ -473,7 +473,7 @@ Apunim thus measures the degree to which an annotator group contributes to overa
 
 \paragraph{Is Any Such Disagreement Unattributable?} \textbf{Mostly no}. We observe no \ac{ip} from two of the models even when subsampling down to the minimum six annotators (Fig.~\ref{fig:inherent-llms}). The only model showing any \ac{ip} is \textsc{olmo32b} which shows a fraction of human \ac{ip} and variance. This result suggests that even when using prompt engineering and persona prompting, LLMs retain their tendency to default to a statistical average, even if that average differs from the ``average human'' whose opinions were learned during model pretraining.
 
-\paragraph{Can Systematic Disagreement be Attributed to LLM Persona Characteristics?} \textbf{No}. 
+\paragraph{Can Systematic Disagreement be Attributed to LLM Persona Characteristics?} \textbf{No}. Unlike human annotations (Table~\ref{tab:apunim-main}), no model shows any statistically significant apunim results in any group and dataset. Even though we use more annotators per item and assign groups uniformly (benefiting minority opinions), the apunim values for most models are zero because of a lack of polarized items. When polarized items exist, the apunim values are generally small and depend largely on the model and dataset. The values may be circumstiantially large, but this effect seems to be prevalent only on \acp{pc} with many groups and may be an artifact of annotation sparsity of that group increasing variance, which would explain why these groups are not statistically significant
 
 \begin{finding}
 	\label{finding:llms}
