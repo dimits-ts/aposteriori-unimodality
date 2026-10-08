@@ -19,7 +19,11 @@ from ..lib.util import (
     significance_superscript,
 )
 from .shared import (
+    APUNIM_TABLE_EXCLUDE_MODELS,
     DATASET_KEYS,
+    _apunim_dfu,
+    _human_sample_dataset,
+    _ndfu_bin_count,
     HumanDatasets,
     MAIN_PROMPT_NAMES,
     LLMAnnotationDataset,
@@ -584,83 +588,91 @@ def export_ndfu_anova_by_prompt(
 # ---------------------------------------------------------------------------
 
 
-def compute_cohens_d_summary_table(
+def compute_cohens_d_compact_table(
     result_df: pd.DataFrame,
     prompt_names: list[str] = MAIN_PROMPT_NAMES,
     baseline_prompt: str = "default",
-    by_model: bool = True,
+    pooled_label: str = "All",
 ) -> pd.DataFrame:
     """
-    Summary stats (via `.describe()`) of Cohen's d values for each
-    non-baseline prompt vs. `baseline_prompt`.
-
-    If `by_model` (default), the summary is computed separately per model
-    and the result is indexed by (Model, stat). Otherwise all models are
-    pooled together and the result is indexed by stat only (old behavior).
+    Compact Cohen's d summary: one row per (Model, Dataset) plus a pooled
+    `pooled_label` row per model (all datasets together), one column per
+    non-baseline prompt, and a leading `n` column with the number of
+    groups the statistics are computed over. Each cell is "mean (SD)" of
+    Cohen's d (prompt vs. `baseline_prompt`) across groups.
     """
     cols = {
-        prompt_name: f"cohens_d_{prompt_name}_vs_{baseline_prompt}"
-        for prompt_name in prompt_names
-        if prompt_name != baseline_prompt
-        and f"cohens_d_{prompt_name}_vs_{baseline_prompt}" in result_df.columns
+        p: f"cohens_d_{p}_vs_{baseline_prompt}"
+        for p in prompt_names
+        if p != baseline_prompt
+        and f"cohens_d_{p}_vs_{baseline_prompt}" in result_df.columns
     }
 
-    def _describe(df: pd.DataFrame) -> dict:
-        return {
-            prompt_name: pd.to_numeric(df[col], errors="coerce").describe()
-            for prompt_name, col in cols.items()
-        }
+    def _row(sub: pd.DataFrame) -> dict:
+        row = {"n": str(len(sub))}
+        for prompt_name, col in cols.items():
+            vals = pd.to_numeric(sub[col], errors="coerce").dropna()
+            if vals.empty:
+                row[prompt_name] = "---"
+            elif len(vals) < 2:
+                row[prompt_name] = f"{vals.iloc[0]:.2f}"
+            else:
+                row[prompt_name] = f"{vals.mean():.2f} ({vals.std():.2f})"
+        return row
 
-    if not by_model:
-        return pd.DataFrame(_describe(result_df))
+    rows, index = [], []
+    for model in _order_models(set(result_df["Model"])):
+        model_df = result_df.loc[result_df["Model"] == model]
+        rows.append(_row(model_df))
+        index.append((model, pooled_label))
+        # Preserve dataset order of appearance in the results.
+        for dataset in model_df["Dataset"].drop_duplicates():
+            rows.append(_row(model_df.loc[model_df["Dataset"] == dataset]))
+            index.append((model, dataset))
 
-    model_order = _order_models(set(result_df["Model"]))
-    frames = []
-    for model in model_order:
-        sub = result_df.loc[result_df["Model"] == model]
-        model_df = pd.DataFrame(_describe(sub))
-        model_df = model_df.reset_index(names="stat")
-        model_df.insert(0, "Model", model)
-        frames.append(model_df)
-
-    return pd.concat(frames, ignore_index=True).set_index(["Model", "stat"])
+    out = pd.DataFrame(
+        rows,
+        index=pd.MultiIndex.from_tuples(index, names=["Model", "Dataset"]),
+    )
+    out.columns = ["n"] + [str(c).capitalize() for c in out.columns[1:]]
+    return out
 
 
-def export_cohens_d_summary_latex(
-    summary_df: pd.DataFrame,
+def _merge_span_cells(latex_str: str, n_total_cols: int) -> str:
+    """
+    Rewrites rows containing a `_SPAN_MARK` value cell so that the value
+    spans all remaining columns of the row (the rest of the row is empty).
+    """
+    out = []
+    for line in latex_str.splitlines():
+        if _SPAN_MARK not in line:
+            out.append(line)
+            continue
+        prefix, rest = line.split(_SPAN_MARK, 1)
+        value = rest.split(" & ", 1)[0].removesuffix("\\\\").strip()
+        span = n_total_cols - prefix.count(" & ")
+        out.append(f"{prefix}\\multicolumn{{{span}}}{{c}}{{{value}}} \\\\")
+    return "\n".join(out) + "\n"
+
+
+def export_compact_prompt_table_latex(
+    compact_df: pd.DataFrame,
     output_path: Path,
     caption: str,
     label: str,
-    by_model: bool,
-    model_order: list[str] | None = None,
 ) -> None:
-    df = summary_df.copy().astype(object)
-
-    if by_model:
-        df = df.drop(index="count", level="stat")
-        df = df.stack().unstack(level="stat")
-        if model_order is not None:
-            df = df.reindex(model_order, level="Model")
-        df.columns = [str(c).capitalize() for c in df.columns]
-        n_index_cols = 2
-    else:
-        df = df.drop("count")
-        df.columns = [str(c).capitalize() for c in df.columns]
-        n_index_cols = 1
-
-    for idx, row in df.iterrows():
-        df.loc[idx] = trim_numeric_col_latex(
-            pd.to_numeric(row), float_format=".3f"
-        )
-
-    latex_str = df.to_latex(
+    latex_str = compact_df.to_latex(
         caption=caption,
         label=label,
         position="t",
         escape=True,
         index=True,
-        multirow=by_model,
-        column_format="r" * (len(df.columns) + n_index_cols),
+        multirow=True,
+        column_format="ll" + "r" * len(compact_df.columns),
+    )
+    latex_str = _merge_span_cells(
+        latex_str,
+        n_total_cols=compact_df.index.nlevels + len(compact_df.columns),
     )
     latex_str = center_table_latex(latex_str)
     latex_str = small_table_latex(latex_str)
@@ -668,6 +680,274 @@ def export_cohens_d_summary_latex(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(latex_str)
     print(f"Table exported to {output_path.resolve()}")
+
+
+def export_default_mean_ndfu_latex(
+    table_df: pd.DataFrame, output_path: Path, caption: str, label: str
+) -> None:
+    n_groups = len(table_df.columns) // 2
+    latex_str = table_df.to_latex(
+        caption=caption,
+        label=label,
+        position="t",
+        escape=True,
+        index=True,
+        multicolumn=True,
+        multicolumn_format="c",
+        column_format="l" + "rr" * n_groups,
+    )
+    latex_str = center_table_latex(latex_str)
+    latex_str = small_table_latex(latex_str)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(latex_str)
+    print(f"Table exported to {output_path.resolve()}")
+
+
+# ---------------------------------------------------------------------------
+# Mean nDFU: human annotations vs. LLM annotations (per instruction prompt)
+# ---------------------------------------------------------------------------
+
+HUMAN_LABEL = "Human"
+_SPAN_MARK = "@@SPAN@@"
+
+
+def _per_comment_ndfu(ds) -> pd.Series:
+    """nDFU of each comment's annotation list, indexed by comment id."""
+    df = ds.get_dataset()
+    annotation_col = ds.get_annotation_column()
+    bins = _ndfu_bin_count(df[annotation_col].to_list())
+    if bins == 0:
+        return pd.Series(dtype=float)
+
+    key_col = ds.get_comment_key_column()
+    values = {}
+    for _, row in df.iterrows():
+        annotations = row[annotation_col]
+        if not isinstance(annotations, (list, np.ndarray)) or (
+            len(annotations) == 0
+        ):
+            continue
+        try:
+            values[row[key_col]] = _apunim_dfu(annotations, bins)
+        except Exception as e:
+            print(f"Error calculating NDFU for an item: {e}")
+    return pd.Series(values, dtype=float)
+
+
+def compute_mean_ndfu_records(
+    human_datasets: HumanDatasets,
+    annotations_dir: Path,
+    dataset_keys: list[str] = PROMPT_COMPARISON_DATASET_KEYS,
+    prompt_names: list[str] = MAIN_PROMPT_NAMES,
+    exclude_models: set[str] | None = APUNIM_TABLE_EXCLUDE_MODELS,
+    sample_prompt: str = "default",
+) -> pd.DataFrame:
+    """
+    Long-format per-comment nDFU, one row per (Dataset, Model, Prompt,
+    text_id). Human rows have Model == HUMAN_LABEL and Prompt == "human";
+    they are computed on the comments actually sampled for the LLM runs
+    (see `_human_sample_dataset`), so human and LLM nDFU are comparable
+    comment by comment.
+    """
+    exclude_models = set(exclude_models or ())
+    records = []
+
+    def _emit(dataset_name, model, prompt, ndfu: pd.Series):
+        return [
+            {
+                "Dataset": dataset_name,
+                "Model": model,
+                "Prompt": prompt,
+                "text_id": text_id,
+                "ndfu": value,
+            }
+            for text_id, value in ndfu.dropna().items()
+        ]
+
+    for dataset_key in dataset_keys:
+        if dataset_key not in human_datasets:
+            continue
+        human_ds = _human_sample_dataset(
+            human_datasets[dataset_key],
+            annotations_dir,
+            dataset_key,
+            sample_prompt,
+        )
+        if human_ds is None:
+            continue
+        dataset_name = human_datasets[dataset_key].get_name()
+        records.extend(
+            _emit(
+                dataset_name,
+                HUMAN_LABEL,
+                "human",
+                _per_comment_ndfu(human_ds),
+            )
+        )
+
+        for prompt_name in prompt_names:
+            files = find_annotation_files(
+                annotations_dir, dataset_key, prompt_name
+            )
+            for model, path in files.items():
+                if model in exclude_models:
+                    continue
+                llm_ds = LLMAnnotationDataset(
+                    load_llm_df(path), dataset_key, model, prompt_name
+                )
+                records.extend(
+                    _emit(
+                        dataset_name,
+                        model,
+                        prompt_name,
+                        _per_comment_ndfu(llm_ds),
+                    )
+                )
+
+    return pd.DataFrame(records)
+
+
+def _mean_se_str(values: pd.Series) -> str:
+    values = pd.to_numeric(values, errors="coerce").dropna()
+    if values.empty:
+        return "---"
+    se = (
+        values.std(ddof=1) / np.sqrt(len(values))
+        if len(values) > 1
+        else np.nan
+    )
+    return f"{values.mean():.2f} ({se:.2f})"
+
+
+def _datasets_in_order(df: pd.DataFrame) -> list[str]:
+    return list(df["Dataset"].drop_duplicates())
+
+
+def build_mean_ndfu_table(
+    ndfu_df: pd.DataFrame,
+    prompt_names: list[str] = MAIN_PROMPT_NAMES,
+    pooled_label: str = "All",
+) -> pd.DataFrame:
+    """
+    Compact table: a leading Human block, then one block per model; each
+    block has a pooled `pooled_label` row and one row per dataset. Columns
+    are `n` (comments) and one per instruction prompt, with the mean (SE)
+    per-comment nDFU. Human annotations do not depend on the prompt, so
+    their value is placed in a single cell spanning all prompt columns
+    (see `export_compact_prompt_table_latex`). Within a model row only
+    comments that the human sample and every available prompt share are
+    used, so all cells in a row use the same comments.
+    """
+    human_df = ndfu_df.loc[ndfu_df["Model"] == HUMAN_LABEL]
+    llm_df = ndfu_df.loc[ndfu_df["Model"] != HUMAN_LABEL]
+    prompts = [p for p in prompt_names if p in set(llm_df["Prompt"])]
+    datasets = _datasets_in_order(human_df)
+
+    def _human_row(sub: pd.DataFrame) -> dict:
+        row = {"n": str(len(sub))}
+        for i, p in enumerate(prompts):
+            row[p] = _SPAN_MARK + _mean_se_str(sub["ndfu"]) if i == 0 else ""
+        return row
+
+    rows, index = [], []
+
+    # Human block
+    rows.append(_human_row(human_df))
+    index.append((HUMAN_LABEL, pooled_label))
+    for d in datasets:
+        rows.append(_human_row(human_df.loc[human_df["Dataset"] == d]))
+        index.append((HUMAN_LABEL, d))
+
+    # Model blocks
+    for model in _order_models(set(llm_df["Model"])):
+        model_df = llm_df.loc[llm_df["Model"] == model]
+        matched = {}
+        for d in datasets:
+            sub = model_df.loc[model_df["Dataset"] == d]
+            present = [p for p in prompts if p in set(sub["Prompt"])]
+            if not present:
+                continue
+            ids = set(human_df.loc[human_df["Dataset"] == d, "text_id"])
+            for p in present:
+                ids &= set(sub.loc[sub["Prompt"] == p, "text_id"])
+            matched[d] = sub[sub["text_id"].isin(ids)]
+
+        def _row(sub: pd.DataFrame) -> dict:
+            first = sub.loc[sub["Prompt"] == sub["Prompt"].iloc[0]]
+            row = {"n": str(first["text_id"].nunique())}
+            for p in prompts:
+                row[p] = _mean_se_str(sub.loc[sub["Prompt"] == p, "ndfu"])
+            return row
+
+        if not matched:
+            continue
+        pooled_n = sum(
+            m.loc[m["Prompt"] == m["Prompt"].iloc[0], "text_id"].nunique()
+            for m in matched.values()
+            if not m.empty
+        )
+        pooled = _row(pd.concat(matched.values()))
+        pooled["n"] = str(pooled_n)
+        rows.append(pooled)
+        index.append((model, pooled_label))
+        for d, sub in matched.items():
+            if sub.empty:
+                continue
+            rows.append(_row(sub))
+            index.append((model, d))
+
+    out = pd.DataFrame(
+        rows,
+        index=pd.MultiIndex.from_tuples(index, names=["Model", "Dataset"]),
+    )
+    out.columns = ["n"] + [str(c).capitalize() for c in out.columns[1:]]
+    return out
+
+
+def build_default_mean_ndfu_table(
+    ndfu_df: pd.DataFrame,
+    prompt_name: str = "default",
+    pooled_label: str = "All",
+) -> pd.DataFrame:
+    """
+    Human row first, then one row per model. For each dataset (plus a
+    pooled `pooled_label` group) an `n` column (comments) and a
+    "Mean (SE)" column with the mean per-comment nDFU. Model rows only use
+    comments that also appear in the human sample.
+    """
+    human_df = ndfu_df.loc[ndfu_df["Model"] == HUMAN_LABEL]
+    llm_df = ndfu_df.loc[
+        (ndfu_df["Model"] != HUMAN_LABEL) & (ndfu_df["Prompt"] == prompt_name)
+    ]
+    datasets = _datasets_in_order(human_df)
+
+    def _fill(row: dict, label: str, sub: pd.DataFrame) -> None:
+        row[(label, "n")] = str(len(sub)) if len(sub) else "---"
+        row[(label, "Mean (SE)")] = _mean_se_str(sub["ndfu"])
+
+    def _make_row(source: pd.DataFrame, restrict: bool) -> dict:
+        row, pooled_parts = {}, []
+        for d in datasets:
+            sub = source.loc[source["Dataset"] == d]
+            if restrict:
+                ids = set(human_df.loc[human_df["Dataset"] == d, "text_id"])
+                sub = sub[sub["text_id"].isin(ids)]
+            _fill(row, d, sub)
+            pooled_parts.append(sub)
+        _fill(row, pooled_label, pd.concat(pooled_parts))
+        return row
+
+    rows = {HUMAN_LABEL: _make_row(human_df, restrict=False)}
+    for model in _order_models(set(llm_df["Model"])):
+        rows[model] = _make_row(
+            llm_df.loc[llm_df["Model"] == model], restrict=True
+        )
+
+    out = pd.DataFrame.from_dict(rows, orient="index")
+    out.columns = pd.MultiIndex.from_tuples(out.columns)
+    out.index.name = "Model"
+    return out
 
 
 def _significance_ratio(res_df: pd.DataFrame, col: str) -> pd.Series:

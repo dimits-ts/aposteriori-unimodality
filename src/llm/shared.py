@@ -10,16 +10,12 @@ and computing the per-comment nDFU values that both the apunim grid
 (plots.py) and the prompt-sensitivity ANOVA (stats.py) are built from.
 """
 
-import re
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 from ..lib.preprocessing import (
-    DicesDataset,
-    KumarDataset,
-    SapDataset,
     Dataset,
     SubsampledView,
     LazyDatasetLoader,
@@ -29,7 +25,7 @@ from ..lib.preprocessing import (
 # Constants
 # ---------------------------------------------------------------------------
 
-DATASET_KEYS = ["dices-350", "dices-990", "sap", "kumar"]
+DATASET_KEYS = ["dices-350", "dices-990", "sap", "kumar", "popquorn"]
 
 # Columns in an llm_annotate.py output CSV (plus the "annotation_clean"
 # column we add in load_llm_df) that are *not* persona/SDB attributes.
@@ -48,6 +44,12 @@ VARIANT_NAMES = ["variant1", "variant2", "variant3"]
 # personas sampled per comment, i.e. the max number of "annotators" any
 # single comment has in the LLM-annotation CSVs.
 MAX_ANNOTATORS_PER_ITEM = 6
+
+# Inherent-polarization subsampling ablation: every comment (human and LLM
+# alike) is repeatedly subsampled down to this many annotators and the
+# results averaged over this many repeats.
+INHERENT_SUBSAMPLE_SIZE = 6
+INHERENT_SUBSAMPLE_REPEATS = 10
 
 # Preferred left-to-right column order for the composite apunim grid (models
 # not in this list are appended alphabetically after it).
@@ -77,12 +79,6 @@ ABLATION_DATASET_KEYS = DATASET_KEYS
 # mean-diff plot, the apunim-by-prompt LaTeX table and grids, and the
 # prompt-sensitivity ANOVA.
 PROMPT_COMPARISON_DATASET_KEYS = MAIN_DATASET_KEYS
-
-# The "adversarial" instruction prompts (instructions/adversarial/<dataset>/,
-# run by annotate_adversarial.sh) -- every MAIN_PROMPT_NAMES entry besides
-# the "default" baseline. Each gets its own composite apunim grid (see
-# plot_apunim_grid / main()).
-ADVERSARIAL_PROMPT_NAMES = [p for p in MAIN_PROMPT_NAMES if p != "default"]
 
 # Models excluded from the apunim-by-prompt LaTeX table (they were never
 # run on the stereotype/persona prompts to begin with; listed explicitly
@@ -325,13 +321,6 @@ def _human_sample_dataset(
     return SubsampledView(ds_human, restricted)
 
 
-def _limited_sdb_columns(ds: Dataset, limit: int | None) -> list[str]:
-    """Caps ds.get_sdb_columns() to the first `limit` entries (or returns
-    them unchanged if `limit` is None), without needing to mutate `ds`."""
-    cols = ds.get_sdb_columns()
-    return cols if limit is None else cols[:limit]
-
-
 # ---------------------------------------------------------------------------
 # nDFU-by-SDB-group records, shared by the composite apunim grid (plots.py)
 # and the prompt-sensitivity ANOVA (stats.py)
@@ -435,38 +424,3 @@ def _compute_ndfu_records(
     for _, row in df.iterrows():
         records.extend(row_fn(row, annotation_col, sdb_columns, bins))
     return pd.DataFrame(records)
-
-
-# ---------------------------------------------------------------------------
-# Human dataset loading
-# ---------------------------------------------------------------------------
-
-
-def load_human_datasets(
-    dices_small_path: Path,
-    dices_large_path: Path,
-    sap_path: Path,
-    kumar_path: Path,
-) -> HumanDatasets:
-    return HumanDatasets(
-        loaders={
-            "dices-350": LazyDatasetLoader(
-                lambda p=dices_small_path: DicesDataset(
-                    dataset_path=p, variant="350"
-                )
-            ),
-            "dices-990": LazyDatasetLoader(
-                lambda p=dices_large_path: DicesDataset(
-                    dataset_path=p, variant="990"
-                )
-            ),
-            "sap": LazyDatasetLoader(
-                lambda p=sap_path: SapDataset(dataset_path=p)
-            ),
-            "kumar": LazyDatasetLoader(
-                lambda p=kumar_path: KumarDataset(
-                    dataset_path=p, num_samples=1_000
-                )
-            ),
-        }
-    )

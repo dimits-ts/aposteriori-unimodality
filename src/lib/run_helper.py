@@ -61,18 +61,22 @@ def subsample_dataset(
     ds: preprocessing.Dataset,
     size: int,
     rng: np.random.Generator,
+    replace: bool = True,
 ) -> preprocessing.Dataset:
     """
     Return a view of `ds` where each comment's annotator lists (for the
     annotation column and every SDB column) have been subsampled down to
-    `size` annotators, sampled with replacement. All columns use the same
-    per-row indices so annotator alignment is preserved across columns.
+    `size` annotators. All columns use the same per-row indices so
+    annotator alignment is preserved across columns.
 
     Parameters
     ----------
     ds: The dataset to subsample.
-    size: Number of annotators to sample per comment (with replacement).
+    size: Number of annotators to sample per comment.
     rng: Numpy random generator to use for sampling.
+    replace: If True (default), sample `size` annotators with replacement.
+        If False, sample without replacement and cap at `size`: comments
+        with `size` annotators or fewer keep all of their annotators.
 
     Returns
     -------
@@ -86,7 +90,11 @@ def subsample_dataset(
 
     # Sample indices once per row so all columns stay aligned
     row_indices = [
-        rng.choice(len(values), size=size, replace=True)
+        rng.choice(
+            len(values),
+            size=size if replace else min(size, len(values)),
+            replace=replace,
+        )
         for values in df[annotation_col]
     ]
 
@@ -489,6 +497,46 @@ def compute_inherent_polarization_exhaustive(
         progress_desc=progress_desc,
         deduplicate_groups=deduplicate,
     )
+
+
+def compute_inherent_polarization_subsampled(
+    dataset: preprocessing.Dataset,
+    size: int,
+    n_repeats: int = 10,
+    seed: int = 42,
+    **polarization_kwargs,
+) -> pd.Series:
+    """
+    Inherent polarization (exhaustive) after repeatedly subsampling every
+    comment down to at most `size` annotators (without replacement; see
+    `subsample_dataset`). Each repeat draws a fresh subsample; the
+    per-comment values are averaged over repeats (NaNs ignored).
+
+    If no comment has more than `size` annotators, subsampling is a no-op,
+    so the polarization is computed once instead of `n_repeats` times.
+
+    `polarization_kwargs` (e.g. the progress-bar options) are forwarded to
+    `compute_inherent_polarization_exhaustive`.
+
+    Returns
+    -------
+    pd.Series
+        Series indexed by comment, named "inherent_polarization".
+    """
+    rng = np.random.default_rng(seed)
+    annotation_col = dataset.get_annotation_column()
+    needs_resampling = any(
+        len(values) > size for values in dataset.get_dataset()[annotation_col]
+    )
+
+    runs = [
+        compute_inherent_polarization_exhaustive(
+            subsample_dataset(dataset, size=size, rng=rng, replace=False),
+            **polarization_kwargs,
+        )
+        for _ in range(n_repeats if needs_resampling else 1)
+    ]
+    return pd.concat(runs, axis=1).mean(axis=1).rename("inherent_polarization")
 
 
 def compute_inherent_polarization_random(

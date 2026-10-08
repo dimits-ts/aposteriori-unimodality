@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
@@ -39,18 +40,80 @@ from .shared import (
 COMMENT_BAR_POSITION = 3
 
 
+@dataclass(frozen=True)
+class SubsampleSpec:
+    """Repeatedly subsample every comment down to `size` annotators."""
+
+    size: int
+    n_repeats: int
+    seed: int = 42
+
+    @property
+    def tag(self) -> str:
+        return f"subsampled-n{self.size}"
+
+
+def _compute_inherent(
+    ds: Dataset, subsample: SubsampleSpec | None, default_fn, **progress
+) -> pd.Series:
+    """Inherent polarization of `ds`: `default_fn` normally, the repeated
+    annotator-subsampling variant when `subsample` is given."""
+    if subsample is None:
+        return default_fn(ds, **progress)
+    return run_helper.compute_inherent_polarization_subsampled(
+        ds,
+        size=subsample.size,
+        n_repeats=subsample.n_repeats,
+        seed=subsample.seed,
+        **progress,
+    )
+
+
+def _cached_series(cached_path: Path, compute_fn) -> pd.Series:
+    """Read `cached_path` if it exists, else compute and write it."""
+    if skip_if_exists(cached_path):
+        series = pd.read_csv(cached_path, index_col="comment")[
+            "inherent_polarization"
+        ]
+        return series.dropna()
+
+    series = compute_fn()
+    cached_path.parent.mkdir(parents=True, exist_ok=True)
+    series.rename("inherent_polarization").rename_axis("comment").to_csv(
+        cached_path
+    )
+    return series.dropna()
+
+
 def _human_inherent_polarization(
     dataset_key: str,
+    prompt_name: str,
     human_ds: Dataset,
     sample_ids: set,
     human_results_dir: Path,
+    apunim_output_dir: Path,
     use_monte_carlo: bool = False,
+    subsample: SubsampleSpec | None = None,
 ) -> pd.Series:
     """
     Human inherent-polarization values, restricted to `sample_ids`.
-    Reuses the precomputed <dataset>-inherent.csv when present; only
-    recomputes when no cached file is found.
+    Normally reuses the precomputed <dataset>-inherent.csv when present
+    (only recomputing when no cached file is found). With `subsample` the
+    precomputed full-annotator file does not apply, so the values are
+    computed on the subsampled data and cached in `apunim_output_dir`.
     """
+    progress = dict(
+        show_progress=True,
+        progress_position=COMMENT_BAR_POSITION,
+        progress_desc=f"    {dataset_key} Human: comments",
+    )
+    if subsample is not None:
+        return _cached_series(
+            apunim_output_dir
+            / f"{dataset_key}-{prompt_name}-Human-inherent.csv",
+            lambda: _compute_inherent(human_ds, subsample, None, **progress),
+        )
+
     cached_path = human_results_dir / f"{dataset_key}-inherent.csv"
     if skip_if_exists(cached_path):
         series = pd.read_csv(cached_path, index_col="comment")[
@@ -63,12 +126,7 @@ def _human_inherent_polarization(
         if use_monte_carlo
         else run_helper.compute_inherent_polarization_exhaustive
     )
-    return fn(
-        human_ds,
-        show_progress=True,
-        progress_position=COMMENT_BAR_POSITION,
-        progress_desc=f"    {dataset_key} Human: comments",
-    ).dropna()
+    return fn(human_ds, **progress).dropna()
 
 
 def _llm_inherent_polarization(
@@ -77,37 +135,33 @@ def _llm_inherent_polarization(
     pseudo: str,
     path: Path,
     apunim_output_dir: Path,
+    subsample: SubsampleSpec | None = None,
 ) -> pd.Series:
     """
     LLM inherent-polarization values for a single (dataset, prompt, model).
     Reuses a cached CSV in `apunim_output_dir` when present; otherwise
-    computes exhaustively and writes the result there.
+    computes exhaustively (or on repeatedly subsampled annotators, see
+    `subsample`) and writes the result there.
     """
-    cached_path = (
+
+    def _compute() -> pd.Series:
+        ds = LLMAnnotationDataset(
+            load_llm_df(path), dataset_key, pseudo, prompt_name
+        )
+        return _compute_inherent(
+            ds,
+            subsample,
+            run_helper.compute_inherent_polarization_exhaustive,
+            show_progress=True,
+            progress_position=COMMENT_BAR_POSITION,
+            progress_desc=f"    {dataset_key}/{prompt_name}/{pseudo}: comments",
+        )
+
+    return _cached_series(
         apunim_output_dir
-        / f"{dataset_key}-{prompt_name}-{pseudo}-inherent.csv"
+        / f"{dataset_key}-{prompt_name}-{pseudo}-inherent.csv",
+        _compute,
     )
-    if skip_if_exists(cached_path):
-        series = pd.read_csv(cached_path, index_col="comment")[
-            "inherent_polarization"
-        ]
-        return series.dropna()
-
-    df = load_llm_df(path)
-    ds = LLMAnnotationDataset(df, dataset_key, pseudo, prompt_name)
-    series = run_helper.compute_inherent_polarization_exhaustive(
-        ds,
-        show_progress=True,
-        progress_position=COMMENT_BAR_POSITION,
-        progress_desc=f"    {dataset_key}/{prompt_name}/{pseudo}: comments",
-    )
-
-    # Write-through cache so the next run can skip this computation.
-    cached_path.parent.mkdir(parents=True, exist_ok=True)
-    series.rename("inherent_polarization").rename_axis("comment").to_csv(
-        cached_path
-    )
-    return series.dropna()
 
 
 def _records_from_series(
@@ -132,13 +186,19 @@ def _inherent_records_for_models(
     files: dict[str, Path],
     apunim_output_dir: Path,
     progress: tqdm | None = None,
+    subsample: SubsampleSpec | None = None,
 ) -> list[dict]:
     records = []
     for pseudo in models:
         if progress is not None:
             progress.set_postfix_str(pseudo)
         series = _llm_inherent_polarization(
-            dataset_key, prompt_name, pseudo, files[pseudo], apunim_output_dir
+            dataset_key,
+            prompt_name,
+            pseudo,
+            files[pseudo],
+            apunim_output_dir,
+            subsample,
         )
         records.extend(
             _records_from_series(series, dataset_key, prompt_name, pseudo)
@@ -157,6 +217,7 @@ def _inherent_records_for_prompt(
     human_results_dir: Path,
     exclude_models: set[str],
     use_monte_carlo: bool,
+    subsample: SubsampleSpec | None = None,
 ) -> list[dict]:
     files = find_annotation_files(annotations_dir, key, prompt_name)
     models = _order_models(set(files) - exclude_models)
@@ -179,7 +240,14 @@ def _inherent_records_for_prompt(
         if human_ds is not None:
             progress.set_postfix_str("Human")
             human_series = _human_inherent_polarization(
-                key, human_ds, sample_ids, human_results_dir, use_monte_carlo
+                key,
+                prompt_name,
+                human_ds,
+                sample_ids,
+                human_results_dir,
+                apunim_output_dir,
+                use_monte_carlo,
+                subsample,
             )
             records.extend(
                 _records_from_series(human_series, key, prompt_name, "Human")
@@ -193,6 +261,7 @@ def _inherent_records_for_prompt(
                 files,
                 apunim_output_dir,
                 progress=progress,
+                subsample=subsample,
             )
         )
     return records
@@ -207,6 +276,7 @@ def _inherent_records_for_dataset(
     human_results_dir: Path,
     exclude_models: set[str],
     use_monte_carlo: bool,
+    subsample: SubsampleSpec | None = None,
 ) -> list[dict]:
     ds_human = human_datasets[key]
     records = []
@@ -226,6 +296,7 @@ def _inherent_records_for_dataset(
                 human_results_dir,
                 exclude_models,
                 use_monte_carlo,
+                subsample,
             )
         )
     return records
@@ -240,11 +311,15 @@ def compute_inherent_polarization_comparison(
     dataset_keys: list[str] = DATASET_KEYS,
     prompt_names: list[str] = MAIN_PROMPT_NAMES,
     exclude_models: set[str] | None = None,
+    subsample: SubsampleSpec | None = None,
 ) -> pd.DataFrame:
     """
     Long-format DataFrame with one row per comment giving its inherent
     polarization, for every (Dataset, Prompt, Source) restricted to the
-    sample of comments the LLMs were actually run on.
+    sample of comments the LLMs were actually run on. With `subsample`,
+    comments are repeatedly subsampled down to `subsample.size`
+    annotators first (use a separate `apunim_output_dir` for this so the
+    cached values of the full-annotator run are not mixed up).
     """
     exclude_models = set(exclude_models or ())
     records = []
@@ -265,6 +340,7 @@ def compute_inherent_polarization_comparison(
                 human_results_dir,
                 exclude_models,
                 use_monte_carlo,
+                subsample,
             )
         )
     return pd.DataFrame(records)
@@ -309,8 +385,18 @@ def _escape_underscores(index: pd.MultiIndex) -> pd.MultiIndex:
     )
 
 
+DEFAULT_INHERENT_CAPTION = (
+    "Mean inherent polarization (mean $\\pm$ 2 SD) per "
+    "(dataset, prompt), for Human and each LLM."
+)
+
+
 def export_inherent_polarization_table(
-    df: pd.DataFrame, output_path: Path, label: str, float_format: str
+    df: pd.DataFrame,
+    output_path: Path,
+    label: str,
+    float_format: str,
+    caption: str = DEFAULT_INHERENT_CAPTION,
 ) -> None:
     if df.empty:
         print(f"No inherent-polarization results; skipping {output_path}.")
@@ -336,10 +422,7 @@ def export_inherent_polarization_table(
     col_count = len(display.columns)
 
     latex_str = display.to_latex(
-        caption=(
-            "Mean inherent polarization (mean $\\pm$ 2 SD) per "
-            "(dataset, prompt), for Human and each LLM."
-        ),
+        caption=caption,
         label=label,
         escape=False,
         position="t",

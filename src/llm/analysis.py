@@ -35,15 +35,10 @@ The following are produced:
    (shared.PROMPT_COMPARISON_DATASET_KEYS) and to the models run on all three prompts (see
    PROMPT_COMPARISON_DATASET_KEYS / APUNIM_TABLE_EXCLUDE_MODELS).
 
-4. A single composite figure (llm_apunim_grid.png) with one subplot per
-   (dataset, model) -- an nDFU-by-SDB-group boxplot for the "default"
-   prompt -- assembled into one grid instead of many separate images, and
-   sized/fonted so it stays readable once placed in a paper (see
-   plot_apunim_grid's docstring for how that sizing works). The same grid
-   is also produced separately for each adversarial prompt (currently
-   "stereotype" and "persona", see ADVERSARIAL_PROMPT_NAMES), as
-   llm_apunim_grid_<prompt>.png, with a title that just names the prompt
-   instead of the main figure's title.
+4. Two compact LaTeX tables of the mean per-comment nDFU of the human
+   annotations and of the LLM annotations (mean_ndfu_by_prompt.tex: every
+   instruction prompt; mean_ndfu_default_vs_human.tex: default prompt
+   only), per model and dataset (see stats.build_mean_ndfu_table).
 
 Rows are matched across files (models, or prompt variants) using the
 comment id ("text_id") together with the sampled persona's characteristics,
@@ -55,6 +50,14 @@ import argparse
 from pathlib import Path
 
 import pandas as pd
+
+from ..lib.preprocessing import (
+    LazyDatasetLoader,
+    DicesDataset,
+    SapDataset,
+    KumarDataset,
+    PopquornDataset,
+)
 
 from ..lib import graphs
 from ..lib.util import skip_if_exists
@@ -68,6 +71,7 @@ def main(
     dices_large_path: Path,
     sap_path: Path,
     kumar_path: Path,
+    popquorn_path: Path,
     annotations_dir: Path,
     paraphrase_dir: Path,
     repeat_dir: Path,
@@ -82,11 +86,30 @@ def main(
     graph_output_dir.mkdir(parents=True, exist_ok=True)
     latex_output_dir.mkdir(parents=True, exist_ok=True)
 
-    human_datasets = shared.load_human_datasets(
-        dices_small_path=dices_small_path,
-        dices_large_path=dices_large_path,
-        sap_path=sap_path,
-        kumar_path=kumar_path,
+    human_datasets = shared.HumanDatasets(
+        {
+            "dices-350": LazyDatasetLoader(
+                lambda p=dices_small_path: DicesDataset(
+                    dataset_path=p, variant="350"
+                )
+            ),
+            "dices-990": LazyDatasetLoader(
+                lambda p=dices_large_path: DicesDataset(
+                    dataset_path=p, variant="990"
+                )
+            ),
+            "sap": LazyDatasetLoader(
+                lambda p=sap_path: SapDataset(dataset_path=p)
+            ),
+            "kumar": LazyDatasetLoader(
+                lambda p=kumar_path: KumarDataset(
+                    dataset_path=p, num_samples=1_000
+                )
+            ),
+            "popquorn": LazyDatasetLoader(
+                lambda p=popquorn_path: PopquornDataset(dataset_path=p)
+            ),
+        }
     )
 
     run_histogram_step(
@@ -117,9 +140,11 @@ def main(
     run_apunim_prompt_table_step(
         human_datasets, annotations_dir, latex_output_dir, cache_dir=cache_dir
     )
-    run_apunim_grid_steps(human_datasets, annotations_dir, graph_output_dir)
+    run_mean_ndfu_step(
+        human_datasets, annotations_dir, latex_output_dir, cache_dir
+    )
 
-    run_inherent_polarization_step(
+    run_inherent_polarization_steps(
         human_datasets,
         annotations_dir,
         latex_output_dir,
@@ -139,15 +164,16 @@ def main(
         )
 
     stats.export_ndfu_anova_by_prompt(result_df=res_df, output_path=stats_path)
-    summary_df = stats.compute_cohens_d_summary_table(res_df, by_model=True)
-    stats.export_cohens_d_summary_latex(
-        summary_df,
+    compact_df = stats.compute_cohens_d_compact_table(res_df)
+    stats.export_compact_prompt_table_latex(
+        compact_df,
         output_path=latex_output_dir / "cohens_d.tex",
-        caption=r"""Cohen's d statistics showing the quantitative difference
-        in \ac{ndfu} between the default and each adversarial instruction
-        prompt for each of the groups of both datasets and across all models.""",
+        caption=r"""Cohen's d between the default and each adversarial
+        instruction prompt, for the \ac{ndfu} of each group, shown as mean
+        (SD) across groups. Rows give results per model, pooled over all
+        datasets (All) and for each dataset separately; $n$ is the number of
+        groups.""",
         label="tab:cohens-d",
-        by_model=True,
     )
     stats.run_exploratory_stats(res_df)
 
@@ -321,28 +347,49 @@ def run_apunim_prompt_table_step(
             )
 
 
-def _run_apunim_grid_for_prompt(
-    human_datasets, annotations_dir, graph_output_dir, prompt_name
+def run_mean_ndfu_step(
+    human_datasets, annotations_dir, latex_output_dir, cache_dir
 ):
-    output_path = graph_output_dir / f"llm_apunim_grid_{prompt_name}.png"
-    grid_models = list(
-        set(shared.MODEL_DISPLAY_ORDER) - shared.APUNIM_TABLE_EXCLUDE_MODELS
-    )
-    plots.plot_apunim_grid(
-        human_datasets=human_datasets,
-        annotations_dir=annotations_dir,
-        output_path=output_path,
-        prompt_name=prompt_name,
-        models=grid_models,
-        title=f"{prompt_name.capitalize()} Prompt",
-    )
-
-
-def run_apunim_grid_steps(human_datasets, annotations_dir, graph_output_dir):
-    for prompt_name in shared.MAIN_PROMPT_NAMES:
-        _run_apunim_grid_for_prompt(
-            human_datasets, annotations_dir, graph_output_dir, prompt_name
+    cache_path = cache_dir / "mean_ndfu_records.csv"
+    if skip_if_exists(cache_path):
+        ndfu_df = pd.read_csv(cache_path)
+    else:
+        ndfu_df = stats.compute_mean_ndfu_records(
+            human_datasets=human_datasets,
+            annotations_dir=annotations_dir,
+            dataset_keys=shared.PROMPT_COMPARISON_DATASET_KEYS,
+            prompt_names=shared.MAIN_PROMPT_NAMES,
+            exclude_models=shared.APUNIM_TABLE_EXCLUDE_MODELS,
         )
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        ndfu_df.to_csv(cache_path, index=False)
+
+    if ndfu_df.empty:
+        print("No matched human/LLM annotations; skipping mean nDFU tables.")
+        return
+
+    stats.export_compact_prompt_table_latex(
+        stats.build_mean_ndfu_table(
+            ndfu_df, prompt_names=shared.MAIN_PROMPT_NAMES
+        ),
+        output_path=latex_output_dir / "mean_ndfu_by_prompt.tex",
+        caption=r"""Mean (SE) per-comment \ac{ndfu} of the human annotations
+        and of the LLM annotations under each instruction prompt. Human
+        annotations do not depend on the prompt. Rows give results per
+        model, pooled over all datasets (All) and for each dataset
+        separately; $n$ is the number of comments.""",
+        label="tab:mean-ndfu-by-prompt",
+    )
+
+    stats.export_default_mean_ndfu_latex(
+        stats.build_default_mean_ndfu_table(ndfu_df, prompt_name="default"),
+        output_path=latex_output_dir / "mean_ndfu_default_vs_human.tex",
+        caption=r"""Mean (SE) per-comment \ac{ndfu} of the human annotations
+        and of the LLM annotations under the default prompt, per dataset
+        and pooled over all datasets (All). $n$ is the number of
+        comments.""",
+        label="tab:mean-ndfu-default-vs-human",
+    )
 
 
 def run_inherent_polarization_step(
@@ -352,35 +399,75 @@ def run_inherent_polarization_step(
     exclude_models,
     human_results_dir: Path,
     cache_dir: Path,
+    subsample: polarization.SubsampleSpec | None = None,
 ):
     # human_results_dir holds the human scripts' own "<dataset>-inherent.csv"
-    # outputs (e.g. output/human/main), which are reused as-is. The per-
-    # (dataset, prompt, model) LLM values are cached separately under
-    # cache_dir/inherent. Delete that folder to force a recompute.
-    llm_inherent_cache_dir = cache_dir / "inherent"
+    # outputs (e.g. output/human/main), which are reused as-is for the main
+    # run. The per-(dataset, prompt, model) values are cached separately
+    # under cache_dir/inherent (the subsampling ablation uses its own
+    # folder, since its values differ). Delete the folder to force a
+    # recompute.
+    suffix = "" if subsample is None else f"-{subsample.tag}"
+    caption = polarization.DEFAULT_INHERENT_CAPTION
+    if subsample is not None:
+        caption = (
+            caption.removesuffix(".")
+            + f", after repeatedly subsampling every comment down to at "
+            f"most {subsample.size} annotators ({subsample.n_repeats} "
+            "repeats)."
+        )
 
     inherent_df = polarization.compute_inherent_polarization_comparison(
         human_datasets=human_datasets,
         annotations_dir=annotations_dir,
-        apunim_output_dir=llm_inherent_cache_dir,
+        apunim_output_dir=cache_dir / f"inherent{suffix}",
         human_results_dir=human_results_dir,
         dataset_keys=shared.MAIN_DATASET_KEYS,
         prompt_names=shared.MAIN_PROMPT_NAMES,
         exclude_models=set(exclude_models),
         use_monte_carlo=True,
+        subsample=subsample,
     )
     inherent_table_df = polarization.build_inherent_polarization_table(
         long_df=inherent_df,
         prompt_names=shared.MAIN_PROMPT_NAMES,
     )
 
-    output_path = latex_output_dir / "inherent-polarization.tex"
     polarization.export_inherent_polarization_table(
         df=inherent_table_df,
-        output_path=output_path,
-        label="tab:inherent-polarization",
+        output_path=latex_output_dir / f"inherent-polarization{suffix}.tex",
+        label=f"tab:inherent-polarization{suffix}",
         float_format=".2f",
+        caption=caption,
     )
+
+
+def run_inherent_polarization_steps(
+    human_datasets,
+    annotations_dir,
+    latex_output_dir,
+    exclude_models,
+    human_results_dir: Path,
+    cache_dir: Path,
+):
+    """Main inherent-polarization run, plus the annotator-subsampling
+    ablation (same pipeline, `subsample` set)."""
+    for subsample in (
+        None,
+        polarization.SubsampleSpec(
+            size=shared.INHERENT_SUBSAMPLE_SIZE,
+            n_repeats=shared.INHERENT_SUBSAMPLE_REPEATS,
+        ),
+    ):
+        run_inherent_polarization_step(
+            human_datasets,
+            annotations_dir,
+            latex_output_dir,
+            exclude_models,
+            human_results_dir=human_results_dir,
+            cache_dir=cache_dir,
+            subsample=subsample,
+        )
 
 
 if __name__ == "__main__":
@@ -393,21 +480,26 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dices-small-path",
-        default=None,
+        required=True,
         help="Path to the DICES-350 CSV file.",
     )
     parser.add_argument(
         "--dices-large-path",
-        default=None,
+        required=True,
         help="Path to the DICES-990 CSV file.",
     )
     parser.add_argument(
-        "--sap-path", default=None, help="Path to the Sap et al. CSV file."
+        "--sap-path", required=True, help="Path to the Sap et al. CSV file."
     )
     parser.add_argument(
         "--kumar-path",
-        default=None,
+        required=True,
         help="Path to the Kumar et al. JSON file.",
+    )
+    parser.add_argument(
+        "--popquorn-path",
+        required=True,
+        help="Path to the POPQUORN offensiveness CSV.",
     )
     parser.add_argument(
         "--annotations-dir",
@@ -475,6 +567,7 @@ if __name__ == "__main__":
         dices_large_path=Path(args.dices_large_path),
         sap_path=Path(args.sap_path),
         kumar_path=Path(args.kumar_path),
+        popquorn_path=Path(args.popquorn_path),
         annotations_dir=Path(args.annotations_dir),
         paraphrase_dir=Path(args.paraphrase_dir),
         repeat_dir=Path(args.repeat_dir),

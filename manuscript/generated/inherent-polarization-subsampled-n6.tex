@@ -1,0 +1,23 @@
+\begin{table}[t]
+\small
+\centering
+\caption{Mean inherent polarization (mean $\pm$ 2 SD) per (dataset, prompt), for Human and each LLM, after repeatedly subsampling every comment down to at most 6 annotators (10 repeats).}
+\label{tab:inherent-polarization-subsampled-n6}
+\begin{tabular}{llrrrrr}
+\toprule
+ &  & Default & Stereotype & Persona & Single & Direct \\
+Dataset & Source &  &  &  &  &  \\
+\midrule
+\multirow[t]{4}{*}{kumar} & Human & 0.17 $\pm$ 0.472 & 0.17 $\pm$ 0.472 & 0.17 $\pm$ 0.472 & 0.17 $\pm$ 0.472 & 0.17 $\pm$ 0.472 \\
+ & olmo32b & 0.05 $\pm$ 0.137 & 0.09 $\pm$ 0.177 & 0.05 $\pm$ 0.132 & 0.07 $\pm$ 0.162 & 0.05 $\pm$ 0.132 \\
+ & qwen32b & 0.00 $\pm$ 0.012 & 0.00 $\pm$ 0.022 & 0.00 $\pm$ 0.010 & 0.02 $\pm$ 0.110 & 0.00 $\pm$ 0.026 \\
+ & qwen7b & 0.02 $\pm$ 0.084 & 0.00 $\pm$ 0.020 & 0.01 $\pm$ 0.050 & 0.01 $\pm$ 0.070 & 0.01 $\pm$ 0.050 \\
+\cline{1-7}
+\multirow[t]{4}{*}{sap} & Human & 0.11 $\pm$ 0.437 & 0.11 $\pm$ 0.437 & 0.11 $\pm$ 0.437 & 0.11 $\pm$ 0.437 & 0.11 $\pm$ 0.437 \\
+ & olmo32b & 0.03 $\pm$ 0.121 & 0.05 $\pm$ 0.144 & 0.05 $\pm$ 0.147 & 0.04 $\pm$ 0.128 & 0.03 $\pm$ 0.128 \\
+ & qwen32b & 0.00 $\pm$ 0.030 & 0.00 $\pm$ 0.045 & 0.00 $\pm$ 0.030 & 0.00 $\pm$ 0.020 & 0.00 $\pm$ 0.023 \\
+ & qwen7b & 0.00 $\pm$ 0.034 & 0.00 $\pm$ 0.015 & 0.00 $\pm$ 0.040 & 0.01 $\pm$ 0.042 & 0.00 $\pm$ 0.032 \\
+\cline{1-7}
+\bottomrule
+\end{tabular}
+\end{table}
