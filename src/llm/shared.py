@@ -70,7 +70,12 @@ MAIN_PROMPT_NAMES = ["default", "stereotype", "persona", "single", "direct"]
 # Datasets used for the main annotation runs (default + adversarial
 # prompts). The DICES datasets are deliberately excluded: they were only
 # run for the ablations below.
-MAIN_DATASET_KEYS = ["sap", "kumar"]
+MAIN_DATASET_KEYS = DATASET_KEYS
+
+# Grid of the subsampled inherent-polarization histogram figure: datasets
+# are the columns, prompts the rows (all main prompts, as in the table).
+INHERENT_HIST_DATASET_KEYS = ["dices-990", "sap", "kumar", "popquorn"]
+INHERENT_HIST_PROMPT_NAMES = MAIN_PROMPT_NAMES
 
 # Datasets used for the ablations (paraphrase variants, repeated runs).
 ABLATION_DATASET_KEYS = DATASET_KEYS

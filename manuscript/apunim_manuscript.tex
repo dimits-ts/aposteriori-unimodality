@@ -457,8 +457,13 @@ Apunim thus measures the degree to which an annotator group contributes to overa
 \label{sec:llms}
  
  \input{generated/mean_ndfu_default_vs_human.tex}
- \input{generated/inherent-polarization-subsampled-n6.tex}
  \input{generated/cohens_d.tex}
+ 
+ \begin{figure}
+ 	\includegraphics[width=\linewidth]{inherent-polarization-subsampled-n6-histogram.png}
+ 	\caption{Normalized histograms showing the \ac{ip} exhibited by each model when truncating annotation to six annotations, compared to human annotations for each dataset. Some LLMs fail to show any \ac{ip}, while the rest show far less than humans. Note that the graph does not include zero \ac{ip}, and the y-axis is truncated to $[0, 0.3]$.}
+ 	\label{fig:inherent-llms}
+ \end{figure}
 
 \paragraph{Experimental Procedure} We investigate six open-source LLMs (two discarded because of prompt sensitivity---see App.~\ref{app:llms}; Table~\ref{tab:llm-consistency-variants}) using twenty annotators for the Kumar, Sap and POPQUORN datasets supplied with personas sampled from our human dataset. While LLM annotation can be scaled to be arbitrarily large, the choice of twenty annotators is a compromise between practical computation costs and enough annotation density to facilitate exploration. We do not annotate the DICES datasets since the annotations are wildly inconsistent (App.~\ref{app:llms}; Table~\ref{tab:llm-consistency-variants}), which we can not readily fix as their original annotation guidelines are not public (\S\ref{sec:datasets}; Table~\ref{tab:datasets}). See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations.
 
@@ -466,13 +471,9 @@ Apunim thus measures the degree to which an annotator group contributes to overa
 
 \paragraph{Do Instructions Influence the Extent of Disagreement?} \textbf{No}. We use four adversarial prompts progressively emphasizing the importance of the LLMs' personas (App.~\ref{app:prompts}). While an ANOVA test\footnote{We use a parametric test due to the abundance of observations ($N={585,1000}$). We also use a multiple hypothesis p-value correction (specifically the ``Holms-Bonferroni'' method~\citep{holms}).} shows that the choice of instruction prompt does indeed affect \ac{ndfu} scores across most models, the effect is generally small ($\lvert d \rvert \leq 0.3$) and inconsistent. The sign of the effect depends on the model: the stereotype prompt \emph{increases} \ac{ndfu} for \textsc{olmo32b} and \textsc{qwen32b} but sharply \emph{decreases} it for \textsc{qwen7b}. The effect also varies with the dataset; large shifts for \textsc{qwen7b} come entirely from Kumar, while on Sap, the same prompts have no effect. Generally, instructions can shift how much LLMs disagree, but no prompt reliably increases \ac{ndfu}, so prompting alone is not a dependable way to elicit systematic disagreement. See App.~\ref{app:full}; Table~\ref{tab:mean-ndfu-default-vs-human} for the actual mean \ac{ndfu} values by prompt.
 
-\paragraph{Is Any Such Disagreement Unattributable?} \textbf{Yes, but not to the levels of humans}. We observe no \ac{ip} from two of the models even when subsampling down to the minimum six annotators (Table~\ref{tab:inherent-polarization-subsampled-n6}). The only model showing any \ac{ip} is \textsc{olmo32b} which shows a fraction of human \ac{ip} and variance. This result suggests that even when using prompt engineering and persona prompting, LLMs retain their tendency to default to a statistical average, even if that average differs from the ``average human'' whose opinions were learned during model pretraining.
+\paragraph{Is Any Such Disagreement Unattributable?} \textbf{Mostly no}. We observe no \ac{ip} from two of the models even when subsampling down to the minimum six annotators (Fig.~\ref{fig:inherent-llms}). The only model showing any \ac{ip} is \textsc{olmo32b} which shows a fraction of human \ac{ip} and variance. This result suggests that even when using prompt engineering and persona prompting, LLMs retain their tendency to default to a statistical average, even if that average differs from the ``average human'' whose opinions were learned during model pretraining.
 
 \paragraph{Can Systematic Disagreement be Attributed to LLM Persona Characteristics?} \textbf{No}. 
-
-%\paragraph{Are LLMs Polarized by Default?} We first examine whether persona prompting with standard instructions leads to polarized annotations. Our results show \emph{no statistically significant attribution effects} and very small \emph{apunim} values for all groups in all models and datasets (App.~\ref{app:llms}; Table~\ref{tab:llm-apunim-by-prompt-kumar},~\ref{tab:llm-apunim-by-prompt-sap}). Unlike human annotations, we observe no \ac{ip} (Table~\ref{tab:inherent-polarization}) and only two of the four models showing any non-zero \ac{ndfu} values (App.~\ref{app:llms}; Fig.~\ref{fig:llm-polarization-adversarial}).
-
-%\paragraph{Do Instructions Influence Polarization?} Since instruction prompts are known to influence the effect of personas \citep{weeber-etal-2026-one}, we also try four adversarial prompts progressively emphasizing the importance of the LLMs' personas (App.~\ref{app:prompts}). While an ANOVA test\footnote{We use a parametric test due to the abundance of observations ($N={585,1000}$). We also use a multiple hypothesis p-value correction (specifically the ``Holms-Bonferroni'' method~\citep{holms}).} shows that the choice of instruction prompt does indeed affect \ac{ndfu} scores across most models (almost all groups for OLMo-32B, half for LLaMa-70B, Qwen-7B and a single group for Qwen-32B), these effects are almost always not quantitatively significant ($<0.2$ Cohen's d), as shown in Table~\ref{tab:cohens-d}. The ``single'' prompt is the only prompt producing a sometimes notable (small-to-medium) quantitative effect exclusively on the OLMo-32B model, which is indeed significant as evidenced by App.~\ref{app:llms}; Fig.~\ref{fig:llm-polarization-adversarial}. 
 
 \begin{finding}
 	\label{finding:llms}
@@ -1025,12 +1026,13 @@ We examine the following conditions for selecting models and datasets for our LL
 
 \subsection{LLM Annotation Results}
 
-\paragraph{Apunim Analysis} Tables~\ref{tab:llm-apunim-by-prompt-kumar} and~\ref{tab:llm-apunim-by-prompt-sap} show the apunim results for the LLM annotation task on the Kumar and Sap datasets respectively. Apunim values are largely model-dependent, but no other concrete pattern can be discerned. 
+\paragraph{Apunim Analysis} Tables~\ref{tab:llm-apunim-by-prompt-kumar},\ref{tab:llm-apunim-by-prompt-sap},\ref{tab:llm-apunim-by-prompt-popquorn} show the apunim results for the LLM annotation task on the Kumar, Sap and POPQUORN datasets respectively. Apunim values are largely model-dependent, but no other concrete pattern can be discerned. 
 
 \begingroup
 \scriptsize
 \input{generated/llm-apunim-by-prompt-kumar.tex}
 \input{generated/llm-apunim-by-prompt-sap.tex}
+\input{generated/llm-apunim-by-prompt-popquorn.tex}
 \endgroup
 
 

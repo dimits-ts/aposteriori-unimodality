@@ -151,6 +151,7 @@ def main(
         exclude_models,
         human_results_dir=human_results_dir,
         cache_dir=cache_dir,
+        graph_output_dir=graph_output_dir,
     )
 
     stats_path = cache_dir / "polarization_by_instruction_anova.csv"
@@ -399,6 +400,7 @@ def run_inherent_polarization_step(
     exclude_models,
     human_results_dir: Path,
     cache_dir: Path,
+    graph_output_dir: Path,
     subsample: polarization.SubsampleSpec | None = None,
 ):
     # human_results_dir holds the human scripts' own "<dataset>-inherent.csv"
@@ -428,18 +430,20 @@ def run_inherent_polarization_step(
         use_monte_carlo=True,
         subsample=subsample,
     )
-    inherent_table_df = polarization.build_inherent_polarization_table(
-        long_df=inherent_df,
-        prompt_names=shared.MAIN_PROMPT_NAMES,
-    )
 
-    polarization.export_inherent_polarization_table(
-        df=inherent_table_df,
-        output_path=latex_output_dir / f"inherent-polarization{suffix}.tex",
-        label=f"tab:inherent-polarization{suffix}",
-        float_format=".2f",
-        caption=caption,
-    )
+    # Normalized histogram grid of the same per-comment values (datasets as
+    # columns, prompts as rows), exported next to the table. Only produced
+    # for the annotator-subsampled variant.
+    if subsample is not None:
+        plots.plot_inherent_polarization_histogram_grid(
+            long_df=inherent_df,
+            output_path=(
+                graph_output_dir
+                / f"inherent-polarization{suffix}-histogram.png"
+            ),
+            dataset_keys=shared.INHERENT_HIST_DATASET_KEYS,
+            prompt_names=shared.INHERENT_HIST_PROMPT_NAMES,
+        )
 
 
 def run_inherent_polarization_steps(
@@ -449,25 +453,22 @@ def run_inherent_polarization_steps(
     exclude_models,
     human_results_dir: Path,
     cache_dir: Path,
+    graph_output_dir: Path,
 ):
-    """Main inherent-polarization run, plus the annotator-subsampling
-    ablation (same pipeline, `subsample` set)."""
-    for subsample in (
-        None,
-        polarization.SubsampleSpec(
+    """Annotator-subsampling ablation (same pipeline, `subsample` set)."""
+    run_inherent_polarization_step(
+        human_datasets,
+        annotations_dir,
+        latex_output_dir,
+        exclude_models,
+        human_results_dir=human_results_dir,
+        cache_dir=cache_dir,
+        graph_output_dir=graph_output_dir,
+        subsample=polarization.SubsampleSpec(
             size=shared.INHERENT_SUBSAMPLE_SIZE,
             n_repeats=shared.INHERENT_SUBSAMPLE_REPEATS,
         ),
-    ):
-        run_inherent_polarization_step(
-            human_datasets,
-            annotations_dir,
-            latex_output_dir,
-            exclude_models,
-            human_results_dir=human_results_dir,
-            cache_dir=cache_dir,
-            subsample=subsample,
-        )
+    )
 
 
 if __name__ == "__main__":
