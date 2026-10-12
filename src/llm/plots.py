@@ -2,6 +2,7 @@ import itertools
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import seaborn as sns
 import numpy as np
 import pandas as pd
@@ -406,5 +407,120 @@ def plot_prompt_mean_diff(
         y=1.02,
     )
     fig.tight_layout()
+    graphs.save_plot(output_path)
+    plt.close(fig)
+
+
+# ---------------------------------------------------------------------------
+# Inherent-polarization histogram grid (companion to the subsampled
+# inherent-polarization table): datasets as columns, prompts as rows
+# ---------------------------------------------------------------------------
+
+INHERENT_HIST_BINS = 30
+
+
+def plot_inherent_polarization_histogram_grid(
+    long_df: pd.DataFrame,
+    output_path: Path,
+    dataset_keys: list[str],
+    prompt_names: list[str],
+    bins: int = INHERENT_HIST_BINS,
+) -> None:
+    """
+    Grid of normalized histograms of per-comment inherent polarization:
+    one row per dataset, one column per prompt, with Human and every LLM
+    overlaid in each cell.
+
+    `long_df` is the long-format frame from
+    `polarization.compute_inherent_polarization_comparison` (columns
+    Dataset, Prompt, Source, TextID, value). Each source is normalized by
+    its own number of comments (bar heights sum to 1).
+
+    Styling follows the human `apriori.png` inherent-polarization figure:
+    colorblind palette with a hatch per source, black bar edges,
+    alpha 0.7, x-range [0, 1].
+    """
+    df = long_df.assign(
+        value=pd.to_numeric(long_df["value"], errors="coerce")
+    ).dropna(subset=["value"])
+    dataset_keys = [k for k in dataset_keys if k in set(df["Dataset"])]
+    prompt_names = [p for p in prompt_names if p in set(df["Prompt"])]
+    if df.empty or not dataset_keys or not prompt_names:
+        print(f"No inherent-polarization values; skipping {output_path}.")
+        return
+
+    sources = ["Human"] + _order_models(set(df["Source"]) - {"Human"})
+    sources = [s for s in sources if s in set(df["Source"])]
+    style = {
+        s: (
+            graphs.COLORBLIND_PALETTE[i % len(graphs.COLORBLIND_PALETTE)],
+            graphs.HATCHES[i % len(graphs.HATCHES)],
+        )
+        for i, s in enumerate(sources)
+    }
+
+    nrows, ncols = len(dataset_keys), len(prompt_names)
+    fig, axes = plt.subplots(
+        nrows,
+        ncols,
+        squeeze=False,
+        sharex=True,
+        sharey=True,
+    )
+
+    for r, key in enumerate(dataset_keys):
+        for c, prompt in enumerate(prompt_names):
+            ax = axes[r][c]
+            for source in sources:
+                vals = df[
+                    (df["Dataset"] == key)
+                    & (df["Prompt"] == prompt)
+                    & (df["Source"] == source)
+                ]["value"]
+                if vals.empty:
+                    continue
+                color, hatch = style[source]
+                before = len(ax.patches)
+                sns.histplot(
+                    x=vals,
+                    bins=bins,
+                    binrange=(0, 1),
+                    stat="proportion",
+                    common_norm=False,
+                    alpha=0.7,
+                    color=color,
+                    ax=ax,
+                )
+                for patch in ax.patches[before:]:
+                    patch.set_hatch(hatch)
+                    patch.set_edgecolor("black")
+                    patch.set_linewidth(0.3)
+            ax.set_xlim(0.1, 1)
+            ax.set_ylim(0, 0.3)
+            ax.set_ylabel(key.capitalize() if c == 0 else "")
+            ax.set_xlabel("")
+            if r == 0:
+                ax.set_title(prompt.capitalize())
+
+    fig.supylabel("Proportion of comments")
+    fig.supxlabel("Unattributable Polarization")
+    fig.suptitle("LLM Annotation Exhibits Different UnPol Patterns")
+
+    legend_handles = [
+        mpatches.Patch(
+            facecolor=style[s][0],
+            edgecolor="black",
+            hatch=style[s][1],
+            label=s,
+            alpha=0.4,
+        )
+        for s in sources
+    ]
+    fig.legend(
+        handles=legend_handles,
+        loc="lower center",
+        ncol=min(len(sources), 7),
+        frameon=False,
+    )
     graphs.save_plot(output_path)
     plt.close(fig)
