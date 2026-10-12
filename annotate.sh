@@ -27,11 +27,15 @@ declare -A model_ids=(
   [olmo7b]="unsloth/Olmo-3-7B-Instruct-unsloth-bnb-4bit"
   [qwen7b]="unsloth/Qwen2.5-7B-Instruct-bnb-4bit"
   [llama8b]="unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit"
+  [mistral24b]="unsloth/Mistral-Small-24B-Instruct-2501-bnb-4bit"
+  [mistral7b]="unsloth/mistral-7b-instruct-v0.3-bnb-4bit"
+  [gemma7b]="unsloth/gemma-4-E2B-it-unsloth-bnb-4bit"
+  [gemma31b]="unsloth/gemma-4-31B-it-unsloth-bnb-4bit"
 )
 
 # Models for the main and ablation runs (all) and the adversarial runs (subset).
-all_models=("olmo32b" "qwen32b" "olmo7b" "qwen7b" "llama8b")
-adv_models=("olmo32b" "qwen32b" "qwen7b")
+all_models=("olmo32b" "qwen32b" "olmo7b" "qwen7b" "llama8b" "mistral24b" "mistral7b" "gemma7b" "gemma31b")
+adv_models=("olmo32b" "qwen32b" "olmo7b" "qwen7b" "llama8b" "mistral24b" "mistral7b" "gemma7b" "gemma31b")
 
 # Anything above the number of annotators is wasted.
 batch_size=20
