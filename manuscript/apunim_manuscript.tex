@@ -43,13 +43,14 @@
 	\newtheorem{researchquestion}{RQ}
 }
 
+\newcommand{\warning}[1]{\textcolor{ACMRed}{\textbf{#1}}}
 \newcommand{\librarylink}{ \url{https://anonymous.4open.science/r/apunim-5F70}}
 \newcommand{\doclink}{\url{https://anonymous.4open.science/r/apunim-page}}
 \newcommand{\explink}{\url{https://anonymous.4open.science/r/aposteriori-unimodality-E8C1}}
 
 \newcommand\given[1][]{\:#1\vert\:}
 
-\graphicspath{ {../graphs} {graphs}  }
+\graphicspath{ {../graphs} {graphs} }
 
 \title[When Silver Isn't Gold]{When Silver Isn't Gold: Quantifying and Auditing Group-Based Disagreement in Human and LLM Annotation}
 
@@ -131,25 +132,20 @@
 	\label{fig:disagreement-vs-polarization}
 \end{figure}
 
-The rise of internet spaces has long necessitated research in subjective phenomena such as the detection of harmful content. Annotations are therefore needed to support social science research, the training of automated classifiers and identifying vulnerable groups \citep{vidgen_2021_directions}.  Most of these annotated datasets typically contain items with very low \ac{iaa} \citep{vidgen_2021_directions}, which if ignored may provide us with the wrong signal, leading to significant misconfiguration in trained AI systems \citep{uma2021}. For example, toxicity models have disproportionately marked \ac{aa} speech as ``toxic'' \citep{sap-etal-2019-risk}, or systematically ignored minority opinions \citep{quaranto2022dog} in the past. 
+The rise of internet spaces has necessitated research in subjective phenomena such as the detection of harmful content. Annotations are needed to support social science research, the training of automated classifiers and the proactive identification of vulnerable groups \citep{vidgen_2021_directions}. Most current annotated datasets typically contain items with very low \ac{iaa} \citep{vidgen_2021_directions}, which if ignored may provide us with the wrong signal, leading to significant misconfiguration in trained AI systems \citep{uma2021}. For example, toxicity models have disproportionately marked \ac{aa} speech as ``toxic'' \citep{sap-etal-2019-risk}, or systematically ignored minority opinions \citep{quaranto2022dog} in the past. Indeed, the disagreement itself may provide us with valuable information \citep{pavlopoulos-likas-2024}. 
 
-As human annotation is generally expensive,  LLM-as-judge systems are increasingly deployed as scalable substitutes for human annotators \citep{rossi_2024, kapania-etal-2025-examining} to acquire a cheaper, ``silver'' supervision signal in place of human-annotated ``gold'' labels.  It is therefore imperative that systematic disagreements by human annotators be preserved by LLMs whose annotations by default gravitate toward the statistical average \citep{bisbee_2023}. Persona-prompting is sometimes used to bypass this limitation, but suffers from its own challenges such as stereotyping and inconsistent annotations \citep{lutz-etal-2025-prompt, liu-etal-2024-evaluating-large}. However, whether current LLM-as-judge systems reproduce, ignore, or distort these human disagreement patterns is largely untested. We posit that the reason for the poor evaluation of disagreements is that the metrics currently used are insufficient in realistic annotation settings and may not distinguish systematic from general disagreement (Fig.~\ref{fig:disagreement-vs-polarization}).
+In practice, researchers usually use \ac{iaa} metrics to distinguish between general and systematic disagreement (Fig.~\ref{fig:disagreement-vs-polarization}). Traditional metrics however hold significant limitations, especially when few annotations per item are available and when the studied groups are imbalanced. Both of these issues are typically present in subjective tasks featuring minority groups, which is the exact case where our metrics should be reliable. We therefore ask RQ~\ref{rq:metric}.
 
-Unlike prior work which framed the question of LLM annotation reliability in terms of human-LLM agreement \citep{dong-etal-2024-llm, gomez-etal-2024-algorithmic, masud-etal-2024-hate} or task-specific performance \citep{gupta2024bias}, we posit that in order for the silver LLM signal to be representative of the gold human signal, the fundamental, systematic disagreements in the annotations should be similar irrespective of whether this disagreement corresponds to the annotators' actual group identities. Thus, we ask the following \textbf{Main Research Question (MRQ): To what extent do LLMs follow human disagreement patterns in subjective annotation tasks?} We attempt to answer this question through the following sub-questions:
-
-\begin{researchquestion}[When and why do current methods for systematic disagreement attribution fail]
-	\label{rq:inherent}
-	We find that prior approaches generally fail in realistic annotation scenarios (Finding~\ref{finding:comparison}). Statistical methods fail as systematic disagreement across items has a \emph{direction}, preventing aggregation (Finding~\ref{finding:conflicting}), while another clustering-based method wrongly assumes that all disagreement can be explained and attributed to some annotator characteristic, which we find not to be the case through the exhaustive creation of theoretical annotator groups (Finding~\ref{finding:inherent}).
-\end{researchquestion}
-
-\begin{researchquestion}[How can we quantitatively attribute systematic disagreement to annotator groups]
+\begin{researchquestion}[How can we Quantitatively Attribute Systematic Disagreement to Annotator Groups]
 	\label{rq:metric}
-	We introduce a new metric which \emph{quantitatively} attributes systematic disagreement to specific \acp{pc}, outperforming prior approaches in realistic annotation scenarios (Fig.~\ref{fig:metrics}). By applying it to four subjective \ac{nlp} datasets we confirm that annotator gender and ethnicity are sources of systematic disagreement (Finding~\ref{finding:human}).
+	We first confirm that prior approaches generally fail in realistic annotation scenarios (Finding~\ref{finding:comparison}). Some fail because inter-comment annotation aggregation violates their assumptions (Finding~\ref{finding:conflicting}), while others fail to account for \ac{ip}, whose existence we discover through the exhaustive creation of theoretical annotator groups (Finding~\ref{finding:inherent}). In order to overcome these issues, we introduce a new metric which \emph{quantitatively} attributes systematic disagreement to specific \acp{pc}, outperforming prior approaches in realistic annotation scenarios (Fig.~\ref{fig:metrics}). 
 \end{researchquestion}
 
-\begin{researchquestion}[Which systematic disagreement patterns are shared between human and LLM annotators]
+As human annotation is generally expensive, LLM-as-judge systems are increasingly deployed as scalable substitutes for human annotators \citep{rossi_2024, kapania-etal-2025-examining} to acquire a cheaper, ``bronze'' supervision signal in place of human-annotated ``silver'' or ``gold'' labels. It is therefore imperative that systematic disagreements by human annotators be preserved by LLMs whose annotations by default gravitate toward the statistical average \citep{bisbee_2023}. Persona-prompting is sometimes used to bypass this limitation, but suffers from its own challenges such as stereotyping and inconsistent annotations \citep{lutz-etal-2025-prompt, liu-etal-2024-evaluating-large}. Unlike prior work which framed the question of LLM annotation reliability in terms of human-LLM agreement \citep{dong-etal-2024-llm, gomez-etal-2024-algorithmic, masud-etal-2024-hate} or task-specific performance \citep{gupta2024bias}, ask the following RQ.
+
+\begin{researchquestion}[Which Systematic Disagreement Patterns are Shared Between Human and LLM Annotators]
 	\label{rq:llm}
-	We conduct an annotation study on one Toxicity and one \ac{hs} dataset using six open-source models in order to compare systematic disagreement patterns between LLM groups with equivalent disagreement exhibited between human groups (\S\ref{sec:llms}). We find that models using persona-prompting generally fail to reproduce any systematic subgroup disagreement patterns regardless of instruction prompt, confirming literature suggesting that persona prompting does not consistently influence LLM outputs in the examined tasks (Finding~\ref{finding:llms}).
+	We analyze human and LLM annotation patterns across five real-life subjective datasets (\S\ref{sec:llms}). Human disagreements are attributed to gender and ethnicity across most datasets (Finding~\ref{finding:human}). On the other hand, LLMs using persona-prompting generally fail to reproduce any systematic subgroup disagreement patterns regardless of instruction prompt, confirming literature suggesting that persona prompting does not consistently influence LLM outputs in the examined tasks (Finding~\ref{finding:llms}).
 \end{researchquestion}
 
 Our work makes the following contributions:
@@ -161,7 +157,7 @@ Our work makes the following contributions:
 We also release a PyPI library implementing our metric to aid future research in this topic and provide suggestions for subjective dataset creation in \S\ref{sec:discussion}.
 
 \begin{center}
-	\noindent\textcolor{ACMRed}{\textbf{Content Warning: Controversial and potentially harmful speech used for demonstration.}}
+	\noindent\warning{Content Warning: Controversial and potentially harmful speech used for demonstration purposes only.}
 \end{center}
 
 
@@ -883,7 +879,7 @@ In order to investigate whether the numerous annotators per items can explain th
 	\label{tab:inherent-examples}
 	\begin{tabularx}{\linewidth}{X c}
 		\toprule
-		\multicolumn{2}{c}{\textcolor{red}{\textbf{Content Warning: Slurs, offensive, toxic and hateful speech.}}} \\
+		\multicolumn{2}{c}{\warning{Content Warning: Slurs, offensive, toxic and hateful speech.}} \\
 		\midrule
 		\textbf{Comment}  & \ac{ip} \\
 		\midrule
@@ -998,10 +994,10 @@ We use a single Quadro RTX 6000 GPU for tasks requiring small (7-8B) models and 
 	\label{fig:llm-human-frequencies}
 \end{figure*}
 
-
 Fig.~\ref{fig:llm-human-frequencies} shows the different annotation frequencies of LLMs and human annotators in the same dataset split. Across all four datasets, we observe a consistent mismatch between human and LLM annotation distributions. For the DICES-350 and DICES-990 harmfulness tasks, human annotations are heavily concentrated at the lowest harmfulness value, whereas most LLMs assign substantially more probability to moderate and high harmfulness values. A similar pattern appears in the \citet{sap-etal-2022-annotators} racism dataset: human judgments are concentrated at low racism scores, while LLMs produce broader distributions with considerably more mass at higher scores, particularly values 4--5. The \citep{kumar-et-al-2021} toxicity results show the same general trend, with humans assigning most probability to zero toxicity while LLMs distribute their predictions across higher toxicity levels, often peaking around values 2--4. Importantly, the magnitude of this discrepancy varies across models; some LLMs are closer to the human distribution, while others show substantially stronger shifts toward higher scores.
 
-We also investigate whether LLM annotations include any \ac{ip}. Table~\ref{tab:inherent-polarization} shows that \ac{ip} is significantly smaller than in human annotations. Adversarial prompts seem to consistently increase it, although it does not approach human levels. It is also notable that as with LLM apunim values (next section), \ac{ip} seems to be primarily model-dependent.
+We also investigate whether LLM annotations include any \ac{ip}. Fig.~\ref{fig:inherent-llms} shows that \ac{ip} is significantly smaller than in human annotations. Adversarial prompts seem to consistently increase it, although it does not approach human levels. It is also notable that as with LLM apunim values (next section), \ac{ip} seems to be primarily model-dependent.
+
 
 \subsection{Annotation Ablations}
 
