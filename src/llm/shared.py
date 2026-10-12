@@ -54,12 +54,15 @@ INHERENT_SUBSAMPLE_REPEATS = 10
 # Preferred left-to-right column order for the composite apunim grid (models
 # not in this list are appended alphabetically after it).
 MODEL_DISPLAY_ORDER = [
-    "llama70b",
     "llama8b",
     "olmo32b",
     "olmo7b",
     "qwen32b",
     "qwen7b",
+    "mistral7b",
+    "mistral24b",
+    "gemma7b",
+    "gemma31b"
 ]
 
 # The three main instruction prompts compared throughout this module (mean-
