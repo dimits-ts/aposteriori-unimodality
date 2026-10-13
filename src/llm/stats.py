@@ -473,9 +473,15 @@ def compute_ndfu_anova_by_prompt(
     baseline_prompt: str = "default",
 ) -> pd.DataFrame:
     """
-    One-way ANOVA per (dataset, model, SDB group) testing whether that
-    group's per-comment nDFU distribution shifts across instruction prompts,
-    with FDR-corrected p-values and Cohen's d effect sizes vs. the baseline.
+    One-way ANOVA per (dataset, model) testing whether the per-comment nDFU
+    distribution shifts across instruction prompts, with corrected p-values
+    and Cohen's d effect sizes vs. the baseline prompt.
+
+    Each comment contributes exactly one nDFU value per prompt (computed on
+    all of its annotations). The test and the effect size are therefore
+    computed once per (dataset, model) on the comment-level values, instead
+    of once per demographic group: per-group samples are near-copies of the
+    same comments, so per-group tests would not be independent evidence.
     """
     exclude_models = set(exclude_models or ())
     records = []
@@ -500,66 +506,43 @@ def compute_ndfu_anova_by_prompt(
                 path = files_by_prompt[prompt_name].get(model)
                 if path is None:
                     continue
-                df = load_llm_df(path)
-                ds = LLMAnnotationDataset(df, dataset_key, model, prompt_name)
-                group_records = _compute_ndfu_records(ds, deduped=True)
-                if not group_records.empty:
-                    ndfu_by_prompt[prompt_name] = group_records.groupby(
-                        "PC Dimension"
-                    )["nDFU"].apply(list)
+                ds = LLMAnnotationDataset(
+                    load_llm_df(path), dataset_key, model, prompt_name
+                )
+                values = _per_comment_ndfu(ds).dropna().to_numpy()
+                if len(values) >= 2:
+                    ndfu_by_prompt[prompt_name] = values
 
-            if len(ndfu_by_prompt) < 2:
+            samples = list(ndfu_by_prompt.values())
+            if len(samples) < 2:
                 continue
+            f_stat, p_value = stats.f_oneway(*samples)
 
-            all_groups = sorted(
-                set.union(*(set(s.index) for s in ndfu_by_prompt.values()))
-            )
-
-            for group in all_groups:
-                samples = [
-                    s[group]
-                    for s in ndfu_by_prompt.values()
-                    if group in s.index and len(s[group]) >= 2
-                ]
-                if len(samples) < 2:
+            baseline_values = ndfu_by_prompt.get(baseline_prompt)
+            record = {
+                "Dataset": dataset_name,
+                "Model": model,
+                "F": f_stat,
+                "p_raw": p_value,
+                "n_prompts_compared": len(samples),
+                "n_total_obs": sum(len(v) for v in samples),
+                "n_comments": (
+                    len(baseline_values)
+                    if baseline_values is not None
+                    else np.nan
+                ),
+            }
+            for prompt_name in prompt_names:
+                if prompt_name == baseline_prompt:
                     continue
-                f_stat, p_value = stats.f_oneway(*samples)
-
-                baseline_values = None
-                if (
-                    baseline_prompt in ndfu_by_prompt
-                    and group in ndfu_by_prompt[baseline_prompt].index
-                ):
-                    baseline_values = ndfu_by_prompt[baseline_prompt][group]
-
-                record = {
-                    "Dataset": dataset_name,
-                    "Model": model,
-                    "PC Dimension": group,
-                    "F": f_stat,
-                    "p_raw": p_value,
-                    "n_prompts_compared": len(samples),
-                    "n_total_obs": sum(len(s) for s in samples),
-                }
-
-                for prompt_name in prompt_names:
-                    if prompt_name == baseline_prompt:
-                        continue
-                    col = f"cohens_d_{prompt_name}_vs_{baseline_prompt}"
-                    prompt_values = None
-                    if (
-                        prompt_name in ndfu_by_prompt
-                        and group in ndfu_by_prompt[prompt_name].index
-                    ):
-                        prompt_values = ndfu_by_prompt[prompt_name][group]
-                    record[col] = (
-                        _cohens_d(prompt_values, baseline_values)
-                        if prompt_values is not None
-                        and baseline_values is not None
-                        else np.nan
-                    )
-
-                records.append(record)
+                prompt_values = ndfu_by_prompt.get(prompt_name)
+                record[f"cohens_d_{prompt_name}_vs_{baseline_prompt}"] = (
+                    _cohens_d(prompt_values, baseline_values)
+                    if prompt_values is not None
+                    and baseline_values is not None
+                    else np.nan
+                )
+            records.append(record)
 
     result_df = pd.DataFrame(records)
     if result_df.empty or correction_method is None:
@@ -593,11 +576,12 @@ def compute_cohens_d_compact_table(
     pooled_label: str = "All",
 ) -> pd.DataFrame:
     """
-    Compact Cohen's d summary: one row per (Model, Dataset) plus a pooled
-    `pooled_label` row per model (all datasets together), one column per
+    Compact Cohen's d summary: one row per (Model, Dataset), one column per
     non-baseline prompt, and a leading `n` column with the number of
-    groups the statistics are computed over. Each cell is "mean (SD)" of
-    Cohen's d (prompt vs. `baseline_prompt`) across groups.
+    comments the effect size is computed over. Each cell is a single
+    Cohen's d (prompt vs. `baseline_prompt`) on per-comment nDFU. A pooled
+    `pooled_label` row per model gives the unweighted mean of the
+    per-dataset values (and the total comment count).
     """
     cols = {
         p: f"cohens_d_{p}_vs_{baseline_prompt}"
@@ -607,15 +591,11 @@ def compute_cohens_d_compact_table(
     }
 
     def _row(sub: pd.DataFrame) -> dict:
-        row = {"n": str(len(sub))}
+        n = pd.to_numeric(sub["n_comments"], errors="coerce").sum()
+        row = {"n": str(int(n))}
         for prompt_name, col in cols.items():
             vals = pd.to_numeric(sub[col], errors="coerce").dropna()
-            if vals.empty:
-                row[prompt_name] = "---"
-            elif len(vals) < 2:
-                row[prompt_name] = f"{vals.iloc[0]:.2f}"
-            else:
-                row[prompt_name] = f"{vals.mean():.2f} ({vals.std():.2f})"
+            row[prompt_name] = "---" if vals.empty else f"{vals.mean():.2f}"
         return row
 
     rows, index = [], []
@@ -956,7 +936,9 @@ def _significance_ratio(res_df: pd.DataFrame, col: str) -> pd.Series:
 
 
 def run_exploratory_stats(res_df: pd.DataFrame) -> None:
-    print("Statistically significant / total distinct groups by model:")
+    print("Statistically significant / total (model, dataset) tests by model:")
     print(_significance_ratio(res_df, "Model"))
-    print("Statistically significant / total distinct groups by dataset:")
+    print(
+        "Statistically significant / total (model, dataset) tests by dataset:"
+    )
     print(_significance_ratio(res_df, "Dataset"))

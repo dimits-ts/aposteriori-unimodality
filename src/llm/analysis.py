@@ -154,7 +154,9 @@ def main(
         graph_output_dir=graph_output_dir,
     )
 
-    stats_path = cache_dir / "polarization_by_instruction_anova.csv"
+    stats_path = (
+        cache_dir / "polarization_by_instruction_anova_by_model_dataset.csv"
+    )
     if skip_if_exists(stats_path):
         res_df = pd.read_csv(stats_path)
     else:
@@ -170,10 +172,9 @@ def main(
         compact_df,
         output_path=latex_output_dir / "cohens_d.tex",
         caption=r"""Cohen's d between the default and each adversarial
-        instruction prompt, for the \ac{ndfu} of each group, shown as mean
-        (SD) across groups. Rows give results per model, pooled over all
-        datasets (All) and for each dataset separately; $n$ is the number of
-        groups.""",
+        instruction prompt, computed on the per-comment \ac{ndfu}. Rows give
+        results per model, for each dataset separately and as the unweighted
+        mean over datasets (All); $n$ is the number of comments.""",
         label="tab:cohens-d",
     )
     stats.run_exploratory_stats(res_df)
