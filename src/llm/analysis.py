@@ -38,7 +38,10 @@ The following are produced:
 4. Two compact LaTeX tables of the mean per-comment nDFU of the human
    annotations and of the LLM annotations (mean_ndfu_by_prompt.tex: every
    instruction prompt; mean_ndfu_default_vs_human.tex: default prompt
-   only), per model and dataset (see stats.build_mean_ndfu_table).
+   only), per model and dataset (see stats.build_mean_ndfu_table). The
+   same tables, and the Cohen's d table (cohens_d.tex), are also exported
+   without the models in EXCLUDED_MODELS (files with an "_excluding"
+   suffix).
 
 Rows are matched across files (models, or prompt variants) using the
 comment id ("text_id") together with the sampled persona's characteristics,
@@ -83,6 +86,9 @@ INHERENT_SUBSAMPLE_REPEATS = 10
 # are the columns, prompts the rows (all main prompts, as in the table).
 INHERENT_HIST_DATASET_KEYS = ["sap", "kumar", "popquorn"]
 INHERENT_HIST_PROMPT_NAMES = shared.MAIN_PROMPT_NAMES
+
+# Models left out of the "excluding" variants of the tables/plots.
+EXCLUDED_MODELS = ["llama8b", "qwen7b", "olmo7b"]
 
 
 def main(
@@ -160,7 +166,11 @@ def main(
         human_datasets, annotations_dir, latex_output_dir, cache_dir=cache_dir
     )
     run_mean_ndfu_step(
-        human_datasets, annotations_dir, latex_output_dir, cache_dir
+        human_datasets,
+        annotations_dir,
+        latex_output_dir,
+        cache_dir,
+        exclude_models,
     )
 
     run_inherent_polarization_steps(
@@ -186,17 +196,53 @@ def main(
         )
 
     stats.export_ndfu_anova_by_prompt(result_df=res_df, output_path=stats_path)
-    compact_df = stats.compute_cohens_d_compact_table(res_df)
-    stats.export_compact_prompt_table_latex(
-        compact_df,
-        output_path=latex_output_dir / "cohens_d.tex",
-        caption=r"""Cohen's d between the default and each adversarial
+    run_cohens_d_step(res_df, latex_output_dir, exclude_models)
+    stats.run_exploratory_stats(res_df)
+
+
+def _model_variants(exclude_models):
+    """
+    Variants of a per-model table: all models, and (if any models are
+    excluded) all models but the excluded ones. Yields
+    (file suffix, label suffix, caption note, models to drop).
+    """
+    yield "", "", "", set()
+    if exclude_models:
+        excluded_str = ", ".join(sorted(exclude_models))
+        yield (
+            "_excluding",
+            "-excluding",
+            f" Excluding the following models: {excluded_str}.",
+            set(exclude_models),
+        )
+
+
+def _drop_models(df: pd.DataFrame, models: set[str]) -> pd.DataFrame:
+    """Rows of a long/results frame whose `Model` is not in `models`."""
+    return df.loc[~df["Model"].isin(models)] if models else df
+
+
+def run_cohens_d_step(res_df, latex_output_dir, exclude_models):
+    # The effect sizes are computed independently per (model, dataset), so
+    # dropping models from the results gives exactly the table one would
+    # get by never running them.
+    caption = r"""Cohen's d between the default and each adversarial
         instruction prompt, computed on the per-comment \ac{ndfu}. Rows give
         results per model, for each dataset separately and as the unweighted
-        mean over datasets (All); $n$ is the number of comments.""",
-        label="tab:cohens-d",
-    )
-    stats.run_exploratory_stats(res_df)
+        mean over datasets (All); $n$ is the number of comments."""
+    for file_suffix, label_suffix, note, models in _model_variants(
+        exclude_models
+    ):
+        variant_df = _drop_models(res_df, models)
+        if variant_df.empty:
+            print(f"No Cohen's d results left{note}; skipping table.")
+            continue
+        stats.export_compact_prompt_table_latex(
+            stats.compute_cohens_d_compact_table(variant_df),
+            output_path=latex_output_dir / f"cohens_d{file_suffix}.tex",
+            caption=caption + note,
+            label=f"tab:cohens-d{label_suffix}",
+        )
 
 
 def run_histogram_step(
@@ -369,9 +415,16 @@ def run_apunim_prompt_table_step(
 
 
 def run_mean_ndfu_step(
-    human_datasets, annotations_dir, latex_output_dir, cache_dir
+    human_datasets,
+    annotations_dir,
+    latex_output_dir,
+    cache_dir,
+    exclude_models,
 ):
-    cache_path = cache_dir / "mean_ndfu_records.csv"
+    # Computed for every model; the "excluding" variants are filtered from
+    # these records. (New cache name: the old mean_ndfu_records.csv was
+    # written without olmo7b/llama8b and would be silently reused.)
+    cache_path = cache_dir / "mean_ndfu_records_all_models.csv"
     if skip_if_exists(cache_path):
         ndfu_df = pd.read_csv(cache_path)
     else:
@@ -380,7 +433,7 @@ def run_mean_ndfu_step(
             annotations_dir=annotations_dir,
             dataset_keys=shared.PROMPT_COMPARISON_DATASET_KEYS,
             prompt_names=shared.MAIN_PROMPT_NAMES,
-            exclude_models=shared.APUNIM_TABLE_EXCLUDE_MODELS,
+            exclude_models=None,
         )
         cache_path.parent.mkdir(parents=True, exist_ok=True)
         ndfu_df.to_csv(cache_path, index=False)
@@ -389,28 +442,40 @@ def run_mean_ndfu_step(
         print("No matched human/LLM annotations; skipping mean nDFU tables.")
         return
 
-    stats.export_compact_prompt_table_latex(
-        stats.build_mean_ndfu_table(
-            ndfu_df, prompt_names=shared.MAIN_PROMPT_NAMES
-        ),
-        output_path=latex_output_dir / "mean_ndfu_by_prompt.tex",
-        caption=r"""Mean (SE) per-comment \ac{ndfu} of the human annotations
+    by_prompt_caption = r"""Mean (SE) per-comment \ac{ndfu} of the human annotations
         and of the LLM annotations under each instruction prompt. Human
         annotations do not depend on the prompt. Rows give results per
         model, pooled over all datasets (All) and for each dataset
-        separately; $n$ is the number of comments.""",
-        label="tab:mean-ndfu-by-prompt",
-    )
-
-    stats.export_default_mean_ndfu_latex(
-        stats.build_default_mean_ndfu_table(ndfu_df, prompt_name="default"),
-        output_path=latex_output_dir / "mean_ndfu_default_vs_human.tex",
-        caption=r"""Mean (SE) per-comment \ac{ndfu} of the human annotations
+        separately; $n$ is the number of comments."""
+    default_caption = r"""Mean (SE) per-comment \ac{ndfu} of the human annotations
         and of the LLM annotations under the default prompt, per dataset
         and pooled over all datasets (All). $n$ is the number of
-        comments.""",
-        label="tab:mean-ndfu-default-vs-human",
-    )
+        comments."""
+
+    for file_suffix, label_suffix, note, models in _model_variants(
+        exclude_models
+    ):
+        variant_df = _drop_models(ndfu_df, models)
+
+        stats.export_compact_prompt_table_latex(
+            stats.build_mean_ndfu_table(
+                variant_df, prompt_names=shared.MAIN_PROMPT_NAMES
+            ),
+            output_path=latex_output_dir
+            / f"mean_ndfu_by_prompt{file_suffix}.tex",
+            caption=by_prompt_caption + note,
+            label=f"tab:mean-ndfu-by-prompt{label_suffix}",
+        )
+
+        stats.export_default_mean_ndfu_latex(
+            stats.build_default_mean_ndfu_table(
+                variant_df, prompt_name="default"
+            ),
+            output_path=latex_output_dir
+            / f"mean_ndfu_default_vs_human{file_suffix}.tex",
+            caption=default_caption + note,
+            label=f"tab:mean-ndfu-default-vs-human{label_suffix}",
+        )
 
 
 def run_inherent_polarization_step(
@@ -572,16 +637,6 @@ if __name__ == "__main__":
             "written by the human analysis scripts, e.g. output/human/main."
         ),
     )
-    parser.add_argument(
-        "--exclude-models",
-        nargs="+",
-        default=[],
-        help=(
-            "Model pseudo names (e.g. olmo7b llama8b) to leave out of an "
-            "additional cross-model consistency table, exported alongside "
-            "the normal one."
-        ),
-    )
     args = parser.parse_args()
 
     main(
@@ -598,5 +653,5 @@ if __name__ == "__main__":
         prompt_name="default",
         cache_dir=Path(args.cache_dir),
         human_results_dir=Path(args.human_results_dir),
-        exclude_models=args.exclude_models,
+        exclude_models=EXCLUDED_MODELS,
     )

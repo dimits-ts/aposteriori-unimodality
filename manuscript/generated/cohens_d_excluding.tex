@@ -1,0 +1,42 @@
+\begin{table}[t]
+\small
+\centering
+\caption{Cohen's d between the default and each adversarial
+        instruction prompt, computed on the per-comment \ac{ndfu}. Rows give
+        results per model, for each dataset separately and as the unweighted
+        mean over datasets (All); $n$ is the number of comments. Excluding the following models: llama8b, olmo7b, qwen7b.}
+\label{tab:cohens-d-excluding}
+\begin{tabular}{llrrrrr}
+\toprule
+ &  & n & Stereotype & Persona & Single & Direct \\
+Model & Dataset &  &  &  &  &  \\
+\midrule
+\multirow[t]{4}{*}{olmo32b} & All & 3085 & -0.09 & -0.02 & 0.01 & -0.15 \\
+ & Sap et al. 2022 & 585 & 0.09 & 0.06 & 0.22 & 0.04 \\
+ & Kumar et al. 2021 & 1000 & 0.14 & -0.13 & -0.29 & -0.31 \\
+ & POPQUORN & 1500 & -0.50 & -0.00 & 0.10 & -0.19 \\
+\cline{1-7}
+\multirow[t]{4}{*}{qwen32b} & All & 3084 & 0.25 & 0.22 & 0.22 & 0.19 \\
+ & Sap et al. 2022 & 585 & 0.32 & 0.13 & -0.09 & 0.09 \\
+ & Kumar et al. 2021 & 1000 & 0.17 & 0.21 & 0.51 & 0.31 \\
+ & POPQUORN & 1499 & 0.26 & 0.30 & 0.24 & 0.17 \\
+\cline{1-7}
+\multirow[t]{3}{*}{mistral7b} & All & 2085 & 0.16 & 0.06 & 0.21 & 0.10 \\
+ & Sap et al. 2022 & 585 & 0.21 & 0.10 & 0.08 & 0.57 \\
+ & POPQUORN & 1500 & 0.12 & 0.02 & 0.33 & -0.36 \\
+\cline{1-7}
+\multirow[t]{3}{*}{mistral24b} & All & 2085 & 0.60 & 0.12 & -0.53 & 0.31 \\
+ & Sap et al. 2022 & 585 & 0.64 & 0.04 & -0.76 & 0.27 \\
+ & POPQUORN & 1500 & 0.55 & 0.20 & -0.30 & 0.35 \\
+\cline{1-7}
+\multirow[t]{3}{*}{gemma7b} & All & 2085 & 0.26 & 0.51 & 0.78 & 0.39 \\
+ & Sap et al. 2022 & 585 & 0.18 & 0.48 & 0.57 & 0.15 \\
+ & POPQUORN & 1500 & 0.34 & 0.54 & 0.99 & 0.63 \\
+\cline{1-7}
+\multirow[t]{3}{*}{gemma31b} & All & 2085 & 0.42 & 0.31 & 0.00 & 0.63 \\
+ & Sap et al. 2022 & 585 & 0.36 & 0.21 & 0.06 & 1.03 \\
+ & POPQUORN & 1500 & 0.47 & 0.40 & -0.06 & 0.23 \\
+\cline{1-7}
+\bottomrule
+\end{tabular}
+\end{table}
