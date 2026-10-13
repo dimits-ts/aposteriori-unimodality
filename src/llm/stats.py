@@ -432,6 +432,187 @@ def export_llm_apunim_prompt_table(
     print(f"Table exported to {output_path.resolve()}")
 
 
+# ---------------------------------------------------------------------------
+# Significant PC dimensions: human vs. LLM annotations, per prompt
+# ---------------------------------------------------------------------------
+
+# apunim's p-values already account for testing several PC dimensions, so a
+# dimension counts as significant when its reported p-value is below this.
+SIGNIFICANCE_ALPHA = 0.05
+
+# Symbols (LaTeX math) used in the cells of the significance table. The
+# legend is written into the table caption.
+_SYM_BOTH = r"\bullet"  # significant for the human and the LLM annotations
+_SYM_LLM_ONLY = r"\dagger"  # significant for the LLM annotations only
+_SYM_HUMAN_ONLY = r"\times"  # significant for the human annotations only
+_SYM_NEITHER = r"\cdot"  # significant for neither
+_SYM_MISSING = r"-"  # no LLM result for this dimension
+
+
+def load_human_apunim_results(
+    human_results_dir: Path, dataset_key: str
+) -> pd.DataFrame | None:
+    """
+    Human apunim results (`<dataset_key>-results.csv`, written by the human
+    analysis scripts) with columns SDB Feature, Value, apunim, pvalue.
+    Returns None if the file does not exist.
+    """
+    path = human_results_dir / f"{dataset_key}-results.csv"
+    if not path.exists():
+        matches = sorted(human_results_dir.rglob(f"{dataset_key}-results.csv"))
+        if not matches:
+            print(
+                f"No human apunim results for {dataset_key} in "
+                f"{human_results_dir}; skipping."
+            )
+            return None
+        path = matches[0]
+    df = pd.read_csv(path)
+    df = df.rename(
+        columns={df.columns[0]: "SDB Feature", df.columns[1]: "Value"}
+    )
+    return df[["SDB Feature", "Value", "apunim", "pvalue"]]
+
+
+def _significance_map(
+    df: pd.DataFrame, alpha: float
+) -> dict[tuple[str, str], bool]:
+    """
+    (SDB feature, value) -> significant? Rows without a p-value are left out.
+    """
+    out = {}
+    for feature, value, p in zip(
+        df["SDB Feature"].astype(str), df["Value"].astype(str), df["pvalue"]
+    ):
+        if not pd.isna(p):
+            out[(feature, value)] = bool(p < alpha)
+    return out
+
+
+def _human_cell(human_sig: bool | None) -> str:
+    if human_sig is None:
+        return "---"
+    return f"${_SYM_BOTH if human_sig else _SYM_NEITHER}$"
+
+
+def _llm_cell(llm_sigs: list[bool | None], human_sig: bool | None) -> str:
+    """One symbol per prompt (in prompt order), joined into one math cell."""
+    symbols = []
+    for llm_sig in llm_sigs:
+        if llm_sig is None:
+            symbols.append(_SYM_MISSING)
+        elif llm_sig:
+            symbols.append(_SYM_BOTH if human_sig else _SYM_LLM_ONLY)
+        else:
+            symbols.append(_SYM_HUMAN_ONLY if human_sig else _SYM_NEITHER)
+    return "$" + r"\,".join("{" + s + "}" for s in symbols) + "$"
+
+
+def build_apunim_significance_table(
+    human_df: pd.DataFrame,
+    llm_df: pd.DataFrame,
+    prompt_names: list[str] = MAIN_PROMPT_NAMES,
+    alpha: float = SIGNIFICANCE_ALPHA,
+) -> pd.DataFrame:
+    """
+    One row per (SDB Feature, Value) found in either the human or the LLM
+    results, with columns `Human` and one per model. A model cell holds one
+    symbol per prompt (in `prompt_names` order) saying whether the model
+    found the dimension significant and how that compares with the human
+    result. The prompts used are stored in `.attrs["prompts"]`.
+    """
+    human_sig = _significance_map(human_df, alpha)
+    models = _order_models(set(llm_df["Model"]))
+    prompts = [p for p in prompt_names if p in set(llm_df["Prompt"])]
+    llm_sig = {
+        (m, p): _significance_map(
+            llm_df.loc[(llm_df["Model"] == m) & (llm_df["Prompt"] == p)], alpha
+        )
+        for m in models
+        for p in prompts
+    }
+
+    llm_dims = set()
+    for sig in llm_sig.values():
+        llm_dims |= set(sig)
+    only_human, only_llm = set(human_sig) - llm_dims, llm_dims - set(human_sig)
+    if only_human or only_llm:
+        print(
+            f"{len(only_human)} PC dimensions only in the human results and "
+            f"{len(only_llm)} only in the LLM results; if these should match, "
+            "check that the feature/value labels agree."
+        )
+
+    rows = []
+    for dim in sorted(set(human_sig) | llm_dims):
+        human = human_sig.get(dim)
+        row = {
+            "SDB Feature": dim[0],
+            "Value": dim[1],
+            "Human": _human_cell(human),
+        }
+        for m in models:
+            sigs = [llm_sig[(m, p)].get(dim) for p in prompts]
+            row[m] = _llm_cell(sigs, human)
+        rows.append(row)
+
+    out = pd.DataFrame(rows)
+    out.attrs["prompts"] = prompts
+    return out
+
+
+def export_apunim_significance_table(
+    table_df: pd.DataFrame,
+    output_path: Path,
+    dataset_name: str,
+    label: str,
+    alpha: float = SIGNIFICANCE_ALPHA,
+    note: str = "",
+) -> None:
+    if table_df.empty:
+        print(
+            f"No apunim significance results for {dataset_name}; "
+            f"skipping {output_path}."
+        )
+        return
+    prompts = table_df.attrs.get("prompts", [])
+    caption = (
+        rf"Statistically significant ($p<{alpha}$) \ac{{pc}} dimensions of "
+        f"the {dataset_name} dataset for the human annotations and for each "
+        "LLM. Each LLM cell shows one symbol per prompt, in the order "
+        f"{', '.join(prompts)}: "
+        rf"${_SYM_BOTH}$~significant for both human and LLM annotations, "
+        rf"${_SYM_LLM_ONLY}$~significant for the LLM only, "
+        rf"${_SYM_HUMAN_ONLY}$~significant for the human annotations only, "
+        rf"${_SYM_NEITHER}$~significant for neither, "
+        rf"${_SYM_MISSING}$~no LLM result. The human column shows "
+        rf"${_SYM_BOTH}$~significant and ${_SYM_NEITHER}$~not significant."
+        + note
+    )
+
+    df = table_df.rename(columns={"SDB Feature": r"\ac{pc}"})
+    df = df.replace("_", r"\_", regex=True).set_index([r"\ac{pc}", "Value"])
+    latex_str = df.to_latex(
+        caption=caption,
+        label=label,
+        escape=False,
+        position="t",
+        index=True,
+        multirow=True,
+        longtable=True,
+        column_format="ll" + "c" * len(df.columns),
+    )
+    latex_str = (
+        "{\\footnotesize\n\\setlength{\\tabcolsep}{3pt}\n"
+        + latex_str
+        + "}\n"
+    )
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(latex_str)
+    print(f"Table exported to {output_path.resolve()}")
+
+
 def _apunim_prompt_cell(row: pd.Series) -> str:
     if pd.isna(row["apunim"]):
         return "---"

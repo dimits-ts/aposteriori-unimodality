@@ -32,8 +32,7 @@ The following are produced:
    column per prompt (default/stereotype/persona) -- rather than
    per-(dataset, model) "-results.csv"/"-inherent.csv" files. Restricted
    to the datasets the adversarial prompts were actually run on
-   (shared.PROMPT_COMPARISON_DATASET_KEYS) and to the models run on all three prompts (see
-   PROMPT_COMPARISON_DATASET_KEYS / APUNIM_TABLE_EXCLUDE_MODELS).
+   (shared.PROMPT_COMPARISON_DATASET_KEYS); all models are included.
 
 4. Two compact LaTeX tables of the mean per-comment nDFU of the human
    annotations and of the LLM annotations (mean_ndfu_by_prompt.tex: every
@@ -42,6 +41,11 @@ The following are produced:
    same tables, and the Cohen's d table (cohens_d.tex), are also exported
    without the models in EXCLUDED_MODELS (files with an "_excluding"
    suffix).
+
+5. For each dataset, a LaTeX table of which PC dimensions each model finds
+   statistically significant under each prompt, next to the human findings
+   (llm-apunim-significance-<dataset>.tex; also without the models in
+   EXCLUDED_MODELS, with an "_excluding" suffix).
 
 Rows are matched across files (models, or prompt variants) using the
 comment id ("text_id") together with the sampled persona's characteristics,
@@ -164,6 +168,14 @@ def main(
 
     run_apunim_prompt_table_step(
         human_datasets, annotations_dir, latex_output_dir, cache_dir=cache_dir
+    )
+    run_apunim_significance_step(
+        human_datasets,
+        annotations_dir,
+        latex_output_dir,
+        cache_dir,
+        human_results_dir,
+        exclude_models,
     )
     run_mean_ndfu_step(
         human_datasets,
@@ -363,6 +375,48 @@ def run_repeat_consistency_step(
     )
 
 
+def _load_or_compute_apunim(
+    annotations_dir: Path, cache_dir: Path, key: str
+) -> pd.DataFrame:
+    """
+    apunim results for every model and prompt of one dataset, cached in
+    cache_dir/apunim_<key>.csv and shared by the apunim-by-prompt tables and
+    the significant-PC-dimension tables. Only models missing from the cache
+    are computed, so a cache written for fewer models is extended instead of
+    being recomputed.
+    """
+    cache_path = cache_dir / f"apunim_{key}.csv"
+    cached = None
+    if cache_path.exists():
+        cached = pd.read_csv(cache_path)
+        # Older caches were written with the DataFrame index as a column.
+        cached = cached.loc[:, ~cached.columns.str.startswith("Unnamed")]
+
+    available = set()
+    for prompt_name in shared.MAIN_PROMPT_NAMES:
+        available |= set(
+            shared.find_annotation_files(annotations_dir, key, prompt_name)
+        )
+    cached_models = set() if cached is None else set(cached["Model"])
+    missing = available - cached_models
+    if cached is not None and not missing:
+        print(f"Skipping (already exists): {cache_path}")
+        return cached
+
+    print(f"Computing apunim for {key}: {', '.join(sorted(missing))}")
+    new_df = stats.compute_llm_apunim_by_prompt(
+        annotations_dir=annotations_dir,
+        dataset_key=key,
+        prompt_names=shared.MAIN_PROMPT_NAMES,
+        exclude_models=cached_models,
+    )
+    long_df = new_df if cached is None else pd.concat([cached, new_df])
+    long_df = long_df.reset_index(drop=True)
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    long_df.to_csv(cache_path, index=False)
+    return long_df
+
+
 def _run_apunim_prompt_table_for_dataset(
     human_datasets: list[str],
     annotations_dir: Path,
@@ -370,17 +424,7 @@ def _run_apunim_prompt_table_for_dataset(
     cache_dir: Path,
     key: str,
 ):
-    cache_path = cache_dir / f"apunim_{key}.csv"
-    if skip_if_exists(cache_path):
-        long_df = pd.read_csv(cache_path)
-    else:
-        long_df = stats.compute_llm_apunim_by_prompt(
-            annotations_dir=annotations_dir,
-            dataset_key=key,
-            prompt_names=shared.MAIN_PROMPT_NAMES,
-            exclude_models=shared.APUNIM_TABLE_EXCLUDE_MODELS,
-        )
-        long_df.to_csv(cache_path)
+    long_df = _load_or_compute_apunim(annotations_dir, cache_dir, key)
 
     wide_df = stats.build_llm_apunim_prompt_table(
         long_df, prompt_names=shared.MAIN_PROMPT_NAMES
@@ -411,6 +455,45 @@ def run_apunim_prompt_table_step(
                 latex_output_dir=latex_output_dir,
                 key=key,
                 cache_dir=cache_dir,
+            )
+
+
+def run_apunim_significance_step(
+    human_datasets,
+    annotations_dir,
+    latex_output_dir,
+    cache_dir,
+    human_results_dir,
+    exclude_models,
+):
+    """
+    Per dataset: which PC dimensions each model finds statistically
+    significant under each prompt, compared with the human results.
+    """
+    for key in shared.PROMPT_COMPARISON_DATASET_KEYS:
+        if key not in human_datasets:
+            continue
+        human_df = stats.load_human_apunim_results(human_results_dir, key)
+        if human_df is None:
+            continue
+
+        llm_df = _load_or_compute_apunim(annotations_dir, cache_dir, key)
+
+        for file_suffix, label_suffix, note, models in _model_variants(
+            exclude_models
+        ):
+            variant_df = _drop_models(llm_df, models)
+            if variant_df.empty:
+                continue
+            stats.export_apunim_significance_table(
+                stats.build_apunim_significance_table(
+                    human_df, variant_df, prompt_names=shared.MAIN_PROMPT_NAMES
+                ),
+                output_path=latex_output_dir
+                / f"llm-apunim-significance-{key}{file_suffix}.tex",
+                dataset_name=human_datasets[key].get_name(),
+                label=f"tab:llm-apunim-significance-{key}{label_suffix}",
+                note=note,
             )
 
 
