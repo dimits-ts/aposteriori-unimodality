@@ -63,7 +63,26 @@ from ..lib import graphs
 from ..lib.util import skip_if_exists
 from . import polarization, stats, shared, plots
 
-# TODO: Separate table export and io from common?
+# ---------------------------------------------------------------------------
+# Run configuration (only used by this script)
+# ---------------------------------------------------------------------------
+
+# Datasets used for the main annotation runs (default + adversarial prompts).
+MAIN_DATASET_KEYS = shared.DATASET_KEYS
+
+# Datasets used for the ablations (paraphrase variants, repeated runs).
+ABLATION_DATASET_KEYS = shared.DATASET_KEYS
+
+# Inherent-polarization subsampling ablation: every comment (human and LLM
+# alike) is repeatedly subsampled down to this many annotators and the
+# results averaged over this many repeats.
+INHERENT_SUBSAMPLE_SIZE = 6
+INHERENT_SUBSAMPLE_REPEATS = 10
+
+# Grid of the subsampled inherent-polarization histogram figure: datasets
+# are the columns, prompts the rows (all main prompts, as in the table).
+INHERENT_HIST_DATASET_KEYS = ["sap", "kumar", "popquorn"]
+INHERENT_HIST_PROMPT_NAMES = shared.MAIN_PROMPT_NAMES
 
 
 def main(
@@ -189,7 +208,7 @@ def run_histogram_step(
         annotations_dir=annotations_dir,
         output_path=output_path,
         prompt_name=prompt_name,
-        dataset_keys=shared.MAIN_DATASET_KEYS,
+        dataset_keys=MAIN_DATASET_KEYS,
     )
 
 
@@ -203,7 +222,7 @@ def run_prompt_diff_step(
         output_path=output_path,
         prompt_names=shared.MAIN_PROMPT_NAMES,
         exclude_models=exclude_models,
-        dataset_keys=shared.MAIN_DATASET_KEYS,
+        dataset_keys=MAIN_DATASET_KEYS,
     )
 
 
@@ -216,7 +235,7 @@ def run_cross_model_consistency_step(
             human_datasets=human_datasets,
             annotations_dir=annotations_dir,
             prompt_name=prompt_name,
-            dataset_keys=shared.MAIN_DATASET_KEYS,
+            dataset_keys=MAIN_DATASET_KEYS,
         ),
         output_path=output_path,
         caption=(
@@ -246,7 +265,7 @@ def _run_cross_model_consistency_excluding_step(
             annotations_dir=annotations_dir,
             prompt_name=prompt_name,
             exclude_models=exclude_models,
-            dataset_keys=shared.MAIN_DATASET_KEYS,
+            dataset_keys=MAIN_DATASET_KEYS,
         ),
         output_path=output_path,
         caption=(
@@ -266,7 +285,7 @@ def run_variant_consistency_step(
         stats.per_model_variant_consistency_table(
             human_datasets=human_datasets,
             paraphrase_dir=paraphrase_dir,
-            dataset_keys=shared.ABLATION_DATASET_KEYS,
+            dataset_keys=ABLATION_DATASET_KEYS,
         ),
         output_path=output_path,
         caption=(
@@ -286,7 +305,7 @@ def run_repeat_consistency_step(
             human_datasets=human_datasets,
             repeat_dir=repeat_dir,
             prompt_name=prompt_name,
-            dataset_keys=shared.ABLATION_DATASET_KEYS,
+            dataset_keys=ABLATION_DATASET_KEYS,
         ),
         output_path=output_path,
         caption=(
@@ -425,7 +444,7 @@ def run_inherent_polarization_step(
         annotations_dir=annotations_dir,
         apunim_output_dir=cache_dir / f"inherent{suffix}",
         human_results_dir=human_results_dir,
-        dataset_keys=shared.MAIN_DATASET_KEYS,
+        dataset_keys=MAIN_DATASET_KEYS,
         prompt_names=shared.MAIN_PROMPT_NAMES,
         exclude_models=set(exclude_models),
         use_monte_carlo=True,
@@ -442,8 +461,8 @@ def run_inherent_polarization_step(
                 graph_output_dir
                 / f"inherent-polarization{suffix}-histogram.png"
             ),
-            dataset_keys=shared.INHERENT_HIST_DATASET_KEYS,
-            prompt_names=shared.INHERENT_HIST_PROMPT_NAMES,
+            dataset_keys=INHERENT_HIST_DATASET_KEYS,
+            prompt_names=INHERENT_HIST_PROMPT_NAMES,
             common_norm=False,
         )
 
@@ -467,8 +486,8 @@ def run_inherent_polarization_steps(
         cache_dir=cache_dir,
         graph_output_dir=graph_output_dir,
         subsample=polarization.SubsampleSpec(
-            size=shared.INHERENT_SUBSAMPLE_SIZE,
-            n_repeats=shared.INHERENT_SUBSAMPLE_REPEATS,
+            size=INHERENT_SUBSAMPLE_SIZE,
+            n_repeats=INHERENT_SUBSAMPLE_REPEATS,
         ),
     )
 

@@ -21,9 +21,7 @@ from ..lib.util import (
 from .shared import (
     APUNIM_TABLE_EXCLUDE_MODELS,
     DATASET_KEYS,
-    _apunim_dfu,
     _human_sample_dataset,
-    _ndfu_bin_count,
     HumanDatasets,
     MAIN_PROMPT_NAMES,
     LLMAnnotationDataset,
@@ -32,12 +30,14 @@ from .shared import (
     _keyed_series,
     _order_models,
     find_annotation_files,
-    find_repeat_files,
     load_llm_df,
     PROMPT_COMPARISON_DATASET_KEYS,
-    VARIANT_NAMES,
-    _compute_ndfu_records,
 )
+
+
+# Prompt-variant names used by the paraphrase ablation
+# (instructions/ablation/<dataset>/variant{1,2,3}.txt).
+VARIANT_NAMES = ["variant1", "variant2", "variant3"]
 
 
 # ---------------------------------------------------------------------------
@@ -243,6 +243,34 @@ def _repeat_rows_for_dataset(
         if row is not None:
             rows.append(row)
     return rows
+
+
+def find_repeat_files(
+    directory: Path, dataset_key: str, prompt_name: str
+) -> dict[str, dict[str, Path]]:
+    """
+    Returns {model_pseudo: {run_label: path}} for every file in `directory`
+    matching f"{dataset_key}-{prompt_name}-<pseudo>-run<N>.csv" (e.g. as
+    written by the repeat ablation in annotate_experiments.sh: the same
+    prompt run N times over the same 10% sub-sample).
+    """
+    import re
+
+    pattern = re.compile(
+        rf"^{re.escape(dataset_key)}-{re.escape(prompt_name)}-"
+        rf"([^-.]+)-(run\d+)\.csv$"
+    )
+    out: dict[str, dict[str, Path]] = {}
+    if not directory.exists():
+        return out
+    for path in sorted(
+        directory.glob(f"{dataset_key}-{prompt_name}-*-run*.csv")
+    ):
+        m = pattern.match(path.name)
+        if m:
+            pseudo, run_label = m.group(1), m.group(2)
+            out.setdefault(pseudo, {})[run_label] = path
+    return out
 
 
 def per_model_repeat_consistency_table(
@@ -688,6 +716,22 @@ def export_default_mean_ndfu_latex(
 
 HUMAN_LABEL = "Human"
 _SPAN_MARK = "@@SPAN@@"
+
+
+def _apunim_dfu(annotations, bins: int) -> float:
+    import apunim  # local import: heavy-ish, only needed for this call
+
+    return apunim.dfu(annotations, bins=bins, normalized=True)
+
+
+def _ndfu_bin_count(annotation_lists) -> int:
+    all_annotations = [
+        v
+        for lst in annotation_lists
+        if isinstance(lst, (list, np.ndarray))
+        for v in lst
+    ]
+    return len(np.unique(all_annotations)) if all_annotations else 0
 
 
 def _per_comment_ndfu(ds) -> pd.Series:
