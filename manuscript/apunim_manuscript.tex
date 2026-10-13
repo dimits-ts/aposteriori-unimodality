@@ -461,7 +461,7 @@ Apunim thus measures the degree to which an annotator group contributes to overa
  	\label{fig:inherent-llms}
  \end{figure}
 
-\paragraph{Experimental Procedure} We investigate six open-source LLMs (three discarded because of prompt sensitivity---see App.~\ref{app:llms}; Table~\ref{tab:llm-consistency-variants}) using twenty annotators for the Kumar, Sap and POPQUORN datasets supplied with personas sampled from our human dataset.\footnote{While LLM annotation can be scaled to be arbitrarily large, the choice of twenty annotators is a compromise between practical computation costs and enough annotation density to facilitate exploration.} We also do not annotate the DICES datasets since the LLM annotations are wildly inconsistent (App.~\ref{app:llms}; Table~\ref{tab:llm-consistency-variants}), an issue we can not readily fix as their original annotation guidelines are not public (\S\ref{sec:datasets}; Table~\ref{tab:datasets}). See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations. Results including the unreliable models can be found in App.~\ref{app:full}; Tables~\ref{tab:cohens-d},\ref{tab:llm-consistency-cross-model}.
+\paragraph{Experimental Procedure} We investigate nine open-source LLMs (three not shown in main results because of prompt sensitivity issues---see App.~\ref{app:llms}; Table~\ref{tab:llm-consistency-variants}) using twenty annotators for the Kumar, Sap and POPQUORN datasets supplied with personas sampled from our human dataset.\footnote{While LLM annotation can be scaled to be arbitrarily large, the choice of twenty annotators is a compromise between practical computation costs and enough annotation density to facilitate exploration.} We also do not annotate the DICES datasets since the LLM annotations are wildly inconsistent (App.~\ref{app:llms}; Table~\ref{tab:llm-consistency-variants}), an issue we can not readily fix as their original annotation guidelines are not public (\S\ref{sec:datasets}; Table~\ref{tab:datasets}). See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations. Results including the unreliable models can be found in App.~\ref{app:full}; Tables~\ref{tab:cohens-d},\ref{tab:llm-consistency-cross-model}.
 
 \paragraph{Do LLMs Exhibit Meaningful Disagreement?} \textbf{Yes}. Table~\ref{tab:mean-ndfu-default-vs-human-excluding} shows that the \ac{ndfu} values exhibited by LLMs when under standard persona prompting can even surpass those of humans.
 
@@ -963,19 +963,22 @@ We use only open-source models, as proprietary models such as OpenAI's GPT-5 yie
 	\caption{LLMs used in this study.}
 	\label{tab:llm-details}
 	\centering
-	\begin{tabular}{l l l}
+	\begin{tabular}{l l l l}
 		\toprule
-		\textbf{Family} & \textbf{Version} & \textbf{\#Params} \\
+		\textbf{Family} & \textbf{Version} & \textbf{\#Params} & \textbf{Year} \\
 		\midrule
-		\texttt{OLMo}~\citep{groeneveld-etal-2024-olmo} & \texttt{2 (0325)} & 32B \\
-		\texttt{Qwen}~\citep{qwen2025qwen25technicalreport} & \texttt{2.5} & 32B \\
-		\texttt{OLMo}~\citep{olmo2026olmo3} & \texttt{3} & 7B \\
-		\texttt{Qwen}~\citep{qwen2025qwen25technicalreport} & \texttt{2.5} & 7B \\
-		\texttt{LLaMa}~\citep{grattafiori2024llama3herdmodels} & \texttt{3.1} & 8B \\
+		\texttt{OLMo}~\citep{groeneveld-etal-2024-olmo} & \texttt{2 (0325)} & 32B & 2025 \\
+		\texttt{Qwen}~\citep{qwen2025qwen25technicalreport} & \texttt{2.5} & 32B & 2024 \\
+		\texttt{OLMo}~\citep{olmo2026olmo3} & \texttt{3} & 7B & 2025 \\
+		\texttt{Qwen}~\citep{qwen2025qwen25technicalreport} & \texttt{2.5} & 7B & 2024 \\
+		\texttt{LLaMa}~\citep{grattafiori2024llama3herdmodels} & \texttt{3.1} & 8B & 2024 \\
+		\texttt{Mistral}~\citep{jiang2023mistral7b} & \texttt{Small 3 (2501)} & 24B & 2025 \\
+		\texttt{Mistral}~\citep{jiang2023mistral7b} & \texttt{v0.3} & 7B & 2024 \\
+		\texttt{Gemma}~\citep{gemma4} & \texttt{4} & E2B & 2026 \\
+		\texttt{Gemma}~\citep{gemma4} & \texttt{4} & 31B & ??2026 \\
 		\bottomrule
 	\end{tabular}
 \end{table}
-
 
 \subsection{Experimental Setup}
 Since each of the datasets in \S\ref{sec:datasets} was annotated using different annotation guidelines and targets we use different instruction prompts for each dataset. The ``default'' annotation prompt is directly extracted from the studies in the case of Sap and Kumar, and inferred from the instruction guidelines used in the DICES datasets with minor modifications. We use standard persona prompting procedures sampled randomly from the available \ac{pc} dimensions in each respective dataset. Six LLM annotators are selected for each item and model.
