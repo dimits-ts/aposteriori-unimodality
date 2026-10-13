@@ -2,6 +2,7 @@ import itertools
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
 import seaborn as sns
 import numpy as np
@@ -425,6 +426,7 @@ def plot_inherent_polarization_histogram_grid(
     dataset_keys: list[str],
     prompt_names: list[str],
     bins: int = INHERENT_HIST_BINS,
+    common_norm: bool = True,
 ) -> None:
     """
     Grid of normalized histograms of per-comment inherent polarization:
@@ -434,7 +436,11 @@ def plot_inherent_polarization_histogram_grid(
     `long_df` is the long-format frame from
     `polarization.compute_inherent_polarization_comparison` (columns
     Dataset, Prompt, Source, TextID, value). Each source is normalized by
-    its own number of comments (bar heights sum to 1).
+    Sources are stacked within each bin (seaborn `multiple="stack"`). With
+    `common_norm=True` each cell's stack sums to 1 across all sources'
+    comments pooled; with False each source is normalized by its own count
+    (each source's bars sum to 1, so stacks reach up to the number of
+    sources).
 
     Styling follows the human `apriori.png` inherent-polarization figure:
     colorblind palette with a hatch per source, black bar edges,
@@ -466,45 +472,53 @@ def plot_inherent_polarization_histogram_grid(
         squeeze=False,
         sharex=True,
         sharey=True,
+        layout="constrained",
     )
 
     for r, key in enumerate(dataset_keys):
         for c, prompt in enumerate(prompt_names):
             ax = axes[r][c]
-            for source in sources:
-                vals = df[
-                    (df["Dataset"] == key)
-                    & (df["Prompt"] == prompt)
-                    & (df["Source"] == source)
-                ]["value"]
-                if vals.empty:
-                    continue
-                color, hatch = style[source]
-                before = len(ax.patches)
+            cell = df[(df["Dataset"] == key) & (df["Prompt"] == prompt)]
+            if not cell.empty:
                 sns.histplot(
-                    x=vals,
+                    data=cell,
+                    x="value",
+                    hue="Source",
+                    hue_order=sources,
+                    palette={s: style[s][0] for s in sources},
                     bins=bins,
                     binrange=(0, 1),
                     stat="proportion",
-                    common_norm=False,
+                    common_norm=common_norm,
+                    multiple="stack",
                     alpha=0.7,
-                    color=color,
+                    legend=False,
                     ax=ax,
                 )
-                for patch in ax.patches[before:]:
-                    patch.set_hatch(hatch)
+                # seaborn draws one set of bars per hue level; match each
+                # bar back to its source by face color to apply the hatch.
+                hatch_by_rgb = {
+                    mcolors.to_rgb(style[s][0]): style[s][1] for s in sources
+                }
+                for patch in ax.patches:
+                    hatch = hatch_by_rgb.get(patch.get_facecolor()[:3])
+                    if hatch is not None:
+                        patch.set_hatch(hatch)
                     patch.set_edgecolor("black")
                     patch.set_linewidth(0.3)
             ax.set_xlim(0.1, 1)
+            ax.set_xticks([0.1, 0.5, 1.0])   # new
             ax.set_ylim(0, 0.3)
             ax.set_ylabel(key.capitalize() if c == 0 else "")
             ax.set_xlabel("")
             if r == 0:
                 ax.set_title(prompt.capitalize())
 
-    fig.supylabel("Proportion of comments")
-    fig.supxlabel("Unattributable Polarization")
-    fig.suptitle("LLM Annotation Exhibits Different UnPol Patterns")
+    fig.supylabel("Proportion of Comments (Stacked)")
+    fig.supxlabel(r"Unattributable Polarization ($\geq 0.1$)")
+    fig.suptitle(
+        "LLM Annotation Exhibits Different UnPol Patterns From Humans"
+    )
 
     legend_handles = [
         mpatches.Patch(
@@ -518,9 +532,8 @@ def plot_inherent_polarization_histogram_grid(
     ]
     fig.legend(
         handles=legend_handles,
-        loc="lower center",
-        ncol=min(len(sources), 7),
-        frameon=False,
+        loc="outside center right",
+        ncol=1,
     )
     graphs.save_plot(output_path)
     plt.close(fig)

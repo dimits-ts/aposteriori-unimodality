@@ -443,6 +443,7 @@ def run_inherent_polarization_step(
             ),
             dataset_keys=shared.INHERENT_HIST_DATASET_KEYS,
             prompt_names=shared.INHERENT_HIST_PROMPT_NAMES,
+            common_norm=False,
         )
 
 
