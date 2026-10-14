@@ -47,6 +47,11 @@ The following are produced:
    (llm-apunim-significance-<dataset>.tex; also without the models in
    EXCLUDED_MODELS, with an "_excluding" suffix).
 
+6. A CSV of the non-standard answers in the raw LLM annotation files
+   (nonstandard_answers_by_model.csv), and an abbreviated LaTeX summary
+   per model, dataset and status (nonstandard_answers_summary.tex):
+   replies that cannot be parsed or are out of range for the dataset.
+
 Rows are matched across files (models, or prompt variants) using the
 comment id ("text_id") together with the sampled persona's characteristics,
 since llm_annotate.py is seeded so that the same comments/personas are
@@ -67,7 +72,12 @@ from ..lib.preprocessing import (
 )
 
 from ..lib import graphs
-from ..lib.util import skip_if_exists
+from ..lib.util import (
+    skip_if_exists,
+    center_table_latex,
+    small_table_latex,
+    trim_numeric_col_latex,
+)
 from . import polarization, stats, shared, plots
 
 # ---------------------------------------------------------------------------
@@ -94,6 +104,15 @@ INHERENT_HIST_PROMPT_NAMES = shared.MAIN_PROMPT_NAMES
 # Models left out of the "excluding" variants of the tables/plots.
 EXCLUDED_MODELS = ["llama8b", "qwen7b", "olmo7b"]
 
+# Valid annotation values per dataset key.
+VALID_ANNOTATION_VALUES = {
+    "dices-350": {-1, 0, 1},
+    "dices-990": {-1, 0, 1},
+    "sap": {1, 2, 3, 4, 5},
+    "kumar": {1, 2, 3, 4, 5},
+    "popquorn": {1, 2, 3, 4, 5},
+}
+
 
 def main(
     dices_small_path: Path,
@@ -114,6 +133,8 @@ def main(
     graphs.graph_setup()
     graph_output_dir.mkdir(parents=True, exist_ok=True)
     latex_output_dir.mkdir(parents=True, exist_ok=True)
+
+    run_nonstandard_answers_step(annotations_dir, cache_dir, latex_output_dir)
 
     human_datasets = shared.HumanDatasets(
         {
@@ -140,7 +161,7 @@ def main(
             ),
         }
     )
-    
+
     run_histogram_step(
         human_datasets, annotations_dir, graph_output_dir, prompt_name
     )
@@ -206,10 +227,218 @@ def main(
             annotations_dir=annotations_dir,
             correction_method="holm",
         )
-    
+
     stats.export_ndfu_anova_by_prompt(result_df=res_df, output_path=stats_path)
     run_cohens_d_step(res_df, latex_output_dir, exclude_models)
     stats.run_exploratory_stats(res_df)
+
+
+# ---------------------------------------------------------------------------
+# Non-standard answers
+# ---------------------------------------------------------------------------
+
+# Display names of the statuses in the LaTeX summary table.
+_STATUS_LABELS = {"unparsed": "Unparsed", "out_of_range": "Out of range"}
+
+
+def _annotation_status(annotation: pd.Series, valid: set) -> pd.Series:
+    """
+    Per-reply status, judged with the parser the analysis uses
+    (shared._clean_annotation): "unparsed" (no integer found, dropped
+    downstream), "out_of_range" (integer not valid for the dataset; NOT
+    dropped by the pipeline), or NA for a reply that parses to a valid
+    value (including replies that only parse after cleaning).
+    """
+    cleaned = shared._clean_annotation(annotation)
+
+    status = pd.Series(pd.NA, index=annotation.index, dtype="object")
+    status[cleaned.isna()] = "unparsed"
+    status[cleaned.notna() & ~cleaned.isin(valid)] = "out_of_range"
+    return status
+
+
+def _nonstandard_counts_for_file(
+    path: Path, model: str, key: str, valid: set
+) -> tuple[pd.DataFrame, int]:
+    """(status/answer value counts of one annotation file, its row count)."""
+    df = pd.read_csv(path)
+    raw = df["annotation"].fillna("<empty>").astype(str)
+    status = _annotation_status(df["annotation"], valid)
+
+    flagged = status.notna()
+    counts = (
+        pd.DataFrame({"status": status[flagged], "answer": raw[flagged]})
+        .value_counts()
+        .reset_index(name="count")
+    )
+    counts["model"] = model
+    counts["dataset"] = key
+    return counts, len(df)
+
+
+def _nonstandard_counts_for_prompt(
+    files: dict[str, Path],
+    key: str,
+    valid: set,
+    totals: dict[tuple[str, str], int],
+) -> list[pd.DataFrame]:
+    """Counts for every model file of one (dataset, prompt). Adds each
+    file's row count to `totals[(model, dataset)]` (in place)."""
+    frames = []
+    for model, path in sorted(files.items()):
+        counts, n_rows = _nonstandard_counts_for_file(path, model, key, valid)
+        totals[(model, key)] = totals.get((model, key), 0) + n_rows
+        frames.append(counts)
+    return frames
+
+
+def _nonstandard_counts_for_dataset(
+    annotations_dir: Path, key: str, totals: dict[tuple[str, str], int]
+) -> list[pd.DataFrame]:
+    """Counts for every prompt and model of one dataset."""
+    valid = VALID_ANNOTATION_VALUES[key]
+    frames = []
+    for prompt_name in shared.MAIN_PROMPT_NAMES:
+        files = shared.find_annotation_files(annotations_dir, key, prompt_name)
+        frames.extend(
+            _nonstandard_counts_for_prompt(files, key, valid, totals)
+        )
+    return frames
+
+
+def _collect_nonstandard_counts(
+    annotations_dir: Path,
+) -> tuple[pd.DataFrame, dict[tuple[str, str], int]]:
+    """
+    (per-file counts with columns model/dataset/status/answer/count,
+    total number of annotations per (model, dataset)), over all main
+    datasets and prompts.
+    """
+    frames: list[pd.DataFrame] = []
+    totals: dict[tuple[str, str], int] = {}
+    for key in MAIN_DATASET_KEYS:
+        frames.extend(
+            _nonstandard_counts_for_dataset(annotations_dir, key, totals)
+        )
+
+    if not frames:
+        empty = pd.DataFrame(
+            columns=["model", "dataset", "status", "answer", "count"]
+        )
+        return empty, totals
+    return pd.concat(frames, ignore_index=True), totals
+
+
+def _totals_per_model(totals: dict[tuple[str, str], int]) -> dict[str, int]:
+    """Sums (model, dataset) annotation totals over datasets."""
+    per_model: dict[str, int] = {}
+    for (model, _), n in totals.items():
+        per_model[model] = per_model.get(model, 0) + n
+    return per_model
+
+
+def _nonstandard_by_model(
+    detailed: pd.DataFrame, totals: dict[tuple[str, str], int]
+) -> pd.DataFrame:
+    """One row per (model, status, answer), with the model's total number
+    of annotations (n_total_model) and the share each row represents."""
+    result = detailed.groupby(["model", "status", "answer"], as_index=False)[
+        "count"
+    ].sum()
+    result["n_total_model"] = result["model"].map(_totals_per_model(totals))
+    result["rate"] = result["count"] / result["n_total_model"]
+    return result.sort_values(
+        ["model", "status", "count"], ascending=[True, True, False]
+    ).reset_index(drop=True)
+
+
+def get_nonstandard_answer_counts(annotations_dir: Path) -> pd.DataFrame:
+    """
+    Value counts of non-standard answers in the raw LLM annotation files,
+    aggregated over all datasets and prompts, one row per
+    (model, status, answer).
+
+    Statuses (see _annotation_status): "unparsed", "out_of_range".
+    Also returns each model's total number of annotations
+    (n_total_model) and the share of those that each row represents (rate).
+    """
+    detailed, totals = _collect_nonstandard_counts(annotations_dir)
+    return _nonstandard_by_model(detailed, totals)
+
+
+def get_nonstandard_summary(
+    detailed: pd.DataFrame, totals: dict[tuple[str, str], int]
+) -> pd.DataFrame:
+    """Abbreviated summary: one row per (model, dataset, status), summed
+    over answers and prompts. `incidence` is the count as a percentage of
+    all of the model's annotations on that dataset (over all prompts)."""
+    summary = detailed.groupby(["model", "dataset", "status"], as_index=False)[
+        "count"
+    ].sum()
+    summary["status"] = summary["status"].map(_STATUS_LABELS)
+
+    keys = pd.Series(
+        list(zip(summary["model"], summary["dataset"])), index=summary.index
+    )
+    summary["incidence"] = 100 * summary["count"] / keys.map(totals)
+    return summary.sort_values(["model", "dataset", "status"]).reset_index(
+        drop=True
+    )
+
+
+def export_nonstandard_summary_latex(
+    summary: pd.DataFrame, output_path: Path
+) -> None:
+    caption = (
+        "Number of non-standard LLM annotations per model and dataset, "
+        "summed over all instruction prompts. Unparsed: no integer found "
+        "in the reply (dropped from the analysis); Out of range: an "
+        "integer outside the dataset's annotation scale. Incidence: "
+        "percentage of the model's annotations on that dataset."
+    )
+    table = summary.assign(
+        incidence=trim_numeric_col_latex(summary["incidence"], ".2f")
+    ).rename(
+        columns={
+            "model": "Model",
+            "dataset": "Dataset",
+            "status": "Status",
+            "count": "Count",
+            "incidence": "Incidence (%)",
+        }
+    )
+    latex = table.to_latex(
+        index=False,
+        escape=True,
+        caption=caption,
+        label="tab:nonstandard-answers",
+        position="htbp",
+    )
+    latex = small_table_latex(center_table_latex(latex))
+    output_path.write_text(latex)
+
+
+def run_nonstandard_answers_step(
+    annotations_dir, csv_output_dir, latex_output_dir
+):
+    detailed, totals = _collect_nonstandard_counts(annotations_dir)
+    csv_output_dir.mkdir(parents=True, exist_ok=True)
+    _nonstandard_by_model(detailed, totals).to_csv(
+        csv_output_dir / "nonstandard_answers_by_model.csv", index=False
+    )
+
+    summary = get_nonstandard_summary(detailed, totals)
+    if summary.empty:
+        print("No non-standard answers found; skipping summary table.")
+        return
+    export_nonstandard_summary_latex(
+        summary, latex_output_dir / "nonstandard_answers_summary.tex"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Shared helpers
+# ---------------------------------------------------------------------------
 
 
 def _model_variants(exclude_models):
@@ -234,6 +463,39 @@ def _drop_models(df: pd.DataFrame, models: set[str]) -> pd.DataFrame:
     return df.loc[~df["Model"].isin(models)] if models else df
 
 
+def _comparison_keys(human_datasets) -> list[str]:
+    """PROMPT_COMPARISON_DATASET_KEYS that are loaded in human_datasets."""
+    return [
+        k for k in shared.PROMPT_COMPARISON_DATASET_KEYS if k in human_datasets
+    ]
+
+
+# ---------------------------------------------------------------------------
+# Cohen's d
+# ---------------------------------------------------------------------------
+
+
+def _export_cohens_d_variant(
+    res_df,
+    latex_output_dir,
+    caption,
+    file_suffix,
+    label_suffix,
+    note,
+    models,
+):
+    variant_df = _drop_models(res_df, models)
+    if variant_df.empty:
+        print(f"No Cohen's d results left{note}; skipping table.")
+        return
+    stats.export_compact_prompt_table_latex(
+        stats.compute_cohens_d_compact_table(variant_df),
+        output_path=latex_output_dir / f"cohens_d{file_suffix}.tex",
+        caption=caption + note,
+        label=f"tab:cohens-d{label_suffix}",
+    )
+
+
 def run_cohens_d_step(res_df, latex_output_dir, exclude_models):
     # The effect sizes are computed independently per (model, dataset), so
     # dropping models from the results gives exactly the table one would
@@ -245,16 +507,20 @@ def run_cohens_d_step(res_df, latex_output_dir, exclude_models):
     for file_suffix, label_suffix, note, models in _model_variants(
         exclude_models
     ):
-        variant_df = _drop_models(res_df, models)
-        if variant_df.empty:
-            print(f"No Cohen's d results left{note}; skipping table.")
-            continue
-        stats.export_compact_prompt_table_latex(
-            stats.compute_cohens_d_compact_table(variant_df),
-            output_path=latex_output_dir / f"cohens_d{file_suffix}.tex",
-            caption=caption + note,
-            label=f"tab:cohens-d{label_suffix}",
+        _export_cohens_d_variant(
+            res_df,
+            latex_output_dir,
+            caption,
+            file_suffix,
+            label_suffix,
+            note,
+            models,
         )
+
+
+# ---------------------------------------------------------------------------
+# Histograms, prompt diffs, consistency tables
+# ---------------------------------------------------------------------------
 
 
 def run_histogram_step(
@@ -375,6 +641,78 @@ def run_repeat_consistency_step(
     )
 
 
+# ---------------------------------------------------------------------------
+# apunim cache
+# ---------------------------------------------------------------------------
+
+
+def _read_apunim_cache(cache_path: Path) -> pd.DataFrame:
+    if not cache_path.exists():
+        return pd.DataFrame()
+    long_df = pd.read_csv(cache_path)
+    # Older caches were written with the DataFrame index as a column.
+    return long_df.loc[:, ~long_df.columns.str.startswith("Unnamed")]
+
+
+def _cached_apunim_pairs(long_df: pd.DataFrame) -> set:
+    if long_df.empty:
+        return set()
+    return set(zip(long_df["Model"], long_df["Prompt"]))
+
+
+def _write_apunim_cache(long_df: pd.DataFrame, cache_path: Path) -> None:
+    # Write to a temp file and rename, so an interrupt during the write
+    # cannot leave a truncated cache behind.
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = cache_path.with_suffix(".csv.tmp")
+    long_df.to_csv(tmp_path, index=False)
+    tmp_path.replace(cache_path)
+
+
+def _update_apunim_cache(
+    long_df: pd.DataFrame, new_df: pd.DataFrame, cache_path: Path
+) -> pd.DataFrame:
+    """Appends `new_df` to the cache (on disk and in the returned frame)."""
+    if new_df.empty:
+        return long_df
+    if not long_df.empty:
+        new_df = pd.concat([long_df, new_df], ignore_index=True)
+    _write_apunim_cache(new_df, cache_path)
+    return new_df
+
+
+def _pending_apunim_pairs(
+    annotations_dir: Path, key: str, cached_pairs: set
+) -> list[tuple[str, str, set[str]]]:
+    """(prompt, model, all models of that prompt) for every (model, prompt)
+    pair that has an annotation file but is not cached yet."""
+    pending = []
+    for prompt_name in shared.MAIN_PROMPT_NAMES:
+        files = shared.find_annotation_files(annotations_dir, key, prompt_name)
+        pending.extend(
+            (prompt_name, model, set(files))
+            for model in sorted(files)
+            if (model, prompt_name) not in cached_pairs
+        )
+    return pending
+
+
+def _compute_apunim_pair(
+    annotations_dir: Path,
+    key: str,
+    prompt_name: str,
+    model: str,
+    all_models: set[str],
+) -> pd.DataFrame:
+    print(f"Computing apunim: {key} / {prompt_name} / {model}")
+    return stats.compute_llm_apunim_by_prompt(
+        annotations_dir=annotations_dir,
+        dataset_key=key,
+        prompt_names=[prompt_name],
+        exclude_models=all_models - {model},
+    )
+
+
 def _load_or_compute_apunim(
     annotations_dir: Path, cache_dir: Path, key: str
 ) -> pd.DataFrame:
@@ -390,49 +728,26 @@ def _load_or_compute_apunim(
     after every pair, so an interrupted run keeps what it finished.
     """
     cache_path = cache_dir / f"apunim_{key}.csv"
-    long_df = pd.DataFrame()
-    if cache_path.exists():
-        long_df = pd.read_csv(cache_path)
-        # Older caches were written with the DataFrame index as a column.
-        long_df = long_df.loc[:, ~long_df.columns.str.startswith("Unnamed")]
-    cached_pairs = (
-        set(zip(long_df["Model"], long_df["Prompt"]))
-        if not long_df.empty
-        else set()
+    long_df = _read_apunim_cache(cache_path)
+    n_rows_before = len(long_df)
+
+    pending = _pending_apunim_pairs(
+        annotations_dir, key, _cached_apunim_pairs(long_df)
     )
+    for prompt_name, model, all_models in pending:
+        new_df = _compute_apunim_pair(
+            annotations_dir, key, prompt_name, model, all_models
+        )
+        long_df = _update_apunim_cache(long_df, new_df, cache_path)
 
-    n_computed = 0
-    for prompt_name in shared.MAIN_PROMPT_NAMES:
-        files = shared.find_annotation_files(annotations_dir, key, prompt_name)
-        for model in sorted(files):
-            if (model, prompt_name) in cached_pairs:
-                continue
-            print(f"Computing apunim: {key} / {prompt_name} / {model}")
-            new_df = stats.compute_llm_apunim_by_prompt(
-                annotations_dir=annotations_dir,
-                dataset_key=key,
-                prompt_names=[prompt_name],
-                exclude_models=set(files) - {model},
-            )
-            if new_df.empty:
-                continue
-            long_df = (
-                new_df
-                if long_df.empty
-                else pd.concat([long_df, new_df], ignore_index=True)
-            )
-            n_computed += 1
-
-            # Write to a temp file and rename, so an interrupt during the
-            # write cannot leave a truncated cache behind.
-            cache_path.parent.mkdir(parents=True, exist_ok=True)
-            tmp_path = cache_path.with_suffix(".csv.tmp")
-            long_df.to_csv(tmp_path, index=False)
-            tmp_path.replace(cache_path)
-
-    if not n_computed:
+    if len(long_df) == n_rows_before:
         print(f"Skipping (nothing new to compute): {cache_path}")
     return long_df
+
+
+# ---------------------------------------------------------------------------
+# apunim tables
+# ---------------------------------------------------------------------------
 
 
 def _run_apunim_prompt_table_for_dataset(
@@ -465,15 +780,70 @@ def run_apunim_prompt_table_step(
 ):
     # Restricted to the datasets the adversarial prompts were run on
     # (shared.PROMPT_COMPARISON_DATASET_KEYS).
-    for key in shared.PROMPT_COMPARISON_DATASET_KEYS:
-        if key in human_datasets:
-            _run_apunim_prompt_table_for_dataset(
-                human_datasets=human_datasets,
-                annotations_dir=annotations_dir,
-                latex_output_dir=latex_output_dir,
-                key=key,
-                cache_dir=cache_dir,
-            )
+    for key in _comparison_keys(human_datasets):
+        _run_apunim_prompt_table_for_dataset(
+            human_datasets=human_datasets,
+            annotations_dir=annotations_dir,
+            latex_output_dir=latex_output_dir,
+            key=key,
+            cache_dir=cache_dir,
+        )
+
+
+def _export_apunim_significance_variant(
+    human_datasets,
+    human_df,
+    llm_df,
+    latex_output_dir,
+    key,
+    file_suffix,
+    label_suffix,
+    note,
+    models,
+):
+    variant_df = _drop_models(llm_df, models)
+    if variant_df.empty:
+        return
+    stats.export_apunim_significance_table(
+        stats.build_apunim_significance_table(
+            human_df, variant_df, prompt_names=shared.MAIN_PROMPT_NAMES
+        ),
+        output_path=latex_output_dir
+        / f"llm-apunim-significance-{key}{file_suffix}.tex",
+        dataset_name=human_datasets[key].get_name(),
+        label=f"tab:llm-apunim-significance-{key}{label_suffix}",
+        note=note,
+    )
+
+
+def _run_apunim_significance_for_dataset(
+    human_datasets,
+    annotations_dir,
+    latex_output_dir,
+    cache_dir,
+    human_results_dir,
+    exclude_models,
+    key,
+):
+    human_df = stats.load_human_apunim_results(human_results_dir, key)
+    if human_df is None:
+        return
+
+    llm_df = _load_or_compute_apunim(annotations_dir, cache_dir, key)
+    for file_suffix, label_suffix, note, models in _model_variants(
+        exclude_models
+    ):
+        _export_apunim_significance_variant(
+            human_datasets,
+            human_df,
+            llm_df,
+            latex_output_dir,
+            key,
+            file_suffix,
+            label_suffix,
+            note,
+            models,
+        )
 
 
 def run_apunim_significance_step(
@@ -488,31 +858,21 @@ def run_apunim_significance_step(
     Per dataset: which PC dimensions each model finds statistically
     significant under each prompt, compared with the human results.
     """
-    for key in shared.PROMPT_COMPARISON_DATASET_KEYS:
-        if key not in human_datasets:
-            continue
-        human_df = stats.load_human_apunim_results(human_results_dir, key)
-        if human_df is None:
-            continue
+    for key in _comparison_keys(human_datasets):
+        _run_apunim_significance_for_dataset(
+            human_datasets,
+            annotations_dir,
+            latex_output_dir,
+            cache_dir,
+            human_results_dir,
+            exclude_models,
+            key,
+        )
 
-        llm_df = _load_or_compute_apunim(annotations_dir, cache_dir, key)
 
-        for file_suffix, label_suffix, note, models in _model_variants(
-            exclude_models
-        ):
-            variant_df = _drop_models(llm_df, models)
-            if variant_df.empty:
-                continue
-            stats.export_apunim_significance_table(
-                stats.build_apunim_significance_table(
-                    human_df, variant_df, prompt_names=shared.MAIN_PROMPT_NAMES
-                ),
-                output_path=latex_output_dir
-                / f"llm-apunim-significance-{key}{file_suffix}.tex",
-                dataset_name=human_datasets[key].get_name(),
-                label=f"tab:llm-apunim-significance-{key}{label_suffix}",
-                note=note,
-            )
+# ---------------------------------------------------------------------------
+# Mean nDFU
+# ---------------------------------------------------------------------------
 
 
 def run_mean_ndfu_step(
@@ -577,6 +937,11 @@ def run_mean_ndfu_step(
             caption=default_caption + note,
             label=f"tab:mean-ndfu-default-vs-human{label_suffix}",
         )
+
+
+# ---------------------------------------------------------------------------
+# Inherent polarization
+# ---------------------------------------------------------------------------
 
 
 def run_inherent_polarization_step(

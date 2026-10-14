@@ -1,0 +1,46 @@
+\begin{table}[htbp]
+\small
+\centering
+\caption{Number of non-standard LLM annotations per model and dataset, summed over all instruction prompts. Unparsed: no integer found in the reply (dropped from the analysis); Out of range: an integer outside the dataset's annotation scale. Incidence: percentage of the model's annotations on that dataset.}
+\label{tab:nonstandard-answers}
+\begin{tabular}{lllrl}
+\toprule
+Model & Dataset & Status & Count & Incidence (\%) \\
+\midrule
+gemma31b & popquorn & Unparsed & 106 & 0.07 \\
+gemma31b & sap & Unparsed & 8 & 0.01 \\
+gemma7b & popquorn & Out of range & 1 & 0.00 \\
+gemma7b & popquorn & Unparsed & 339 & 0.23 \\
+gemma7b & sap & Out of range & 1008 & 1.72 \\
+gemma7b & sap & Unparsed & 2 & 0.00 \\
+llama8b & kumar & Unparsed & 5355 & 26.77 \\
+llama8b & popquorn & Out of range & 1 & 0.00 \\
+llama8b & popquorn & Unparsed & 66199 & 44.13 \\
+llama8b & sap & Unparsed & 22852 & 39.06 \\
+mistral24b & popquorn & Unparsed & 34409 & 22.94 \\
+mistral24b & sap & Unparsed & 15114 & 25.84 \\
+mistral7b & popquorn & Out of range & 106 & 0.07 \\
+mistral7b & popquorn & Unparsed & 6201 & 4.13 \\
+mistral7b & sap & Out of range & 9 & 0.02 \\
+mistral7b & sap & Unparsed & 2214 & 3.78 \\
+olmo32b & kumar & Out of range & 25 & 0.03 \\
+olmo32b & kumar & Unparsed & 270 & 0.27 \\
+olmo32b & popquorn & Out of range & 14 & 0.01 \\
+olmo32b & popquorn & Unparsed & 1430 & 0.95 \\
+olmo32b & sap & Out of range & 2 & 0.00 \\
+olmo32b & sap & Unparsed & 964 & 1.65 \\
+olmo7b & kumar & Out of range & 20 & 0.10 \\
+olmo7b & kumar & Unparsed & 75 & 0.38 \\
+olmo7b & popquorn & Out of range & 263 & 0.18 \\
+olmo7b & popquorn & Unparsed & 4903 & 3.27 \\
+olmo7b & sap & Out of range & 35 & 0.06 \\
+olmo7b & sap & Unparsed & 4178 & 7.14 \\
+qwen32b & kumar & Unparsed & 1 & 0.00 \\
+qwen32b & popquorn & Unparsed & 45 & 0.03 \\
+qwen7b & kumar & Out of range & 137 & 0.14 \\
+qwen7b & kumar & Unparsed & 22 & 0.02 \\
+qwen7b & popquorn & Out of range & 1 & 0.00 \\
+qwen7b & popquorn & Unparsed & 42 & 0.03 \\
+\bottomrule
+\end{tabular}
+\end{table}
