@@ -1,54 +1,43 @@
-% Tick and cross from rotated rules (needs graphicx).
-\providecommand{\sigstroke}[4]{\hspace{#1}\makebox[0pt]{\raisebox{#2}{%
-  \rotatebox[origin=c]{#3}{\rule[-0.5\dimexpr#4\relax]{0.18ex}{#4}}}}%
-  \hspace{-#1}}
-\DeclareRobustCommand{\sigyes}{\makebox[1.3ex][l]{\hspace{0.58ex}%
-  \sigstroke{-0.26ex}{0.26ex}{45}{0.72ex}%
-  \sigstroke{0.47ex}{0.68ex}{-33}{1.62ex}\hspace{0.85ex}}}
-\DeclareRobustCommand{\signo}{\makebox[1.3ex][c]{\raisebox{0.07ex}{%
-  \sigstroke{0ex}{0.65ex}{45}{1.5ex}\sigstroke{0ex}{0.65ex}{-45}{1.5ex}}}}
-\begin{table}
-\caption{Statistical significance of each \ac{pc} feature per method. \sigyes: significant at $p<0.05$ after Bonferroni correction across the features of the dataset; \signo: not significant.}
-\label{tab:real-data-methods}
-\begin{tabular}{llcccc}
-\toprule
- &  & apunim & Krippendorff $\Delta\alpha$ & aposteriori unim. & $\chi^2$ \\
- & \ac{pc} &  &  &  &  \\
-\midrule
-\multirow[t]{4}{*}{DICES-350} & Age & \signo & \signo & \signo & \sigyes \\
- & Education & \sigyes & \signo & \signo & \sigyes \\
- & Gender & \signo & \sigyes & \signo & \sigyes \\
- & Race & \sigyes & \sigyes & \signo & \sigyes \\
-\cline{1-6}
-\multirow[t]{4}{*}{DICES-990} & Age & \sigyes & \signo & \signo & \sigyes \\
- & Education & \sigyes & \sigyes & \signo & \sigyes \\
- & Gender & \sigyes & \sigyes & \signo & \sigyes \\
- & Race & \sigyes & \signo & \signo & \sigyes \\
-\cline{1-6}
-\multirow[t]{3}{*}{Sap et al. 2022} & Age & \signo & \signo & \signo & \sigyes \\
- & Ethnicity & \signo & \signo & \signo & \sigyes \\
- & Gender & \sigyes & \sigyes & \signo & \sigyes \\
-\cline{1-6}
-\multirow[t]{13}{*}{Kumar et al. 2021} & Age & \signo & \signo & \signo & \sigyes \\
- & Education & \signo & \signo & \signo & \sigyes \\
- & Ethnicity & \signo & \signo & \signo & \sigyes \\
- & Gender & \signo & \signo & \signo & \sigyes \\
- & Has Been Targeted & \signo & \signo & \signo & \sigyes \\
- & Is Parent & \signo & \signo & \signo & \sigyes \\
- & Is Transgender & \signo & \signo & \signo & \sigyes \\
- & Political Affiliation & \signo & \signo & \signo & \sigyes \\
- & Religion Important & \signo & \signo & \signo & \sigyes \\
- & Seen Toxicity & \signo & \signo & \signo & \sigyes \\
- & Sexual Orientation & \signo & \signo & \signo & \sigyes \\
- & Technology Impact & \signo & \signo & \signo & \sigyes \\
- & Toxicity Problem & \signo & \signo & \signo & \sigyes \\
-\cline{1-6}
-\multirow[t]{5}{*}{POPQUORN} & Age & \signo & \signo & \signo & \sigyes \\
- & Education & \sigyes & \signo & \signo & \sigyes \\
- & Gender & \signo & \signo & \signo & \sigyes \\
- & Occupation & \signo & \signo & \signo & \sigyes \\
- & Race & \sigyes & \signo & \signo & \sigyes \\
-\cline{1-6}
-\bottomrule
-\end{tabular}
-\end{table}
+\begin{table*}
+	\caption{Statistical significance of each \ac{pc} feature per method. \sigyes: significant at $p<0.05$ after Bonferroni correction across the features of the dataset; \signo: not significant. The method \textit{am} refers to our method, ``apunim''.}
+	\label{tab:real-data-methods}
+	\centering
+	\scriptsize
+	\begin{tabular}{l*{27}{c}}
+		\toprule
+		& \multicolumn{4}{c}{DICES-350} & \multicolumn{4}{c}{DICES-990} & \multicolumn{3}{c}{Sap et al. 2022} & \multicolumn{11}{c}{Kumar et al. 2021} & \multicolumn{5}{c}{POPQUORN} \\
+		\cmidrule(lr){2-5} \cmidrule(lr){6-9} \cmidrule(lr){10-12} \cmidrule(lr){13-23} \cmidrule(lr){24-28}
+		\rotatebox{90}{\textbf{Method}} 
+		& \rotatebox{90}{Age} & \rotatebox{90}{Education} & \rotatebox{90}{Gender} & \rotatebox{90}{Race}
+		& \rotatebox{90}{Age} & \rotatebox{90}{Education} & \rotatebox{90}{Gender} & \rotatebox{90}{Race}
+		& \rotatebox{90}{Age} & \rotatebox{90}{Ethnicity} & \rotatebox{90}{Gender}
+		& \rotatebox{90}{Age} & \rotatebox{90}{Education} & \rotatebox{90}{Ethnicity} & \rotatebox{90}{Gender/Trans} & \rotatebox{90}{Targeted} & \rotatebox{90}{Parent} & \rotatebox{90}{Politics} & \rotatebox{90}{Religion} & \rotatebox{90}{Tox.Seen/Problem} & \rotatebox{90}{Sex. Orient.} & \rotatebox{90}{Tech Impact}
+		& \rotatebox{90}{Age} & \rotatebox{90}{Education} & \rotatebox{90}{Gender} & \rotatebox{90}{Occupation} & \rotatebox{90}{Race} \\
+		\midrule
+		am
+		& \signo & \sigyes & \signo & \sigyes
+		& \sigyes & \sigyes & \sigyes & \sigyes
+		& \signo & \signo & \sigyes
+		& \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo
+		& \signo & \sigyes & \signo & \signo & \sigyes \\
+		$\Delta\alpha$
+		& \signo & \signo & \sigyes & \sigyes
+		& \signo & \sigyes & \sigyes & \signo
+		& \signo & \signo & \sigyes
+		& \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo
+		& \signo & \signo & \signo & \signo & \signo \\
+		\ac{au}
+		& \signo & \signo & \signo & \signo
+		& \signo & \signo & \signo & \signo
+		& \signo & \signo & \signo
+		& \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo
+		& \signo & \signo & \signo & \signo & \signo \\
+		$\chi^2$
+		& \sigyes & \sigyes & \sigyes & \sigyes
+		& \sigyes & \sigyes & \sigyes & \sigyes
+		& \sigyes & \sigyes & \sigyes
+		& \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes
+		& \sigyes & \sigyes & \sigyes & \sigyes & \sigyes \\
+		\bottomrule
+	\end{tabular}
+\end{table*}
