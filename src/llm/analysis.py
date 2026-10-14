@@ -115,6 +115,9 @@ def main(
     graph_output_dir.mkdir(parents=True, exist_ok=True)
     latex_output_dir.mkdir(parents=True, exist_ok=True)
 
+    non_std_df = get_nonstandard_answer_counts(annotations_dir)
+    non_std_df.to_csv(latex_output_dir / "non_standard_answers.csv")
+
     human_datasets = shared.HumanDatasets(
         {
             "dices-350": LazyDatasetLoader(
@@ -140,7 +143,7 @@ def main(
             ),
         }
     )
-    
+
     run_histogram_step(
         human_datasets, annotations_dir, graph_output_dir, prompt_name
     )
@@ -206,7 +209,7 @@ def main(
             annotations_dir=annotations_dir,
             correction_method="holm",
         )
-    
+
     stats.export_ndfu_anova_by_prompt(result_df=res_df, output_path=stats_path)
     run_cohens_d_step(res_df, latex_output_dir, exclude_models)
     stats.run_exploratory_stats(res_df)
@@ -232,6 +235,72 @@ def _model_variants(exclude_models):
 def _drop_models(df: pd.DataFrame, models: set[str]) -> pd.DataFrame:
     """Rows of a long/results frame whose `Model` is not in `models`."""
     return df.loc[~df["Model"].isin(models)] if models else df
+
+
+def get_nonstandard_answer_counts(
+    annotations_dir: Path
+) -> pd.DataFrame:
+    """
+    Print, per (dataset, prompt, model), the value counts of "non-standard"
+    answers in the raw LLM annotation files.
+
+    An answer is non-standard if it is missing/non-numeric, or -- when
+    `valid_values` is given (e.g. {1, 2, 3, 4, 5}) -- numeric but outside
+    that set. Assumes annotation files are CSVs with the raw answer in one
+    of ANNOTATION_COLUMN_CANDIDATES.
+    """
+    VALID_ANNOTATION_VALUES = {
+        "dices-350": {-1, 0, 1},
+        "dices-990": {-1, 0, 1},
+        "sap": {1, 2, 3, 4, 5},
+        "kumar": {1, 2, 3, 4, 5},
+        "popquorn": {1, 2, 3, 4, 5},
+    }
+    dataset_keys = MAIN_DATASET_KEYS
+    prompt_names = shared.MAIN_PROMPT_NAMES
+
+    rows = []
+    for key in dataset_keys:
+        valid = VALID_ANNOTATION_VALUES[key]
+        for prompt_name in prompt_names:
+            files = shared.find_annotation_files(
+                annotations_dir, key, prompt_name
+            )
+            for model in sorted(files):
+                paths = files[model]
+                if isinstance(paths, (str, Path)):
+                    paths = [paths]
+
+                df = pd.concat(
+                    [pd.read_csv(p) for p in paths], ignore_index=True
+                )
+                raw = df["annotation"]
+                numeric = pd.to_numeric(raw, errors="coerce")
+                bad = ~numeric.isin(valid)  # NaN is not in `valid` either
+
+                counts = raw[bad].astype(str).value_counts(dropna=False)
+                for answer, count in counts.items():
+                    rows.append(
+                        {
+                            "dataset": key,
+                            "prompt": prompt_name,
+                            "model": model,
+                            "answer": answer,
+                            "count": int(count),
+                            "n_total": len(raw),
+                        }
+                    )
+
+    detailed = pd.DataFrame(
+        rows,
+        columns=["dataset", "prompt", "model", "answer", "count", "n_total"],
+    )
+    by_model = (
+        detailed.groupby(["model", "answer"], as_index=False)["count"]
+        .sum()
+        .sort_values(["model", "count"], ascending=[True, False])
+    )
+    return by_model
 
 
 def run_cohens_d_step(res_df, latex_output_dir, exclude_models):
