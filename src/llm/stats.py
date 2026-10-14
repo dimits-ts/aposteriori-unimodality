@@ -13,6 +13,7 @@ from statsmodels.stats.multitest import multipletests
 
 from ..lib import run_helper
 from ..lib.util import (
+    SIGNIFICANCE_LEGEND,
     center_table_latex,
     small_table_latex,
     trim_numeric_col_latex,
@@ -417,7 +418,7 @@ def export_llm_apunim_prompt_table(
         caption=(
             "Aposteriori unimodality results for the LLM annotations of "
             f"the {dataset_name} dataset, across instruction prompts. "
-            r"$^{*}p<0.05$, $^{**}p<0.01$, $^{***}p<0.001$."
+            f"{SIGNIFICANCE_LEGEND}"
         ),
         label=label,
         escape=False,
@@ -603,9 +604,7 @@ def export_apunim_significance_table(
         column_format="ll" + "c" * len(df.columns),
     )
     latex_str = (
-        "{\\footnotesize\n\\setlength{\\tabcolsep}{3pt}\n"
-        + latex_str
-        + "}\n"
+        "{\\footnotesize\n\\setlength{\\tabcolsep}{3pt}\n" + latex_str + "}\n"
     )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)

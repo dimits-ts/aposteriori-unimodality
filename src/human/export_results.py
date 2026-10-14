@@ -9,7 +9,11 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
 from ..lib import graphs
-from ..lib.util import center_table_latex, significance_superscript
+from ..lib.util import (
+    SIGNIFICANCE_LEGEND,
+    center_table_latex,
+    significance_superscript,
+)
 from ..lib.preprocessing import (
     Dataset,
     DicesDataset,
@@ -409,7 +413,7 @@ def _results_to_latex(
             "Aposteriori unimodality results for the "
             f"{dataset_name.capitalize()} dataset. "
             "Stars indicate statistical significance: "
-            "*: p<0.1, **: p<0.05, ***: p<0.01."
+            f"{SIGNIFICANCE_LEGEND}"
         ),
         label=table_label,
         escape=False,  # allow LaTeX math ($^{*}$)

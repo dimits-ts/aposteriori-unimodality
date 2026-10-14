@@ -140,7 +140,7 @@ def main(
             ),
         }
     )
-    """
+    
     run_histogram_step(
         human_datasets, annotations_dir, graph_output_dir, prompt_name
     )
@@ -165,7 +165,7 @@ def main(
     run_repeat_consistency_step(
         human_datasets, repeat_dir, latex_output_dir, prompt_name
     )
-    """
+
     run_apunim_prompt_table_step(
         human_datasets, annotations_dir, latex_output_dir, cache_dir=cache_dir
     )
