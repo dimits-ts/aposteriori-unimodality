@@ -140,7 +140,7 @@ def main(
             ),
         }
     )
-
+    """
     run_histogram_step(
         human_datasets, annotations_dir, graph_output_dir, prompt_name
     )
@@ -165,7 +165,7 @@ def main(
     run_repeat_consistency_step(
         human_datasets, repeat_dir, latex_output_dir, prompt_name
     )
-
+    """
     run_apunim_prompt_table_step(
         human_datasets, annotations_dir, latex_output_dir, cache_dir=cache_dir
     )
@@ -206,7 +206,7 @@ def main(
             annotations_dir=annotations_dir,
             correction_method="holm",
         )
-
+    
     stats.export_ndfu_anova_by_prompt(result_df=res_df, output_path=stats_path)
     run_cohens_d_step(res_df, latex_output_dir, exclude_models)
     stats.run_exploratory_stats(res_df)
@@ -381,39 +381,57 @@ def _load_or_compute_apunim(
     """
     apunim results for every model and prompt of one dataset, cached in
     cache_dir/apunim_<key>.csv and shared by the apunim-by-prompt tables and
-    the significant-PC-dimension tables. Only models missing from the cache
-    are computed, so a cache written for fewer models is extended instead of
-    being recomputed.
+    the significant-PC-dimension tables.
+
+    The cache is checked per (model, prompt) pair -- the unit apunim is run
+    on -- so annotation runs that are still in progress are handled: pairs
+    already in the cache are never recomputed, pairs whose annotation file
+    appears later are added on the next run, and the cache is rewritten
+    after every pair, so an interrupted run keeps what it finished.
     """
     cache_path = cache_dir / f"apunim_{key}.csv"
-    cached = None
+    long_df = pd.DataFrame()
     if cache_path.exists():
-        cached = pd.read_csv(cache_path)
+        long_df = pd.read_csv(cache_path)
         # Older caches were written with the DataFrame index as a column.
-        cached = cached.loc[:, ~cached.columns.str.startswith("Unnamed")]
-
-    available = set()
-    for prompt_name in shared.MAIN_PROMPT_NAMES:
-        available |= set(
-            shared.find_annotation_files(annotations_dir, key, prompt_name)
-        )
-    cached_models = set() if cached is None else set(cached["Model"])
-    missing = available - cached_models
-    if cached is not None and not missing:
-        print(f"Skipping (already exists): {cache_path}")
-        return cached
-
-    print(f"Computing apunim for {key}: {', '.join(sorted(missing))}")
-    new_df = stats.compute_llm_apunim_by_prompt(
-        annotations_dir=annotations_dir,
-        dataset_key=key,
-        prompt_names=shared.MAIN_PROMPT_NAMES,
-        exclude_models=cached_models,
+        long_df = long_df.loc[:, ~long_df.columns.str.startswith("Unnamed")]
+    cached_pairs = (
+        set(zip(long_df["Model"], long_df["Prompt"]))
+        if not long_df.empty
+        else set()
     )
-    long_df = new_df if cached is None else pd.concat([cached, new_df])
-    long_df = long_df.reset_index(drop=True)
-    cache_path.parent.mkdir(parents=True, exist_ok=True)
-    long_df.to_csv(cache_path, index=False)
+
+    n_computed = 0
+    for prompt_name in shared.MAIN_PROMPT_NAMES:
+        files = shared.find_annotation_files(annotations_dir, key, prompt_name)
+        for model in sorted(files):
+            if (model, prompt_name) in cached_pairs:
+                continue
+            print(f"Computing apunim: {key} / {prompt_name} / {model}")
+            new_df = stats.compute_llm_apunim_by_prompt(
+                annotations_dir=annotations_dir,
+                dataset_key=key,
+                prompt_names=[prompt_name],
+                exclude_models=set(files) - {model},
+            )
+            if new_df.empty:
+                continue
+            long_df = (
+                new_df
+                if long_df.empty
+                else pd.concat([long_df, new_df], ignore_index=True)
+            )
+            n_computed += 1
+
+            # Write to a temp file and rename, so an interrupt during the
+            # write cannot leave a truncated cache behind.
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            tmp_path = cache_path.with_suffix(".csv.tmp")
+            long_df.to_csv(tmp_path, index=False)
+            tmp_path.replace(cache_path)
+
+    if not n_computed:
+        print(f"Skipping (nothing new to compute): {cache_path}")
     return long_df
 
 

@@ -27,9 +27,7 @@ MAX_CTX_TOKENS = 512
 
 
 DATASET_LOADERS = {
-    "kumar": lambda p: KumarDataset(
-        dataset_path=p, num_samples=SAMPLES_PER_DATASET["kumar"]
-    ),
+    "kumar": lambda p: KumarDataset(dataset_path=p, num_samples=1000),
     "sap": lambda p: SapDataset(dataset_path=p),
     "dices-350": lambda p: DicesDataset(dataset_path=p, variant="350"),
     "dices-990": lambda p: DicesDataset(dataset_path=p, variant="990"),
