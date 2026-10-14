@@ -126,10 +126,12 @@ def load_dataset(dataset_key: str, dataset_path: Path) -> Dataset:
 
 
 def load_generator(model_name: str):
+    kwargs = {"fix_mistral_regex": True} if "mistral" in model_name.lower() else {}
     generator = pipeline(
         "text-generation",
         model=model_name,
         device_map="auto",
+        tokenizer_kwargs=kwargs
     )
     tok = generator.tokenizer
     if tok.pad_token is None:
