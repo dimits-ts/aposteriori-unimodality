@@ -1,0 +1,2651 @@
+model,status,answer,count,n_total_model,rate
+gemma31b,unparsed,Please provide the,105,208500,0.0005035971223021583
+gemma31b,unparsed,Since you didn,3,208500,1.4388489208633093e-05
+gemma31b,unparsed,Since no post,2,208500,9.59232613908873e-06
+gemma31b,unparsed,Since there is,2,208500,9.59232613908873e-06
+gemma31b,unparsed,Since you did,1,208500,4.796163069544365e-06
+gemma31b,unparsed,Unable to provide,1,208500,4.796163069544365e-06
+gemma7b,out_of_range,0,1009,208500,0.0048393285371702635
+gemma7b,unparsed,Please provide the,329,208500,0.0015779376498800959
+gemma7b,unparsed,thought,9,208500,4.3165467625899284e-05
+gemma7b,unparsed,ให้คะแนน,2,208500,9.59232613908873e-06
+gemma7b,unparsed,ไม่สามารถประ,1,208500,4.796163069544365e-06
+llama8b,out_of_range,The HD650,1,228500,4.37636761487965e-06
+llama8b,unparsed,"The single,",25640,228500,0.11221006564551422
+llama8b,unparsed,I cannot annotate,8940,228500,0.03912472647702407
+llama8b,unparsed,Based on the,8700,228500,0.038074398249452954
+llama8b,unparsed,I would rate,6058,228500,0.026512035010940918
+llama8b,unparsed,I find this,4468,228500,0.019553610503282276
+llama8b,unparsed,I personally find,4427,228500,0.01937417943107221
+llama8b,unparsed,I'd rate,4155,228500,0.018183807439824944
+llama8b,unparsed,I cannot provide,2936,228500,0.012849015317286652
+llama8b,unparsed,**Offens,2791,228500,0.012214442013129103
+llama8b,unparsed,I cannot create,1947,228500,0.008520787746170677
+llama8b,unparsed,"Single, most",1418,228500,0.006205689277899344
+llama8b,unparsed,I would find,1405,228500,0.006148796498905908
+llama8b,unparsed,I don't,1355,228500,0.005929978118161925
+llama8b,unparsed,"The identified,",1248,228500,0.005461706783369803
+llama8b,unparsed,I cannot verify,1085,228500,0.00474835886214442
+llama8b,unparsed,*annotated,1036,228500,0.004533916849015317
+llama8b,unparsed,**Annotation:,949,228500,0.0041531728665207875
+llama8b,unparsed,This comment appears,888,228500,0.003886214442013129
+llama8b,unparsed,This post seems,815,228500,0.0035667396061269145
+llama8b,unparsed,Toxicity,666,228500,0.002914660831509847
+llama8b,unparsed,This post appears,642,228500,0.0028096280087527353
+llama8b,unparsed,**Content Warning,641,228500,0.0028052516411378554
+llama8b,unparsed,**Post Annotation,568,228500,0.0024857768052516413
+llama8b,unparsed,The identified trait,438,228500,0.0019168490153172867
+llama8b,unparsed,The identified single,430,228500,0.0018818380743982495
+llama8b,unparsed,I cannot process,404,228500,0.0017680525164113785
+llama8b,unparsed,I cannot continue,368,228500,0.0016105032822757112
+llama8b,unparsed,I'd find,333,228500,0.0014573304157549235
+llama8b,unparsed,I'm not,333,228500,0.0014573304157549235
+llama8b,unparsed,The most influential,329,228500,0.0014398249452954048
+llama8b,unparsed,I would annotate,323,228500,0.001413566739606127
+llama8b,unparsed,**Trigger Warning,321,228500,0.0014048140043763676
+llama8b,unparsed,This comment is,315,228500,0.0013785557986870896
+llama8b,unparsed,*shrugs,294,228500,0.0012866520787746171
+llama8b,unparsed,It seems like,262,228500,0.0011466083150984683
+llama8b,unparsed,I'm a,234,228500,0.0010240700218818381
+llama8b,unparsed,As a,212,228500,0.0009277899343544858
+llama8b,unparsed,**Comment Analysis,203,228500,0.0008884026258205689
+llama8b,unparsed,**Annotated,202,228500,0.0008840262582056892
+llama8b,unparsed,This post is,195,228500,0.0008533916849015318
+llama8b,unparsed,**Warning:,184,228500,0.0008052516411378556
+llama8b,unparsed,**Annotation**,179,228500,0.0007833698030634573
+llama8b,unparsed,Based on my,171,228500,0.0007483588621444202
+llama8b,unparsed,The comment appears,169,228500,0.0007396061269146608
+llama8b,unparsed,I'd say,158,228500,0.0006914660831509846
+llama8b,unparsed,**Original Post,151,228500,0.0006608315098468272
+llama8b,unparsed,**Triggering,150,228500,0.0006564551422319475
+llama8b,unparsed,I'm annot,142,228500,0.0006214442013129103
+llama8b,unparsed,I'm happy,134,228500,0.000586433260393873
+llama8b,unparsed,**Trigger warning,133,228500,0.0005820568927789935
+llama8b,unparsed,**Context:**,129,228500,0.0005645514223194748
+llama8b,unparsed,**Comment:**,119,228500,0.0005207877461706783
+llama8b,unparsed,I'd be,113,228500,0.0004945295404814005
+llama8b,unparsed,Offensiveness,110,228500,0.0004814004376367615
+llama8b,unparsed,I'm unable,104,228500,0.0004551422319474836
+llama8b,unparsed,**Racist,98,228500,0.0004288840262582057
+llama8b,unparsed,I'd annotate,94,228500,0.0004113785557986871
+llama8b,unparsed,As a non,93,228500,0.00040700218818380746
+llama8b,unparsed,I annotate this,86,228500,0.00037636761487964986
+llama8b,unparsed,I'll annotate,83,228500,0.00036323851203501096
+llama8b,unparsed,**Offense,80,228500,0.000350109409190372
+llama8b,unparsed,*rolls eyes,76,228500,0.0003326039387308534
+llama8b,unparsed,I think this,76,228500,0.0003326039387308534
+llama8b,unparsed,This comment seems,76,228500,0.0003326039387308534
+llama8b,unparsed,**Comment Annotation,70,228500,0.0003063457330415755
+llama8b,unparsed,I would perceive,70,228500,0.0003063457330415755
+llama8b,unparsed,I'd like,64,228500,0.0002800875273522976
+llama8b,unparsed,It seems there,64,228500,0.0002800875273522976
+llama8b,unparsed,Comment:,59,228500,0.00025820568927789936
+llama8b,unparsed,The comment is,57,228500,0.00024945295404814
+llama8b,unparsed,As an Arab,55,228500,0.00024070021881838076
+llama8b,unparsed,**Offensive,54,228500,0.00023632385120350108
+llama8b,unparsed,I'm glad,49,228500,0.00021444201312910286
+llama8b,unparsed,I can't,48,228500,0.00021006564551422319
+llama8b,unparsed,*sigh*,47,228500,0.00020568927789934354
+llama8b,unparsed,* Annotation:,42,228500,0.0001838074398249453
+llama8b,unparsed,*laughs*,41,228500,0.00017943107221006564
+llama8b,unparsed,*post annotation,40,228500,0.000175054704595186
+llama8b,unparsed,I'm assuming,39,228500,0.00017067833698030635
+llama8b,unparsed,*post annotated,38,228500,0.0001663019693654267
+llama8b,unparsed,Intolerance for,35,228500,0.00015317286652078774
+llama8b,unparsed,It appears to,34,228500,0.0001487964989059081
+llama8b,unparsed,I'm going,33,228500,0.00014442013129102845
+llama8b,unparsed,**Toxic,31,228500,0.00013566739606126914
+llama8b,unparsed,I cannot fulfill,28,228500,0.0001225382932166302
+llama8b,unparsed,**Not at,26,228500,0.0001137855579868709
+llama8b,unparsed,**Comment Toxic,24,228500,0.00010503282275711159
+llama8b,unparsed,It seems you,24,228500,0.00010503282275711159
+llama8b,unparsed,"My single,",24,228500,0.00010503282275711159
+llama8b,unparsed,**annotated,23,228500,0.00010065645514223195
+llama8b,unparsed,Given the characteristics,23,228500,0.00010065645514223195
+llama8b,unparsed,I cannot generate,23,228500,0.00010065645514223195
+llama8b,unparsed,I'm app,23,228500,0.00010065645514223195
+llama8b,unparsed,I'm gonna,23,228500,0.00010065645514223195
+llama8b,unparsed,*personally,22,228500,9.62800875273523e-05
+llama8b,unparsed,**Personal Annotation,21,228500,9.190371991247264e-05
+llama8b,unparsed,*Annotation:,21,228500,9.190371991247264e-05
+llama8b,unparsed,**Annotation:**,20,228500,8.7527352297593e-05
+llama8b,unparsed,*Post annotation,20,228500,8.7527352297593e-05
+llama8b,unparsed,Given the provided,20,228500,8.7527352297593e-05
+llama8b,unparsed,"Honey,",20,228500,8.7527352297593e-05
+llama8b,unparsed,**Content warning,19,228500,8.315098468271335e-05
+llama8b,unparsed,*ahem,19,228500,8.315098468271335e-05
+llama8b,unparsed,I find the,19,228500,8.315098468271335e-05
+llama8b,unparsed,**Title:**,18,228500,7.87746170678337e-05
+llama8b,unparsed,*Post annotated,18,228500,7.87746170678337e-05
+llama8b,unparsed,"Comment: """,18,228500,7.87746170678337e-05
+llama8b,unparsed,*person's,17,228500,7.439824945295405e-05
+llama8b,unparsed,* annotation *,16,228500,7.00218818380744e-05
+llama8b,unparsed,As a young,16,228500,7.00218818380744e-05
+llama8b,unparsed,**Content:**,15,228500,6.564551422319475e-05
+llama8b,unparsed,**Post Analysis,15,228500,6.564551422319475e-05
+llama8b,unparsed,**Post:**,15,228500,6.564551422319475e-05
+llama8b,unparsed,*Sigh*,15,228500,6.564551422319475e-05
+llama8b,unparsed,As a retired,15,228500,6.564551422319475e-05
+llama8b,unparsed,I would classify,15,228500,6.564551422319475e-05
+llama8b,unparsed,I'll be,15,228500,6.564551422319475e-05
+llama8b,unparsed,Rating:,15,228500,6.564551422319475e-05
+llama8b,unparsed,This appears to,15,228500,6.564551422319475e-05
+llama8b,unparsed,This statement appears,15,228500,6.564551422319475e-05
+llama8b,unparsed,*Trigger warning,14,228500,6.12691466083151e-05
+llama8b,unparsed,I'm shocked,14,228500,6.12691466083151e-05
+llama8b,unparsed,I'm so,14,228500,6.12691466083151e-05
+llama8b,unparsed,This article appears,14,228500,6.12691466083151e-05
+llama8b,unparsed,**Post annotation,13,228500,5.689277899343545e-05
+llama8b,unparsed,**Rac,13,228500,5.689277899343545e-05
+llama8b,unparsed,*Post Annotation,13,228500,5.689277899343545e-05
+llama8b,unparsed,"Haha,",13,228500,5.689277899343545e-05
+llama8b,unparsed,I think the,13,228500,5.689277899343545e-05
+llama8b,unparsed,The comment seems,13,228500,5.689277899343545e-05
+llama8b,unparsed,This text appears,13,228500,5.689277899343545e-05
+llama8b,unparsed,**Content Analysis,12,228500,5.2516411378555796e-05
+llama8b,unparsed,**Post An,12,228500,5.2516411378555796e-05
+llama8b,unparsed,Huh?,12,228500,5.2516411378555796e-05
+llama8b,unparsed,It appears there,12,228500,5.2516411378555796e-05
+llama8b,unparsed,It seems this,12,228500,5.2516411378555796e-05
+llama8b,unparsed,It's difficult,12,228500,5.2516411378555796e-05
+llama8b,unparsed,The comment provided,12,228500,5.2516411378555796e-05
+llama8b,unparsed,**Comment:,11,228500,4.814004376367615e-05
+llama8b,unparsed,**Content Annotation,11,228500,4.814004376367615e-05
+llama8b,unparsed,**Emotional,11,228500,4.814004376367615e-05
+llama8b,unparsed,Comment Analysis:,11,228500,4.814004376367615e-05
+llama8b,unparsed,I cannot show,11,228500,4.814004376367615e-05
+llama8b,unparsed,"I, a",11,228500,4.814004376367615e-05
+llama8b,unparsed,One day a,11,228500,4.814004376367615e-05
+llama8b,unparsed,**Annot,10,228500,4.37636761487965e-05
+llama8b,unparsed,*Note:,10,228500,4.37636761487965e-05
+llama8b,unparsed,*Offens,10,228500,4.37636761487965e-05
+llama8b,unparsed,"Annotation:
+
+Comment",10,228500,4.37636761487965e-05
+llama8b,unparsed,Comment: I,10,228500,4.37636761487965e-05
+llama8b,unparsed,I couldn't,10,228500,4.37636761487965e-05
+llama8b,unparsed,I personally don,10,228500,4.37636761487965e-05
+llama8b,unparsed,I'd recommend,10,228500,4.37636761487965e-05
+llama8b,unparsed,There is no,10,228500,4.37636761487965e-05
+llama8b,unparsed,**Comment Context,9,228500,3.938730853391685e-05
+llama8b,unparsed,*confused,9,228500,3.938730853391685e-05
+llama8b,unparsed,*smiles,9,228500,3.938730853391685e-05
+llama8b,unparsed,As a Hispanic,9,228500,3.938730853391685e-05
+llama8b,unparsed,As a Native,9,228500,3.938730853391685e-05
+llama8b,unparsed,Given the persona,9,228500,3.938730853391685e-05
+llama8b,unparsed,It appears that,9,228500,3.938730853391685e-05
+llama8b,unparsed,It seems that,9,228500,3.938730853391685e-05
+llama8b,unparsed,This passage appears,9,228500,3.938730853391685e-05
+llama8b,unparsed,This post reson,9,228500,3.938730853391685e-05
+llama8b,unparsed,**Concerned,8,228500,3.50109409190372e-05
+llama8b,unparsed,*chuckles,8,228500,3.50109409190372e-05
+llama8b,unparsed,*facep,8,228500,3.50109409190372e-05
+llama8b,unparsed,*shaking,8,228500,3.50109409190372e-05
+llama8b,unparsed,"Honestly, I",8,228500,3.50109409190372e-05
+llama8b,unparsed,I personally think,8,228500,3.50109409190372e-05
+llama8b,unparsed,I understand your,8,228500,3.50109409190372e-05
+llama8b,unparsed,I'd choose,8,228500,3.50109409190372e-05
+llama8b,unparsed,I'd perceive,8,228500,3.50109409190372e-05
+llama8b,unparsed,I'm feeling,8,228500,3.50109409190372e-05
+llama8b,unparsed,"The comment """,8,228500,3.50109409190372e-05
+llama8b,unparsed,This comment does,8,228500,3.50109409190372e-05
+llama8b,unparsed,This post would,8,228500,3.50109409190372e-05
+llama8b,unparsed,*person annot,7,228500,3.063457330415755e-05
+llama8b,unparsed,*personality,7,228500,3.063457330415755e-05
+llama8b,unparsed,*post is,7,228500,3.063457330415755e-05
+llama8b,unparsed,*scratches,7,228500,3.063457330415755e-05
+llama8b,unparsed,*shudder,7,228500,3.063457330415755e-05
+llama8b,unparsed,As a mill,7,228500,3.063457330415755e-05
+llama8b,unparsed,"Hombre,",7,228500,3.063457330415755e-05
+llama8b,unparsed,I cannot calculate,7,228500,3.063457330415755e-05
+llama8b,unparsed,I think I,7,228500,3.063457330415755e-05
+llama8b,unparsed,I will annotate,7,228500,3.063457330415755e-05
+llama8b,unparsed,I'll assume,7,228500,3.063457330415755e-05
+llama8b,unparsed,It appears you,7,228500,3.063457330415755e-05
+llama8b,unparsed,It's great,7,228500,3.063457330415755e-05
+llama8b,unparsed,The article mentions,7,228500,3.063457330415755e-05
+llama8b,unparsed,The given comment,7,228500,3.063457330415755e-05
+llama8b,unparsed,The trait that,7,228500,3.063457330415755e-05
+llama8b,unparsed,This annotation is,7,228500,3.063457330415755e-05
+llama8b,unparsed,This poem appears,7,228500,3.063457330415755e-05
+llama8b,unparsed,This post comes,7,228500,3.063457330415755e-05
+llama8b,unparsed,To identify the,7,228500,3.063457330415755e-05
+llama8b,unparsed,**Annotation as,6,228500,2.6258205689277898e-05
+llama8b,unparsed,**Annotations:,6,228500,2.6258205689277898e-05
+llama8b,unparsed,*Offense,6,228500,2.6258205689277898e-05
+llama8b,unparsed,*expression:,6,228500,2.6258205689277898e-05
+llama8b,unparsed,*reads the,6,228500,2.6258205689277898e-05
+llama8b,unparsed,*smiling,6,228500,2.6258205689277898e-05
+llama8b,unparsed,*written in,6,228500,2.6258205689277898e-05
+llama8b,unparsed,As a hom,6,228500,2.6258205689277898e-05
+llama8b,unparsed,As a woman,6,228500,2.6258205689277898e-05
+llama8b,unparsed,Comment Annotation:,6,228500,2.6258205689277898e-05
+llama8b,unparsed,I appreciate your,6,228500,2.6258205689277898e-05
+llama8b,unparsed,I can provide,6,228500,2.6258205689277898e-05
+llama8b,unparsed,I think there,6,228500,2.6258205689277898e-05
+llama8b,unparsed,I'll provide,6,228500,2.6258205689277898e-05
+llama8b,unparsed,I'm excited,6,228500,2.6258205689277898e-05
+llama8b,unparsed,It seems they,6,228500,2.6258205689277898e-05
+llama8b,unparsed,My intolerance for,6,228500,2.6258205689277898e-05
+llama8b,unparsed,The Grand Theft,6,228500,2.6258205689277898e-05
+llama8b,unparsed,The post seems,6,228500,2.6258205689277898e-05
+llama8b,unparsed,The tone of,6,228500,2.6258205689277898e-05
+llama8b,unparsed,*   **,5,228500,2.188183807439825e-05
+llama8b,unparsed,**Commenter,5,228500,2.188183807439825e-05
+llama8b,unparsed,**Initial Reaction,5,228500,2.188183807439825e-05
+llama8b,unparsed,**ListView Adapter,5,228500,2.188183807439825e-05
+llama8b,unparsed,**Logical Conclusion,5,228500,2.188183807439825e-05
+llama8b,unparsed,**Post Context,5,228500,2.188183807439825e-05
+llama8b,unparsed,**Rating:,5,228500,2.188183807439825e-05
+llama8b,unparsed,**Reflections,5,228500,2.188183807439825e-05
+llama8b,unparsed,*Annotation*,5,228500,2.188183807439825e-05
+llama8b,unparsed,*Deep sigh,5,228500,2.188183807439825e-05
+llama8b,unparsed,*Person's,5,228500,2.188183807439825e-05
+llama8b,unparsed,*Personal Annotation,5,228500,2.188183807439825e-05
+llama8b,unparsed,*This post,5,228500,2.188183807439825e-05
+llama8b,unparsed,*rolls their,5,228500,2.188183807439825e-05
+llama8b,unparsed,*side-eye,5,228500,2.188183807439825e-05
+llama8b,unparsed,A weather report,5,228500,2.188183807439825e-05
+llama8b,unparsed,I am a,5,228500,2.188183807439825e-05
+llama8b,unparsed,I will be,5,228500,2.188183807439825e-05
+llama8b,unparsed,I would consider,5,228500,2.188183807439825e-05
+llama8b,unparsed,I'm deeply,5,228500,2.188183807439825e-05
+llama8b,unparsed,I'm learning,5,228500,2.188183807439825e-05
+llama8b,unparsed,I'm really,5,228500,2.188183807439825e-05
+llama8b,unparsed,It appears this,5,228500,2.188183807439825e-05
+llama8b,unparsed,The text appears,5,228500,2.188183807439825e-05
+llama8b,unparsed,This statement is,5,228500,2.188183807439825e-05
+llama8b,unparsed,To calculate the,5,228500,2.188183807439825e-05
+llama8b,unparsed,**Comment An,4,228500,1.75054704595186e-05
+llama8b,unparsed,**Commentary,4,228500,1.75054704595186e-05
+llama8b,unparsed,**Context:,4,228500,1.75054704595186e-05
+llama8b,unparsed,**Interpret,4,228500,1.75054704595186e-05
+llama8b,unparsed,*Commenter,4,228500,1.75054704595186e-05
+llama8b,unparsed,*Title:,4,228500,1.75054704595186e-05
+llama8b,unparsed,*Title:*,4,228500,1.75054704595186e-05
+llama8b,unparsed,*posts a,4,228500,1.75054704595186e-05
+llama8b,unparsed,As a self,4,228500,1.75054704595186e-05
+llama8b,unparsed,Given my persona,4,228500,1.75054704595186e-05
+llama8b,unparsed,"Hmmm,",4,228500,1.75054704595186e-05
+llama8b,unparsed,I cannot perform,4,228500,1.75054704595186e-05
+llama8b,unparsed,I find it,4,228500,1.75054704595186e-05
+llama8b,unparsed,I find these,4,228500,1.75054704595186e-05
+llama8b,unparsed,I identify the,4,228500,1.75054704595186e-05
+llama8b,unparsed,I love this,4,228500,1.75054704595186e-05
+llama8b,unparsed,I think a,4,228500,1.75054704595186e-05
+llama8b,unparsed,I think it,4,228500,1.75054704595186e-05
+llama8b,unparsed,I'd identify,4,228500,1.75054704595186e-05
+llama8b,unparsed,I'll do,4,228500,1.75054704595186e-05
+llama8b,unparsed,I'm confused,4,228500,1.75054704595186e-05
+llama8b,unparsed,I'm literally,4,228500,1.75054704595186e-05
+llama8b,unparsed,My strong belief,4,228500,1.75054704595186e-05
+llama8b,unparsed,"OMG,",4,228500,1.75054704595186e-05
+llama8b,unparsed,The Sog,4,228500,1.75054704595186e-05
+llama8b,unparsed,The games you,4,228500,1.75054704595186e-05
+llama8b,unparsed,The given text,4,228500,1.75054704595186e-05
+llama8b,unparsed,This post doesn,4,228500,1.75054704595186e-05
+llama8b,unparsed,This quote is,4,228500,1.75054704595186e-05
+llama8b,unparsed,This statement seems,4,228500,1.75054704595186e-05
+llama8b,unparsed,"To clarify,",4,228500,1.75054704595186e-05
+llama8b,unparsed,To determine the,4,228500,1.75054704595186e-05
+llama8b,unparsed,What a lovely,4,228500,1.75054704595186e-05
+llama8b,unparsed,idk what,4,228500,1.75054704595186e-05
+llama8b,unparsed,#Bible,3,228500,1.3129102844638949e-05
+llama8b,unparsed,*   I,3,228500,1.3129102844638949e-05
+llama8b,unparsed,* Annotation of,3,228500,1.3129102844638949e-05
+llama8b,unparsed,* Tone:,3,228500,1.3129102844638949e-05
+llama8b,unparsed,* annotation:,3,228500,1.3129102844638949e-05
+llama8b,unparsed,**Author's,3,228500,1.3129102844638949e-05
+llama8b,unparsed,**Code Sn,3,228500,1.3129102844638949e-05
+llama8b,unparsed,**Fru,3,228500,1.3129102844638949e-05
+llama8b,unparsed,**Personal An,3,228500,1.3129102844638949e-05
+llama8b,unparsed,*Annot,3,228500,1.3129102844638949e-05
+llama8b,unparsed,*Annotation as,3,228500,1.3129102844638949e-05
+llama8b,unparsed,*I take a,3,228500,1.3129102844638949e-05
+llama8b,unparsed,*Offended,3,228500,1.3129102844638949e-05
+llama8b,unparsed,*Original Comment,3,228500,1.3129102844638949e-05
+llama8b,unparsed,*The post,3,228500,1.3129102844638949e-05
+llama8b,unparsed,*neutral tone,3,228500,1.3129102844638949e-05
+llama8b,unparsed,*person with,3,228500,1.3129102844638949e-05
+llama8b,unparsed,*personal annotation,3,228500,1.3129102844638949e-05
+llama8b,unparsed,*post appears,3,228500,1.3129102844638949e-05
+llama8b,unparsed,*post tone,3,228500,1.3129102844638949e-05
+llama8b,unparsed,*rolls her,3,228500,1.3129102844638949e-05
+llama8b,unparsed,*scrunch,3,228500,1.3129102844638949e-05
+llama8b,unparsed,*shakes,3,228500,1.3129102844638949e-05
+llama8b,unparsed,"Annotation:
+
+*",3,228500,1.3129102844638949e-05
+llama8b,unparsed,"Annotation:
+
+This",3,228500,1.3129102844638949e-05
+llama8b,unparsed,"Annotation:
+Comment",3,228500,1.3129102844638949e-05
+llama8b,unparsed,As an Asian,3,228500,1.3129102844638949e-05
+llama8b,unparsed,Comment Toxicity,3,228500,1.3129102844638949e-05
+llama8b,unparsed,Comment: The,3,228500,1.3129102844638949e-05
+llama8b,unparsed,"Hahaha,",3,228500,1.3129102844638949e-05
+llama8b,unparsed,Hmmm...,3,228500,1.3129102844638949e-05
+llama8b,unparsed,I am annot,3,228500,1.3129102844638949e-05
+llama8b,unparsed,I cannot maintain,3,228500,1.3129102844638949e-05
+llama8b,unparsed,I love kurz,3,228500,1.3129102844638949e-05
+llama8b,unparsed,I see what,3,228500,1.3129102844638949e-05
+llama8b,unparsed,I think they,3,228500,1.3129102844638949e-05
+llama8b,unparsed,I think you,3,228500,1.3129102844638949e-05
+llama8b,unparsed,I'd personally,3,228500,1.3129102844638949e-05
+llama8b,unparsed,I'll break,3,228500,1.3129102844638949e-05
+llama8b,unparsed,I'll explain,3,228500,1.3129102844638949e-05
+llama8b,unparsed,I'll re,3,228500,1.3129102844638949e-05
+llama8b,unparsed,I'm an,3,228500,1.3129102844638949e-05
+llama8b,unparsed,I'm delighted,3,228500,1.3129102844638949e-05
+llama8b,unparsed,I'm having,3,228500,1.3129102844638949e-05
+llama8b,unparsed,I'm low,3,228500,1.3129102844638949e-05
+llama8b,unparsed,I'm thrilled,3,228500,1.3129102844638949e-05
+llama8b,unparsed,I'm uncomfortable,3,228500,1.3129102844638949e-05
+llama8b,unparsed,It seems I,3,228500,1.3129102844638949e-05
+llama8b,unparsed,It's a,3,228500,1.3129102844638949e-05
+llama8b,unparsed,My job is,3,228500,1.3129102844638949e-05
+llama8b,unparsed,Not at all,3,228500,1.3129102844638949e-05
+llama8b,unparsed,The article suggests,3,228500,1.3129102844638949e-05
+llama8b,unparsed,The comment you,3,228500,1.3129102844638949e-05
+llama8b,unparsed,The given statement,3,228500,1.3129102844638949e-05
+llama8b,unparsed,The provided text,3,228500,1.3129102844638949e-05
+llama8b,unparsed,The question about,3,228500,1.3129102844638949e-05
+llama8b,unparsed,The situation seems,3,228500,1.3129102844638949e-05
+llama8b,unparsed,The text does,3,228500,1.3129102844638949e-05
+llama8b,unparsed,This is a,3,228500,1.3129102844638949e-05
+llama8b,unparsed,This person seems,3,228500,1.3129102844638949e-05
+llama8b,unparsed,This post align,3,228500,1.3129102844638949e-05
+llama8b,unparsed,"Ugh,",3,228500,1.3129102844638949e-05
+llama8b,unparsed,"""Ugh",2,228500,8.7527352297593e-06
+llama8b,unparsed,# Bible verse,2,228500,8.7527352297593e-06
+llama8b,unparsed,* Annotation *,2,228500,8.7527352297593e-06
+llama8b,unparsed,* Post:,2,228500,8.7527352297593e-06
+llama8b,unparsed,**ANNOTATION,2,228500,8.7527352297593e-06
+llama8b,unparsed,**Comment annotated,2,228500,8.7527352297593e-06
+llama8b,unparsed,**Comment annotation,2,228500,8.7527352297593e-06
+llama8b,unparsed,**Comment from,2,228500,8.7527352297593e-06
+llama8b,unparsed,**Content Note,2,228500,8.7527352297593e-06
+llama8b,unparsed,**Content:,2,228500,8.7527352297593e-06
+llama8b,unparsed,**Contextual,2,228500,8.7527352297593e-06
+llama8b,unparsed,**Exciting,2,228500,8.7527352297593e-06
+llama8b,unparsed,**Perceived,2,228500,8.7527352297593e-06
+llama8b,unparsed,**Post annotated,2,228500,8.7527352297593e-06
+llama8b,unparsed,**Religious,2,228500,8.7527352297593e-06
+llama8b,unparsed,**Sar,2,228500,8.7527352297593e-06
+llama8b,unparsed,**Self-,2,228500,8.7527352297593e-06
+llama8b,unparsed,**Sigh,2,228500,8.7527352297593e-06
+llama8b,unparsed,**Song Title,2,228500,8.7527352297593e-06
+llama8b,unparsed,**Thoughts,2,228500,8.7527352297593e-06
+llama8b,unparsed,**Thread Renew,2,228500,8.7527352297593e-06
+llama8b,unparsed,*Background checks,2,228500,8.7527352297593e-06
+llama8b,unparsed,*Content Warning,2,228500,8.7527352297593e-06
+llama8b,unparsed,*Original Post,2,228500,8.7527352297593e-06
+llama8b,unparsed,*Politicians,2,228500,8.7527352297593e-06
+llama8b,unparsed,*Post:,2,228500,8.7527352297593e-06
+llama8b,unparsed,*Source:,2,228500,8.7527352297593e-06
+llama8b,unparsed,*Triggered,2,228500,8.7527352297593e-06
+llama8b,unparsed,*annotates,2,228500,8.7527352297593e-06
+llama8b,unparsed,*deep breath,2,228500,8.7527352297593e-06
+llama8b,unparsed,*excited,2,228500,8.7527352297593e-06
+llama8b,unparsed,*expression of,2,228500,8.7527352297593e-06
+llama8b,unparsed,*person is,2,228500,8.7527352297593e-06
+llama8b,unparsed,*raises an,2,228500,8.7527352297593e-06
+llama8b,unparsed,*reading the,2,228500,8.7527352297593e-06
+llama8b,unparsed,*slightly,2,228500,8.7527352297593e-06
+llama8b,unparsed,*smirk,2,228500,8.7527352297593e-06
+llama8b,unparsed,*uses they,2,228500,8.7527352297593e-06
+llama8b,unparsed,A sweet and,2,228500,8.7527352297593e-06
+llama8b,unparsed,As a transgender,2,228500,8.7527352297593e-06
+llama8b,unparsed,As an,2,228500,8.7527352297593e-06
+llama8b,unparsed,Based on Woody,2,228500,8.7527352297593e-06
+llama8b,unparsed,Comment toxicity:,2,228500,8.7527352297593e-06
+llama8b,unparsed,Comment: Initially,2,228500,8.7527352297593e-06
+llama8b,unparsed,Comment: It,2,228500,8.7527352297593e-06
+llama8b,unparsed,Comment: You,2,228500,8.7527352297593e-06
+llama8b,unparsed,Given the topic,2,228500,8.7527352297593e-06
+llama8b,unparsed,I am app,2,228500,8.7527352297593e-06
+llama8b,unparsed,I am deeply,2,228500,8.7527352297593e-06
+llama8b,unparsed,I appreciate the,2,228500,8.7527352297593e-06
+llama8b,unparsed,I cannot proceed,2,228500,8.7527352297593e-06
+llama8b,unparsed,I gotta say,2,228500,8.7527352297593e-06
+llama8b,unparsed,I must admit,2,228500,8.7527352297593e-06
+llama8b,unparsed,I think Spider,2,228500,8.7527352297593e-06
+llama8b,unparsed,I would identify,2,228500,8.7527352297593e-06
+llama8b,unparsed,I wouldn't,2,228500,8.7527352297593e-06
+llama8b,unparsed,I'd classify,2,228500,8.7527352297593e-06
+llama8b,unparsed,I'd describe,2,228500,8.7527352297593e-06
+llama8b,unparsed,I'll identify,2,228500,8.7527352297593e-06
+llama8b,unparsed,I'm find,2,228500,8.7527352297593e-06
+llama8b,unparsed,I'm good,2,228500,8.7527352297593e-06
+llama8b,unparsed,I'm horrified,2,228500,8.7527352297593e-06
+llama8b,unparsed,I'm reading,2,228500,8.7527352297593e-06
+llama8b,unparsed,I've had,2,228500,8.7527352297593e-06
+llama8b,unparsed,I've read,2,228500,8.7527352297593e-06
+llama8b,unparsed,It's hard,2,228500,8.7527352297593e-06
+llama8b,unparsed,It's lovely,2,228500,8.7527352297593e-06
+llama8b,unparsed,It's nice,2,228500,8.7527352297593e-06
+llama8b,unparsed,It's the,2,228500,8.7527352297593e-06
+llama8b,unparsed,Phil Robertson was,2,228500,8.7527352297593e-06
+llama8b,unparsed,That's a,2,228500,8.7527352297593e-06
+llama8b,unparsed,The 'I,2,228500,8.7527352297593e-06
+llama8b,unparsed,The commenter above,2,228500,8.7527352297593e-06
+llama8b,unparsed,The differences between,2,228500,8.7527352297593e-06
+llama8b,unparsed,The individual making,2,228500,8.7527352297593e-06
+llama8b,unparsed,The mention of,2,228500,8.7527352297593e-06
+llama8b,unparsed,The post appears,2,228500,8.7527352297593e-06
+llama8b,unparsed,The statement appears,2,228500,8.7527352297593e-06
+llama8b,unparsed,The text provided,2,228500,8.7527352297593e-06
+llama8b,unparsed,This comment doesn,2,228500,8.7527352297593e-06
+llama8b,unparsed,This person is,2,228500,8.7527352297593e-06
+llama8b,unparsed,This poem seems,2,228500,8.7527352297593e-06
+llama8b,unparsed,This post likely,2,228500,8.7527352297593e-06
+llama8b,unparsed,This post suggests,2,228500,8.7527352297593e-06
+llama8b,unparsed,This post uses,2,228500,8.7527352297593e-06
+llama8b,unparsed,"This post,",2,228500,8.7527352297593e-06
+llama8b,unparsed,This question seems,2,228500,8.7527352297593e-06
+llama8b,unparsed,This quote appears,2,228500,8.7527352297593e-06
+llama8b,unparsed,This quote seems,2,228500,8.7527352297593e-06
+llama8b,unparsed,"This quote,",2,228500,8.7527352297593e-06
+llama8b,unparsed,"Translation: """,2,228500,8.7527352297593e-06
+llama8b,unparsed,"Unfortunately, I",2,228500,8.7527352297593e-06
+llama8b,unparsed,"Unfortunately, there",2,228500,8.7527352297593e-06
+llama8b,unparsed,You are correct,2,228500,8.7527352297593e-06
+llama8b,unparsed,You'd like,2,228500,8.7527352297593e-06
+llama8b,unparsed,"""Politicians",1,228500,4.37636761487965e-06
+llama8b,unparsed,"""Steal",1,228500,4.37636761487965e-06
+llama8b,unparsed,# Influential,1,228500,4.37636761487965e-06
+llama8b,unparsed,# Offens,1,228500,4.37636761487965e-06
+llama8b,unparsed,# Personality Trait,1,228500,4.37636761487965e-06
+llama8b,unparsed,"# Single,",1,228500,4.37636761487965e-06
+llama8b,unparsed,#GoLady,1,228500,4.37636761487965e-06
+llama8b,unparsed,#NationalRead,1,228500,4.37636761487965e-06
+llama8b,unparsed,#UNDERWOOD,1,228500,4.37636761487965e-06
+llama8b,unparsed,#quote #,1,228500,4.37636761487965e-06
+llama8b,unparsed,*   Context,1,228500,4.37636761487965e-06
+llama8b,unparsed,*   The,1,228500,4.37636761487965e-06
+llama8b,unparsed,* Annotation as,1,228500,4.37636761487965e-06
+llama8b,unparsed,* Antoine G,1,228500,4.37636761487965e-06
+llama8b,unparsed,* Commenter,1,228500,4.37636761487965e-06
+llama8b,unparsed,* Context:,1,228500,4.37636761487965e-06
+llama8b,unparsed,* I find,1,228500,4.37636761487965e-06
+llama8b,unparsed,* Original post,1,228500,4.37636761487965e-06
+llama8b,unparsed,* Post Analysis,1,228500,4.37636761487965e-06
+llama8b,unparsed,* Post Annotation,1,228500,4.37636761487965e-06
+llama8b,unparsed,* Post annotation,1,228500,4.37636761487965e-06
+llama8b,unparsed,* Post content,1,228500,4.37636761487965e-06
+llama8b,unparsed,* Reflecting,1,228500,4.37636761487965e-06
+llama8b,unparsed,* tone:,1,228500,4.37636761487965e-06
+llama8b,unparsed,* translation:,1,228500,4.37636761487965e-06
+llama8b,unparsed,** Annotation as,1,228500,4.37636761487965e-06
+llama8b,unparsed,** Annotation:,1,228500,4.37636761487965e-06
+llama8b,unparsed,**A heart,1,228500,4.37636761487965e-06
+llama8b,unparsed,**A message,1,228500,4.37636761487965e-06
+llama8b,unparsed,**A thought,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Article Annotation,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Bug Report,1,228500,4.37636761487965e-06
+llama8b,unparsed,**CMV,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Code Issue,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Concern about,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Confront,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Confusion,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Content annotation,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Contentious,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Evaluation Task,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Excit,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Extremely,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Femin,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Flaw,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Hateful,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Honest,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Internal Mon,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Judgment,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Labeling,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Language Alert,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Language and,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Language:**,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Map Analysis,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Movies/,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Musical,1,228500,4.37636761487965e-06
+llama8b,unparsed,**My Annotation,1,228500,4.37636761487965e-06
+llama8b,unparsed,**My Reaction,1,228500,4.37636761487965e-06
+llama8b,unparsed,**My annotated,1,228500,4.37636761487965e-06
+llama8b,unparsed,**My annotation,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Null Pointer,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Observation,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Original Comment,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Original Text,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Perception,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Persona Characteristics,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Personal Reflection,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Post Title,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Potential Issue,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Reflection and,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Relax,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Sarc,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Security Concern,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Self-de,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Self-dis,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Severity of,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Sinc,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Slightly,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Slur,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Surviving,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Text Analysis,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Thread Alert,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Thread Re,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Thread Restart,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Tone,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Triggered,1,228500,4.37636761487965e-06
+llama8b,unparsed,**Video Context,1,228500,4.37636761487965e-06
+llama8b,unparsed,**WARNING:,1,228500,4.37636761487965e-06
+llama8b,unparsed,**evaluation time,1,228500,4.37636761487965e-06
+llama8b,unparsed,**lyrics,1,228500,4.37636761487965e-06
+llama8b,unparsed,*All reported,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Chris Rock,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Comment Context,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Comment analysis,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Comment appears,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Comment flagged,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Comment from,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Comment tone,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Comment's,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Comment:,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Comment:*,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Content warning,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Deep breath,1,228500,4.37636761487965e-06
+llama8b,unparsed,*General tone,1,228500,4.37636761487965e-06
+llama8b,unparsed,*I am deeply,1,228500,4.37636761487965e-06
+llama8b,unparsed,*I raise an,1,228500,4.37636761487965e-06
+llama8b,unparsed,*I'd like,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Language and,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Non-binary,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Noticing,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Observation,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Offensive,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Original post,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Person annot,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Person:,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Personal annotation,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Personality,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Positive tone,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Post Analysis,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Post is,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Post tone,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Question,1,228500,4.37636761487965e-06
+llama8b,unparsed,*REALITY,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Scratches,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Thoughts,1,228500,4.37636761487965e-06
+llama8b,unparsed,*Thread revival,1,228500,4.37636761487965e-06
+llama8b,unparsed,*adds a,1,228500,4.37636761487965e-06
+llama8b,unparsed,*adjusts,1,228500,4.37636761487965e-06
+llama8b,unparsed,*annotating,1,228500,4.37636761487965e-06
+llama8b,unparsed,*bold text,1,228500,4.37636761487965e-06
+llama8b,unparsed,*comment tone,1,228500,4.37636761487965e-06
+llama8b,unparsed,*content warning,1,228500,4.37636761487965e-06
+llama8b,unparsed,*deep sigh,1,228500,4.37636761487965e-06
+llama8b,unparsed,*non-binary,1,228500,4.37636761487965e-06
+llama8b,unparsed,*original post,1,228500,4.37636761487965e-06
+llama8b,unparsed,*person reflects,1,228500,4.37636761487965e-06
+llama8b,unparsed,*post by,1,228500,4.37636761487965e-06
+llama8b,unparsed,*post:,1,228500,4.37636761487965e-06
+llama8b,unparsed,*posts are,1,228500,4.37636761487965e-06
+llama8b,unparsed,*posts with,1,228500,4.37636761487965e-06
+llama8b,unparsed,*shocked,1,228500,4.37636761487965e-06
+llama8b,unparsed,*smir,1,228500,4.37636761487965e-06
+llama8b,unparsed,*stares,1,228500,4.37636761487965e-06
+llama8b,unparsed,*thread is,1,228500,4.37636761487965e-06
+llama8b,unparsed,*uses a,1,228500,4.37636761487965e-06
+llama8b,unparsed,*uses informal,1,228500,4.37636761487965e-06
+llama8b,unparsed,*uses slang,1,228500,4.37636761487965e-06
+llama8b,unparsed,*uses social,1,228500,4.37636761487965e-06
+llama8b,unparsed,A casual conversation,1,228500,4.37636761487965e-06
+llama8b,unparsed,"A casual,",1,228500,4.37636761487965e-06
+llama8b,unparsed,A completely innoc,1,228500,4.37636761487965e-06
+llama8b,unparsed,A curious individual,1,228500,4.37636761487965e-06
+llama8b,unparsed,A harmless post,1,228500,4.37636761487965e-06
+llama8b,unparsed,A nostalgic moment,1,228500,4.37636761487965e-06
+llama8b,unparsed,A simple expression,1,228500,4.37636761487965e-06
+llama8b,unparsed,A simple yet,1,228500,4.37636761487965e-06
+llama8b,unparsed,"Annotation:
+
+**",1,228500,4.37636761487965e-06
+llama8b,unparsed,"Annotation:
+
+The",1,228500,4.37636761487965e-06
+llama8b,unparsed,Annotation: This,1,228500,4.37636761487965e-06
+llama8b,unparsed,As I reflect,1,228500,4.37636761487965e-06
+llama8b,unparsed,As a Black,1,228500,4.37636761487965e-06
+llama8b,unparsed,As a Gen,1,228500,4.37636761487965e-06
+llama8b,unparsed,As a black,1,228500,4.37636761487965e-06
+llama8b,unparsed,As a detail,1,228500,4.37636761487965e-06
+llama8b,unparsed,As a middle,1,228500,4.37636761487965e-06
+llama8b,unparsed,As a mult,1,228500,4.37636761487965e-06
+llama8b,unparsed,As a person,1,228500,4.37636761487965e-06
+llama8b,unparsed,As an annot,1,228500,4.37636761487965e-06
+llama8b,unparsed,As an audi,1,228500,4.37636761487965e-06
+llama8b,unparsed,As someone who,1,228500,4.37636761487965e-06
+llama8b,unparsed,As the annot,1,228500,4.37636761487965e-06
+llama8b,unparsed,Based on various,1,228500,4.37636761487965e-06
+llama8b,unparsed,Based on your,1,228500,4.37636761487965e-06
+llama8b,unparsed,Bismill,1,228500,4.37636761487965e-06
+llama8b,unparsed,"Brother,",1,228500,4.37636761487965e-06
+llama8b,unparsed,"Bruh,",1,228500,4.37636761487965e-06
+llama8b,unparsed,Buenos,1,228500,4.37636761487965e-06
+llama8b,unparsed,Comment annotation:,1,228500,4.37636761487965e-06
+llama8b,unparsed,Comment toxicity level,1,228500,4.37636761487965e-06
+llama8b,unparsed,Comment's Toxic,1,228500,4.37636761487965e-06
+llama8b,unparsed,"Comment:
+""",1,228500,4.37636761487965e-06
+llama8b,unparsed,"Comment:
+""A",1,228500,4.37636761487965e-06
+llama8b,unparsed,"Comment:
+their",1,228500,4.37636761487965e-06
+llama8b,unparsed,Comment: AD,1,228500,4.37636761487965e-06
+llama8b,unparsed,Comment: As,1,228500,4.37636761487965e-06
+llama8b,unparsed,Comment: Big,1,228500,4.37636761487965e-06
+llama8b,unparsed,Comment: Fun,1,228500,4.37636761487965e-06
+llama8b,unparsed,Comment: Great,1,228500,4.37636761487965e-06
+llama8b,unparsed,Comment: Not,1,228500,4.37636761487965e-06
+llama8b,unparsed,Comment: Now,1,228500,4.37636761487965e-06
+llama8b,unparsed,Comment: SOME,1,228500,4.37636761487965e-06
+llama8b,unparsed,Comment: Such,1,228500,4.37636761487965e-06
+llama8b,unparsed,Comment: There,1,228500,4.37636761487965e-06
+llama8b,unparsed,Comment: This,1,228500,4.37636761487965e-06
+llama8b,unparsed,Comment: i,1,228500,4.37636761487965e-06
+llama8b,unparsed,Considering the S,1,228500,4.37636761487965e-06
+llama8b,unparsed,Given the description,1,228500,4.37636761487965e-06
+llama8b,unparsed,Given the historical,1,228500,4.37636761487965e-06
+llama8b,unparsed,Given the person,1,228500,4.37636761487965e-06
+llama8b,unparsed,Given the traits,1,228500,4.37636761487965e-06
+llama8b,unparsed,Group Tries,1,228500,4.37636761487965e-06
+llama8b,unparsed,Hahaha!,1,228500,4.37636761487965e-06
+llama8b,unparsed,Here's the,1,228500,4.37636761487965e-06
+llama8b,unparsed,"Hey there,",1,228500,4.37636761487965e-06
+llama8b,unparsed,"Honestly, this",1,228500,4.37636761487965e-06
+llama8b,unparsed,I ain't,1,228500,4.37636761487965e-06
+llama8b,unparsed,I am absolutely,1,228500,4.37636761487965e-06
+llama8b,unparsed,I am excited,1,228500,4.37636761487965e-06
+llama8b,unparsed,I am horrified,1,228500,4.37636761487965e-06
+llama8b,unparsed,I am not,1,228500,4.37636761487965e-06
+llama8b,unparsed,I am shocked,1,228500,4.37636761487965e-06
+llama8b,unparsed,I annotate the,1,228500,4.37636761487965e-06
+llama8b,unparsed,I annotate these,1,228500,4.37636761487965e-06
+llama8b,unparsed,I cannot determine,1,228500,4.37636761487965e-06
+llama8b,unparsed,I cannot moderate,1,228500,4.37636761487965e-06
+llama8b,unparsed,I cannot respond,1,228500,4.37636761487965e-06
+llama8b,unparsed,I do not,1,228500,4.37636761487965e-06
+llama8b,unparsed,I got a,1,228500,4.37636761487965e-06
+llama8b,unparsed,I got into,1,228500,4.37636761487965e-06
+llama8b,unparsed,I gotta be,1,228500,4.37636761487965e-06
+llama8b,unparsed,I hate being,1,228500,4.37636761487965e-06
+llama8b,unparsed,I have a,1,228500,4.37636761487965e-06
+llama8b,unparsed,I have mixed,1,228500,4.37636761487965e-06
+llama8b,unparsed,I identify my,1,228500,4.37636761487965e-06
+llama8b,unparsed,I love everything,1,228500,4.37636761487965e-06
+llama8b,unparsed,I see you,1,228500,4.37636761487965e-06
+llama8b,unparsed,I set an,1,228500,4.37636761487965e-06
+llama8b,unparsed,I still hate,1,228500,4.37636761487965e-06
+llama8b,unparsed,I strongly disagree,1,228500,4.37636761487965e-06
+llama8b,unparsed,I think about,1,228500,4.37636761487965e-06
+llama8b,unparsed,I understand what,1,228500,4.37636761487965e-06
+llama8b,unparsed,I understand you,1,228500,4.37636761487965e-06
+llama8b,unparsed,I view sex,1,228500,4.37636761487965e-06
+llama8b,unparsed,I will provide,1,228500,4.37636761487965e-06
+llama8b,unparsed,I wish they,1,228500,4.37636761487965e-06
+llama8b,unparsed,I would be,1,228500,4.37636761487965e-06
+llama8b,unparsed,I would like,1,228500,4.37636761487965e-06
+llama8b,unparsed,I would not,1,228500,4.37636761487965e-06
+llama8b,unparsed,I would personally,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'd consider,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'd love,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'll clarify,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'll respond,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'll take,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'll use,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'll wait,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'm absolutely,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'm curious,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'm feel,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'm finding,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'm here,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'm hesitant,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'm hurt,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'm in,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'm interpreting,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'm liv,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'm loving,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'm quite,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'm smart,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'm surprised,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'm very,1,228500,4.37636761487965e-06
+llama8b,unparsed,I'm vib,1,228500,4.37636761487965e-06
+llama8b,unparsed,I've annotated,1,228500,4.37636761487965e-06
+llama8b,unparsed,I've been,1,228500,4.37636761487965e-06
+llama8b,unparsed,I've got,1,228500,4.37636761487965e-06
+llama8b,unparsed,"I, Am",1,228500,4.37636761487965e-06
+llama8b,unparsed,"I, Grey",1,228500,4.37636761487965e-06
+llama8b,unparsed,"I, as",1,228500,4.37636761487965e-06
+llama8b,unparsed,Identified trait,1,228500,4.37636761487965e-06
+llama8b,unparsed,It appears the,1,228500,4.37636761487965e-06
+llama8b,unparsed,It seems the,1,228500,4.37636761487965e-06
+llama8b,unparsed,It's challenging,1,228500,4.37636761487965e-06
+llama8b,unparsed,It's getting,1,228500,4.37636761487965e-06
+llama8b,unparsed,It's interesting,1,228500,4.37636761487965e-06
+llama8b,unparsed,It's unlikely,1,228500,4.37636761487965e-06
+llama8b,unparsed,Mami says,1,228500,4.37636761487965e-06
+llama8b,unparsed,Man (my,1,228500,4.37636761487965e-06
+llama8b,unparsed,"Man, I",1,228500,4.37636761487965e-06
+llama8b,unparsed,"Man, this",1,228500,4.37636761487965e-06
+llama8b,unparsed,My most influential,1,228500,4.37636761487965e-06
+llama8b,unparsed,My name is,1,228500,4.37636761487965e-06
+llama8b,unparsed,No annotation of,1,228500,4.37636761487965e-06
+llama8b,unparsed,"Oh honey,",1,228500,4.37636761487965e-06
+llama8b,unparsed,Since I'm,1,228500,4.37636761487965e-06
+llama8b,unparsed,Since there is,1,228500,4.37636761487965e-06
+llama8b,unparsed,Since you didn,1,228500,4.37636761487965e-06
+llama8b,unparsed,The Spongebob,1,228500,4.37636761487965e-06
+llama8b,unparsed,The article appears,1,228500,4.37636761487965e-06
+llama8b,unparsed,The article highlights,1,228500,4.37636761487965e-06
+llama8b,unparsed,The comment does,1,228500,4.37636761487965e-06
+llama8b,unparsed,The comparison of,1,228500,4.37636761487965e-06
+llama8b,unparsed,The concept of,1,228500,4.37636761487965e-06
+llama8b,unparsed,The desire to,1,228500,4.37636761487965e-06
+llama8b,unparsed,The eternal question,1,228500,4.37636761487965e-06
+llama8b,unparsed,The game seems,1,228500,4.37636761487965e-06
+llama8b,unparsed,The games mentioned,1,228500,4.37636761487965e-06
+llama8b,unparsed,The given poem,1,228500,4.37636761487965e-06
+llama8b,unparsed,The given post,1,228500,4.37636761487965e-06
+llama8b,unparsed,The historical context,1,228500,4.37636761487965e-06
+llama8b,unparsed,The individual appears,1,228500,4.37636761487965e-06
+llama8b,unparsed,The individual with,1,228500,4.37636761487965e-06
+llama8b,unparsed,The joke seems,1,228500,4.37636761487965e-06
+llama8b,unparsed,The mentioned games,1,228500,4.37636761487965e-06
+llama8b,unparsed,The mentioned post,1,228500,4.37636761487965e-06
+llama8b,unparsed,The nostalgia in,1,228500,4.37636761487965e-06
+llama8b,unparsed,The nostalgia of,1,228500,4.37636761487965e-06
+llama8b,unparsed,The nostalgia!,1,228500,4.37636761487965e-06
+llama8b,unparsed,The nostalgic tone,1,228500,4.37636761487965e-06
+llama8b,unparsed,The original comment,1,228500,4.37636761487965e-06
+llama8b,unparsed,The post is,1,228500,4.37636761487965e-06
+llama8b,unparsed,The post.,1,228500,4.37636761487965e-06
+llama8b,unparsed,The provided statement,1,228500,4.37636761487965e-06
+llama8b,unparsed,The reference to,1,228500,4.37636761487965e-06
+llama8b,unparsed,The sentence provided,1,228500,4.37636761487965e-06
+llama8b,unparsed,The single most,1,228500,4.37636761487965e-06
+llama8b,unparsed,"The song """,1,228500,4.37636761487965e-06
+llama8b,unparsed,The song title,1,228500,4.37636761487965e-06
+llama8b,unparsed,The speaker seems,1,228500,4.37636761487965e-06
+llama8b,unparsed,"The statement """,1,228500,4.37636761487965e-06
+llama8b,unparsed,The statement does,1,228500,4.37636761487965e-06
+llama8b,unparsed,The statement is,1,228500,4.37636761487965e-06
+llama8b,unparsed,The text is,1,228500,4.37636761487965e-06
+llama8b,unparsed,The use of,1,228500,4.37636761487965e-06
+llama8b,unparsed,The weather report,1,228500,4.37636761487965e-06
+llama8b,unparsed,These appear to,1,228500,4.37636761487965e-06
+llama8b,unparsed,These are not,1,228500,4.37636761487965e-06
+llama8b,unparsed,They’re closed,1,228500,4.37636761487965e-06
+llama8b,unparsed,This argument is,1,228500,4.37636761487965e-06
+llama8b,unparsed,This article does,1,228500,4.37636761487965e-06
+llama8b,unparsed,This biblical quote,1,228500,4.37636761487965e-06
+llama8b,unparsed,This comment could,1,228500,4.37636761487965e-06
+llama8b,unparsed,This comment discusses,1,228500,4.37636761487965e-06
+llama8b,unparsed,This comment has,1,228500,4.37636761487965e-06
+llama8b,unparsed,This comment would,1,228500,4.37636761487965e-06
+llama8b,unparsed,This conversation appears,1,228500,4.37636761487965e-06
+llama8b,unparsed,This conversation seems,1,228500,4.37636761487965e-06
+llama8b,unparsed,This headline could,1,228500,4.37636761487965e-06
+llama8b,unparsed,This individual is,1,228500,4.37636761487965e-06
+llama8b,unparsed,This individual's,1,228500,4.37636761487965e-06
+llama8b,unparsed,"This individual,",1,228500,4.37636761487965e-06
+llama8b,unparsed,This is an,1,228500,4.37636761487965e-06
+llama8b,unparsed,This is not,1,228500,4.37636761487965e-06
+llama8b,unparsed,This phrase seems,1,228500,4.37636761487965e-06
+llama8b,unparsed,This poem doesn,1,228500,4.37636761487965e-06
+llama8b,unparsed,This post highlights,1,228500,4.37636761487965e-06
+llama8b,unparsed,This question appears,1,228500,4.37636761487965e-06
+llama8b,unparsed,This question suggests,1,228500,4.37636761487965e-06
+llama8b,unparsed,This response appears,1,228500,4.37636761487965e-06
+llama8b,unparsed,This response seems,1,228500,4.37636761487965e-06
+llama8b,unparsed,This text does,1,228500,4.37636761487965e-06
+llama8b,unparsed,To create a,1,228500,4.37636761487965e-06
+llama8b,unparsed,"Trait: """,1,228500,4.37636761487965e-06
+llama8b,unparsed,Umm...,1,228500,4.37636761487965e-06
+llama8b,unparsed,"Unfortunately, you",1,228500,4.37636761487965e-06
+llama8b,unparsed,What a philosophical,1,228500,4.37636761487965e-06
+llama8b,unparsed,What a refreshing,1,228500,4.37636761487965e-06
+llama8b,unparsed,What a thrilling,1,228500,4.37636761487965e-06
+llama8b,unparsed,What comes of,1,228500,4.37636761487965e-06
+llama8b,unparsed,Yaaas,1,228500,4.37636761487965e-06
+llama8b,unparsed,"You know,",1,228500,4.37636761487965e-06
+llama8b,unparsed,You're asking,1,228500,4.37636761487965e-06
+llama8b,unparsed,idk why,1,228500,4.37636761487965e-06
+llama8b,unparsed,lol idk,1,228500,4.37636761487965e-06
+llama8b,unparsed,lol what's,1,228500,4.37636761487965e-06
+llama8b,unparsed,"omg,",1,228500,4.37636761487965e-06
+llama8b,unparsed,thread: new,1,228500,4.37636761487965e-06
+mistral24b,unparsed,Intolerance for,32950,208500,0.1580335731414868
+mistral24b,unparsed,Based on the,5677,208500,0.027227817745803358
+mistral24b,unparsed,As a Gen,2262,208500,0.010848920863309353
+mistral24b,unparsed,As a non,2103,208500,0.010086330935251799
+mistral24b,unparsed,As a mill,1744,208500,0.008364508393285371
+mistral24b,unparsed,The post is,1560,208500,0.007482014388489209
+mistral24b,unparsed,As a,815,208500,0.003908872901678657
+mistral24b,unparsed,As a middle,360,208500,0.0017266187050359713
+mistral24b,unparsed,As a Hispanic,319,208500,0.0015299760191846523
+mistral24b,unparsed,As a Native,278,208500,0.0013333333333333333
+mistral24b,unparsed,As an Arab,203,208500,0.000973621103117506
+mistral24b,unparsed,This post is,188,208500,0.0009016786570743405
+mistral24b,unparsed,The post contains,141,208500,0.0006762589928057554
+mistral24b,unparsed,As a self,109,208500,0.0005227817745803357
+mistral24b,unparsed,The post seems,90,208500,0.0004316546762589928
+mistral24b,unparsed,As a Mill,81,208500,0.00038848920863309355
+mistral24b,unparsed,As a Middle,70,208500,0.0003357314148681055
+mistral24b,unparsed,As a Black,68,208500,0.0003261390887290168
+mistral24b,unparsed,As a young,58,208500,0.00027817745803357315
+mistral24b,unparsed,As a retired,45,208500,0.0002158273381294964
+mistral24b,unparsed,The post uses,42,208500,0.0002014388489208633
+mistral24b,unparsed,The post would,42,208500,0.0002014388489208633
+mistral24b,unparsed,As a woman,38,208500,0.00018225419664268585
+mistral24b,unparsed,The post appears,26,208500,0.00012470023980815347
+mistral24b,unparsed,The post reson,21,208500,0.00010071942446043166
+mistral24b,unparsed,I am a,19,208500,9.112709832134293e-05
+mistral24b,unparsed,The post mentions,18,208500,8.633093525179857e-05
+mistral24b,unparsed,I understand your,17,208500,8.15347721822542e-05
+mistral24b,unparsed,As a man,16,208500,7.673860911270984e-05
+mistral24b,unparsed,The post highlights,16,208500,7.673860911270984e-05
+mistral24b,unparsed,As a white,12,208500,5.755395683453237e-05
+mistral24b,unparsed,As a black,10,208500,4.796163069544364e-05
+mistral24b,unparsed,Based on my,10,208500,4.796163069544364e-05
+mistral24b,unparsed,As an,9,208500,4.3165467625899284e-05
+mistral24b,unparsed,I understand now,9,208500,4.3165467625899284e-05
+mistral24b,unparsed,Strong belief in,8,208500,3.836930455635492e-05
+mistral24b,unparsed,**Annotation:**,7,208500,3.3573141486810554e-05
+mistral24b,unparsed,The post discusses,6,208500,2.8776978417266186e-05
+mistral24b,unparsed,The post makes,6,208500,2.8776978417266186e-05
+mistral24b,unparsed,Based on your,5,208500,2.398081534772182e-05
+mistral24b,unparsed,The use of,5,208500,2.398081534772182e-05
+mistral24b,unparsed,As a person,4,208500,1.918465227817746e-05
+mistral24b,unparsed,I am asking,4,208500,1.918465227817746e-05
+mistral24b,unparsed,Sensitivity to,4,208500,1.918465227817746e-05
+mistral24b,unparsed,The most influential,4,208500,1.918465227817746e-05
+mistral24b,unparsed,This post would,4,208500,1.918465227817746e-05
+mistral24b,unparsed,As a laid,3,208500,1.4388489208633093e-05
+mistral24b,unparsed,I find this,3,208500,1.4388489208633093e-05
+mistral24b,unparsed,I need more,3,208500,1.4388489208633093e-05
+mistral24b,unparsed,The post presents,3,208500,1.4388489208633093e-05
+mistral24b,unparsed,The post references,3,208500,1.4388489208633093e-05
+mistral24b,unparsed,I am an,2,208500,9.59232613908873e-06
+mistral24b,unparsed,I find the,2,208500,9.59232613908873e-06
+mistral24b,unparsed,"Post: """,2,208500,9.59232613908873e-06
+mistral24b,unparsed,"Sure, I",2,208500,9.59232613908873e-06
+mistral24b,unparsed,"Sure, please",2,208500,9.59232613908873e-06
+mistral24b,unparsed,As a highly,1,208500,4.796163069544365e-06
+mistral24b,unparsed,As a pharmac,1,208500,4.796163069544365e-06
+mistral24b,unparsed,As an Asian,1,208500,4.796163069544365e-06
+mistral24b,unparsed,I am going,1,208500,4.796163069544365e-06
+mistral24b,unparsed,I can't,1,208500,4.796163069544365e-06
+mistral24b,unparsed,I will annot,1,208500,4.796163069544365e-06
+mistral24b,unparsed,I would find,1,208500,4.796163069544365e-06
+mistral24b,unparsed,I'm sorry,1,208500,4.796163069544365e-06
+mistral24b,unparsed,"The post """,1,208500,4.796163069544365e-06
+mistral24b,unparsed,The post comes,1,208500,4.796163069544365e-06
+mistral24b,unparsed,The post describes,1,208500,4.796163069544365e-06
+mistral24b,unparsed,The post expresses,1,208500,4.796163069544365e-06
+mistral24b,unparsed,The post might,1,208500,4.796163069544365e-06
+mistral24b,unparsed,"The single,",1,208500,4.796163069544365e-06
+mistral24b,unparsed,This post contains,1,208500,4.796163069544365e-06
+mistral7b,out_of_range,6 (,32,208500,0.00015347721822541968
+mistral7b,out_of_range,20,28,208500,0.00013429256594724222
+mistral7b,out_of_range,6 -,17,208500,8.15347721822542e-05
+mistral7b,out_of_range,12,11,208500,5.275779376498801e-05
+mistral7b,out_of_range,10,8,208500,3.836930455635492e-05
+mistral7b,out_of_range,13,7,208500,3.3573141486810554e-05
+mistral7b,out_of_range,0.,3,208500,1.4388489208633093e-05
+mistral7b,out_of_range,54,3,208500,1.4388489208633093e-05
+mistral7b,out_of_range,65,3,208500,1.4388489208633093e-05
+mistral7b,out_of_range,14,1,208500,4.796163069544365e-06
+mistral7b,out_of_range,6-,1,208500,4.796163069544365e-06
+mistral7b,out_of_range,90,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Based on the,3211,208500,0.015400479616306955
+mistral7b,unparsed,"The single,",520,208500,0.0024940047961630697
+mistral7b,unparsed,To answer your,467,208500,0.002239808153477218
+mistral7b,unparsed,To answer this,455,208500,0.002182254196642686
+mistral7b,unparsed,To address your,286,208500,0.0013717026378896882
+mistral7b,unparsed,The single most,260,208500,0.0012470023980815348
+mistral7b,unparsed,I would rate,255,208500,0.001223021582733813
+mistral7b,unparsed,The most influential,231,208500,0.0011079136690647481
+mistral7b,unparsed,Given the persona,137,208500,0.0006570743405275779
+mistral7b,unparsed,Offensiveness,128,208500,0.0006139088729016787
+mistral7b,unparsed,To provide an,104,208500,0.0004988009592326139
+mistral7b,unparsed,To calculate the,102,208500,0.0004892086330935252
+mistral7b,unparsed,To determine the,95,208500,0.0004556354916067146
+mistral7b,unparsed,Given the provided,77,208500,0.00036930455635491606
+mistral7b,unparsed,I'm,60,208500,0.00028776978417266187
+mistral7b,unparsed,Based on my,59,208500,0.0002829736211031175
+mistral7b,unparsed,I don',58,208500,0.00027817745803357315
+mistral7b,unparsed,I am a,56,208500,0.00026858513189448443
+mistral7b,unparsed,To provide a,56,208500,0.00026858513189448443
+mistral7b,unparsed,I'd,52,208500,0.00024940047961630695
+mistral7b,unparsed,Given the identified,50,208500,0.00023980815347721823
+mistral7b,unparsed,The single influential,42,208500,0.0002014388489208633
+mistral7b,unparsed,To annot,42,208500,0.0002014388489208633
+mistral7b,unparsed,The identified single,31,208500,0.0001486810551558753
+mistral7b,unparsed,Using the provided,31,208500,0.0001486810551558753
+mistral7b,unparsed,To address the,30,208500,0.00014388489208633093
+mistral7b,unparsed,To answer the,30,208500,0.00014388489208633093
+mistral7b,unparsed,The identified trait,29,208500,0.00013908872901678657
+mistral7b,unparsed,Given the characteristics,25,208500,0.00011990407673860912
+mistral7b,unparsed,To identify the,25,208500,0.00011990407673860912
+mistral7b,unparsed,Based solely on,24,208500,0.00011510791366906474
+mistral7b,unparsed,Considering the,22,208500,0.00010551558752997601
+mistral7b,unparsed,I cannot assign,22,208500,0.00010551558752997601
+mistral7b,unparsed,The provided comment,22,208500,0.00010551558752997601
+mistral7b,unparsed,To address this,21,208500,0.00010071942446043166
+mistral7b,unparsed,The persona would,20,208500,9.592326139088728e-05
+mistral7b,unparsed,"The persona,",20,208500,9.592326139088728e-05
+mistral7b,unparsed,To evaluate the,20,208500,9.592326139088728e-05
+mistral7b,unparsed,To assess the,18,208500,8.633093525179857e-05
+mistral7b,unparsed,Assuming the,17,208500,8.15347721822542e-05
+mistral7b,unparsed,To accurately assess,17,208500,8.15347721822542e-05
+mistral7b,unparsed,I would evaluate,16,208500,7.673860911270984e-05
+mistral7b,unparsed,Score:,16,208500,7.673860911270984e-05
+mistral7b,unparsed,Given that the,14,208500,6.714628297362111e-05
+mistral7b,unparsed,I would an,14,208500,6.714628297362111e-05
+mistral7b,unparsed,I would estimate,14,208500,6.714628297362111e-05
+mistral7b,unparsed,Given the comment,13,208500,6.235011990407674e-05
+mistral7b,unparsed,I do not,13,208500,6.235011990407674e-05
+mistral7b,unparsed,I would score,13,208500,6.235011990407674e-05
+mistral7b,unparsed,In this scenario,13,208500,6.235011990407674e-05
+mistral7b,unparsed,Based on this,12,208500,5.755395683453237e-05
+mistral7b,unparsed,The single identified,12,208500,5.755395683453237e-05
+mistral7b,unparsed,I apologize,11,208500,5.275779376498801e-05
+mistral7b,unparsed,The comment is,11,208500,5.275779376498801e-05
+mistral7b,unparsed,The given comment,11,208500,5.275779376498801e-05
+mistral7b,unparsed,To create a,11,208500,5.275779376498801e-05
+mistral7b,unparsed,For this persona,10,208500,4.796163069544364e-05
+mistral7b,unparsed,I would class,10,208500,4.796163069544364e-05
+mistral7b,unparsed,I would say,10,208500,4.796163069544364e-05
+mistral7b,unparsed,"My persona,",10,208500,4.796163069544364e-05
+mistral7b,unparsed,On a scale,10,208500,4.796163069544364e-05
+mistral7b,unparsed,Since the persona,10,208500,4.796163069544364e-05
+mistral7b,unparsed,The comment does,10,208500,4.796163069544364e-05
+mistral7b,unparsed,Without a specific,10,208500,4.796163069544364e-05
+mistral7b,unparsed,Given the single,9,208500,4.3165467625899284e-05
+mistral7b,unparsed,Given the specified,9,208500,4.3165467625899284e-05
+mistral7b,unparsed,I am unable,9,208500,4.3165467625899284e-05
+mistral7b,unparsed,As a non,8,208500,3.836930455635492e-05
+mistral7b,unparsed,Based purely on,8,208500,3.836930455635492e-05
+mistral7b,unparsed,On the given,8,208500,3.836930455635492e-05
+mistral7b,unparsed,Since the comment,8,208500,3.836930455635492e-05
+mistral7b,unparsed,The given post,8,208500,3.836930455635492e-05
+mistral7b,unparsed,The persona finds,8,208500,3.836930455635492e-05
+mistral7b,unparsed,The persona might,8,208500,3.836930455635492e-05
+mistral7b,unparsed,The provided post,8,208500,3.836930455635492e-05
+mistral7b,unparsed,Given the age,7,208500,3.3573141486810554e-05
+mistral7b,unparsed,I cannot determine,7,208500,3.3573141486810554e-05
+mistral7b,unparsed,I would assign,7,208500,3.3573141486810554e-05
+mistral7b,unparsed,If my persona,7,208500,3.3573141486810554e-05
+mistral7b,unparsed,Since the post,7,208500,3.3573141486810554e-05
+mistral7b,unparsed,Since the provided,7,208500,3.3573141486810554e-05
+mistral7b,unparsed,The post is,7,208500,3.3573141486810554e-05
+mistral7b,unparsed,To quantify,7,208500,3.3573141486810554e-05
+mistral7b,unparsed,Trait:,7,208500,3.3573141486810554e-05
+mistral7b,unparsed,Without delving,7,208500,3.3573141486810554e-05
+mistral7b,unparsed,As a woman,6,208500,2.8776978417266186e-05
+mistral7b,unparsed,Given my persona,6,208500,2.8776978417266186e-05
+mistral7b,unparsed,Given the statement,6,208500,2.8776978417266186e-05
+mistral7b,unparsed,Given the trait,6,208500,2.8776978417266186e-05
+mistral7b,unparsed,I am an,6,208500,2.8776978417266186e-05
+mistral7b,unparsed,I am not,6,208500,2.8776978417266186e-05
+mistral7b,unparsed,I appreciate your,6,208500,2.8776978417266186e-05
+mistral7b,unparsed,I cannot be,6,208500,2.8776978417266186e-05
+mistral7b,unparsed,I'll,6,208500,2.8776978417266186e-05
+mistral7b,unparsed,Let's,6,208500,2.8776978417266186e-05
+mistral7b,unparsed,Not Applic,6,208500,2.8776978417266186e-05
+mistral7b,unparsed,The persona',6,208500,2.8776978417266186e-05
+mistral7b,unparsed,To accurately address,6,208500,2.8776978417266186e-05
+mistral7b,unparsed,To accurately determine,6,208500,2.8776978417266186e-05
+mistral7b,unparsed,To classify,6,208500,2.8776978417266186e-05
+mistral7b,unparsed,Using the single,6,208500,2.8776978417266186e-05
+mistral7b,unparsed,According to the,5,208500,2.398081534772182e-05
+mistral7b,unparsed,As a,5,208500,2.398081534772182e-05
+mistral7b,unparsed,As the persona,5,208500,2.398081534772182e-05
+mistral7b,unparsed,Based on identifying,5,208500,2.398081534772182e-05
+mistral7b,unparsed,Given the non,5,208500,2.398081534772182e-05
+mistral7b,unparsed,I cannot accurately,5,208500,2.398081534772182e-05
+mistral7b,unparsed,I cannot definit,5,208500,2.398081534772182e-05
+mistral7b,unparsed,I cannot make,5,208500,2.398081534772182e-05
+mistral7b,unparsed,I consider the,5,208500,2.398081534772182e-05
+mistral7b,unparsed,In this case,5,208500,2.398081534772182e-05
+mistral7b,unparsed,Not at all,5,208500,2.398081534772182e-05
+mistral7b,unparsed,Strong belief in,5,208500,2.398081534772182e-05
+mistral7b,unparsed,The influential trait,5,208500,2.398081534772182e-05
+mistral7b,unparsed,The provided text,5,208500,2.398081534772182e-05
+mistral7b,unparsed,To analyze this,5,208500,2.398081534772182e-05
+mistral7b,unparsed,To evaluate this,5,208500,2.398081534772182e-05
+mistral7b,unparsed,Using the given,5,208500,2.398081534772182e-05
+mistral7b,unparsed,As a person,4,208500,1.918465227817746e-05
+mistral7b,unparsed,Based on your,4,208500,1.918465227817746e-05
+mistral7b,unparsed,For the given,4,208500,1.918465227817746e-05
+mistral7b,unparsed,Given the content,4,208500,1.918465227817746e-05
+mistral7b,unparsed,Given the context,4,208500,1.918465227817746e-05
+mistral7b,unparsed,Given the question,4,208500,1.918465227817746e-05
+mistral7b,unparsed,Given the specific,4,208500,1.918465227817746e-05
+mistral7b,unparsed,Given the woman,4,208500,1.918465227817746e-05
+mistral7b,unparsed,I can',4,208500,1.918465227817746e-05
+mistral7b,unparsed,I cannot evaluate,4,208500,1.918465227817746e-05
+mistral7b,unparsed,I cannot provide,4,208500,1.918465227817746e-05
+mistral7b,unparsed,I would assess,4,208500,1.918465227817746e-05
+mistral7b,unparsed,I would suggest,4,208500,1.918465227817746e-05
+mistral7b,unparsed,My persona is,4,208500,1.918465227817746e-05
+mistral7b,unparsed,Not applicable (,4,208500,1.918465227817746e-05
+mistral7b,unparsed,The post would,4,208500,1.918465227817746e-05
+mistral7b,unparsed,"The post,",4,208500,1.918465227817746e-05
+mistral7b,unparsed,The single identifying,4,208500,1.918465227817746e-05
+mistral7b,unparsed,To accurately answer,4,208500,1.918465227817746e-05
+mistral7b,unparsed,To approach this,4,208500,1.918465227817746e-05
+mistral7b,unparsed,To assign an,4,208500,1.918465227817746e-05
+mistral7b,unparsed,To estimate the,4,208500,1.918465227817746e-05
+mistral7b,unparsed,To respond to,4,208500,1.918465227817746e-05
+mistral7b,unparsed,Using the identified,4,208500,1.918465227817746e-05
+mistral7b,unparsed,A score of,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,As a mill,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,Assuming that,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,Based on a,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,Based only on,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,For the persona,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,For this analysis,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,Given the limited,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,Given the perspective,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,Given the post,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,Given the traits,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,Given the use,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,I personally find,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,I will an,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,I will provide,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,I will use,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,I wouldn',3,208500,1.4388489208633093e-05
+mistral7b,unparsed,If we consider,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,My persona finds,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,Offensive score,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,Sensitivity,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,Since my persona,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,Taking into account,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,The comment may,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,The number,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,The persona is,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,The persona provided,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,The post could,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,The post seems,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,The trait identified,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,This comment does,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,This comment is,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,"This persona,",3,208500,1.4388489208633093e-05
+mistral7b,unparsed,To accurately respond,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,To analyze the,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,To rate the,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,Understood.,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,Using the persona,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,"Without context,",3,208500,1.4388489208633093e-05
+mistral7b,unparsed,Without the comment,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,Without the specific,3,208500,1.4388489208633093e-05
+mistral7b,unparsed,A single number,2,208500,9.59232613908873e-06
+mistral7b,unparsed,Although the comment,2,208500,9.59232613908873e-06
+mistral7b,unparsed,Although the provided,2,208500,9.59232613908873e-06
+mistral7b,unparsed,Based exclusively on,2,208500,9.59232613908873e-06
+mistral7b,unparsed,Based on provided,2,208500,9.59232613908873e-06
+mistral7b,unparsed,For the purpose,2,208500,9.59232613908873e-06
+mistral7b,unparsed,Given the character,2,208500,9.59232613908873e-06
+mistral7b,unparsed,Given the comments,2,208500,9.59232613908873e-06
+mistral7b,unparsed,Given the lack,2,208500,9.59232613908873e-06
+mistral7b,unparsed,Given the language,2,208500,9.59232613908873e-06
+mistral7b,unparsed,Given the person,2,208500,9.59232613908873e-06
+mistral7b,unparsed,Given the personality,2,208500,9.59232613908873e-06
+mistral7b,unparsed,Given the stated,2,208500,9.59232613908873e-06
+mistral7b,unparsed,I am analy,2,208500,9.59232613908873e-06
+mistral7b,unparsed,I cannot asc,2,208500,9.59232613908873e-06
+mistral7b,unparsed,I cannot confirm,2,208500,9.59232613908873e-06
+mistral7b,unparsed,I cannot directly,2,208500,9.59232613908873e-06
+mistral7b,unparsed,I cannot in,2,208500,9.59232613908873e-06
+mistral7b,unparsed,I cannot say,2,208500,9.59232613908873e-06
+mistral7b,unparsed,I consider it,2,208500,9.59232613908873e-06
+mistral7b,unparsed,I find the,2,208500,9.59232613908873e-06
+mistral7b,unparsed,I have identified,2,208500,9.59232613908873e-06
+mistral7b,unparsed,I will assign,2,208500,9.59232613908873e-06
+mistral7b,unparsed,I will evaluate,2,208500,9.59232613908873e-06
+mistral7b,unparsed,I would assume,2,208500,9.59232613908873e-06
+mistral7b,unparsed,I would rank,2,208500,9.59232613908873e-06
+mistral7b,unparsed,I've,2,208500,9.59232613908873e-06
+mistral7b,unparsed,"I, as",2,208500,9.59232613908873e-06
+mistral7b,unparsed,If we are,2,208500,9.59232613908873e-06
+mistral7b,unparsed,In this instance,2,208500,9.59232613908873e-06
+mistral7b,unparsed,In this specific,2,208500,9.59232613908873e-06
+mistral7b,unparsed,Influential,2,208500,9.59232613908873e-06
+mistral7b,unparsed,It's,2,208500,9.59232613908873e-06
+mistral7b,unparsed,Not applicable.,2,208500,9.59232613908873e-06
+mistral7b,unparsed,Number:,2,208500,9.59232613908873e-06
+mistral7b,unparsed,Offensiv,2,208500,9.59232613908873e-06
+mistral7b,unparsed,Since the identified,2,208500,9.59232613908873e-06
+mistral7b,unparsed,Since the posted,2,208500,9.59232613908873e-06
+mistral7b,unparsed,Since the single,2,208500,9.59232613908873e-06
+mistral7b,unparsed,Since this persona,2,208500,9.59232613908873e-06
+mistral7b,unparsed,"The comment """,2,208500,9.59232613908873e-06
+mistral7b,unparsed,The comment',2,208500,9.59232613908873e-06
+mistral7b,unparsed,"The comment,",2,208500,9.59232613908873e-06
+mistral7b,unparsed,The identified influential,2,208500,9.59232613908873e-06
+mistral7b,unparsed,The identifying trait,2,208500,9.59232613908873e-06
+mistral7b,unparsed,The most influ,2,208500,9.59232613908873e-06
+mistral7b,unparsed,The non-,2,208500,9.59232613908873e-06
+mistral7b,unparsed,The persona does,2,208500,9.59232613908873e-06
+mistral7b,unparsed,The persona finding,2,208500,9.59232613908873e-06
+mistral7b,unparsed,The post can,2,208500,9.59232613908873e-06
+mistral7b,unparsed,The post does,2,208500,9.59232613908873e-06
+mistral7b,unparsed,The post may,2,208500,9.59232613908873e-06
+mistral7b,unparsed,The post might,2,208500,9.59232613908873e-06
+mistral7b,unparsed,The score I,2,208500,9.59232613908873e-06
+mistral7b,unparsed,The single trait,2,208500,9.59232613908873e-06
+mistral7b,unparsed,The trait for,2,208500,9.59232613908873e-06
+mistral7b,unparsed,The trait that,2,208500,9.59232613908873e-06
+mistral7b,unparsed,This comment would,2,208500,9.59232613908873e-06
+mistral7b,unparsed,To accurately calculate,2,208500,9.59232613908873e-06
+mistral7b,unparsed,To appropriately,2,208500,9.59232613908873e-06
+mistral7b,unparsed,To clarify,2,208500,9.59232613908873e-06
+mistral7b,unparsed,To establish the,2,208500,9.59232613908873e-06
+mistral7b,unparsed,To find the,2,208500,9.59232613908873e-06
+mistral7b,unparsed,To identify a,2,208500,9.59232613908873e-06
+mistral7b,unparsed,Using the traits,2,208500,9.59232613908873e-06
+mistral7b,unparsed,With the given,2,208500,9.59232613908873e-06
+mistral7b,unparsed,Without having personal,2,208500,9.59232613908873e-06
+mistral7b,unparsed,A rating of,1,208500,4.796163069544365e-06
+mistral7b,unparsed,After careful consideration,1,208500,4.796163069544365e-06
+mistral7b,unparsed,After considering the,1,208500,4.796163069544365e-06
+mistral7b,unparsed,After identifying the,1,208500,4.796163069544365e-06
+mistral7b,unparsed,As a retired,1,208500,4.796163069544365e-06
+mistral7b,unparsed,As a white,1,208500,4.796163069544365e-06
+mistral7b,unparsed,As the given,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Assuming a,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Assuming your,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Based on advoc,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Based on community,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Based on statements,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Based on these,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Based upon your,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Calculating,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Despite sharing the,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Despite the large,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Despite the post,1,208500,4.796163069544365e-06
+mistral7b,unparsed,For a non,1,208500,4.796163069544365e-06
+mistral7b,unparsed,For a woman,1,208500,4.796163069544365e-06
+mistral7b,unparsed,For the purposes,1,208500,4.796163069544365e-06
+mistral7b,unparsed,For this exercise,1,208500,4.796163069544365e-06
+mistral7b,unparsed,For this particular,1,208500,4.796163069544365e-06
+mistral7b,unparsed,For this question,1,208500,4.796163069544365e-06
+mistral7b,unparsed,For this response,1,208500,4.796163069544365e-06
+mistral7b,unparsed,For this specific,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Gender:,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Given Bobby E,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Given my personal,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Given my specified,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Given that E,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Given the background,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Given the defined,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Given the handle,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Given the heated,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Given the individual,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Given the information,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Given the ins,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Given the offensive,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Given the personal,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Given the posted,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Given the reading,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Given the sensitive,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Given the sensitivity,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Given the strong,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Given the tone,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Given your persona,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Having identified the,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I am assign,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I am calcul,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I am most,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I appreciate the,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I cannot affirm,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I cannot an,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I cannot calculate,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I cannot comment,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I cannot endorse,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I cannot find,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I cannot guarantee,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I cannot personally,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I cannot reli,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I cannot reply,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I cannot truly,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I find it,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I find that,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I have analyzed,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I identify as,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I identify the,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I might use,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I must pre,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I perceive,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I perceived the,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I score this,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I understand now,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I understand your,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I will do,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I will not,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I will only,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I would expect,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I would give,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I would grade,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I would imagine,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I would interpret,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I would not,1,208500,4.796163069544365e-06
+mistral7b,unparsed,I would personally,1,208500,4.796163069544365e-06
+mistral7b,unparsed,If I were,1,208500,4.796163069544365e-06
+mistral7b,unparsed,In light of,1,208500,4.796163069544365e-06
+mistral7b,unparsed,In this particular,1,208500,4.796163069544365e-06
+mistral7b,unparsed,It appears that,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Matching the,1,208500,4.796163069544365e-06
+mistral7b,unparsed,My persona has,1,208500,4.796163069544365e-06
+mistral7b,unparsed,My persona would,1,208500,4.796163069544365e-06
+mistral7b,unparsed,My persona',1,208500,4.796163069544365e-06
+mistral7b,unparsed,No offensive content,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Offensive level,1,208500,4.796163069544365e-06
+mistral7b,unparsed,On the offensive,1,208500,4.796163069544365e-06
+mistral7b,unparsed,On the scale,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Person finds post,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Personally identifying,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Racist,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Since the content,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Since the information,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Since the stated,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Since there is,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Since this comment,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Taking into consideration,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Taking the characteristics,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Taking the identified,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The comment I,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The comment appears,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The comment contains,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The comment could,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The comment provided,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The comment seems,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The content of,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The identified singular,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The identifier is,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The key trait,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The number indicating,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The offensive level,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The offensive score,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The person finds,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The person identified,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The persona here,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The persona identified,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The persona in,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The persona may,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The personality would,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The post as,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The post critic,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The post doesn,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The post itself,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The post you,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The primary trait,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The proposed solution,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The question does,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The remark does,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The sentiment expressed,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The sentiment of,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The significant trait,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The single ident,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The single influ,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The single influence,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The sole identified,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The statement express,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The tone of,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The trait of,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The use of,1,208500,4.796163069544365e-06
+mistral7b,unparsed,The woman with,1,208500,4.796163069544365e-06
+mistral7b,unparsed,"The woman,",1,208500,4.796163069544365e-06
+mistral7b,unparsed,There doesn',1,208500,4.796163069544365e-06
+mistral7b,unparsed,There is no,1,208500,4.796163069544365e-06
+mistral7b,unparsed,This comment contrad,1,208500,4.796163069544365e-06
+mistral7b,unparsed,This comment directly,1,208500,4.796163069544365e-06
+mistral7b,unparsed,This comment targets,1,208500,4.796163069544365e-06
+mistral7b,unparsed,This persona is,1,208500,4.796163069544365e-06
+mistral7b,unparsed,This post may,1,208500,4.796163069544365e-06
+mistral7b,unparsed,This post would,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To account for,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To accurately an,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To accurately assign,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To accurately class,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To accurately evaluate,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To accurately perform,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To accurately reply,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To adhere,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To animate,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To approach the,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To automate,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To avoid any,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To avoid mis,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To be clear,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To calculate a,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To calculate toxic,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To correctly address,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To correctly answer,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To correctly assess,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To determine a,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To effectively answer,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To ensure an,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To find a,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To help in,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To keep the,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To make an,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To match the,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To objectively,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To offer an,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To provide the,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To provide you,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To respond accurately,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To understand the,1,208500,4.796163069544365e-06
+mistral7b,unparsed,To understand this,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Toanswer this,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Toxicity,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Understood!,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Using the scale,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Using the values,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Using your provided,1,208500,4.796163069544365e-06
+mistral7b,unparsed,While my persona,1,208500,4.796163069544365e-06
+mistral7b,unparsed,While the comment,1,208500,4.796163069544365e-06
+mistral7b,unparsed,While the post,1,208500,4.796163069544365e-06
+mistral7b,unparsed,With a high,1,208500,4.796163069544365e-06
+mistral7b,unparsed,With the identified,1,208500,4.796163069544365e-06
+mistral7b,unparsed,With the provided,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Without a full,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Without a rich,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Without a strong,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Without directly attribut,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Without exhaustive,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Without explicit context,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Without explicitly mention,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Without having a,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Without possessing,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Without providing personal,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Without providing specific,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Without specific context,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Without specific details,1,208500,4.796163069544365e-06
+mistral7b,unparsed,Without specific information,1,208500,4.796163069544365e-06
+mistral7b,unparsed,offensiveness,1,208500,4.796163069544365e-06
+olmo32b,out_of_range,0,16,308500,5.186385737439222e-05
+olmo32b,out_of_range,22,6,308500,1.9448946515397084e-05
+olmo32b,out_of_range,6,6,308500,1.9448946515397084e-05
+olmo32b,out_of_range,8,6,308500,1.9448946515397084e-05
+olmo32b,out_of_range,#13Reason,1,308500,3.241491085899514e-06
+olmo32b,out_of_range,20,1,308500,3.241491085899514e-06
+olmo32b,out_of_range,34,1,308500,3.241491085899514e-06
+olmo32b,out_of_range,35,1,308500,3.241491085899514e-06
+olmo32b,out_of_range,42.,1,308500,3.241491085899514e-06
+olmo32b,out_of_range,45,1,308500,3.241491085899514e-06
+olmo32b,out_of_range,51,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not at all,966,308500,0.0031312803889789304
+olmo32b,unparsed,not at all,466,308500,0.0015105348460291734
+olmo32b,unparsed,Not applicable (,80,308500,0.0002593192868719611
+olmo32b,unparsed,Not applicable.,72,308500,0.000233387358184765
+olmo32b,unparsed,Not applicable,47,308500,0.00015235008103727714
+olmo32b,unparsed,Not applicable to,46,308500,0.00014910858995137764
+olmo32b,unparsed,Not applicable as,39,308500,0.00012641815235008103
+olmo32b,unparsed,Not Applicable,21,308500,6.807131280388978e-05
+olmo32b,unparsed,"Not applicable,",21,308500,6.807131280388978e-05
+olmo32b,unparsed,This post does,20,308500,6.482982171799028e-05
+olmo32b,unparsed,not applicable,19,308500,6.158833063209076e-05
+olmo32b,unparsed,Not applicable for,17,308500,5.510534846029174e-05
+olmo32b,unparsed,Based on the,14,308500,4.5380875202593194e-05
+olmo32b,unparsed,Extremely toxic,13,308500,4.213938411669368e-05
+olmo32b,unparsed,This post is,13,308500,4.213938411669368e-05
+olmo32b,unparsed,I would rate,12,308500,3.889789303079417e-05
+olmo32b,unparsed,This comment would,12,308500,3.889789303079417e-05
+olmo32b,unparsed,Not applicable based,10,308500,3.241491085899514e-05
+olmo32b,unparsed,Not offensive at,10,308500,3.241491085899514e-05
+olmo32b,unparsed,This comment does,10,308500,3.241491085899514e-05
+olmo32b,unparsed,This comment is,10,308500,3.241491085899514e-05
+olmo32b,unparsed,three,10,308500,3.241491085899514e-05
+olmo32b,unparsed,I don't,9,308500,2.9173419773095624e-05
+olmo32b,unparsed,Not provided as,9,308500,2.9173419773095624e-05
+olmo32b,unparsed,One,9,308500,2.9173419773095624e-05
+olmo32b,unparsed,Based on my,8,308500,2.593192868719611e-05
+olmo32b,unparsed,The comment is,8,308500,2.593192868719611e-05
+olmo32b,unparsed,"The comment,",8,308500,2.593192868719611e-05
+olmo32b,unparsed,Three,8,308500,2.593192868719611e-05
+olmo32b,unparsed,not applicable to,8,308500,2.593192868719611e-05
+olmo32b,unparsed,Five,7,308500,2.2690437601296597e-05
+olmo32b,unparsed,My persona would,7,308500,2.2690437601296597e-05
+olmo32b,unparsed,Not applicable in,7,308500,2.2690437601296597e-05
+olmo32b,unparsed,Not enough information,7,308500,2.2690437601296597e-05
+olmo32b,unparsed,not offensive at,7,308500,2.2690437601296597e-05
+olmo32b,unparsed,I am an,6,308500,1.9448946515397084e-05
+olmo32b,unparsed,Not provided in,6,308500,1.9448946515397084e-05
+olmo32b,unparsed,The comment does,6,308500,1.9448946515397084e-05
+olmo32b,unparsed,The comment would,6,308500,1.9448946515397084e-05
+olmo32b,unparsed,The post does,6,308500,1.9448946515397084e-05
+olmo32b,unparsed,This post would,6,308500,1.9448946515397084e-05
+olmo32b,unparsed,Two,6,308500,1.9448946515397084e-05
+olmo32b,unparsed,not applicable (,6,308500,1.9448946515397084e-05
+olmo32b,unparsed,not applicable for,6,308500,1.9448946515397084e-05
+olmo32b,unparsed,I find this,5,308500,1.620745542949757e-05
+olmo32b,unparsed,Not enough context,5,308500,1.620745542949757e-05
+olmo32b,unparsed,Not provided with,5,308500,1.620745542949757e-05
+olmo32b,unparsed,On this scale,5,308500,1.620745542949757e-05
+olmo32b,unparsed,The most influential,5,308500,1.620745542949757e-05
+olmo32b,unparsed,The post is,5,308500,1.620745542949757e-05
+olmo32b,unparsed,There is no,5,308500,1.620745542949757e-05
+olmo32b,unparsed,Without knowing the,5,308500,1.620745542949757e-05
+olmo32b,unparsed,As per the,4,308500,1.2965964343598055e-05
+olmo32b,unparsed,I must clarify,4,308500,1.2965964343598055e-05
+olmo32b,unparsed,In this case,4,308500,1.2965964343598055e-05
+olmo32b,unparsed,Not all at,4,308500,1.2965964343598055e-05
+olmo32b,unparsed,Not offensive.,4,308500,1.2965964343598055e-05
+olmo32b,unparsed,Not provided.,4,308500,1.2965964343598055e-05
+olmo32b,unparsed,Not providing a,4,308500,1.2965964343598055e-05
+olmo32b,unparsed,On the scale,4,308500,1.2965964343598055e-05
+olmo32b,unparsed,The comment seems,4,308500,1.2965964343598055e-05
+olmo32b,unparsed,This is a,4,308500,1.2965964343598055e-05
+olmo32b,unparsed,This post contains,4,308500,1.2965964343598055e-05
+olmo32b,unparsed,not relevant to,4,308500,1.2965964343598055e-05
+olmo32b,unparsed,"""Not at",3,308500,9.724473257698542e-06
+olmo32b,unparsed,As per my,3,308500,9.724473257698542e-06
+olmo32b,unparsed,Given the persona,3,308500,9.724473257698542e-06
+olmo32b,unparsed,I would say,3,308500,9.724473257698542e-06
+olmo32b,unparsed,NOT APPLIC,3,308500,9.724473257698542e-06
+olmo32b,unparsed,Not applicable here,3,308500,9.724473257698542e-06
+olmo32b,unparsed,Not applicable since,3,308500,9.724473257698542e-06
+olmo32b,unparsed,"Not offensive,",3,308500,9.724473257698542e-06
+olmo32b,unparsed,Not provided,3,308500,9.724473257698542e-06
+olmo32b,unparsed,Not provided within,3,308500,9.724473257698542e-06
+olmo32b,unparsed,Not specified in,3,308500,9.724473257698542e-06
+olmo32b,unparsed,The persona would,3,308500,9.724473257698542e-06
+olmo32b,unparsed,The post would,3,308500,9.724473257698542e-06
+olmo32b,unparsed,"The post,",3,308500,9.724473257698542e-06
+olmo32b,unparsed,There's no,3,308500,9.724473257698542e-06
+olmo32b,unparsed,This comment's,3,308500,9.724473257698542e-06
+olmo32b,unparsed,This post doesn,3,308500,9.724473257698542e-06
+olmo32b,unparsed,Your persona finds,3,308500,9.724473257698542e-06
+olmo32b,unparsed,not all offensive,3,308500,9.724473257698542e-06
+olmo32b,unparsed,not applicable as,3,308500,9.724473257698542e-06
+olmo32b,unparsed,not provided,3,308500,9.724473257698542e-06
+olmo32b,unparsed,two,3,308500,9.724473257698542e-06
+olmo32b,unparsed,#,2,308500,6.482982171799028e-06
+olmo32b,unparsed,**Comment:**,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Answer:,2,308500,6.482982171799028e-06
+olmo32b,unparsed,As a mill,2,308500,6.482982171799028e-06
+olmo32b,unparsed,As a non,2,308500,6.482982171799028e-06
+olmo32b,unparsed,As defined by,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Based on this,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Cannot be determined,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Given my persona,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Given this persona,2,308500,6.482982171799028e-06
+olmo32b,unparsed,I am not,2,308500,6.482982171799028e-06
+olmo32b,unparsed,I classify this,2,308500,6.482982171799028e-06
+olmo32b,unparsed,I personally find,2,308500,6.482982171799028e-06
+olmo32b,unparsed,I rate this,2,308500,6.482982171799028e-06
+olmo32b,unparsed,I would classify,2,308500,6.482982171799028e-06
+olmo32b,unparsed,I'm sorry,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Let's analyze,2,308500,6.482982171799028e-06
+olmo32b,unparsed,NOT A VALID,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Not all all,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Not all comment,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Not all content,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Not all the,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Not applicable -,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Not applicable /,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Not applicable score,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Not applicable:,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Not at,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Not given a,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Not offensive (,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Not offensive:,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Not providing an,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Not relevant to,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Number:,2,308500,6.482982171799028e-06
+olmo32b,unparsed,On behalf of,2,308500,6.482982171799028e-06
+olmo32b,unparsed,One.,2,308500,6.482982171799028e-06
+olmo32b,unparsed,The comment could,2,308500,6.482982171799028e-06
+olmo32b,unparsed,The influential trait,2,308500,6.482982171799028e-06
+olmo32b,unparsed,The persona described,2,308500,6.482982171799028e-06
+olmo32b,unparsed,The persona with,2,308500,6.482982171799028e-06
+olmo32b,unparsed,The persona's,2,308500,6.482982171799028e-06
+olmo32b,unparsed,The post doesn,2,308500,6.482982171799028e-06
+olmo32b,unparsed,The post expresses,2,308500,6.482982171799028e-06
+olmo32b,unparsed,The post itself,2,308500,6.482982171799028e-06
+olmo32b,unparsed,The prompt itself,2,308500,6.482982171799028e-06
+olmo32b,unparsed,The rating is,2,308500,6.482982171799028e-06
+olmo32b,unparsed,The selected influential,2,308500,6.482982171799028e-06
+olmo32b,unparsed,"The single,",2,308500,6.482982171799028e-06
+olmo32b,unparsed,There's nothing,2,308500,6.482982171799028e-06
+olmo32b,unparsed,"This comment,",2,308500,6.482982171799028e-06
+olmo32b,unparsed,This content does,2,308500,6.482982171799028e-06
+olmo32b,unparsed,This is not,2,308500,6.482982171799028e-06
+olmo32b,unparsed,This is outside,2,308500,6.482982171799028e-06
+olmo32b,unparsed,This may be,2,308500,6.482982171799028e-06
+olmo32b,unparsed,This persona would,2,308500,6.482982171799028e-06
+olmo32b,unparsed,"This persona,",2,308500,6.482982171799028e-06
+olmo32b,unparsed,This request cannot,2,308500,6.482982171799028e-06
+olmo32b,unparsed,Without more context,2,308500,6.482982171799028e-06
+olmo32b,unparsed,four,2,308500,6.482982171799028e-06
+olmo32b,unparsed,not all,2,308500,6.482982171799028e-06
+olmo32b,unparsed,not all (,2,308500,6.482982171799028e-06
+olmo32b,unparsed,not offensive,2,308500,6.482982171799028e-06
+olmo32b,unparsed,"not offensive,",2,308500,6.482982171799028e-06
+olmo32b,unparsed,not relevant,2,308500,6.482982171799028e-06
+olmo32b,unparsed,"""not at",1,308500,3.241491085899514e-06
+olmo32b,unparsed,# As an,1,308500,3.241491085899514e-06
+olmo32b,unparsed,# Based on,1,308500,3.241491085899514e-06
+olmo32b,unparsed,# I would,1,308500,3.241491085899514e-06
+olmo32b,unparsed,### Not applicable,1,308500,3.241491085899514e-06
+olmo32b,unparsed,#not at,1,308500,3.241491085899514e-06
+olmo32b,unparsed,(As instructed,1,308500,3.241491085899514e-06
+olmo32b,unparsed,(Note:,1,308500,3.241491085899514e-06
+olmo32b,unparsed,(The question,1,308500,3.241491085899514e-06
+olmo32b,unparsed,** Not at,1,308500,3.241491085899514e-06
+olmo32b,unparsed,**Comment:,1,308500,3.241491085899514e-06
+olmo32b,unparsed,**Instruction requires,1,308500,3.241491085899514e-06
+olmo32b,unparsed,**Instruction to,1,308500,3.241491085899514e-06
+olmo32b,unparsed,**Not at,1,308500,3.241491085899514e-06
+olmo32b,unparsed,**Removed due,1,308500,3.241491085899514e-06
+olmo32b,unparsed,**This comment,1,308500,3.241491085899514e-06
+olmo32b,unparsed,**This post,1,308500,3.241491085899514e-06
+olmo32b,unparsed,**Your annotation,1,308500,3.241491085899514e-06
+olmo32b,unparsed,**Your system,1,308500,3.241491085899514e-06
+olmo32b,unparsed,*Not at,1,308500,3.241491085899514e-06
+olmo32b,unparsed,*This answer,1,308500,3.241491085899514e-06
+olmo32b,unparsed,<PRES,1,308500,3.241491085899514e-06
+olmo32b,unparsed,<empty>,1,308500,3.241491085899514e-06
+olmo32b,unparsed,A person with,1,308500,3.241491085899514e-06
+olmo32b,unparsed,A response that,1,308500,3.241491085899514e-06
+olmo32b,unparsed,A substantial part,1,308500,3.241491085899514e-06
+olmo32b,unparsed,An offensive rating,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Answering with,1,308500,3.241491085899514e-06
+olmo32b,unparsed,As a,1,308500,3.241491085899514e-06
+olmo32b,unparsed,As a hom,1,308500,3.241491085899514e-06
+olmo32b,unparsed,As a middle,1,308500,3.241491085899514e-06
+olmo32b,unparsed,As a thoughtful,1,308500,3.241491085899514e-06
+olmo32b,unparsed,As an,1,308500,3.241491085899514e-06
+olmo32b,unparsed,As an annot,1,308500,3.241491085899514e-06
+olmo32b,unparsed,As per annot,1,308500,3.241491085899514e-06
+olmo32b,unparsed,As the persona,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Based on persona,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Based on strong,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Based on these,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Can't really,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Cannot be rated,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Cannot determine due,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Cannot process.,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Cannot rate the,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Comment not provided,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Comment:,1,308500,3.241491085899514e-06
+olmo32b,unparsed,"Comment: """,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Considering the persona,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Due to my,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Due to the,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Extreme language and,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Extreme language implies,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Extremely high,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Extremely.,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Four,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Four.,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Given these characteristics,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Given these specifics,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Here is my,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Here is the,1,308500,3.241491085899514e-06
+olmo32b,unparsed,"Here, focusing",1,308500,3.241491085899514e-06
+olmo32b,unparsed,I am a,1,308500,3.241491085899514e-06
+olmo32b,unparsed,I am interpreting,1,308500,3.241491085899514e-06
+olmo32b,unparsed,I am sorry,1,308500,3.241491085899514e-06
+olmo32b,unparsed,"I apologize,",1,308500,3.241491085899514e-06
+olmo32b,unparsed,I find it,1,308500,3.241491085899514e-06
+olmo32b,unparsed,I interpret,1,308500,3.241491085899514e-06
+olmo32b,unparsed,I interpret this,1,308500,3.241491085899514e-06
+olmo32b,unparsed,I must indicate,1,308500,3.241491085899514e-06
+olmo32b,unparsed,I perceive the,1,308500,3.241491085899514e-06
+olmo32b,unparsed,I perceive this,1,308500,3.241491085899514e-06
+olmo32b,unparsed,I understand that,1,308500,3.241491085899514e-06
+olmo32b,unparsed,I view this,1,308500,3.241491085899514e-06
+olmo32b,unparsed,I would annotate,1,308500,3.241491085899514e-06
+olmo32b,unparsed,I would find,1,308500,3.241491085899514e-06
+olmo32b,unparsed,I would like,1,308500,3.241491085899514e-06
+olmo32b,unparsed,I would rank,1,308500,3.241491085899514e-06
+olmo32b,unparsed,I'd rate,1,308500,3.241491085899514e-06
+olmo32b,unparsed,I'll provide,1,308500,3.241491085899514e-06
+olmo32b,unparsed,I'm an,1,308500,3.241491085899514e-06
+olmo32b,unparsed,I'm just,1,308500,3.241491085899514e-06
+olmo32b,unparsed,If I were,1,308500,3.241491085899514e-06
+olmo32b,unparsed,If seen through,1,308500,3.241491085899514e-06
+olmo32b,unparsed,If the post,1,308500,3.241491085899514e-06
+olmo32b,unparsed,If we are,1,308500,3.241491085899514e-06
+olmo32b,unparsed,If you are,1,308500,3.241491085899514e-06
+olmo32b,unparsed,If you feel,1,308500,3.241491085899514e-06
+olmo32b,unparsed,It's challenging,1,308500,3.241491085899514e-06
+olmo32b,unparsed,It's hard,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Let me reset,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Let's clarify,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Let's consider,1,308500,3.241491085899514e-06
+olmo32b,unparsed,My assigned trait,1,308500,3.241491085899514e-06
+olmo32b,unparsed,My personal annotation,1,308500,3.241491085899514e-06
+olmo32b,unparsed,My personal perception,1,308500,3.241491085899514e-06
+olmo32b,unparsed,My rating would,1,308500,3.241491085899514e-06
+olmo32b,unparsed,NOT PROVIDED,1,308500,3.241491085899514e-06
+olmo32b,unparsed,NOT RAC,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Neither this post,1,308500,3.241491085899514e-06
+olmo32b,unparsed,No offensive content,1,308500,3.241491085899514e-06
+olmo32b,unparsed,No response (,1,308500,3.241491085899514e-06
+olmo32b,unparsed,No response needed,1,308500,3.241491085899514e-06
+olmo32b,unparsed,No text request,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not a direct,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not all bridges,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not all situations,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not all subjective,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not all.,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not answerable,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not answering since,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not applicable (#,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not applicable because,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not applicable due,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not applicable per,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not applicable through,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not applicable under,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not applicable using,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not applicable —,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not applicable/,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not applicable;,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not applying judgment,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not based on,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not classified as,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not considering scale,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not explicitly toxic,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not given,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not given as,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not given is,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not given text,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not going to,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not interpreting this,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not much context,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not offensive to,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not present in,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not provided because,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not providing toxicity,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not rated because,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not rating because,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not relevant,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not responding as,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not specified because,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not specifying a,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not taking the,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not using the,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not very offensive,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Not very toxic,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Note: The,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Offensiveness,1,308500,3.241491085899514e-06
+olmo32b,unparsed,On this specific,1,308500,3.241491085899514e-06
+olmo32b,unparsed,One to rock,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Please note that,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Please provide me,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Sensitivity to,1,308500,3.241491085899514e-06
+olmo32b,unparsed,"Since I,",1,308500,3.241491085899514e-06
+olmo32b,unparsed,Since he is,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Since my persona,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Since the comment,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Since the single,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The above post,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The annotator,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The assessment as,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The assumed non,1,308500,3.241491085899514e-06
+olmo32b,unparsed,"The comment """,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The comment can,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The comment expresses,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The comment in,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The comment includes,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The comment may,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The comment mentions,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The comment provided,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The comment's,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The content of,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The content seems,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The content you,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The context provided,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The focus of,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The given comment,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The given message,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The identified influential,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The identified single,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The key trait,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The lava comment,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The message does,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The message doesn,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The message indicates,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The persona as,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The persona finds,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The persona mentioned,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The persona might,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The post appears,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The post by,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The post con,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The post contains,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The post could,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The post has,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The post in,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The post mentioned,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The post might,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The post on,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The post provided,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The post reson,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The post seems,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The post shows,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The post you,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The provided comment,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The query asking,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The racial aspect,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The response as,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The response will,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The scale for,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The selected persona,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The single most,1,308500,3.241491085899514e-06
+olmo32b,unparsed,The toxicity score,1,308500,3.241491085899514e-06
+olmo32b,unparsed,There are elements,1,308500,3.241491085899514e-06
+olmo32b,unparsed,There are no,1,308500,3.241491085899514e-06
+olmo32b,unparsed,There seems to,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This comment align,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This comment contains,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This comment could,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This comment discusses,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This comment expresses,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This comment feels,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This comment focuses,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This comment in,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This comment isn,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This comment might,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This comment object,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This content con,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This content deserves,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This content reinforces,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This does not,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This is beyond,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This isn't,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This message,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This message is,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This message seems,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This message would,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This persona is,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This persona might,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This persona recognizes,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This post,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This post could,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This post rates,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This post uses,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This post's,1,308500,3.241491085899514e-06
+olmo32b,unparsed,"This post,",1,308500,3.241491085899514e-06
+olmo32b,unparsed,This reply requires,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This request appears,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This request asks,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This request lacks,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This requires a,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This response does,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This scenario requires,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This situation requires,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This statement does,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This statement would,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This task requires,1,308500,3.241491085899514e-06
+olmo32b,unparsed,This would not,1,308500,3.241491085899514e-06
+olmo32b,unparsed,To rate this,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Toxicity,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Using the perspective,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Using these characteristics,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Very difficult.,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Very much so,1,308500,3.241491085899514e-06
+olmo32b,unparsed,We don't,1,308500,3.241491085899514e-06
+olmo32b,unparsed,While assessing the,1,308500,3.241491085899514e-06
+olmo32b,unparsed,While my persona,1,308500,3.241491085899514e-06
+olmo32b,unparsed,While this persona,1,308500,3.241491085899514e-06
+olmo32b,unparsed,With the given,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Without any explicit,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Without any personal,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Without any racial,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Without any room,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Without clear target,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Without detailed elabor,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Without knowing my,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Without making assumptions,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Without the need,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Without toxic bias,1,308500,3.241491085899514e-06
+olmo32b,unparsed,You have,1,308500,3.241491085899514e-06
+olmo32b,unparsed,You should provide,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Your comment is,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Your persona would,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Your post is,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Your prompt asks,1,308500,3.241491085899514e-06
+olmo32b,unparsed,Your request falls,1,308500,3.241491085899514e-06
+olmo32b,unparsed,^^^^^^^,1,308500,3.241491085899514e-06
+olmo32b,unparsed,not a lot,1,308500,3.241491085899514e-06
+olmo32b,unparsed,not all comments,1,308500,3.241491085899514e-06
+olmo32b,unparsed,not an applicable,1,308500,3.241491085899514e-06
+olmo32b,unparsed,not applicable here,1,308500,3.241491085899514e-06
+olmo32b,unparsed,not applicable in,1,308500,3.241491085899514e-06
+olmo32b,unparsed,not applicable under,1,308500,3.241491085899514e-06
+olmo32b,unparsed,not offensive -,1,308500,3.241491085899514e-06
+olmo32b,unparsed,not offensive to,1,308500,3.241491085899514e-06
+olmo32b,unparsed,not provided with,1,308500,3.241491085899514e-06
+olmo32b,unparsed,not relevant for,1,308500,3.241491085899514e-06
+olmo32b,unparsed,not very toxic,1,308500,3.241491085899514e-06
+olmo32b,unparsed,the comment has,1,308500,3.241491085899514e-06
+olmo32b,unparsed,very much so,1,308500,3.241491085899514e-06
+olmo7b,out_of_range,6,176,228500,0.0007702407002188184
+olmo7b,out_of_range,7,77,228500,0.00033698030634573303
+olmo7b,out_of_range,8,24,228500,0.00010503282275711159
+olmo7b,out_of_range,0,19,228500,8.315098468271335e-05
+olmo7b,out_of_range,9,13,228500,5.689277899343545e-05
+olmo7b,out_of_range,14,3,228500,1.3129102844638949e-05
+olmo7b,out_of_range,13,2,228500,8.7527352297593e-06
+olmo7b,out_of_range,19,1,228500,4.37636761487965e-06
+olmo7b,out_of_range,41,1,228500,4.37636761487965e-06
+olmo7b,out_of_range,44,1,228500,4.37636761487965e-06
+olmo7b,out_of_range,54,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'm sorry,2059,228500,0.009010940919037199
+olmo7b,unparsed,I'm unable,1024,228500,0.004481400437636762
+olmo7b,unparsed,Not at all,849,228500,0.003715536105032823
+olmo7b,unparsed,Given the persona,400,228500,0.00175054704595186
+olmo7b,unparsed,I cannot provide,398,228500,0.0017417943107221007
+olmo7b,unparsed,I can't,259,228500,0.0011334792122538293
+olmo7b,unparsed,I cannot engage,240,228500,0.001050328227571116
+olmo7b,unparsed,I'm not,238,228500,0.0010415754923413566
+olmo7b,unparsed,I don't,181,228500,0.0007921225382932167
+olmo7b,unparsed,Based on the,143,228500,0.0006258205689277899
+olmo7b,unparsed,I cannot evaluate,132,228500,0.0005776805251641138
+olmo7b,unparsed,Given your persona,124,228500,0.0005426695842450765
+olmo7b,unparsed,I cannot answer,123,228500,0.000538293216630197
+olmo7b,unparsed,I cannot respond,101,228500,0.0004420131291028446
+olmo7b,unparsed,I'm here,92,228500,0.0004026258205689278
+olmo7b,unparsed,I would rate,82,228500,0.0003588621444201313
+olmo7b,unparsed,Assuming the,68,228500,0.0002975929978118162
+olmo7b,unparsed,I cannot comply,63,228500,0.00027571115973741794
+olmo7b,unparsed,I cannot determine,52,228500,0.0002275711159737418
+olmo7b,unparsed,I cannot process,50,228500,0.0002188183807439825
+olmo7b,unparsed,I cannot generate,47,228500,0.00020568927789934354
+olmo7b,unparsed,I cannot proceed,47,228500,0.00020568927789934354
+olmo7b,unparsed,"I apologize,",45,228500,0.00019693654266958425
+olmo7b,unparsed,I’m sorry,43,228500,0.00018818380743982493
+olmo7b,unparsed,I cannot rate,41,228500,0.00017943107221006564
+olmo7b,unparsed,I do not,41,228500,0.00017943107221006564
+olmo7b,unparsed,This comment is,40,228500,0.000175054704595186
+olmo7b,unparsed,I would find,36,228500,0.0001575492341356674
+olmo7b,unparsed,I understand you,35,228500,0.00015317286652078774
+olmo7b,unparsed,I'd rate,34,228500,0.0001487964989059081
+olmo7b,unparsed,**Trait identified,30,228500,0.0001312910284463895
+olmo7b,unparsed,Answer:,30,228500,0.0001312910284463895
+olmo7b,unparsed,I would annotate,28,228500,0.0001225382932166302
+olmo7b,unparsed,I'm an,28,228500,0.0001225382932166302
+olmo7b,unparsed,I am unable,27,228500,0.00011816192560175054
+olmo7b,unparsed,The most influential,27,228500,0.00011816192560175054
+olmo7b,unparsed,Based on your,26,228500,0.0001137855579868709
+olmo7b,unparsed,I'm really,26,228500,0.0001137855579868709
+olmo7b,unparsed,I cannot assist,24,228500,0.00010503282275711159
+olmo7b,unparsed,Understood.,24,228500,0.00010503282275711159
+olmo7b,unparsed,I,22,228500,9.62800875273523e-05
+olmo7b,unparsed,I don’t,22,228500,9.62800875273523e-05
+olmo7b,unparsed,I'm designed,22,228500,9.62800875273523e-05
+olmo7b,unparsed,As a,20,228500,8.7527352297593e-05
+olmo7b,unparsed,I understand your,20,228500,8.7527352297593e-05
+olmo7b,unparsed,**Offens,18,228500,7.87746170678337e-05
+olmo7b,unparsed,As a Gen,18,228500,7.87746170678337e-05
+olmo7b,unparsed,I need the,18,228500,7.87746170678337e-05
+olmo7b,unparsed,Since the persona,17,228500,7.439824945295405e-05
+olmo7b,unparsed,How offensive would,16,228500,7.00218818380744e-05
+olmo7b,unparsed,I would perceive,16,228500,7.00218818380744e-05
+olmo7b,unparsed,I’m unable,16,228500,7.00218818380744e-05
+olmo7b,unparsed,I'm missing,15,228500,6.564551422319475e-05
+olmo7b,unparsed,I'm assuming,14,228500,6.12691466083151e-05
+olmo7b,unparsed,As a non,13,228500,5.689277899343545e-05
+olmo7b,unparsed,Given your described,13,228500,5.689277899343545e-05
+olmo7b,unparsed,I cannot make,13,228500,5.689277899343545e-05
+olmo7b,unparsed,**Annotation as,12,228500,5.2516411378555796e-05
+olmo7b,unparsed,Given the characteristics,12,228500,5.2516411378555796e-05
+olmo7b,unparsed,Given the provided,12,228500,5.2516411378555796e-05
+olmo7b,unparsed,I’m not,12,228500,5.2516411378555796e-05
+olmo7b,unparsed,I cannot participate,11,228500,4.814004376367615e-05
+olmo7b,unparsed,I rate this,11,228500,4.814004376367615e-05
+olmo7b,unparsed,I would see,11,228500,4.814004376367615e-05
+olmo7b,unparsed,Let's break,11,228500,4.814004376367615e-05
+olmo7b,unparsed,This comment would,11,228500,4.814004376367615e-05
+olmo7b,unparsed,Without knowing the,11,228500,4.814004376367615e-05
+olmo7b,unparsed,Given your stated,10,228500,4.37636761487965e-05
+olmo7b,unparsed,With the persona,10,228500,4.37636761487965e-05
+olmo7b,unparsed,**Annotation based,9,228500,3.938730853391685e-05
+olmo7b,unparsed,**Annotation:**,9,228500,3.938730853391685e-05
+olmo7b,unparsed,**Trait:**,9,228500,3.938730853391685e-05
+olmo7b,unparsed,I cannot assess,9,228500,3.938730853391685e-05
+olmo7b,unparsed,I'm going,9,228500,3.938730853391685e-05
+olmo7b,unparsed,If I am,9,228500,3.938730853391685e-05
+olmo7b,unparsed,The single most,9,228500,3.938730853391685e-05
+olmo7b,unparsed,As a mill,8,228500,3.50109409190372e-05
+olmo7b,unparsed,As a woman,8,228500,3.50109409190372e-05
+olmo7b,unparsed,I apologize for,8,228500,3.50109409190372e-05
+olmo7b,unparsed,I appreciate your,8,228500,3.50109409190372e-05
+olmo7b,unparsed,I choose,8,228500,3.50109409190372e-05
+olmo7b,unparsed,I would classify,8,228500,3.50109409190372e-05
+olmo7b,unparsed,I'm unclear,8,228500,3.50109409190372e-05
+olmo7b,unparsed,I'm unsure,8,228500,3.50109409190372e-05
+olmo7b,unparsed,"Sorry, I",8,228500,3.50109409190372e-05
+olmo7b,unparsed,The comment is,8,228500,3.50109409190372e-05
+olmo7b,unparsed,Without specific context,8,228500,3.50109409190372e-05
+olmo7b,unparsed,**Offense,7,228500,3.063457330415755e-05
+olmo7b,unparsed,As a Native,7,228500,3.063457330415755e-05
+olmo7b,unparsed,Assessing,7,228500,3.063457330415755e-05
+olmo7b,unparsed,Can't provide,7,228500,3.063457330415755e-05
+olmo7b,unparsed,I am not,7,228500,3.063457330415755e-05
+olmo7b,unparsed,I cannot classify,7,228500,3.063457330415755e-05
+olmo7b,unparsed,I cannot continue,7,228500,3.063457330415755e-05
+olmo7b,unparsed,I refuse to,7,228500,3.063457330415755e-05
+olmo7b,unparsed,I understand the,7,228500,3.063457330415755e-05
+olmo7b,unparsed,I would personally,7,228500,3.063457330415755e-05
+olmo7b,unparsed,No,7,228500,3.063457330415755e-05
+olmo7b,unparsed,Number:,7,228500,3.063457330415755e-05
+olmo7b,unparsed,The comment expresses,7,228500,3.063457330415755e-05
+olmo7b,unparsed,This is a,7,228500,3.063457330415755e-05
+olmo7b,unparsed,This would be,7,228500,3.063457330415755e-05
+olmo7b,unparsed,**Most influential,6,228500,2.6258205689277898e-05
+olmo7b,unparsed,**Trait Identified,6,228500,2.6258205689277898e-05
+olmo7b,unparsed,I am a,6,228500,2.6258205689277898e-05
+olmo7b,unparsed,I cannot access,6,228500,2.6258205689277898e-05
+olmo7b,unparsed,I think this,6,228500,2.6258205689277898e-05
+olmo7b,unparsed,I'm interpreting,6,228500,2.6258205689277898e-05
+olmo7b,unparsed,I'm truly,6,228500,2.6258205689277898e-05
+olmo7b,unparsed,This comment could,6,228500,2.6258205689277898e-05
+olmo7b,unparsed,As an,5,228500,2.188183807439825e-05
+olmo7b,unparsed,Can't evaluate,5,228500,2.188183807439825e-05
+olmo7b,unparsed,Depends on,5,228500,2.188183807439825e-05
+olmo7b,unparsed,For a Gen,5,228500,2.188183807439825e-05
+olmo7b,unparsed,Given your characteristics,5,228500,2.188183807439825e-05
+olmo7b,unparsed,How would a,5,228500,2.188183807439825e-05
+olmo7b,unparsed,I can only,5,228500,2.188183807439825e-05
+olmo7b,unparsed,I cannot accurately,5,228500,2.188183807439825e-05
+olmo7b,unparsed,I cannot analyze,5,228500,2.188183807439825e-05
+olmo7b,unparsed,I cannot and,5,228500,2.188183807439825e-05
+olmo7b,unparsed,I cannot perform,5,228500,2.188183807439825e-05
+olmo7b,unparsed,I need more,5,228500,2.188183807439825e-05
+olmo7b,unparsed,I understand that,5,228500,2.188183807439825e-05
+olmo7b,unparsed,I won't,5,228500,2.188183807439825e-05
+olmo7b,unparsed,I'd annotate,5,228500,2.188183807439825e-05
+olmo7b,unparsed,I'd need,5,228500,2.188183807439825e-05
+olmo7b,unparsed,I'm happy,5,228500,2.188183807439825e-05
+olmo7b,unparsed,This comment expresses,5,228500,2.188183807439825e-05
+olmo7b,unparsed,"This comment,",5,228500,2.188183807439825e-05
+olmo7b,unparsed,This post is,5,228500,2.188183807439825e-05
+olmo7b,unparsed,Using the persona,5,228500,2.188183807439825e-05
+olmo7b,unparsed,Without the specific,5,228500,2.188183807439825e-05
+olmo7b,unparsed,**Trait selected,4,228500,1.75054704595186e-05
+olmo7b,unparsed,Based solely on,4,228500,1.75054704595186e-05
+olmo7b,unparsed,Because my persona,4,228500,1.75054704595186e-05
+olmo7b,unparsed,Considering the persona,4,228500,1.75054704595186e-05
+olmo7b,unparsed,Given my persona,4,228500,1.75054704595186e-05
+olmo7b,unparsed,I apologize if,4,228500,1.75054704595186e-05
+olmo7b,unparsed,I cannot comment,4,228500,1.75054704595186e-05
+olmo7b,unparsed,I cannot compute,4,228500,1.75054704595186e-05
+olmo7b,unparsed,I cannot create,4,228500,1.75054704595186e-05
+olmo7b,unparsed,I cannot eth,4,228500,1.75054704595186e-05
+olmo7b,unparsed,I cannot see,4,228500,1.75054704595186e-05
+olmo7b,unparsed,I must base,4,228500,1.75054704595186e-05
+olmo7b,unparsed,I must note,4,228500,1.75054704595186e-05
+olmo7b,unparsed,I see the,4,228500,1.75054704595186e-05
+olmo7b,unparsed,"I understand,",4,228500,1.75054704595186e-05
+olmo7b,unparsed,I will not,4,228500,1.75054704595186e-05
+olmo7b,unparsed,I would judge,4,228500,1.75054704595186e-05
+olmo7b,unparsed,I would likely,4,228500,1.75054704595186e-05
+olmo7b,unparsed,I would view,4,228500,1.75054704595186e-05
+olmo7b,unparsed,I'm a,4,228500,1.75054704595186e-05
+olmo7b,unparsed,I'm having,4,228500,1.75054704595186e-05
+olmo7b,unparsed,I'm using,4,228500,1.75054704595186e-05
+olmo7b,unparsed,I'm very,4,228500,1.75054704595186e-05
+olmo7b,unparsed,If the persona,4,228500,1.75054704595186e-05
+olmo7b,unparsed,I’d rate,4,228500,1.75054704595186e-05
+olmo7b,unparsed,On a scale,4,228500,1.75054704595186e-05
+olmo7b,unparsed,Since the comment,4,228500,1.75054704595186e-05
+olmo7b,unparsed,"Sorry, but",4,228500,1.75054704595186e-05
+olmo7b,unparsed,Thank you for,4,228500,1.75054704595186e-05
+olmo7b,unparsed,That's a,4,228500,1.75054704595186e-05
+olmo7b,unparsed,The comment uses,4,228500,1.75054704595186e-05
+olmo7b,unparsed,This content is,4,228500,1.75054704595186e-05
+olmo7b,unparsed,This response cannot,4,228500,1.75054704595186e-05
+olmo7b,unparsed,To answer based,4,228500,1.75054704595186e-05
+olmo7b,unparsed,Without additional context,4,228500,1.75054704595186e-05
+olmo7b,unparsed,**Identified,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,**Offensive,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,**Single influential,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,**Trait chosen,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,As a Mill,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,As a man,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,Assessment based,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,Assuming a,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,Based on a,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,Based on my,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,Based purely on,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,Based strictly on,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,Because the persona,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,Can you please,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,Can't assist,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,For a non,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,For the persona,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,Given the context,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,Given the instructions,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,Given your instructions,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,Given your request,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,I appreciate the,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,I cannot calculate,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,I cannot fulfill,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,I can’t,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,I must know,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,I see.,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,I understand.,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,I would estimate,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,I would interpret,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,I wouldn't,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,I'm asking,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,I'm just,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,I've analyzed,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,I’m here,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,Let me clarify,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,Let’s break,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,My persona is,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,Score:,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,Since the request,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,The comment contains,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,"The persona,",3,228500,1.3129102844638949e-05
+olmo7b,unparsed,This comment uses,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,This is an,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,This request is,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,This response is,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,With the identified,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,Without seeing the,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,Without specific details,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,Without the actual,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,\boxed{,3,228500,1.3129102844638949e-05
+olmo7b,unparsed,** Offens,2,228500,8.7527352297593e-06
+olmo7b,unparsed,**Annotation (,2,228500,8.7527352297593e-06
+olmo7b,unparsed,**Annotation:,2,228500,8.7527352297593e-06
+olmo7b,unparsed,<empty>,2,228500,8.7527352297593e-06
+olmo7b,unparsed,After evaluating the,2,228500,8.7527352297593e-06
+olmo7b,unparsed,As per the,2,228500,8.7527352297593e-06
+olmo7b,unparsed,As the persona,2,228500,8.7527352297593e-06
+olmo7b,unparsed,"Assuming """,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Assuming this,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Assuming your,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Based only on,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Because I am,2,228500,8.7527352297593e-06
+olmo7b,unparsed,But I can,2,228500,8.7527352297593e-06
+olmo7b,unparsed,But I must,2,228500,8.7527352297593e-06
+olmo7b,unparsed,But I'm,2,228500,8.7527352297593e-06
+olmo7b,unparsed,But since I,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Can't assess,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Can't determine,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Cannot proceed.,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Considering your persona,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Due to the,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Five,2,228500,8.7527352297593e-06
+olmo7b,unparsed,For a persona,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Given only the,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Given the information,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Given the requested,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Given the traits,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Given your mill,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Given your specified,2,228500,8.7527352297593e-06
+olmo7b,unparsed,"How offensive,",2,228500,8.7527352297593e-06
+olmo7b,unparsed,How toxic do,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I acknowledge the,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I acknowledge your,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I am programmed,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I can follow,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I cannot annotate,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I cannot browse,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I cannot complete,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I cannot cond,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I cannot endorse,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I cannot produce,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I cannot support,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I cannot view,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I find the,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I give:,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I misunderstood your,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I must decline,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I must evaluate,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I must focus,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I must refuse,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I must rely,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I see your,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I understand from,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I understand this,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I will need,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I will now,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I would approach,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I would assign,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I would consider,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I would evaluate,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I would give,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I would need,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I would not,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I would say,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I would still,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I'd approach,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I'm afraid,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I'm choosing,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I'm considering,2,228500,8.7527352297593e-06
+olmo7b,unparsed,I've interpreted,2,228500,8.7527352297593e-06
+olmo7b,unparsed,If my persona,2,228500,8.7527352297593e-06
+olmo7b,unparsed,If the comment,2,228500,8.7527352297593e-06
+olmo7b,unparsed,My response as,2,228500,8.7527352297593e-06
+olmo7b,unparsed,No at all,2,228500,8.7527352297593e-06
+olmo7b,unparsed,No response available,2,228500,8.7527352297593e-06
+olmo7b,unparsed,"No response,",2,228500,8.7527352297593e-06
+olmo7b,unparsed,"No, I",2,228500,8.7527352297593e-06
+olmo7b,unparsed,Not allowed.,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Not applicable,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Not applicable.,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Not enough information,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Number selected:,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Offensive rating,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Reply:,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Since my persona,2,228500,8.7527352297593e-06
+olmo7b,unparsed,The message contains,2,228500,8.7527352297593e-06
+olmo7b,unparsed,The persona described,2,228500,8.7527352297593e-06
+olmo7b,unparsed,"The statement """,2,228500,8.7527352297593e-06
+olmo7b,unparsed,The statement expresses,2,228500,8.7527352297593e-06
+olmo7b,unparsed,The statement is,2,228500,8.7527352297593e-06
+olmo7b,unparsed,This cannot be,2,228500,8.7527352297593e-06
+olmo7b,unparsed,This comment reflects,2,228500,8.7527352297593e-06
+olmo7b,unparsed,This comment seems,2,228500,8.7527352297593e-06
+olmo7b,unparsed,This is not,2,228500,8.7527352297593e-06
+olmo7b,unparsed,This post comes,2,228500,8.7527352297593e-06
+olmo7b,unparsed,This post expresses,2,228500,8.7527352297593e-06
+olmo7b,unparsed,This prompt requires,2,228500,8.7527352297593e-06
+olmo7b,unparsed,This reply is,2,228500,8.7527352297593e-06
+olmo7b,unparsed,This request contains,2,228500,8.7527352297593e-06
+olmo7b,unparsed,This request involves,2,228500,8.7527352297593e-06
+olmo7b,unparsed,This response would,2,228500,8.7527352297593e-06
+olmo7b,unparsed,This statement is,2,228500,8.7527352297593e-06
+olmo7b,unparsed,This statement reflects,2,228500,8.7527352297593e-06
+olmo7b,unparsed,This would likely,2,228500,8.7527352297593e-06
+olmo7b,unparsed,To answer this,2,228500,8.7527352297593e-06
+olmo7b,unparsed,To answer your,2,228500,8.7527352297593e-06
+olmo7b,unparsed,"To proceed,",2,228500,8.7527352297593e-06
+olmo7b,unparsed,With a Gen,2,228500,8.7527352297593e-06
+olmo7b,unparsed,With the given,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Without a specific,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Without explicit content,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Without specific content,2,228500,8.7527352297593e-06
+olmo7b,unparsed,Your reply should,2,228500,8.7527352297593e-06
+olmo7b,unparsed,** Persona Annotation,1,228500,4.37636761487965e-06
+olmo7b,unparsed,** Trait matched,1,228500,4.37636761487965e-06
+olmo7b,unparsed,** trait:,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Annot,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Annotation Example,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Annotation by,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**As a,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Influ,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Number,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Number chosen,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Number response,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Number:,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Number:**,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Offence,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Persona's,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Personal perception,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Personna,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Rating:**,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Scenario Analysis,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Single Influ,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Single influ,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Single most,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Summary of,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Toxic,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Trait matched,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Trait used,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Trait**:,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**TraitIdent,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Traits identified,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Value Alignment,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**Value-based,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**annotation:**,1,228500,4.37636761487965e-06
+olmo7b,unparsed,**offense,1,228500,4.37636761487965e-06
+olmo7b,unparsed,A,1,228500,4.37636761487965e-06
+olmo7b,unparsed,As a Hispanic,1,228500,4.37636761487965e-06
+olmo7b,unparsed,As a persona,1,228500,4.37636761487965e-06
+olmo7b,unparsed,As an AI,1,228500,4.37636761487965e-06
+olmo7b,unparsed,As an Arab,1,228500,4.37636761487965e-06
+olmo7b,unparsed,As an Asian,1,228500,4.37636761487965e-06
+olmo7b,unparsed,As an Hispanic,1,228500,4.37636761487965e-06
+olmo7b,unparsed,As an annot,1,228500,4.37636761487965e-06
+olmo7b,unparsed,As an individual,1,228500,4.37636761487965e-06
+olmo7b,unparsed,As instructed to,1,228500,4.37636761487965e-06
+olmo7b,unparsed,As per your,1,228500,4.37636761487965e-06
+olmo7b,unparsed,As someone in,1,228500,4.37636761487965e-06
+olmo7b,unparsed,As the described,1,228500,4.37636761487965e-06
+olmo7b,unparsed,As the system,1,228500,4.37636761487965e-06
+olmo7b,unparsed,As your persona,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Assessed through,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Assessment of,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Based on an,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Because I can,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Because my value,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Because of your,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Because raising prices,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Because respectful dialogue,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Because the identified,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Because the instruction,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Because the only,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Because the post,1,228500,4.37636761487965e-06
+olmo7b,unparsed,But I cannot,1,228500,4.37636761487965e-06
+olmo7b,unparsed,But I don,1,228500,4.37636761487965e-06
+olmo7b,unparsed,But as per,1,228500,4.37636761487965e-06
+olmo7b,unparsed,"But first,",1,228500,4.37636761487965e-06
+olmo7b,unparsed,But you didn,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Can you clarify,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Can you provide,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Can you share,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Can you specify,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Can't answer,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Can't engage,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Cannot answer due,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Cannot answer without,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Cannot calculate an,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Cannot comply with,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Cannot determine.,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Cannot evaluate the,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Cannot process request,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Cannot process the,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Cannot process.,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Cannot provide an,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Cannot provide annotation,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Cannot provide evaluation,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Cannot respond due,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Cannot respond to,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Certainly. Here,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Considering the prompt,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Depends if,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Due to my,1,228500,4.37636761487965e-06
+olmo7b,unparsed,"First, let",1,228500,4.37636761487965e-06
+olmo7b,unparsed,"First, the",1,228500,4.37636761487965e-06
+olmo7b,unparsed,For a,1,228500,4.37636761487965e-06
+olmo7b,unparsed,For a mill,1,228500,4.37636761487965e-06
+olmo7b,unparsed,For a woman,1,228500,4.37636761487965e-06
+olmo7b,unparsed,For my persona,1,228500,4.37636761487965e-06
+olmo7b,unparsed,For persona:,1,228500,4.37636761487965e-06
+olmo7b,unparsed,For the described,1,228500,4.37636761487965e-06
+olmo7b,unparsed,For the given,1,228500,4.37636761487965e-06
+olmo7b,unparsed,For the provided,1,228500,4.37636761487965e-06
+olmo7b,unparsed,For this analysis,1,228500,4.37636761487965e-06
+olmo7b,unparsed,For this comment,1,228500,4.37636761487965e-06
+olmo7b,unparsed,For this revised,1,228500,4.37636761487965e-06
+olmo7b,unparsed,For this task,1,228500,4.37636761487965e-06
+olmo7b,unparsed,For your request,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given a persona,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given the attributes,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given the identified,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given the instruction,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given the limited,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given the profile,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given the prompt,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given the request,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given the requirements,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given the response,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given the scenario,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given the single,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given the task,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given this persona,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given your background,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given your defined,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given your description,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given your frustration,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given your identity,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given your input,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given your profile,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given your prompt,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Given your statement,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Here’s how,1,228500,4.37636761487965e-06
+olmo7b,unparsed,How offensive?,1,228500,4.37636761487965e-06
+olmo7b,unparsed,How racist:,1,228500,4.37636761487965e-06
+olmo7b,unparsed,How racist?,1,228500,4.37636761487965e-06
+olmo7b,unparsed,How would I,1,228500,4.37636761487965e-06
+olmo7b,unparsed,How would Mana,1,228500,4.37636761487965e-06
+olmo7b,unparsed,"However, since",1,228500,4.37636761487965e-06
+olmo7b,unparsed,"However, without",1,228500,4.37636761487965e-06
+olmo7b,unparsed,I agree that,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I agree with,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I am deeply,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I am non,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I am prohibited,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I am reflecting,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I am sensitive,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I am sorry,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I am unsure,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I answered based,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I can analyze,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I can explain,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I can provide,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I cannot address,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I cannot assign,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I cannot categor,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I cannot choose,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I cannot consider,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I cannot contribute,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I cannot express,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I cannot fully,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I cannot honor,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I cannot interact,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I cannot meaning,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I cannot or,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I cannot reply,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I cannot review,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I cannot safely,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I cannot show,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I cannot use,1,228500,4.37636761487965e-06
+olmo7b,unparsed,"I cannot,",1,228500,4.37636761487965e-06
+olmo7b,unparsed,"I choose """,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I choose **,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I did not,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I have chosen,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I have little,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I have no,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I have not,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I have to,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I identified the,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I lack information,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I lack the,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I must acknowledge,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I must apologize,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I must avoid,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I must be,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I must consider,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I must determine,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I must only,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I must prioritize,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I need a,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I need actual,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I need to,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I need you,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I notice the,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I only have,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I personally rate,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I rate the,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I read this,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I read your,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I really loved,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I see how,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I think I,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I think the,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I understand feelings,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I use a,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I will address,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I will consider,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I will evaluate,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I will proceed,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I will provide,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I work through,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I would categor,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I would probably,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I would score,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I would weigh,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'd as,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'd be,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'd consider,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'd first,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'd identify,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'd interpret,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'd perceive,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'd personally,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'd treat,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'd use,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'll analyze,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'll answer,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'll consider,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'll proceed,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'll respond,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'm able,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'm cannot,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'm committed,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'm constrained,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'm deeply,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'm making,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'm neutral,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'm only,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'm programmed,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'm refusing,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'm required,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'm seeking,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'm thinking,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'm uncertain,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I'm uncomfortable,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I't not,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I've been,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I've considered,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I've identified,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I've reflected,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I've taken,1,228500,4.37636761487965e-06
+olmo7b,unparsed,If as a,1,228500,4.37636761487965e-06
+olmo7b,unparsed,If evaluating the,1,228500,4.37636761487965e-06
+olmo7b,unparsed,If your persona,1,228500,4.37636761487965e-06
+olmo7b,unparsed,In my view,1,228500,4.37636761487965e-06
+olmo7b,unparsed,In the context,1,228500,4.37636761487965e-06
+olmo7b,unparsed,In this case,1,228500,4.37636761487965e-06
+olmo7b,unparsed,In this scenario,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Invalid request.,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Invalid; content,1,228500,4.37636761487965e-06
+olmo7b,unparsed,It's hard,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I’d annotate,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I’d approach,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I’d need,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I’d perceive,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I’d say,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I’m a,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I’m assuming,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I’m deeply,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I’m designed,1,228500,4.37636761487965e-06
+olmo7b,unparsed,I’m using,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Let me evaluate,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Let me explain,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Let me first,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Letting the,1,228500,4.37636761487965e-06
+olmo7b,unparsed,My apologies for,1,228500,4.37636761487965e-06
+olmo7b,unparsed,My response comes,1,228500,4.37636761487965e-06
+olmo7b,unparsed,My response is,1,228500,4.37636761487965e-06
+olmo7b,unparsed,No annotation requested,1,228500,4.37636761487965e-06
+olmo7b,unparsed,No answer provided,1,228500,4.37636761487965e-06
+olmo7b,unparsed,No comment.,1,228500,4.37636761487965e-06
+olmo7b,unparsed,No data provided,1,228500,4.37636761487965e-06
+olmo7b,unparsed,No further information,1,228500,4.37636761487965e-06
+olmo7b,unparsed,No information was,1,228500,4.37636761487965e-06
+olmo7b,unparsed,No number.,1,228500,4.37636761487965e-06
+olmo7b,unparsed,No numerical reply,1,228500,4.37636761487965e-06
+olmo7b,unparsed,No numerical response,1,228500,4.37636761487965e-06
+olmo7b,unparsed,No offense,1,228500,4.37636761487965e-06
+olmo7b,unparsed,No offense (,1,228500,4.37636761487965e-06
+olmo7b,unparsed,No offense at,1,228500,4.37636761487965e-06
+olmo7b,unparsed,No offense calculated,1,228500,4.37636761487965e-06
+olmo7b,unparsed,No rating provided,1,228500,4.37636761487965e-06
+olmo7b,unparsed,No response.,1,228500,4.37636761487965e-06
+olmo7b,unparsed,No.,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Not provided.,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Not providing a,1,228500,4.37636761487965e-06
+olmo7b,unparsed,"Not requested,",1,228500,4.37636761487965e-06
+olmo7b,unparsed,Note: No,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Number four,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Of course.,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Offensiveness,1,228500,4.37636761487965e-06
+olmo7b,unparsed,On the described,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Please describe how,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Please provide the,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Rephrasing,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Scale from,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Since I am,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Since I can,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Since I do,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Since I must,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Since I previously,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Since I'm,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Since the identified,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Since the trait,1,228500,4.37636761487965e-06
+olmo7b,unparsed,So thinking about,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Sorry for the,1,228500,4.37636761487965e-06
+olmo7b,unparsed,"Sorry, your",1,228500,4.37636761487965e-06
+olmo7b,unparsed,"Sure, I",1,228500,4.37636761487965e-06
+olmo7b,unparsed,Sure. Based,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Sure. I,1,228500,4.37636761487965e-06
+olmo7b,unparsed,That is deeply,1,228500,4.37636761487965e-06
+olmo7b,unparsed,That response is,1,228500,4.37636761487965e-06
+olmo7b,unparsed,That's an,1,228500,4.37636761487965e-06
+olmo7b,unparsed,That’s inappropriate,1,228500,4.37636761487965e-06
+olmo7b,unparsed,The **most,1,228500,4.37636761487965e-06
+olmo7b,unparsed,"The answer,",1,228500,4.37636761487965e-06
+olmo7b,unparsed,"The comment """,1,228500,4.37636761487965e-06
+olmo7b,unparsed,The comment critiques,1,228500,4.37636761487965e-06
+olmo7b,unparsed,The comment describes,1,228500,4.37636761487965e-06
+olmo7b,unparsed,The comment does,1,228500,4.37636761487965e-06
+olmo7b,unparsed,The comment in,1,228500,4.37636761487965e-06
+olmo7b,unparsed,The comment you,1,228500,4.37636761487965e-06
+olmo7b,unparsed,The original instruction,1,228500,4.37636761487965e-06
+olmo7b,unparsed,The persona is,1,228500,4.37636761487965e-06
+olmo7b,unparsed,The perspective here,1,228500,4.37636761487965e-06
+olmo7b,unparsed,The post is,1,228500,4.37636761487965e-06
+olmo7b,unparsed,The question mentions,1,228500,4.37636761487965e-06
+olmo7b,unparsed,The sentiment expressed,1,228500,4.37636761487965e-06
+olmo7b,unparsed,The statement appears,1,228500,4.37636761487965e-06
+olmo7b,unparsed,The system must,1,228500,4.37636761487965e-06
+olmo7b,unparsed,The system you,1,228500,4.37636761487965e-06
+olmo7b,unparsed,The use of,1,228500,4.37636761487965e-06
+olmo7b,unparsed,There is no,1,228500,4.37636761487965e-06
+olmo7b,unparsed,There isn't,1,228500,4.37636761487965e-06
+olmo7b,unparsed,There's some,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This annotation is,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This answer relies,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This argument is,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This classification doesn,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This comment discusses,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This comment does,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This comment from,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This comment might,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This comment promotes,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This comment shows,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This comment:,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This evaluation uses,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This is,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This is difficult,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This is extremely,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This is political,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This is slightly,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This is the,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This is unclear,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This post carries,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This post feels,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This post shows,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This post would,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This post:,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This prompt asks,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This prompt requests,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This query describes,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This query does,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This question comes,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This question is,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This request lacks,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This request raises,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This request seems,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This requires identifying,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This requires reflection,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This response attempts,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This response can,1,228500,4.37636761487965e-06
+olmo7b,unparsed,"This response,",1,228500,4.37636761487965e-06
+olmo7b,unparsed,This sounds like,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This statement could,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This statement expresses,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This statement uses,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This statement would,1,228500,4.37636761487965e-06
+olmo7b,unparsed,"This statement—""",1,228500,4.37636761487965e-06
+olmo7b,unparsed,This text is,1,228500,4.37636761487965e-06
+olmo7b,unparsed,This would rate,1,228500,4.37636761487965e-06
+olmo7b,unparsed,To answer using,1,228500,4.37636761487965e-06
+olmo7b,unparsed,To proceed as,1,228500,4.37636761487965e-06
+olmo7b,unparsed,To proceed with,1,228500,4.37636761487965e-06
+olmo7b,unparsed,To process your,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Under the assumption,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Understood!,1,228500,4.37636761487965e-06
+olmo7b,unparsed,"Unfortunately, the",1,228500,4.37636761487965e-06
+olmo7b,unparsed,Using the *,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Using your persona,1,228500,4.37636761487965e-06
+olmo7b,unparsed,With a mill,1,228500,4.37636761487965e-06
+olmo7b,unparsed,With my stated,1,228500,4.37636761487965e-06
+olmo7b,unparsed,With the characteristics,1,228500,4.37636761487965e-06
+olmo7b,unparsed,With the described,1,228500,4.37636761487965e-06
+olmo7b,unparsed,With these characteristics,1,228500,4.37636761487965e-06
+olmo7b,unparsed,With those characteristics,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Without an explicit,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Without clear context,1,228500,4.37636761487965e-06
+olmo7b,unparsed,"Without context,",1,228500,4.37636761487965e-06
+olmo7b,unparsed,Without direct context,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Without explicit context,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Without more context,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Without specific instructions,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Without the exact,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Without the full,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Without the original,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Would this persona,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Would this response,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Would you classify,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Would you find,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Would you give,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Would you like,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Would you rate,1,228500,4.37636761487965e-06
+olmo7b,unparsed,You do not,1,228500,4.37636761487965e-06
+olmo7b,unparsed,You don't,1,228500,4.37636761487965e-06
+olmo7b,unparsed,You provided the,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Your comment could,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Your comment uses,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Your comment’s,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Your persona as,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Your persona's,1,228500,4.37636761487965e-06
+olmo7b,unparsed,"Your persona,",1,228500,4.37636761487965e-06
+olmo7b,unparsed,Your post is,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Your reasoning required,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Your reply is,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Your reply suggests,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Your reply would,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Your response should,1,228500,4.37636761487965e-06
+olmo7b,unparsed,Your use of,1,228500,4.37636761487965e-06
+olmo7b,unparsed,[Annotation:,1,228500,4.37636761487965e-06
+olmo7b,unparsed,[Based on,1,228500,4.37636761487965e-06
+olmo7b,unparsed,[My analysis,1,228500,4.37636761487965e-06
+olmo7b,unparsed,[Using empathy,1,228500,4.37636761487965e-06
+qwen32b,unparsed,The request seems,9,308500,2.9173419773095624e-05
+qwen32b,unparsed,It seems like,7,308500,2.2690437601296597e-05
+qwen32b,unparsed,This statement does,4,308500,1.2965964343598055e-05
+qwen32b,unparsed,Without the actual,4,308500,1.2965964343598055e-05
+qwen32b,unparsed,It seems there,3,308500,9.724473257698542e-06
+qwen32b,unparsed,"The question """,2,308500,6.482982171799028e-06
+qwen32b,unparsed,The request appears,2,308500,6.482982171799028e-06
+qwen32b,unparsed,The request does,2,308500,6.482982171799028e-06
+qwen32b,unparsed,The request doesn,2,308500,6.482982171799028e-06
+qwen32b,unparsed,The request for,2,308500,6.482982171799028e-06
+qwen32b,unparsed,This response does,2,308500,6.482982171799028e-06
+qwen32b,unparsed,The instruction provided,1,308500,3.241491085899514e-06
+qwen32b,unparsed,The provided text,1,308500,3.241491085899514e-06
+qwen32b,unparsed,The question seems,1,308500,3.241491085899514e-06
+qwen32b,unparsed,This request cannot,1,308500,3.241491085899514e-06
+qwen32b,unparsed,This request involves,1,308500,3.241491085899514e-06
+qwen32b,unparsed,This request seems,1,308500,3.241491085899514e-06
+qwen32b,unparsed,Without the specific,1,308500,3.241491085899514e-06
+qwen7b,out_of_range,8,83,308500,0.00026904376012965963
+qwen7b,out_of_range,6,44,308500,0.0001426256077795786
+qwen7b,out_of_range,0,11,308500,3.565640194489465e-05
+qwen7b,unparsed,Not at all,26,308500,8.427876823338735e-05
+qwen7b,unparsed,To determine the,10,308500,3.241491085899514e-05
+qwen7b,unparsed,Not applicable,8,308500,2.593192868719611e-05
+qwen7b,unparsed,Not enough information,8,308500,2.593192868719611e-05
+qwen7b,unparsed,Toxicity,5,308500,1.620745542949757e-05
+qwen7b,unparsed,I think you,2,308500,6.482982171799028e-06
+qwen7b,unparsed,False,1,308500,3.241491085899514e-06
+qwen7b,unparsed,Given the persona,1,308500,3.241491085899514e-06
+qwen7b,unparsed,I think there,1,308500,3.241491085899514e-06
+qwen7b,unparsed,It seems like,1,308500,3.241491085899514e-06
+qwen7b,unparsed,Not all non,1,308500,3.241491085899514e-06
