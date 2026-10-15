@@ -269,7 +269,7 @@ A brief overview of the dataset characteristics is provided in Table \ref{tab:da
 \begin{figure}[t]
 	\centering
 	\includegraphics[width=\linewidth]{metric_comparison.png}
-	\caption{Polarization group attribution on synthetic distributions. Bars indicate standard error. We assign a number of annotators per item, and split the annotator groups 50-50 or 80-20. Higher $\delta$ represents higher polarization. Apunim is adept at attributing systematic disagreements to the correct group regardless of number of annotators per item, or how these annotators are split. Dashed lines show the results of a simplified experimental setup, where disagreement always has the same direction.}
+	\caption{Systematic disagreement group-attribution on synthetic distributions. Bars indicate standard error. Higher $\delta$ represents higher inter-group mean rating deviation. Apunim is adept at attributing systematic disagreements to the correct group regardless of number of annotators per item, or how these annotators are split. Dashed lines show the results of a simplified experimental setup, where disagreement always has the same direction.}
 	\label{fig:metrics}
 \end{figure}
 
@@ -299,7 +299,7 @@ We find that the \ac{au} method completely fails to attribute polarization to an
 \end{finding}
 
 
-\subsection{Conflicting Disagreement Directions}
+\subsection{Reason 1: Inter-Item Annotation Aggregation}
 
 \begin{figure}[ht]
 	\centering
@@ -320,7 +320,7 @@ We can confirm the persistence of this issue using \ac{ndfu} \citep{pavlopoulos-
 \end{finding}
 
 
-\subsection{Inherent Polarization}
+\subsection{Reason 2: Unattributable Polarization}
 
 \begin{figure}[t]
 	\centering
@@ -361,9 +361,22 @@ Opposing disagreement may explain the failure of statistical methods, but not th
 \label{sec:apunim}
 
 \subsection{Quantifying Attribution to Annotator Groups}
-Instead of using \ac{ip}, which represents the minimum possible systematic disagreement exhibited by any group, we calculate the \emph{expected} (average). Therefore, we do not test whether the group is polarized against the whole; nor whether the group explains \emph{some polarization} (as would be the case if we used Eq.~\ref{eq:inherent}), but rather whether the group explains polarization \emph{more than other groups}. 
 
-Specifically, we define apriori polarization for an item $c$ as $\mathrm{Pol}_{apr}(c) = \mathbb{E}_{S \sim G_c} \left[ \mathrm{nDFU}(S) \right]$, which is averaged across items for a dataset $D$. Intuitively, a high $\mathrm{Pol}_{apr}(c)$ score means that much of the polarization is likely not driven by any single group. We compare this quantity with the average observed \ac{ndfu} of all items, which yields our normalized metric, \emph{apunim} (Eq.~\ref{eq:apunim}). We explain why defining $\mathrm{Pol}_{apr}(c)$ in this way is preferable to alternatives in App.~\ref{app:design}. The \emph{sign} of apunim carries information agreement-based attribution does not:
+In order to design a metric that bypasses the issues outlined in \S\ref{sec:methods}, we construct a quantifiable value following two required properties:
+\begin{enumerate*}
+	\item All statistics are computed on the item level (Finding~\ref{finding:conflicting}).
+	\item The item-level statistics are aggregated presupposing the existence of \ac{ip} (Finding~\ref{finding:inherent}).
+\end{enumerate*}
+We estimate polarization using \ac{ndfu} (see \S\ref{sec:related}; Eq.~\ref{eq:apunim}). Specifically, we measure the unimodality of each group $g$ for an item $c$, which we call $Pol_g(c)$ and compare it to he \emph{expected} (average) unimodality of all theoretical groups  $\mathrm{Pol}_{apr}(c) = \mathbb{E}_{S \sim G_c} \left[ \mathrm{nDFU}(S) \right]$.\footnote{Instead of using \ac{ip}, which represents the minimum possible systematic disagreement exhibited by any group, we calculate the average so that we do not test whether the group is polarized against the whole; nor whether the group explains \emph{some polarization} (as would be the case if we used Eq.~\ref{eq:inherent}), but rather whether the group explains polarization \emph{more than other groups}.}  Intuitively, a high $\mathrm{Pol}_{apr}(c)$ score means that much of the polarization is likely not driven by any single group. 
+
+Since the  $\mathrm{Pol}_{apr}(c)$ and $Pol_g(c)$ quantities represent very noisy estimates due to the lack of annotators per item, a direct comparison would not be reliable. We therefore exploit the Law of Large Numbers to compute the statistic on the dataset level and average both quantities for all items in the dataset. Normalizing this difference yields the metric described in Eq.~\ref{eq:ndfu}, which we call \emph{apunim}.
+
+\begin{equation}
+	\label{eq:apunim}
+	apunim(D, g) = \frac{\mathbb{E}_{c \in D} \left[ \mathrm{Pol}_{apr}(c) \right] - \mathbb{E}_{c \in D} \left[ Pol_g(c)\right] }{1 - \mathbb{E}_{c \in D} \left[ \mathrm{Pol}_{apr}(c) \right]}
+\end{equation}
+
+The \emph{sign} of apunim carries information agreement-based attribution does not:
 
 \begin{itemize}
 	\item$apunim(g) \approx 0$: The group $g$ does not meaningfully disagree with the other annotators.
@@ -371,13 +384,7 @@ Specifically, we define apriori polarization for an item $c$ as $\mathrm{Pol}_{a
 	\item $apunim(g) < 0$: The annotators of group $g$ are polarized between themselves.
 \end{itemize}
 
-\begin{equation}
-	\label{eq:apunim}
-	apunim(D, g) = \frac{\mathbb{E}_{c \in D} \left[ \mathrm{Pol}_{apr}(c) \right] - \mathbb{E}_{c \in D} \left[ Pol_g(c)\right] }{1 - \mathbb{E}_{c \in D} \left[ \mathrm{Pol}_{apr}(c) \right]}
-\end{equation}
-\noindent where $Pol_g$ is the observed \ac{ndfu} in the annotations of an item $c$ created by annotators belonging to group $g$.
-
-Apunim thus measures the degree to which an annotator group contributes to overall polarization in a set of items. As demonstrated in \S\ref{sec:methods}; Fig.~\ref{fig:metrics}, our metric is robust to the number of annotators per item, opposing systematic disagreement effects, and minority groups, validating our initial motivation. Furthermore, unlike some prior methods \citep{akhtar_2019, checco_2017}, apunim allows us to attribute systematic disagreement to a specific group, not a \ac{pc} dimension, allowing fine-grained analysis. We include a perturbation-based p-value estimation, which tests whether the observed apunim value of a group $g$ statistically surpasses that of random groups in App.~\ref{app:pvalue} and analyze theoretical design decisions, limitations and computational details in App.~\ref{app:design}.
+Apunim thus measures the degree to which an annotator group contributes to overall polarization in a set of items. As demonstrated in \S\ref{sec:methods}; Fig.~\ref{fig:metrics}, our metric is robust to the number of annotators per item, opposing systematic disagreement effects, and minority groups, validating our initial motivation. Furthermore, unlike some prior methods \citep{akhtar_2019, checco_2017}, apunim allows us to attribute systematic disagreement to a specific group, not just a \ac{pc} dimension (e.g., only ``men'' instead of ``gender'' as a whole), allowing fine-grained analysis. We include a perturbation-based p-value estimation, which tests whether the observed apunim value of a group $g$ statistically surpasses that of random groups in App.~\ref{app:pvalue} and analyze theoretical design decisions, limitations and computational details in App.~\ref{app:design}.
 
 
 \subsection{How Are Humans Polarized?}
@@ -449,18 +456,11 @@ Apunim thus measures the degree to which an annotator group contributes to overa
 	\end{minipage}
 \end{table}
 
-\begin{figure}[t]
-	\centering
-	\includegraphics[width=\linewidth]{apunim_subsampling_robustness.png}
-	\caption{\ac{sd} of $apunim$ across items, averaged across $10$ runs, where each item is resampled $100$ times. Shaded areas represent two \acp{sd}. Non-statistically significant results from Table~\ref{tab:apunim-main} remain systematically close to zero, while statistically significant results can be distinguished from very small annotator counts (six annotators for well-balanced groups, $\approx 20$ for poorly split groups such as non-binary annotators in DICES-990).}
-	\label{fig:std_error}
-\end{figure}
-
 \paragraph{Experimental Setup} Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \ac{pc} dimensions can explain the systematic disagreements shown in the four datasets (\S\ref{sec:datasets}). Statistically significant results are presented in Table~\ref{tab:apunim-main}.\footnote{The results are not necessarily contingent on a reliable p-value estimation, as non-statistically significant results have very low ($<0.01$) apunim values. A threshold on the apunim values would produce similar tables.} Note that the lack of rich annotation data prevents us from analyzing how different annotator groups interact and thus our analysis is necessarily uni-dimensional. See App.~\ref{app:software} for details on other parameters and execution times, App.~\ref{app:full} for the full results.
 
 \paragraph{Results} \emph{Systematic disagreements are consistently attributed to \textbf{ethnicity}} across all datasets excluding DICES-330, confirming prior work suggesting that it is a systematic source of annotator disagreement in \ac{hs} tasks~\citep{goyal2022your}.\footnote{Note that \acp{aa} show differently signed apunim values in the two DICES datasets, which may be attributed to these datasets using different labels (see \S\ref{sec:datasets}) and because different ethnic group splits are considered in each dataset. Thus, while detection is constant across the two datasets, attribution is not.} Additionally, in both DICES-990, Sap and POPQUORN, \emph{\textbf{men} are a consistent source of systematic disagreement} (positive values), while in the two former datasets  \textbf{women} disagree among themselves (positive values), which is consistent with previous findings~\citep{wojatzki2018women, binns2017like}. None of the Kumar dimensions show statistically significant values, but this is expected, as our methodology requires at least six annotators per item to work reliably. 
 
-\paragraph{Robustness} \textbf{To Annotator Size:} We run an ablation experiment for datasets with more than six annotators per item (excluding Kumar and Sap), where we systematically subsample them with replacement. Fig.~\ref{fig:std_error} shows that our results are \emph{robust to small annotator counts}, corroborating the synthetic experiments in Fig.~\ref{fig:metrics}.  \footnote{Sampling annotators with replacement also uncovers a new group which systematically disagrees with the others; the Non-Binary annotators in the POPQUORN and DICES-990 datasets. This group was undetectable when partitioning annotator groups with the methodology described in Eq.~\ref{eq:apunim} since only one item is annotated by three \emph{Non-Binary} annotators in POPQUORN and none for DICES-990, but sampling with replacement uncovers a very strong attribution. It is unclear whether this is a methodological artifact, or a new finding unexplored in prior analysis concerning these datasets.} \textbf{To Annotator Group Splits:} Given that we have subsampled the Kumar dataset for computational reasons (\S\ref{sec:datasets}), we confirm our results across different sample sizes and sample selection in App.~\ref{app:ablation}. \textbf{As Compared to Prior Methods:} Our results are similar to those produced by \ac{iaa}, as was shown in Table~\ref{tab:real-data-methods}, although unlike apunim, the latter could not attribute \emph{any} disagreement to the POPQUORN dataset.
+\paragraph{Robustness} \textbf{To Annotator Size:} We run an ablation experiment for datasets with more than six annotators per item (excluding Kumar and Sap), where we systematically subsample them with replacement. App.~\ref{app:ablation}; Fig.~\ref{fig:std_error} shows that our results are \emph{robust to small annotator counts}, corroborating the synthetic experiments in Fig.~\ref{fig:metrics}.  \textbf{To Annotator Group Splits:} Given that we have subsampled the Kumar dataset for computational reasons (\S\ref{sec:datasets}), we confirm our results across different sample sizes and sample selection in App.~\ref{app:ablation}. \textbf{As Compared to Prior Methods:} Our results are similar to those produced by \ac{iaa}, as was shown in Table~\ref{tab:real-data-methods}, although unlike apunim, the latter could not attribute \emph{any} disagreement to the POPQUORN dataset.
 
 \begin{finding}
 	\label{finding:human}
@@ -476,9 +476,9 @@ Apunim thus measures the degree to which an annotator group contributes to overa
  \input{generated/llm-apunim-significance_excluding.tex}
  
  \begin{figure}
- 	\includegraphics[width=\linewidth]{inherent-polarization-subsampled-n6-histogram.png}
- 	\caption{Normalized histograms showing the \ac{ip} exhibited by each model when truncating annotation to six annotations, compared to human annotations for each dataset. Some LLMs fail to show any \ac{ip}, while the rest show far less than humans. Note that the graph does not include zero \ac{ip}, and the y-axis is truncated to $[0, 0.3]$.}
- 	\label{fig:inherent-llms}
+	\includegraphics[width=\linewidth]{inherent-polarization-subsampled-n6-histogram.png}
+	\caption{Normalized histograms showing the \ac{ip} exhibited by each model when truncating annotation to six annotations, compared to human annotations for each dataset. Some LLMs fail to show any \ac{ip}, while the rest show far less than humans. Note that the graph does not include zero \ac{ip}, and the y-axis is truncated to $[0, 0.3]$.}
+	\label{fig:inherent-llms}
  \end{figure}
 
 \paragraph{Experimental Procedure} We investigate nine open-source LLMs (three not shown in main results because of prompt sensitivity issues) using twenty annotators for the Kumar, Sap and POPQUORN datasets supplied with personas sampled from our human dataset.\footnote{While LLM annotation can be scaled to be arbitrarily large, the choice of twenty annotators is a compromise between practical computation costs and enough annotation density to facilitate exploration. Results including the unreliable models can be found in App.~\ref{app:full}; Tables~\ref{tab:cohens-d},\ref{tab:llm-consistency-cross-model}.} We also do not annotate the DICES datasets since the LLM annotations are wildly inconsistent (App.~\ref{app:llms}; Table~\ref{tab:llm-consistency-variants}), an issue we can not fix as their original annotation guidelines are not public (Table~\ref{tab:datasets}). Four adversarial prompts are used, emphasizing the importance of the LLMs' personas in different ways (App.~\ref{app:prompts}). 
@@ -980,6 +980,15 @@ We examine \ac{ndfu} scores for three specific textual examples presented in Fig
 \paragraph{How Does Sample Selection Influence Apunim?}
 Astute readers may notice that some variability does exist across differently sized samples for the same examined groups, where for example the sign of the apunim value may switch. We note that the statistically significant values (bold rows) change signs only when the apunim value approaches zero in the largest samples. Thus, the results are not inverted, but rather pushed towards zero. In order to verify that this variability is caused by the sample size, and not by different samples being drawn, we execute a further ablation study. Specifically, we execute the apunim study on the $3000$-sized sample of the dataset, using different subsets of the Kumar dataset. The results can be found in Fig.~\ref{fig:seeds}, where we note that variability is not an issue, except for a couple of cases. These cases seem to represent sparse annotator groups, where missing a few items may genuinely change the value of the apunim metric. These groups however are largely not detected by apunim as significant either way (see Table~\ref{tab:apunim-main}).
 
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=\linewidth]{apunim_subsampling_robustness.png}
+	\caption{\ac{sd} of $apunim$ across items, averaged across $10$ runs, where each item is resampled $100$ times. Shaded areas represent two \acp{sd}.}
+	\label{fig:std_error}
+\end{figure}
+
+\paragraph{How Many Annotators Does Apunim Need?} Fig.~\ref{fig:std_error} sows that non-statistically significant results from Table~\ref{tab:apunim-main} remain systematically close to zero, while statistically significant results can be distinguished from very small annotator counts (six annotators for well-balanced groups, $\approx 20$ for poorly split groups such as non-binary annotators in DICES-990). Sampling annotators with replacement also uncovers a new group which systematically disagrees with the others; the Non-Binary annotators in the POPQUORN and DICES-990 datasets. This group was undetectable when partitioning annotator groups with the methodology described in Eq.~\ref{eq:apunim} since only one item is annotated by three \emph{Non-Binary} annotators in POPQUORN and none for DICES-990, but sampling with replacement uncovers a very strong attribution. It is unclear whether this is a methodological artifact, or a new finding unexplored in prior analysis concerning these datasets.
 
 \section{LLM Annotation Procedure}
 \label{app:llms}
