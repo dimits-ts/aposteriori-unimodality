@@ -42,10 +42,11 @@ The following are produced:
    without the models in EXCLUDED_MODELS (files with an "_excluding"
    suffix).
 
-5. For each dataset, a LaTeX table of which PC dimensions each model finds
-   statistically significant under each prompt, next to the human findings
-   (llm-apunim-significance-<dataset>.tex; also without the models in
-   EXCLUDED_MODELS, with an "_excluding" suffix).
+5. A single LaTeX table, over all datasets, of which PC dimensions (SDB
+   features such as age or gender; a dimension counts as significant if any
+   of its groups is) each model finds statistically significant under each
+   prompt, compared with the human findings (llm-apunim-significance.tex; also
+   without the models in EXCLUDED_MODELS, with an "_excluding" suffix).
 
 6. A CSV of the non-standard answers in the raw LLM annotation files
    (nonstandard_answers_by_model.csv), and an abbreviated LaTeX summary
@@ -103,6 +104,11 @@ INHERENT_HIST_PROMPT_NAMES = shared.MAIN_PROMPT_NAMES
 
 # Models left out of the "excluding" variants of the tables/plots.
 EXCLUDED_MODELS = ["llama8b", "qwen7b", "olmo7b"]
+
+# Width (em) of one prompt slot in the significance table, i.e. the cell
+# size. The all-models version has more columns, so its cells are narrower.
+SIGNIFICANCE_SLOT_WIDTH_ALL_MODELS_EM = 0.9
+SIGNIFICANCE_SLOT_WIDTH_EXCLUDING_EM = stats.DEFAULT_SLOT_WIDTH_EM
 
 # Valid annotation values per dataset key.
 VALID_ANNOTATION_VALUES = {
@@ -790,60 +796,33 @@ def run_apunim_prompt_table_step(
         )
 
 
-def _export_apunim_significance_variant(
-    human_datasets,
-    human_df,
-    llm_df,
-    latex_output_dir,
-    key,
-    file_suffix,
-    label_suffix,
-    note,
-    models,
-):
-    variant_df = _drop_models(llm_df, models)
-    if variant_df.empty:
-        return
-    stats.export_apunim_significance_table(
-        stats.build_apunim_significance_table(
-            human_df, variant_df, prompt_names=shared.MAIN_PROMPT_NAMES
-        ),
-        output_path=latex_output_dir
-        / f"llm-apunim-significance-{key}{file_suffix}.tex",
-        dataset_name=human_datasets[key].get_name(),
-        label=f"tab:llm-apunim-significance-{key}{label_suffix}",
-        note=note,
-    )
+def _collect_apunim_significance_inputs(
+    human_datasets, annotations_dir, cache_dir, human_results_dir
+) -> dict[str, tuple[pd.DataFrame, pd.DataFrame]]:
+    """dataset key -> (human apunim results, LLM apunim results), for every
+    comparison dataset that has human results."""
+    inputs = {}
+    # ignore kumar since no human results can be significant
+    for key in [k for k in _comparison_keys(human_datasets) if k != "kumar"]:
+        human_df = stats.load_human_apunim_results(human_results_dir, key)
+        if human_df is None:
+            continue
+        llm_df = _load_or_compute_apunim(annotations_dir, cache_dir, key)
+        inputs[key] = (human_df, llm_df)
+    return inputs
 
 
-def _run_apunim_significance_for_dataset(
-    human_datasets,
-    annotations_dir,
-    latex_output_dir,
-    cache_dir,
-    human_results_dir,
-    exclude_models,
-    key,
-):
-    human_df = stats.load_human_apunim_results(human_results_dir, key)
-    if human_df is None:
-        return
-
-    llm_df = _load_or_compute_apunim(annotations_dir, cache_dir, key)
-    for file_suffix, label_suffix, note, models in _model_variants(
-        exclude_models
-    ):
-        _export_apunim_significance_variant(
-            human_datasets,
-            human_df,
-            llm_df,
-            latex_output_dir,
-            key,
-            file_suffix,
-            label_suffix,
-            note,
-            models,
-        )
+def _significance_inputs_by_name(
+    human_datasets, inputs, models
+) -> dict[str, tuple[pd.DataFrame, pd.DataFrame]]:
+    """`inputs` keyed by dataset display name and without the given models;
+    datasets left without LLM results are dropped."""
+    by_name = {}
+    for key, (human_df, llm_df) in inputs.items():
+        variant_df = _drop_models(llm_df, models)
+        if not variant_df.empty:
+            by_name[human_datasets[key].get_name()] = (human_df, variant_df)
+    return by_name
 
 
 def run_apunim_significance_step(
@@ -855,18 +834,34 @@ def run_apunim_significance_step(
     exclude_models,
 ):
     """
-    Per dataset: which PC dimensions each model finds statistically
-    significant under each prompt, compared with the human results.
+    One table over all datasets: which PC dimensions (SDB features, e.g.
+    age) each model finds statistically significant under each prompt,
+    compared with the human results.
     """
-    for key in _comparison_keys(human_datasets):
-        _run_apunim_significance_for_dataset(
-            human_datasets,
-            annotations_dir,
-            latex_output_dir,
-            cache_dir,
-            human_results_dir,
-            exclude_models,
-            key,
+    inputs = _collect_apunim_significance_inputs(
+        human_datasets, annotations_dir, cache_dir, human_results_dir
+    )
+    for file_suffix, label_suffix, note, models in _model_variants(
+        exclude_models
+    ):
+        by_name = _significance_inputs_by_name(human_datasets, inputs, models)
+        if not by_name:
+            continue
+        slot_width_em = (
+            SIGNIFICANCE_SLOT_WIDTH_EXCLUDING_EM
+            if models
+            else SIGNIFICANCE_SLOT_WIDTH_ALL_MODELS_EM
+        )
+        stats.export_apunim_significance_table(
+            stats.build_apunim_significance_table(
+                by_name,
+                prompt_names=shared.MAIN_PROMPT_NAMES,
+                slot_width_em=slot_width_em,
+            ),
+            output_path=latex_output_dir
+            / f"llm-apunim-significance{file_suffix}.tex",
+            label=f"tab:llm-apunim-significance{label_suffix}",
+            note=note,
         )
 
 

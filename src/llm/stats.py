@@ -13,7 +13,6 @@ from statsmodels.stats.multitest import multipletests
 
 from ..lib import run_helper
 from ..lib.util import (
-    SIGNIFICANCE_LEGEND,
     center_table_latex,
     small_table_latex,
     trim_numeric_col_latex,
@@ -418,7 +417,7 @@ def export_llm_apunim_prompt_table(
         caption=(
             "Aposteriori unimodality results for the LLM annotations of "
             f"the {dataset_name} dataset, across instruction prompts. "
-            f"{SIGNIFICANCE_LEGEND}"
+            r"$^{*}p<0.05$, $^{**}p<0.01$, $^{***}p<0.001$."
         ),
         label=label,
         escape=False,
@@ -441,13 +440,17 @@ def export_llm_apunim_prompt_table(
 # dimension counts as significant when its reported p-value is below this.
 SIGNIFICANCE_ALPHA = 0.05
 
-# Symbols (LaTeX math) used in the cells of the significance table. The
-# legend is written into the table caption.
-_SYM_BOTH = r"\bullet"  # significant for the human and the LLM annotations
-_SYM_LLM_ONLY = r"\dagger"  # significant for the LLM annotations only
-_SYM_HUMAN_ONLY = r"\times"  # significant for the human annotations only
-_SYM_NEITHER = r"\cdot"  # significant for neither
-_SYM_MISSING = r"-"  # no LLM result for this dimension
+# Symbols of the significance table (LaTeX; \sigyes and \signo are macros
+# defined in the paper preamble). The legend is written into the caption.
+_SYM_AGREE = r"\sigyes"  # agree on significance (and on sign, if significant)
+_SYM_DISAGREE = r"\signo"  # significant for only one of the two
+_SYM_SIGN_DIFFERS = r"$\pm$"  # both significant, but the sign differs
+
+# Each prompt gets a fixed-width slot (in em), so that the symbols of
+# different rows line up and a prompt without LLM results is simply blank.
+# It can be set per table (`slot_width_em`); the symbols are roughly an em
+# wide, so much narrower slots make them touch.
+DEFAULT_SLOT_WIDTH_EM = 1.2
 
 
 def load_human_apunim_results(
@@ -475,88 +478,236 @@ def load_human_apunim_results(
     return df[["SDB Feature", "Value", "apunim", "pvalue"]]
 
 
-def _significance_map(
+def _dimension_significance(df: pd.DataFrame, alpha: float) -> dict[str, bool]:
+    """
+    PC dimension (SDB feature, e.g. age) -> significant?
+
+    apunim reports one p-value per group (feature value). A dimension counts
+    as significant if at least one of its groups has a p-value below
+    `alpha`. Dimensions without any p-value are left out.
+    """
+    p_values = pd.to_numeric(df["pvalue"], errors="coerce")
+    features = df["SDB Feature"].astype(str)
+    significant = (p_values < alpha).groupby(features).any()
+    has_p_value = p_values.notna().groupby(features).any()
+    return {
+        feature: bool(significant[feature])
+        for feature in has_p_value.index[has_p_value]
+    }
+
+
+def _significant_group_signs(
     df: pd.DataFrame, alpha: float
-) -> dict[tuple[str, str], bool]:
+) -> dict[tuple[str, str], int]:
     """
-    (SDB feature, value) -> significant? Rows without a p-value are left out.
+    (SDB feature, value) -> sign (+1 or -1) of the group's apunim value, for
+    the groups that are significant (p below `alpha`) and have a non-zero
+    value. Other groups are left out: the sign of a non-significant value
+    is noise.
     """
-    out = {}
-    for feature, value, p in zip(
-        df["SDB Feature"].astype(str), df["Value"].astype(str), df["pvalue"]
-    ):
-        if not pd.isna(p):
-            out[(feature, value)] = bool(p < alpha)
-    return out
+    p_values = pd.to_numeric(df["pvalue"], errors="coerce")
+    apunim = pd.to_numeric(df["apunim"], errors="coerce")
+    keep = (p_values < alpha) & apunim.notna() & (apunim != 0)
+    groups = zip(
+        df.loc[keep, "SDB Feature"].astype(str),
+        df.loc[keep, "Value"].astype(str),
+    )
+    return {g: int(np.sign(a)) for g, a in zip(groups, apunim[keep])}
 
 
-def _human_cell(human_sig: bool | None) -> str:
-    if human_sig is None:
-        return "---"
-    return f"${_SYM_BOTH if human_sig else _SYM_NEITHER}$"
+def _sign_disagreement_dimensions(
+    human_signs: dict[tuple[str, str], int],
+    llm_signs: dict[tuple[str, str], int],
+) -> set[str]:
+    """PC dimensions with a group that is significant for both the human and
+    the LLM results but with opposite signs."""
+    return {
+        feature
+        for (feature, value), sign in llm_signs.items()
+        if human_signs.get((feature, value), sign) != sign
+    }
 
 
-def _llm_cell(llm_sigs: list[bool | None], human_sig: bool | None) -> str:
-    """One symbol per prompt (in prompt order), joined into one math cell."""
-    symbols = []
-    for llm_sig in llm_sigs:
-        if llm_sig is None:
-            symbols.append(_SYM_MISSING)
-        elif llm_sig:
-            symbols.append(_SYM_BOTH if human_sig else _SYM_LLM_ONLY)
-        else:
-            symbols.append(_SYM_HUMAN_ONLY if human_sig else _SYM_NEITHER)
-    return "$" + r"\,".join("{" + s + "}" for s in symbols) + "$"
+def _slot(symbol: str, width_em: float) -> str:
+    return rf"\makebox[{width_em:g}em][c]{{{symbol}}}"
+
+
+def _comparison_symbol(
+    llm_significant: bool, human_significant: bool, sign_differs: bool
+) -> str:
+    """
+    How the LLM result for a dimension compares with the human one:
+    agreement (both significant, or neither), disagreement on significance,
+    or both significant but with a different sign for some group.
+    """
+    if llm_significant != human_significant:
+        return _SYM_DISAGREE
+    if llm_significant and sign_differs:
+        return _SYM_SIGN_DIFFERS
+    return _SYM_AGREE
+
+
+def _llm_cell(
+    llm_results: list[bool | None],
+    human_significant: bool | None,
+    sign_differs: list[bool],
+    slot_width_em: float = DEFAULT_SLOT_WIDTH_EM,
+) -> str:
+    """
+    One slot per prompt (in prompt order); a prompt without an LLM result is
+    a blank slot, and a model without any result gives an empty cell. A
+    dimension missing from the human results counts as not significant.
+    `sign_differs` says, per prompt, whether some group's sign differs from
+    the human one; `slot_width_em` is the width of each prompt slot.
+    """
+    if all(llm is None for llm in llm_results):
+        return ""
+    return "".join(
+        _slot(
+            (
+                ""
+                if llm is None
+                else _comparison_symbol(llm, bool(human_significant), differs)
+            ),
+            slot_width_em,
+        )
+        for llm, differs in zip(llm_results, sign_differs)
+    )
+
+
+def _llm_pair_results(
+    llm_df: pd.DataFrame,
+    models: list[str],
+    prompts: list[str],
+    alpha: float,
+    human_signs: dict[tuple[str, str], int],
+) -> dict[tuple[str, str], tuple[dict[str, bool], set[str]]]:
+    """(model, prompt) -> (dimension significance, dimensions whose sign
+    differs from the human one for some group significant in both)."""
+    results = {}
+    for m in models:
+        for p in prompts:
+            pair_df = llm_df.loc[
+                (llm_df["Model"] == m) & (llm_df["Prompt"] == p)
+            ]
+            differs = _sign_disagreement_dimensions(
+                human_signs, _significant_group_signs(pair_df, alpha)
+            )
+            results[(m, p)] = (
+                _dimension_significance(pair_df, alpha),
+                differs,
+            )
+    return results
+
+
+def _report_unmatched(
+    dataset_name: str,
+    human_dims: set[str],
+    llm_dims: set[str],
+    human_df: pd.DataFrame,
+    llm_df: pd.DataFrame,
+) -> None:
+    """Prints label mismatches between the human and the LLM results: whole
+    PC dimensions, and groups of the dimensions both have (the sign
+    comparison cannot use groups without a counterpart)."""
+    only_human, only_llm = human_dims - llm_dims, llm_dims - human_dims
+    if only_human or only_llm:
+        print(
+            f"{dataset_name}: {len(only_human)} PC dimensions only in the "
+            f"human results and {len(only_llm)} only in the LLM results; if "
+            "these should match, check that the feature labels agree."
+        )
+
+    def groups(df):
+        return set(zip(df["SDB Feature"].astype(str), df["Value"].astype(str)))
+
+    shared_dims = human_dims & llm_dims
+    unmatched = {
+        g for g in groups(llm_df) - groups(human_df) if g[0] in shared_dims
+    }
+    if unmatched:
+        print(
+            f"{dataset_name}: {len(unmatched)} LLM groups have no group with "
+            "the same label in the human results; their signs cannot be "
+            "compared."
+        )
+
+
+def _dataset_significance_rows(
+    dataset_name: str,
+    human_df: pd.DataFrame,
+    llm_df: pd.DataFrame,
+    models: list[str],
+    prompts: list[str],
+    alpha: float,
+    slot_width_em: float,
+) -> list[dict]:
+    """Table rows (one per PC dimension) of one dataset."""
+    human = _dimension_significance(human_df, alpha)
+    pairs = _llm_pair_results(
+        llm_df,
+        models,
+        prompts,
+        alpha,
+        _significant_group_signs(human_df, alpha),
+    )
+
+    llm_dims = set()
+    for significance, _ in pairs.values():
+        llm_dims |= set(significance)
+    _report_unmatched(dataset_name, set(human), llm_dims, human_df, llm_df)
+
+    rows = []
+    for dim in sorted(llm_dims):
+        cells = {}
+        for m in models:
+            results = [pairs[(m, p)][0].get(dim) for p in prompts]
+            differs = [dim in pairs[(m, p)][1] for p in prompts]
+            cells[m] = _llm_cell(
+                results, human.get(dim), differs, slot_width_em
+            )
+        rows.append({"Dataset": dataset_name, "SDB Feature": dim, **cells})
+    return rows
 
 
 def build_apunim_significance_table(
-    human_df: pd.DataFrame,
-    llm_df: pd.DataFrame,
+    inputs: dict[str, tuple[pd.DataFrame, pd.DataFrame]],
     prompt_names: list[str] = MAIN_PROMPT_NAMES,
     alpha: float = SIGNIFICANCE_ALPHA,
+    slot_width_em: float = DEFAULT_SLOT_WIDTH_EM,
 ) -> pd.DataFrame:
     """
-    One row per (SDB Feature, Value) found in either the human or the LLM
-    results, with columns `Human` and one per model. A model cell holds one
-    symbol per prompt (in `prompt_names` order) saying whether the model
-    found the dimension significant and how that compares with the human
-    result. The prompts used are stored in `.attrs["prompts"]`.
-    """
-    human_sig = _significance_map(human_df, alpha)
-    models = _order_models(set(llm_df["Model"]))
-    prompts = [p for p in prompt_names if p in set(llm_df["Prompt"])]
-    llm_sig = {
-        (m, p): _significance_map(
-            llm_df.loc[(llm_df["Model"] == m) & (llm_df["Prompt"] == p)], alpha
-        )
-        for m in models
-        for p in prompts
-    }
+    One row per (dataset, PC dimension) for which the LLMs have results, and
+    one column per model. `inputs` maps a dataset name to its (human, LLM)
+    apunim results.
 
-    llm_dims = set()
-    for sig in llm_sig.values():
-        llm_dims |= set(sig)
-    only_human, only_llm = set(human_sig) - llm_dims, llm_dims - set(human_sig)
-    if only_human or only_llm:
-        print(
-            f"{len(only_human)} PC dimensions only in the human results and "
-            f"{len(only_llm)} only in the LLM results; if these should match, "
-            "check that the feature/value labels agree."
-        )
+    A model cell holds one symbol per prompt (in `prompt_names` order)
+    saying how the model's result for the dimension compares with the human
+    one (see _comparison_symbol); a prompt without results is blank.
+    `slot_width_em` sets the width of each prompt slot, i.e. the cell size.
+    The prompts used are stored in `.attrs["prompts"]`.
+    """
+    llm_dfs = [llm_df for _, llm_df in inputs.values()]
+    models = _order_models({m for df in llm_dfs for m in df["Model"]})
+    prompts = [
+        p
+        for p in prompt_names
+        if any(p in set(df["Prompt"]) for df in llm_dfs)
+    ]
 
     rows = []
-    for dim in sorted(set(human_sig) | llm_dims):
-        human = human_sig.get(dim)
-        row = {
-            "SDB Feature": dim[0],
-            "Value": dim[1],
-            "Human": _human_cell(human),
-        }
-        for m in models:
-            sigs = [llm_sig[(m, p)].get(dim) for p in prompts]
-            row[m] = _llm_cell(sigs, human)
-        rows.append(row)
-
+    for dataset_name, (human_df, llm_df) in inputs.items():
+        rows.extend(
+            _dataset_significance_rows(
+                dataset_name,
+                human_df,
+                llm_df,
+                models,
+                prompts,
+                alpha,
+                slot_width_em,
+            )
+        )
     out = pd.DataFrame(rows)
     out.attrs["prompts"] = prompts
     return out
@@ -565,34 +716,31 @@ def build_apunim_significance_table(
 def export_apunim_significance_table(
     table_df: pd.DataFrame,
     output_path: Path,
-    dataset_name: str,
     label: str,
     alpha: float = SIGNIFICANCE_ALPHA,
     note: str = "",
 ) -> None:
     if table_df.empty:
-        print(
-            f"No apunim significance results for {dataset_name}; "
-            f"skipping {output_path}."
-        )
+        print(f"No apunim significance results; skipping {output_path}.")
         return
     prompts = table_df.attrs.get("prompts", [])
     caption = (
         rf"Statistically significant ($p<{alpha}$) \ac{{pc}} dimensions of "
-        f"the {dataset_name} dataset for the human annotations and for each "
-        "LLM. Each LLM cell shows one symbol per prompt, in the order "
+        "each LLM compared with the human annotations, per dataset. A "
+        "dimension counts as significant if at least one of its groups is. "
+        "Each cell shows one symbol per prompt, in the order "
         f"{', '.join(prompts)}: "
-        rf"${_SYM_BOTH}$~significant for both human and LLM annotations, "
-        rf"${_SYM_LLM_ONLY}$~significant for the LLM only, "
-        rf"${_SYM_HUMAN_ONLY}$~significant for the human annotations only, "
-        rf"${_SYM_NEITHER}$~significant for neither, "
-        rf"${_SYM_MISSING}$~no LLM result. The human column shows "
-        rf"${_SYM_BOTH}$~significant and ${_SYM_NEITHER}$~not significant."
-        + note
+        rf"{_SYM_AGREE}~the LLM and the human annotations agree (both "
+        "significant, with the same sign for every group that is "
+        "significant in both, or neither significant), "
+        rf"{_SYM_DISAGREE}~they disagree on significance (significant for "
+        f"only one of the two), {_SYM_SIGN_DIFFERS}~both are significant "
+        "but the sign of at least one group's effect differs; blank: no "
+        "LLM result." + note
     )
 
     df = table_df.rename(columns={"SDB Feature": r"\ac{pc}"})
-    df = df.replace("_", r"\_", regex=True).set_index([r"\ac{pc}", "Value"])
+    df = df.replace("_", r"\_", regex=True).set_index(["Dataset", r"\ac{pc}"])
     latex_str = df.to_latex(
         caption=caption,
         label=label,

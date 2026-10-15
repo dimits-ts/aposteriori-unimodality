@@ -473,6 +473,7 @@ Apunim thus measures the degree to which an annotator group contributes to overa
  
  \input{generated/mean_ndfu_default_vs_human_excluding.tex}
  \input{generated/cohens_d_excluding.tex}
+ \input{generated/llm-apunim-significance_excluding.tex}
  
  \begin{figure}
  	\includegraphics[width=\linewidth]{inherent-polarization-subsampled-n6-histogram.png}
@@ -1080,9 +1081,13 @@ We examine the following conditions for selecting models and datasets for our LL
 
 \input{generated/mean_ndfu_default_vs_human.tex}
 \input{generated/cohens_d.tex}
+\begingroup
+	\scriptsize
+	\input{generated/llm-apunim-significance.tex}
+\endgroup
 
 \paragraph{LLM Annotation}
-Tables~\ref{tab:cohens-d},\ref{tab:llm-consistency-cross-model} mirror Tables~\ref{tab:cohens-d-excluding},\ref{tab:llm-consistency-cross-model-excluding} presented in \S\ref{sec:llms}, but include the LLMs which showed very poor consistency in annotation (Tab;e~\ref{tab:llm-consistency-cross-model}).
+Tables~\ref{tab:cohens-d},\ref{tab:llm-consistency-cross-model},\ref{tab:llm-apunim-significance} mirror Tables~\ref{tab:cohens-d-excluding},\ref{tab:llm-consistency-cross-model-excluding},\ref{tab:llm-apunim-significance-excluding} presented in \S\ref{sec:llms}, but include the LLMs which showed very poor consistency in annotation (Tab;e~\ref{tab:llm-consistency-cross-model}).
 
 
 \section{Prompts Used}
