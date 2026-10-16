@@ -748,7 +748,7 @@ def export_apunim_significance_table(
         position="t",
         index=True,
         multirow=True,
-        longtable=True,
+        longtable=False,
         column_format="ll" + "c" * len(df.columns),
     )
     latex_str = (
