@@ -129,7 +129,7 @@ def plot_dfu_histograms(
 
     full_df = pd.concat(all_data, ignore_index=True)
 
-    fig, ax = plt.subplots(figsize=(6, 7))
+    fig, ax = plt.subplots(figsize=(10, 4))
 
     datasets = sorted(full_df["dataset"].unique())
     legend_handles = []
@@ -140,7 +140,7 @@ def plot_dfu_histograms(
 
         sns.histplot(
             data=full_df[full_df["dataset"] == dataset],
-            x="value",
+            y="value",
             bins=bins,
             stat="density",
             common_norm=False,
@@ -167,9 +167,12 @@ def plot_dfu_histograms(
             )
         )
 
-    ax.set_xlabel("Inherent polarization")
+    ax.set_title(
+        "UnPol Frequently Exists in Datasets with Low Annotation Density"
+    )
+    ax.set_xlabel("Unattributable polarization")
     ax.set_ylabel("Density")
-    ax.set_xlim(0, 1)
+    ax.set_ylim((0, 1))
 
     ax.legend(handles=legend_handles)
 
