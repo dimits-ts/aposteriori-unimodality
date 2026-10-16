@@ -55,6 +55,7 @@ METHOD_ORDER = [
 ]
 
 LEGEND_LABEL = {
+    "apunim": "apunim (ours)",
     "Krippendorff delta-alpha": r"Krippendorff $\Delta\alpha$",
     "aposteriori unimodality (2024)": "aposteriori unim.",
     "chi-squared (Akhtar et al. 2019)": r"$\chi^2$",
