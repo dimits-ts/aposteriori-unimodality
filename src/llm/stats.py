@@ -739,8 +739,12 @@ def export_apunim_significance_table(
         "LLM result." + note
     )
 
-    df = table_df.rename(columns={"SDB Feature": r"\ac{sdd}"})
-    df = df.replace("_", r"\_", regex=True).set_index(["Dataset", r"\ac{sdd}"])
+    df = table_df
+    df.Dataset = df.Dataset.replace(
+        {"Sap et al. 2022": "Sap", "POPQUORN": "POP"}
+    )
+    df = table_df.rename(columns={"SDB Feature": r"\ac{sdd}", "Dataset": "Ds"})
+    df = df.replace("_", r"\_", regex=True).set_index(["Ds", r"\ac{sdd}"])
     latex_str = df.to_latex(
         caption=caption,
         label=label,

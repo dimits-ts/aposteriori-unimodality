@@ -356,16 +356,15 @@ def subgroup_counts_to_latex(
     """
     for ds in datasets:
         counts = pd.concat(
-            get_subgroup_counts(ds), names=["\ac{sdd} feature", "Value"]
+            get_subgroup_counts(ds), names=[r"\ac{sdd}", "Value"]
         ).to_frame("Count")
-
         latex_str = counts.to_latex(
             caption=(
                 f"Number of annotations per subgroup for the {ds.get_name()} "
                 "dataset."
             ),
             label=f"tab:subgroups-{_slug(ds.get_name())}",
-            escape=True,
+            escape=False,
             position="t",
             index=True,
             multirow=False,
