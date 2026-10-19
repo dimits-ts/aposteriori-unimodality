@@ -141,11 +141,11 @@ def export_latex_table(df: pd.DataFrame, output_path: Path) -> None:
     methods = [m for m in METHOD_ORDER if m in table.columns]
     table = table[methods].rename(columns=LEGEND_LABEL)
     table.columns.name = None
-    table.index.names = [None, r"\ac{pc}"]
+    table.index.names = [None, r"\ac{sdd}"]
 
     table.to_latex(
         caption=(
-            "Statistical significance of each \\ac{pc} feature per method. "
+            "Statistical significance of each \\ac{sdd} feature per method. "
             f"{TICK}: significant at $p<{ALPHA}$ after Bonferroni correction "
             "across the features of the dataset; "
             f"{CROSS}: not significant."
@@ -154,7 +154,7 @@ def export_latex_table(df: pd.DataFrame, output_path: Path) -> None:
         escape=False,
         multirow=True,
         column_format="ll" + "c" * len(methods),
-        output_path=output_path,
+        buf=output_path,
     )
     print(f"Table exported to {output_path.resolve()}")
 

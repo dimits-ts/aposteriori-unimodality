@@ -356,7 +356,7 @@ def subgroup_counts_to_latex(
     """
     for ds in datasets:
         counts = pd.concat(
-            get_subgroup_counts(ds), names=["SDB feature", "Value"]
+            get_subgroup_counts(ds), names=["\ac{sdd} feature", "Value"]
         ).to_frame("Count")
 
         latex_str = counts.to_latex(
@@ -393,8 +393,8 @@ def _results_to_latex(
     """
     res_df = (
         res_df.replace("_", r"\_", regex=True)
-        .rename(columns={"Unnamed: 1": "Value", "SDB Feature": r"\ac{pc}"})
-        .set_index([r"\ac{pc}", "Value"])
+        .rename(columns={"Unnamed: 1": "Value", "SDB Feature": r"\ac{sdd}"})
+        .set_index([r"\ac{sdd}", "Value"])
     )
 
     if "pvalue" in res_df.columns and "apunim" in res_df.columns:

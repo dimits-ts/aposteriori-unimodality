@@ -404,13 +404,13 @@ def export_llm_apunim_prompt_table(
             f"skipping {output_path}."
         )
         return
-    df = df.rename(columns={"SDB Feature": r"\ac{pc}"})
+    df = df.rename(columns={"SDB Feature": r"\ac{sdd}"})
 
     # The prompt columns already hold formatted "value$^{***}$" strings (see
     # _apunim_prompt_cell); they must not be passed through
     # trim_numeric_col_latex, which would turn the starred cells into "---".
     df = df.replace("_", r"\_", regex=True).set_index(
-        [r"\ac{pc}", "Value", "Model"]
+        [r"\ac{sdd}", "Value", "Model"]
     )
 
     latex_str = df.to_latex(
@@ -725,7 +725,7 @@ def export_apunim_significance_table(
         return
     prompts = table_df.attrs.get("prompts", [])
     caption = (
-        rf"Statistically significant ($p<{alpha}$) \ac{{pc}} dimensions of "
+        rf"Statistically significant ($p<{alpha}$) \acp{{sdd}} of "
         "each LLM compared with the human annotations, per dataset. A "
         "dimension counts as significant if at least one of its groups is. "
         "Each cell shows one symbol per prompt, in the order "
@@ -739,8 +739,8 @@ def export_apunim_significance_table(
         "LLM result." + note
     )
 
-    df = table_df.rename(columns={"SDB Feature": r"\ac{pc}"})
-    df = df.replace("_", r"\_", regex=True).set_index(["Dataset", r"\ac{pc}"])
+    df = table_df.rename(columns={"SDB Feature": r"\ac{sdd}"})
+    df = df.replace("_", r"\_", regex=True).set_index(["Dataset", r"\ac{sdd}"])
     latex_str = df.to_latex(
         caption=caption,
         label=label,

@@ -144,7 +144,7 @@ def export_latex_sample_size_table(
     # Pivot: rows = (dimension, subgroup), columns = sample sizes.
     combined = pd.DataFrame({n: df["apunim"] for n, df in frames.items()})
     combined.columns = [r"\textbf{" + str(n) + "}" for n in combined.columns]
-    combined.index.names = [None, r"\textbf{\ac{pc}}"]
+    combined.index.names = [None, r"\textbf{\ac{sdd}}"]
 
     latex = combined.to_latex(
         longtable=True,
