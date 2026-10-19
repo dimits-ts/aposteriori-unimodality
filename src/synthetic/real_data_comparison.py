@@ -32,7 +32,6 @@ long-format versions of the methods:
 """
 
 import argparse
-import functools
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
@@ -52,7 +51,7 @@ from ..lib.preprocessing import (
 from ..lib.util import skip_if_exists
 from .shared import ALPHA, LEGEND_LABEL, METHOD_ORDER, _alpha, _seed
 
-KUMAR_NUM_SAMPLES = 3_000
+KUMAR_NUM_SAMPLES = 1_000
 
 METHOD_APUNIM = "apunim"
 METHOD_DELTA_ALPHA = "Krippendorff delta-alpha"
@@ -69,16 +68,6 @@ COLUMNS = ["dataset", "sdb_feature", "method", "stat", "pvalue", "detected"]
 # drawn from rotated rules. Only graphicx is needed, no symbol font.
 TICK = r"\sigyes"
 CROSS = r"\signo"
-SYMBOL_DEFINITIONS = r"""% Tick and cross from rotated rules (needs graphicx).
-\providecommand{\sigstroke}[4]{\hspace{#1}\makebox[0pt]{\raisebox{#2}{%
-  \rotatebox[origin=c]{#3}{\rule[-0.5\dimexpr#4\relax]{0.18ex}{#4}}}}%
-  \hspace{-#1}}
-\DeclareRobustCommand{\sigyes}{\makebox[1.3ex][l]{\hspace{0.58ex}%
-  \sigstroke{-0.26ex}{0.26ex}{45}{0.72ex}%
-  \sigstroke{0.47ex}{0.68ex}{-33}{1.62ex}\hspace{0.85ex}}}
-\DeclareRobustCommand{\signo}{\makebox[1.3ex][c]{\raisebox{0.07ex}{%
-  \sigstroke{0ex}{0.65ex}{45}{1.5ex}\sigstroke{0ex}{0.65ex}{-45}{1.5ex}}}}
-"""
 NOT_COMPUTED = "---"
 
 
@@ -86,8 +75,8 @@ NOT_COMPUTED = "---"
 
 
 def main(
-    cache_path: Path,
-    latex_output_path: Path,
+    cache_dir: Path,
+    latex_output_dir: Path,
     dices_small_path: Path,
     dices_large_path: Path,
     sap_path: Path,
@@ -95,8 +84,9 @@ def main(
     popquorn_path: Path,
     workers: int,
 ) -> pd.DataFrame:
-    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    cache_dir.mkdir(parents=True, exist_ok=True)
 
+    cache_path = cache_dir / "real_data.csv"
     if skip_if_exists(cache_path):
         print(f"loading cached results from {cache_path}")
     else:
@@ -111,7 +101,7 @@ def main(
         )
 
     df = pd.read_csv(cache_path)
-    export_latex_table(df, latex_output_path)
+    export_latex_table(df, latex_output_dir / "real_data_comparison.tex")
 
     return df
 
@@ -153,7 +143,7 @@ def export_latex_table(df: pd.DataFrame, output_path: Path) -> None:
     table.columns.name = None
     table.index.names = [None, r"\ac{pc}"]
 
-    latex_str = table.to_latex(
+    table.to_latex(
         caption=(
             "Statistical significance of each \\ac{pc} feature per method. "
             f"{TICK}: significant at $p<{ALPHA}$ after Bonferroni correction "
@@ -164,10 +154,8 @@ def export_latex_table(df: pd.DataFrame, output_path: Path) -> None:
         escape=False,
         multirow=True,
         column_format="ll" + "c" * len(methods),
+        output_path=output_path,
     )
-
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(SYMBOL_DEFINITIONS + latex_str)
     print(f"Table exported to {output_path.resolve()}")
 
 
@@ -479,12 +467,12 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--cache-path",
+        "--cache-dir",
         required=True,
         help="Path for the output CSV cache.",
     )
     parser.add_argument(
-        "--latex-output-path",
+        "--latex-output-dir",
         required=True,
         help="Path for the output LaTeX table.",
     )
@@ -518,8 +506,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(
-        Path(args.cache_path),
-        Path(args.latex_output_path),
+        Path(args.cache_dir),
+        Path(args.latex_output_dir),
         Path(args.dices_small_path),
         Path(args.dices_large_path),
         Path(args.sap_path),

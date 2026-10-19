@@ -81,7 +81,7 @@ COL_LABEL_PAD = 6
 # The shared rcParams default (14, 6) is sized for a single row of panels;
 # a 3-row grid needs more height so titles, tick labels and margin labels
 # have room at the global font sizes set in graphs.graph_setup().
-FIGSIZE = (14, 10)
+FIGSIZE = (14, 9)
 
 # Horizontal padding (inches) the constrained layout engine leaves around
 # each axes and figure-level label.
@@ -91,8 +91,8 @@ LAYOUT_W_PAD = 0.15
 # thin gridspec track (left of the rows / above the columns) so the
 # constrained layout engine reserves space for it like any other element.
 # ARROW_TRACK is that track's size relative to one panel.
-ROW_ARROW_LABELS = ("Ideal", "Realistic")  # top -> bottom
-COL_ARROW_LABELS = ("Ideal", "Minority")  # left -> right
+ROW_ARROW_LABELS = ("Utopic", "Realistic")  # top -> bottom
+COL_ARROW_LABELS = ("Balanced", "Minority")  # left -> right
 ARROW_TRACK = 0.04
 ARROW_COLOR = "0.35"
 ARROW_LABEL_GAP = 4  # points between an arrow end and its label
@@ -515,8 +515,8 @@ def plot(rows, methods, out_path, panel_titles=None):
         "Efficacy of IAA and Other Prior Methods on "
         "Systematic Disagreement Attribution"
     )
-    fig.supylabel("Detection rate")
-    fig.supxlabel(r"Maximum group effect size $\delta$")
+    fig.supylabel("Detection rate (higher=better)")
+    fig.supxlabel("Opinion (Mean Rating) Difference Among Groups")
 
     graphs.save_plot(out_path)
 
