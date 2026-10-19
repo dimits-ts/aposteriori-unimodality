@@ -168,6 +168,12 @@ def main(
         }
     )
 
+    # apunim results for every comparison dataset, computed (or loaded from
+    # the cache) once and shared by the apunim table steps below.
+    apunim_results = load_apunim_results(
+        human_datasets, annotations_dir, cache_dir
+    )
+
     run_histogram_step(
         human_datasets, annotations_dir, graph_output_dir, prompt_name
     )
@@ -192,15 +198,13 @@ def main(
     run_repeat_consistency_step(
         human_datasets, repeat_dir, latex_output_dir, prompt_name
     )
-
     run_apunim_prompt_table_step(
-        human_datasets, annotations_dir, latex_output_dir, cache_dir=cache_dir
+        human_datasets, apunim_results, latex_output_dir
     )
     run_apunim_significance_step(
         human_datasets,
-        annotations_dir,
+        apunim_results,
         latex_output_dir,
-        cache_dir,
         human_results_dir,
         exclude_models,
     )
@@ -724,8 +728,7 @@ def _load_or_compute_apunim(
 ) -> pd.DataFrame:
     """
     apunim results for every model and prompt of one dataset, cached in
-    cache_dir/apunim_<key>.csv and shared by the apunim-by-prompt tables and
-    the significant-PC-dimension tables.
+    cache_dir/apunim_<key>.csv.
 
     The cache is checked per (model, prompt) pair -- the unit apunim is run
     on -- so annotation runs that are still in progress are handled: pairs
@@ -751,20 +754,29 @@ def _load_or_compute_apunim(
     return long_df
 
 
+def load_apunim_results(
+    human_datasets, annotations_dir: Path, cache_dir: Path
+) -> dict[str, pd.DataFrame]:
+    """dataset key -> apunim results (every model and prompt), for every
+    comparison dataset. Computed once and shared by the apunim-by-prompt
+    tables and the significant-PC-dimension tables."""
+    return {
+        key: _load_or_compute_apunim(annotations_dir, cache_dir, key)
+        for key in _comparison_keys(human_datasets)
+    }
+
+
 # ---------------------------------------------------------------------------
 # apunim tables
 # ---------------------------------------------------------------------------
 
 
 def _run_apunim_prompt_table_for_dataset(
-    human_datasets: list[str],
-    annotations_dir: Path,
+    human_datasets,
+    long_df: pd.DataFrame,
     latex_output_dir: Path,
-    cache_dir: Path,
     key: str,
 ):
-    long_df = _load_or_compute_apunim(annotations_dir, cache_dir, key)
-
     wide_df = stats.build_llm_apunim_prompt_table(
         long_df, prompt_names=shared.MAIN_PROMPT_NAMES
     )
@@ -779,35 +791,34 @@ def _run_apunim_prompt_table_for_dataset(
 
 
 def run_apunim_prompt_table_step(
-    human_datasets: list[str],
-    annotations_dir: Path,
+    human_datasets,
+    apunim_results: dict[str, pd.DataFrame],
     latex_output_dir: Path,
-    cache_dir: Path,
 ):
-    # Restricted to the datasets the adversarial prompts were run on
-    # (shared.PROMPT_COMPARISON_DATASET_KEYS).
-    for key in _comparison_keys(human_datasets):
+    # apunim_results only holds the datasets the adversarial prompts were
+    # run on (shared.PROMPT_COMPARISON_DATASET_KEYS).
+    for key, long_df in apunim_results.items():
         _run_apunim_prompt_table_for_dataset(
             human_datasets=human_datasets,
-            annotations_dir=annotations_dir,
+            long_df=long_df,
             latex_output_dir=latex_output_dir,
             key=key,
-            cache_dir=cache_dir,
         )
 
 
 def _collect_apunim_significance_inputs(
-    human_datasets, annotations_dir, cache_dir, human_results_dir
+    apunim_results: dict[str, pd.DataFrame], human_results_dir: Path
 ) -> dict[str, tuple[pd.DataFrame, pd.DataFrame]]:
     """dataset key -> (human apunim results, LLM apunim results), for every
     comparison dataset that has human results."""
     inputs = {}
-    # ignore kumar since no human results can be significant
-    for key in [k for k in _comparison_keys(human_datasets) if k != "kumar"]:
+    for key, llm_df in apunim_results.items():
+        # ignore kumar since no human results can be significant
+        if key == "kumar":
+            continue
         human_df = stats.load_human_apunim_results(human_results_dir, key)
         if human_df is None:
             continue
-        llm_df = _load_or_compute_apunim(annotations_dir, cache_dir, key)
         inputs[key] = (human_df, llm_df)
     return inputs
 
@@ -827,9 +838,8 @@ def _significance_inputs_by_name(
 
 def run_apunim_significance_step(
     human_datasets,
-    annotations_dir,
+    apunim_results: dict[str, pd.DataFrame],
     latex_output_dir,
-    cache_dir,
     human_results_dir,
     exclude_models,
 ):
@@ -839,7 +849,7 @@ def run_apunim_significance_step(
     compared with the human results.
     """
     inputs = _collect_apunim_significance_inputs(
-        human_datasets, annotations_dir, cache_dir, human_results_dir
+        apunim_results, human_results_dir
     )
     for file_suffix, label_suffix, note, models in _model_variants(
         exclude_models
