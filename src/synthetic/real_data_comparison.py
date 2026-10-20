@@ -34,6 +34,7 @@ long-format versions of the methods:
 import argparse
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
+from collections import Counter
 
 import apunim
 import numpy as np
@@ -111,8 +112,11 @@ def main(
 
 def export_latex_table(df: pd.DataFrame, output_path: Path) -> None:
     """
-    Table of which method finds which SDB feature significant, grouped by
-    dataset.
+    Table of which method finds which SDB feature significant.
+
+    Methods are the rows; the columns are the SDB features, grouped by
+    dataset. The (rotated) feature names are in the header, below the
+    dataset names.
 
     The cached p-values are Bonferroni-corrected across the SDB features of
     each dataset, separately for every method. Features for which a method
@@ -140,22 +144,68 @@ def export_latex_table(df: pd.DataFrame, output_path: Path) -> None:
     )
     methods = [m for m in METHOD_ORDER if m in table.columns]
     table = table[methods].rename(columns=LEGEND_LABEL)
-    table.columns.name = None
-    table.index.names = [None, r"\ac{sdd}"]
 
-    table.to_latex(
-        caption=(
-            "Statistical significance of each \\ac{sdd} feature per method. "
-            f"{TICK}: significant at $p<{ALPHA}$ after Bonferroni correction "
-            "across the features of the dataset; "
-            f"{CROSS}: not significant."
-        ),
-        label="tab:real-data-methods",
-        escape=False,
-        multirow=True,
-        column_format="ll" + "c" * len(methods),
-        buf=output_path,
+    # One table column per (dataset, SDB feature), in dataset order.
+    features = list(table.index)
+    datasets = list(dict.fromkeys(dataset for dataset, _ in features))
+    sizes = Counter(dataset for dataset, _ in features)
+
+    # A small gap between the column groups of different datasets.
+    column_format = "l" + "@{\\hspace{8pt}}".join(
+        "c" * sizes[dataset] for dataset in datasets
     )
+
+    dataset_header = " & ".join(
+        [""] + [rf"\multicolumn{{{sizes[d]}}}{{c}}{{{d}}}" for d in datasets]
+    )
+
+    rules, first = [], 2  # column 1 holds the method names
+    for dataset in datasets:
+        last = first + sizes[dataset] - 1
+        rules.append(rf"\cmidrule(lr){{{first}-{last}}}")
+        first = last + 1
+
+    feature_header = " & ".join(
+        [r"\ac{sdd}"]
+        + [rf"\rotatebox{{90}}{{{feature}}}" for _, feature in features]
+    )
+
+    rows = [
+        " & ".join([label] + table[label].fillna(NOT_COMPUTED).tolist())
+        + r" \\"
+        for label in table.columns
+    ]
+
+    caption = (
+        "Statistical significance of each \\ac{sdd} feature per method. "
+        f"{TICK}: significant at $p<{ALPHA}$ after Bonferroni correction "
+        "across the features of the dataset; "
+        f"{CROSS}: not significant."
+    )
+
+    # \resizebox: with one column per feature the table is wider than the
+    # text, so it is scaled down to fit.
+    lines = [
+        r"\begin{table}",
+        rf"\caption{{{caption}}}",
+        r"\label{tab:real-data-methods}",
+        r"\centering",
+        r"\setlength{\tabcolsep}{2pt}",
+        r"\resizebox{\linewidth}{!}{%",
+        rf"\begin{{tabular}}{{{column_format}}}",
+        r"\toprule",
+        dataset_header + r" \\",
+        "".join(rules),
+        feature_header + r" \\",
+        r"\midrule",
+        *rows,
+        r"\bottomrule",
+        r"\end{tabular}%",
+        r"}",
+        r"\end{table}",
+    ]
+
+    output_path.write_text("\n".join(lines) + "\n")
     print(f"Table exported to {output_path.resolve()}")
 
 

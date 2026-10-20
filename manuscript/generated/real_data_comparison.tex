@@ -1,45 +1,20 @@
 \begin{table}
 \caption{Statistical significance of each \ac{sdd} feature per method. \sigyes: significant at $p<0.05$ after Bonferroni correction across the features of the dataset; \signo: not significant.}
 \label{tab:real-data-methods}
-\begin{tabular}{llcccc}
+\centering
+\setlength{\tabcolsep}{2pt}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lcccc@{\hspace{8pt}}cccc@{\hspace{8pt}}ccc@{\hspace{8pt}}ccccccccccccc@{\hspace{8pt}}ccccc}
 \toprule
- &  & apunim (ours) & Krippendorff $\Delta\alpha$ & \ac{au} & $\chi^2$ \\
- & \ac{sdd} &  &  &  &  \\
+ & \multicolumn{4}{c}{DICES-350} & \multicolumn{4}{c}{DICES-990} & \multicolumn{3}{c}{Sap et al. 2022} & \multicolumn{13}{c}{Kumar et al. 2021} & \multicolumn{5}{c}{POPQUORN} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-9}\cmidrule(lr){10-12}\cmidrule(lr){13-25}\cmidrule(lr){26-30}
+\ac{sdd} & \rotatebox{90}{Age} & \rotatebox{90}{Education} & \rotatebox{90}{Gender} & \rotatebox{90}{Race} & \rotatebox{90}{Age} & \rotatebox{90}{Education} & \rotatebox{90}{Gender} & \rotatebox{90}{Race} & \rotatebox{90}{Age} & \rotatebox{90}{Ethnicity} & \rotatebox{90}{Gender} & \rotatebox{90}{Age} & \rotatebox{90}{Education} & \rotatebox{90}{Ethnicity} & \rotatebox{90}{Gender} & \rotatebox{90}{Has Been Targeted} & \rotatebox{90}{Is Parent} & \rotatebox{90}{Is Transgender} & \rotatebox{90}{Political Affiliation} & \rotatebox{90}{Religion Important} & \rotatebox{90}{Seen Toxicity} & \rotatebox{90}{Sexual Orientation} & \rotatebox{90}{Technology Impact} & \rotatebox{90}{Toxicity Problem} & \rotatebox{90}{Age} & \rotatebox{90}{Education} & \rotatebox{90}{Gender} & \rotatebox{90}{Occupation} & \rotatebox{90}{Race} \\
 \midrule
-\multirow[t]{4}{*}{DICES-350} & Age & \signo & \signo & \signo & \sigyes \\
- & Education & \signo & \signo & \signo & \sigyes \\
- & Gender & \signo & \sigyes & \signo & \sigyes \\
- & Race & \sigyes & \sigyes & \signo & \sigyes \\
-\cline{1-6}
-\multirow[t]{4}{*}{DICES-990} & Age & \sigyes & \signo & \signo & \sigyes \\
- & Education & \sigyes & \sigyes & \signo & \sigyes \\
- & Gender & \sigyes & \sigyes & \signo & \sigyes \\
- & Race & \sigyes & \signo & \signo & \sigyes \\
-\cline{1-6}
-\multirow[t]{3}{*}{Sap et al. 2022} & Age & \signo & \signo & \signo & \sigyes \\
- & Ethnicity & \signo & \signo & \signo & \sigyes \\
- & Gender & \sigyes & \sigyes & \signo & \sigyes \\
-\cline{1-6}
-\multirow[t]{13}{*}{Kumar et al. 2021} & Age & \signo & \signo & \signo & \sigyes \\
- & Education & \signo & \signo & \signo & \sigyes \\
- & Ethnicity & \signo & \signo & \signo & \sigyes \\
- & Gender & \signo & \signo & \signo & \signo \\
- & Has Been Targeted & \signo & \signo & \signo & \sigyes \\
- & Is Parent & \signo & \signo & \signo & \sigyes \\
- & Is Transgender & \signo & \signo & \signo & \sigyes \\
- & Political Affiliation & \signo & \signo & \signo & \sigyes \\
- & Religion Important & \signo & \signo & \signo & \sigyes \\
- & Seen Toxicity & \signo & \signo & \signo & \sigyes \\
- & Sexual Orientation & \signo & \signo & \signo & \sigyes \\
- & Technology Impact & \signo & \signo & \signo & \sigyes \\
- & Toxicity Problem & \signo & \signo & \signo & \sigyes \\
-\cline{1-6}
-\multirow[t]{5}{*}{POPQUORN} & Age & \signo & \signo & \signo & \sigyes \\
- & Education & \signo & \signo & \signo & \sigyes \\
- & Gender & \signo & \signo & \signo & \sigyes \\
- & Occupation & \signo & \signo & \signo & \sigyes \\
- & Race & \signo & \signo & \signo & \sigyes \\
-\cline{1-6}
+apunim (ours) & \signo & \signo & \signo & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \signo & \signo & \sigyes & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo \\
+Krippendorff $\Delta\alpha$ & \signo & \signo & \sigyes & \sigyes & \signo & \sigyes & \sigyes & \signo & \signo & \signo & \sigyes & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo \\
+\ac{au} & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo & \signo \\
+$\chi^2$ & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \signo & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes & \sigyes \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
