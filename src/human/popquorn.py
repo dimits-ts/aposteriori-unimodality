@@ -28,6 +28,10 @@ def main(
         res = run_helper.compute_inherent_polarization_exhaustive(dataset=ds)
         res.to_csv(inherent_path, header=True, index_label="comment")
 
+    run_helper.write_inherent_polarization_subsampled(
+        ds, output_dir, name=name, n_repeats=100
+    )
+
     results_path = output_dir / f"{name}-results.csv"
     if not skip_if_exists(results_path):
         res = run_helper.run_all_results(ds)

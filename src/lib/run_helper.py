@@ -10,6 +10,18 @@ from tqdm.auto import tqdm
 
 from . import preprocessing
 
+# Inherent polarization after repeatedly subsampling every comment down to at
+# most this many annotators (see compute_inherent_polarization_subsampled).
+# Six matches the exhaustive cap used for Kumar, so the densely annotated
+# datasets can be compared at a Kumar-like annotation density.
+INHERENT_SUBSAMPLE_SIZE = 6
+INHERENT_SUBSAMPLE_REPEATS = 10
+# File name suffix: "<dataset>-inherent-subsampled-n6.csv". It deliberately
+# does not end in "-inherent", so globs for the full files skip it.
+INHERENT_SUBSAMPLED_STEM_SUFFIX = (
+    f"-inherent-subsampled-n{INHERENT_SUBSAMPLE_SIZE}"
+)
+
 
 def run_all_results(ds: preprocessing.Dataset) -> pd.DataFrame:
     """
@@ -537,6 +549,32 @@ def compute_inherent_polarization_subsampled(
         for _ in range(n_repeats if needs_resampling else 1)
     ]
     return pd.concat(runs, axis=1).mean(axis=1).rename("inherent_polarization")
+
+
+def write_inherent_polarization_subsampled(
+    dataset: preprocessing.Dataset,
+    output_dir: Path,
+    name: str,
+    n_repeats: int = INHERENT_SUBSAMPLE_REPEATS,
+) -> None:
+    """
+    Write "<name>-inherent-subsampled-n6.csv" to `output_dir` (skipped if it
+    exists): inherent polarization with every comment subsampled down to at
+    most INHERENT_SUBSAMPLE_SIZE annotators, averaged over
+    INHERENT_SUBSAMPLE_REPEATS repeats. Shown on the left of apriori.png.
+    """
+    output_path = output_dir / f"{name}{INHERENT_SUBSAMPLED_STEM_SUFFIX}.csv"
+    if output_path.exists():
+        print(f"Skipping (already exists): {output_path}")
+        return
+
+    res = compute_inherent_polarization_subsampled(
+        dataset=dataset,
+        size=INHERENT_SUBSAMPLE_SIZE,
+        n_repeats=n_repeats,
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    res.to_csv(output_path, header=True, index_label="comment")
 
 
 def compute_inherent_polarization_random(

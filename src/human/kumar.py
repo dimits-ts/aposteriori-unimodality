@@ -90,6 +90,10 @@ def main_analysis(
         loader=loader,
         res_output_dir=res_output_dir,
     )
+    _inherent_subsampled_experiment(
+        loader=loader,
+        res_output_dir=res_output_dir,
+    )
     _main_experiment(
         dataset_path=dataset_path,
         res_output_dir=res_output_dir,
@@ -194,6 +198,23 @@ def _inherent_experiment(
         inherent_path,
         header=True,
         index_label="comment",
+    )
+
+
+def _inherent_subsampled_experiment(
+    loader: LazyDatasetLoader,
+    res_output_dir: Path,
+) -> None:
+    """Every comment subsampled down to at most 6 annotators (for
+    apriori.png). Unlike kumar-inherent.csv, which drops comments with more
+    than 6 annotators, this keeps them, as for the other datasets."""
+    path = res_output_dir / (
+        f"kumar{run_helper.INHERENT_SUBSAMPLED_STEM_SUFFIX}.csv"
+    )
+    if skip_if_exists(path):  # avoid loading the dataset needlessly
+        return
+    run_helper.write_inherent_polarization_subsampled(
+        loader.get(), res_output_dir, name="kumar"
     )
 
 

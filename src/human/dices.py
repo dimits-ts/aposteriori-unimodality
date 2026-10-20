@@ -95,6 +95,9 @@ def main(
     if not skip_if_exists(inherent_path):
         res = run_helper.compute_inherent_polarization_random(ds_350)
         res.to_csv(inherent_path, header=True, index_label="comment")
+    run_helper.write_inherent_polarization_subsampled(
+        ds_350, output_dir, name="dices-350", n_repeats=100
+    )
 
     results_path = output_dir / "dices-350-results.csv"
     if not skip_if_exists(results_path):
@@ -111,6 +114,9 @@ def main(
     if not skip_if_exists(inherent_path):
         res = run_helper.compute_inherent_polarization_random(ds_990)
         res.to_csv(inherent_path, header=True, index_label="comment")
+    run_helper.write_inherent_polarization_subsampled(
+        ds_990, output_dir, name="dices-990", n_repeats=100
+    )
 
     results_path = output_dir / "dices-990-results.csv"
     if not skip_if_exists(results_path):

@@ -7,8 +7,9 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+from matplotlib.ticker import FuncFormatter
 
-from ..lib import graphs
+from ..lib import graphs, run_helper
 from ..lib.util import (
     SIGNIFICANCE_LEGEND,
     center_table_latex,
@@ -56,6 +57,11 @@ def main(
     )
     plot_dfu_histograms(
         file_paths=list(results_dir.rglob("*-inherent.csv")),
+        subsampled_paths=list(
+            results_dir.rglob(
+                f"*{run_helper.INHERENT_SUBSAMPLED_STEM_SUFFIX}.csv"
+            )
+        ),
         graph_output_dir=graph_output_dir,
     )
     plot_sample_size_polarization(
@@ -107,74 +113,135 @@ def main(
     )
 
 
+def _inherent_label(path: Path, stem_suffix: str = "-inherent") -> str:
+    """Dataset label from an inherent-polarization CSV name, e.g.
+    "dices-350-inherent.csv" -> "Dices 350"."""
+    return " ".join(path.stem.removesuffix(stem_suffix).split("-")).capitalize()
+
+
+def _read_inherent(path: Path) -> pd.Series:
+    arr = pd.read_csv(path).inherent_polarization
+    return arr[~np.isnan(arr)]
+
+
+def _draw_density_bars(
+    ax, values: pd.Series, edges: np.ndarray, sign: int, color, hatch
+) -> None:
+    """Horizontal density histogram on shared `edges`, drawn to the right
+    of x=0 (sign=1) or mirrored to the left (sign=-1)."""
+    counts, _ = np.histogram(values, bins=edges)
+    widths = np.diff(edges)
+    density = counts / (counts.sum() * widths) if counts.sum() else counts
+    ax.barh(
+        y=edges[:-1],
+        width=sign * density,
+        height=widths,
+        align="edge",
+        color=color,
+        alpha=0.7,
+        hatch=hatch,
+        edgecolor="black",
+        linewidth=0.3,
+    )
+
+
 def plot_dfu_histograms(
     file_paths: list[Path],
     graph_output_dir: Path,
+    subsampled_paths: list[Path] | None = None,
     bins: int = 30,
 ):
     """
-    Plot histogram distributions per dataset with colorblind palette
-    and hatch patterns.
+    Mirrored histograms of unattributable polarization per dataset, with
+    colorblind palette and hatch patterns.
+
+    Right of the centre line: the full datasets ("<dataset>-inherent.csv").
+    Left of it: the same datasets with at most 6 annotators per comment
+    (every comment subsampled down to 6; "<dataset>-inherent-subsampled-n6.csv"),
+    in the same colour and hatch, so each dataset's two histograms mirror
+    each other. A dataset whose subsampled file is missing is only drawn on
+    the right, with a printed warning.
+
+    All histograms share one set of bins on [0, 1], so the two sides line up.
     """
-    all_data = []
+    full_series = {
+        _inherent_label(Path(path)): _read_inherent(path)
+        for path in file_paths
+    }
+    subsampled_series = {
+        _inherent_label(Path(path), run_helper.INHERENT_SUBSAMPLED_STEM_SUFFIX):
+        _read_inherent(path)
+        for path in (subsampled_paths or [])
+    }
 
-    for path in file_paths:
-        path = Path(path)
-        label = " ".join(path.stem.split("-")[:-1]).capitalize()
+    # Colours/hatches follow the full datasets, as in the original figure.
+    datasets = sorted(full_series)
+    extra = sorted(set(subsampled_series) - set(datasets))
+    styles = {
+        name: (color, hatch)
+        for name, color, hatch in zip(
+            datasets + extra, graphs.COLORBLIND_PALETTE, graphs.HATCHES
+        )
+    }
+    edges = np.linspace(0, 1, bins + 1)
 
-        arr = pd.read_csv(path).inherent_polarization
-        arr = arr[~np.isnan(arr)]
-
-        all_data.append(pd.DataFrame({"value": arr, "dataset": label}))
-
-    full_df = pd.concat(all_data, ignore_index=True)
+    for name in sorted(set(datasets) - set(subsampled_series)):
+        print(
+            f"Warning: no max-{run_helper.INHERENT_SUBSAMPLE_SIZE} file for "
+            f"{name}; it is only shown with all annotators. Rerun its script."
+        )
 
     fig, ax = plt.subplots(figsize=(10, 4))
 
-    datasets = sorted(full_df["dataset"].unique())
-    legend_handles = []
-    for i, (dataset, color, hatch) in enumerate(
-        zip(datasets, graphs.COLORBLIND_PALETTE, graphs.HATCHES)
+    for sign, series in ((1, full_series), (-1, subsampled_series)):
+        for name in sorted(series):
+            _draw_density_bars(ax, series[name], edges, sign, *styles[name])
+
+    # symmetric x-range so the centre line sits in the middle
+    xmax = max(abs(x) for x in ax.get_xlim())
+    ax.set_xlim(-xmax, xmax)
+    ax.axvline(0, color="black", linewidth=0.8)
+    # densities are positive on both sides
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f"{abs(x):g}"))
+
+    size = run_helper.INHERENT_SUBSAMPLE_SIZE
+    for x, text, ha in (
+        (-0.02, rf"Max {size} annotators", "right"),
+        (0.02, "All annotators", "left"),
     ):
-        before = len(ax.patches)
-
-        sns.histplot(
-            data=full_df[full_df["dataset"] == dataset],
-            y="value",
-            bins=bins,
-            stat="density",
-            common_norm=False,
-            alpha=0.7,
-            color=color,
-            ax=ax,
+        ax.text(
+            0.5 + x,
+            0.97,
+            text,
+            transform=ax.transAxes,
+            ha=ha,
+            va="top",
+            fontsize="small",
         )
 
-        # Only newly created bars
-        new_patches = ax.patches[before:]
-
-        for patch in new_patches:
-            patch.set_hatch(hatch)
-            patch.set_edgecolor("black")
-            patch.set_linewidth(0.3)
-
-        legend_handles.append(
-            mpatches.Patch(
-                facecolor=color,
-                edgecolor="black",
-                hatch=hatch,
-                label=dataset,
-                alpha=0.4,
-            )
+    legend_handles = [
+        mpatches.Patch(
+            facecolor=styles[name][0],
+            edgecolor="black",
+            hatch=styles[name][1],
+            label=name,
+            alpha=0.4,
         )
+        for name in datasets + extra
+    ]
 
     ax.set_title(
         "UnPol Frequently Exists in Datasets with Low Annotation Density"
     )
-    ax.set_xlabel("Unattributable polarization")
-    ax.set_ylabel("Density")
+    ax.set_xlabel("Density")
+    ax.set_ylabel("UnPol")
     ax.set_ylim((0, 1))
 
-    ax.legend(handles=legend_handles)
+    ax.legend(
+        handles=legend_handles,
+        loc="center left",
+        bbox_to_anchor=(1.02, 0.5),
+    )
 
     graphs.save_plot(graph_output_dir / "apriori.png")
     plt.close()

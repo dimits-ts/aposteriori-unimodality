@@ -16,6 +16,9 @@ def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
     res.to_csv(
         output_dir / "sap-inherent.csv", header=True, index_label="comment"
     )
+    run_helper.write_inherent_polarization_subsampled(
+        ds, output_dir, name="sap"
+    )
 
     res = run_helper.run_all_results(ds)
     res.to_csv(output_dir / "sap-results.csv")
