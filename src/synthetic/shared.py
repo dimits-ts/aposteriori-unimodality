@@ -223,28 +223,45 @@ def _long(matrix, groups):
     )
 
 
-def method_apunim(matrix, groups, seed):
-    ann, fac, com = _long(matrix, groups)
+def apunim_min_pvalue(annotations, groups, comments, num_bins, seed):
+    """
+    apunim aggregated to one (stat, pvalue) pair per SDB feature: the factor
+    with the smallest p-value, Bonferroni-corrected over the factors that
+    could be tested. Inputs are in long format (one entry per annotation).
 
+    Shared by the synthetic experiments (method_apunim below) and the real
+    data comparison (real_data_comparison.method_apunim).
+    """
     try:
         res = apunim.aposteriori_unimodality(
-            ann,
-            fac,
-            com,
-            num_bins=N_LEVELS,
+            annotations,
+            groups,
+            comments,
+            num_bins=num_bins,
             iterations=100,
+            # raw p-values: the Bonferroni correction over the factors
+            # below is the only correction (apunim's default alpha=0.05
+            # would apply BH on top of it)
+            alpha=None,
             seed=seed,
         )
     except ValueError:
         return 0.0, 1.0
 
+    # factors apunim could not test have a NaN p-value; they are neither
+    # candidates for the minimum nor counted in the correction
+    res = {k: v for k, v in res.items() if not np.isnan(v.pvalue)}
+
     if not res:
         return 0.0, 1.0
 
-    best = min(res.items(), key=lambda kv: kv[1].pvalue)
-    return (
-        best[1].apunim,
-        min(1.0, best[1].pvalue * len(res)),
+    best = min(res.values(), key=lambda r: r.pvalue)
+    return best.apunim, min(1.0, best.pvalue * len(res))
+
+
+def method_apunim(matrix, groups, seed):
+    return apunim_min_pvalue(
+        *_long(matrix, groups), num_bins=N_LEVELS, seed=seed
     )
 
 

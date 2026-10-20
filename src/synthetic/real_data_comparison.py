@@ -50,7 +50,14 @@ from ..lib.preprocessing import (
     SapDataset,
 )
 from ..lib.util import skip_if_exists
-from .shared import ALPHA, LEGEND_LABEL, METHOD_ORDER, _alpha, _seed
+from .shared import (
+    ALPHA,
+    LEGEND_LABEL,
+    METHOD_ORDER,
+    _alpha,
+    _seed,
+    apunim_min_pvalue,
+)
 
 KUMAR_NUM_SAMPLES = 1_000
 
@@ -359,29 +366,10 @@ def _pad(values, codes, n_comments):
 
 
 def method_apunim(values, groups, codes):
-    """
-    Same aggregation as shared.method_apunim: the factor with the smallest
-    p-value, Bonferroni-corrected over the factors that could be tested.
-    """
-    try:
-        res = apunim.aposteriori_unimodality(
-            values,
-            groups,
-            codes,
-            num_bins=_num_bins(values),
-            iterations=100,
-            seed=42,
-        )
-    except ValueError:
-        return 0.0, 1.0
-
-    res = {k: v for k, v in res.items() if not np.isnan(v.pvalue)}
-
-    if not res:
-        return 0.0, 1.0
-
-    best = min(res.values(), key=lambda r: r.pvalue)
-    return best.apunim, min(1.0, best.pvalue * len(res))
+    """shared.apunim_min_pvalue, with the rating levels read from the data."""
+    return apunim_min_pvalue(
+        values, groups, codes, num_bins=_num_bins(values), seed=42
+    )
 
 
 def _safe_alpha(matrix):
