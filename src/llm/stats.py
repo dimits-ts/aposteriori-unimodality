@@ -1304,6 +1304,179 @@ def build_default_mean_ndfu_table(
     return out
 
 
+# ---------------------------------------------------------------------------
+# Correlation of per-comment nDFU with external polarization ratings
+# ---------------------------------------------------------------------------
+
+# Column holding the 1-5 polarization rating in the ratings CSV.
+RATING_COLUMN = "polarization_rating"
+RATING_KEY_COLUMN = "instance_id"
+
+
+def load_polarization_ratings(path: Path) -> pd.DataFrame:
+    """
+    Reads a ratings CSV (columns `instance_id` and `polarization_rating`,
+    as exported for the POPQUORN comments) into a frame with one numeric
+    rating per comment. Duplicate comments keep their first rating.
+    """
+    df = pd.read_csv(path)
+    missing = {RATING_KEY_COLUMN, RATING_COLUMN} - set(df.columns)
+    if missing:
+        raise ValueError(
+            f"{path} is missing required column(s): {sorted(missing)}"
+        )
+    df = df[[RATING_KEY_COLUMN, RATING_COLUMN]].drop_duplicates(
+        RATING_KEY_COLUMN
+    )
+    df[RATING_KEY_COLUMN] = pd.to_numeric(df[RATING_KEY_COLUMN], errors="coerce")
+    df[RATING_COLUMN] = pd.to_numeric(df[RATING_COLUMN], errors="coerce")
+    return df.dropna().reset_index(drop=True)
+
+
+def _correlation_stats(x: pd.Series, y: pd.Series) -> dict:
+    """Spearman and Pearson correlation of two aligned series (NaN when
+    undefined, e.g. too few points or a constant series)."""
+    out = {
+        "n": len(x),
+        "spearman_rho": np.nan,
+        "spearman_p": np.nan,
+        "pearson_r": np.nan,
+        "pearson_p": np.nan,
+    }
+    if len(x) < 3 or x.nunique() < 2 or y.nunique() < 2:
+        return out
+    out["spearman_rho"], out["spearman_p"] = stats.spearmanr(x, y)
+    out["pearson_r"], out["pearson_p"] = stats.pearsonr(x, y)
+    return out
+
+
+def _correlation_sources(
+    merged: pd.DataFrame, prompt_names: list[str]
+) -> list[tuple[str, str]]:
+    """(model, prompt) pairs present in `merged`: Human first, then the
+    LLMs in display order, each over `prompt_names` in order."""
+    present = set(zip(merged["Model"], merged["Prompt"]))
+    pairs = [(HUMAN_LABEL, "human")] if (HUMAN_LABEL, "human") in present else []
+    llm_models = _order_models({m for m, _ in present if m != HUMAN_LABEL})
+    pairs += [
+        (m, p) for m in llm_models for p in prompt_names if (m, p) in present
+    ]
+    return pairs
+
+
+def compute_ndfu_rating_correlations(
+    ndfu_df: pd.DataFrame,
+    ratings_df: pd.DataFrame,
+    dataset_name: str = "POPQUORN",
+    prompt_names: list[str] = MAIN_PROMPT_NAMES,
+    correction_method: str | None = "holm",
+) -> pd.DataFrame:
+    """
+    Correlates the per-comment nDFU (long format as returned by
+    `compute_mean_ndfu_records`) with an external per-comment polarization
+    rating (see `load_polarization_ratings`).
+
+    One row per (Model, Prompt) -- the human annotations first (Prompt
+    "human"), then each LLM under each prompt -- with the number of comments
+    both have, Spearman's rho (the main statistic, since the ratings are
+    ordinal) and Pearson's r with their p-values, plus `spearman_p_corrected`
+    (corrected over all rows with `correction_method`; None disables it).
+    Comments are matched on text_id == instance_id and only those of
+    `dataset_name` are used.
+    """
+    sub = ndfu_df.loc[ndfu_df["Dataset"] == dataset_name].copy()
+    sub["text_id"] = pd.to_numeric(sub["text_id"], errors="coerce")
+    sub = sub.dropna(subset=["text_id"])
+    sub = sub.loc[sub["Prompt"].isin(["human", *prompt_names])]
+
+    merged = sub.merge(
+        ratings_df[[RATING_KEY_COLUMN, RATING_COLUMN]],
+        left_on="text_id",
+        right_on=RATING_KEY_COLUMN,
+        how="inner",
+    )
+
+    records = []
+    for model, prompt in _correlation_sources(merged, prompt_names):
+        pair = merged.loc[(merged["Model"] == model) & (merged["Prompt"] == prompt)]
+        records.append(
+            {
+                "Model": model,
+                "Prompt": prompt,
+                **_correlation_stats(pair["ndfu"], pair[RATING_COLUMN]),
+            }
+        )
+
+    result = pd.DataFrame(
+        records,
+        columns=[
+            "Model",
+            "Prompt",
+            "n",
+            "spearman_rho",
+            "spearman_p",
+            "pearson_r",
+            "pearson_p",
+        ],
+    )
+    result["spearman_p_corrected"] = np.nan
+    valid = result["spearman_p"].notna()
+    if correction_method is not None and valid.any():
+        result.loc[valid, "spearman_p_corrected"] = multipletests(
+            result.loc[valid, "spearman_p"], method=correction_method
+        )[1]
+
+    result.attrs["dataset"] = dataset_name
+    result.attrs["n_rated_comments"] = len(ratings_df)
+    result.attrs["n_rated_in_ndfu_sample"] = int(
+        merged.loc[merged["Model"] == HUMAN_LABEL, "text_id"].nunique()
+    )
+    result.attrs["correction_method"] = correction_method
+    return result
+
+
+def format_ndfu_rating_correlations(corr_df: pd.DataFrame) -> str:
+    """Plain-text rendering of `compute_ndfu_rating_correlations` output."""
+    if corr_df.empty:
+        return "No nDFU values could be matched to the polarization ratings."
+
+    def _fmt(col: pd.Series, spec: str) -> pd.Series:
+        return col.map(lambda x: "---" if pd.isna(x) else f"{x:{spec}}")
+
+    table = pd.DataFrame(
+        {
+            "Model": corr_df["Model"],
+            "Prompt": corr_df["Prompt"],
+            "n": corr_df["n"],
+            "Spearman rho": _fmt(corr_df["spearman_rho"], ".3f"),
+            "p": _fmt(corr_df["spearman_p"], ".4f"),
+            "p (corr.)": _fmt(corr_df["spearman_p_corrected"], ".4f"),
+            "Pearson r": _fmt(corr_df["pearson_r"], ".3f"),
+            "p ": _fmt(corr_df["pearson_p"], ".4f"),
+        }
+    )
+    attrs = corr_df.attrs
+    header = (
+        f"Correlation of per-comment nDFU with polarization ratings "
+        f"({attrs.get('dataset', '?')}): "
+        f"{attrs.get('n_rated_in_ndfu_sample', '?')} of "
+        f"{attrs.get('n_rated_comments', '?')} rated comments are in the "
+        f"nDFU sample. p (corr.): Spearman p-values, "
+        f"{attrs.get('correction_method')} correction."
+    )
+    return header + "\n" + table.to_string(index=False)
+
+
+def export_ndfu_rating_correlations(
+    corr_df: pd.DataFrame, output_path: Path
+) -> None:
+    """Writes `compute_ndfu_rating_correlations` output to a CSV (all
+    columns, unrounded)."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    corr_df.to_csv(output_path, index=False)
+    print(f"Correlations exported to {output_path.resolve()}")
+
+
 def _significance_ratio(res_df: pd.DataFrame, col: str) -> pd.Series:
     total = res_df[col].value_counts()
     significant = res_df.loc[res_df.reject_null, col].value_counts()

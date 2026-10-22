@@ -36,7 +36,7 @@ JOBS=(
 
 'kumar|python -m src.human.kumar --dataset-path=data/datasets/kumar.json --output-dir=output/human/main --graph-output-dir=graphs --ablation-dir=output/human/ablations --latex-output-dir=manuscript/generated --graph-output-dir=graphs --latex-output-dir=manuscript/generated'
 
-'llm|python -m src.llm.analysis --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --sap-path=data/datasets/sap.csv --kumar-path=data/datasets/kumar.json --popquorn-path=data/datasets/popquorn_offensiveness.csv --annotations-dir=output/llm/annotations --paraphrase-dir=output/llm/ablations/paraphrase --repeat-dir=output/llm/ablations/repeat --graph-output-dir=graphs --latex-output-dir=manuscript/generated --cache-dir=cache --human-results-dir=output/human/main'
+'llm|python -m src.llm.analysis --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --sap-path=data/datasets/sap.csv --kumar-path=data/datasets/kumar.json --popquorn-path=data/datasets/popquorn_offensiveness.csv --annotations-dir=output/llm/annotations --paraphrase-dir=output/llm/ablations/paraphrase --repeat-dir=output/llm/ablations/repeat --graph-output-dir=graphs --latex-output-dir=manuscript/generated --cache-dir=cache --human-results-dir=output/human/main --ratings-path=data/swx_ratings.csv'
 )
 
 printf "%s\n" "${JOBS[@]}" |

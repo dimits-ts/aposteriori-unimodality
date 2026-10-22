@@ -53,6 +53,11 @@ The following are produced:
    per model, dataset and status (nonstandard_answers_summary.tex):
    replies that cannot be parsed or are out of range for the dataset.
 
+7. (Optional) The correlation between the per-comment nDFU (human and LLM,
+   per prompt) and an external per-comment polarization rating, exported to
+   a CSV (ndfu_rating_correlations.csv, see
+   stats.compute_ndfu_rating_correlations).
+
 Rows are matched across files (models, or prompt variants) using the
 comment id ("text_id") together with the sampled persona's characteristics,
 since llm_annotate.py is seeded so that the same comments/personas are
@@ -135,6 +140,8 @@ def main(
     human_results_dir: Path,
     exclude_models: list[str],
     prompt_name: str = "default",
+    ratings_path: Path | None = None,
+    ratings_output_path: Path | None = None,
 ):
     graphs.graph_setup()
     graph_output_dir.mkdir(parents=True, exist_ok=True)
@@ -168,6 +175,7 @@ def main(
         }
     )
 
+    """
     # apunim results for every comparison dataset, computed (or loaded from
     # the cache) once and shared by the apunim table steps below.
     apunim_results = load_apunim_results(
@@ -215,6 +223,16 @@ def main(
         cache_dir,
         exclude_models,
     )
+    """
+    run_rating_correlation_step(
+        human_datasets,
+        annotations_dir,
+        cache_dir,
+        ratings_path,
+        ratings_output_path
+        or latex_output_dir / "ndfu_rating_correlations.csv",
+    )
+    return
 
     run_inherent_polarization_steps(
         human_datasets,
@@ -880,6 +898,30 @@ def run_apunim_significance_step(
 # ---------------------------------------------------------------------------
 
 
+def load_mean_ndfu_records(
+    human_datasets, annotations_dir, cache_dir
+) -> pd.DataFrame:
+    """Per-comment nDFU records of the human and every LLM annotation, for
+    every model (the "excluding" variants are filtered from these).
+    Computed once and cached. (New cache name: the old
+    mean_ndfu_records.csv was written without olmo7b/llama8b and would be
+    silently reused.)"""
+    cache_path = cache_dir / "mean_ndfu_records_all_models.csv"
+    if skip_if_exists(cache_path):
+        return pd.read_csv(cache_path)
+
+    ndfu_df = stats.compute_mean_ndfu_records(
+        human_datasets=human_datasets,
+        annotations_dir=annotations_dir,
+        dataset_keys=shared.PROMPT_COMPARISON_DATASET_KEYS,
+        prompt_names=shared.MAIN_PROMPT_NAMES,
+        exclude_models=None,
+    )
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    ndfu_df.to_csv(cache_path, index=False)
+    return ndfu_df
+
+
 def run_mean_ndfu_step(
     human_datasets,
     annotations_dir,
@@ -887,22 +929,9 @@ def run_mean_ndfu_step(
     cache_dir,
     exclude_models,
 ):
-    # Computed for every model; the "excluding" variants are filtered from
-    # these records. (New cache name: the old mean_ndfu_records.csv was
-    # written without olmo7b/llama8b and would be silently reused.)
-    cache_path = cache_dir / "mean_ndfu_records_all_models.csv"
-    if skip_if_exists(cache_path):
-        ndfu_df = pd.read_csv(cache_path)
-    else:
-        ndfu_df = stats.compute_mean_ndfu_records(
-            human_datasets=human_datasets,
-            annotations_dir=annotations_dir,
-            dataset_keys=shared.PROMPT_COMPARISON_DATASET_KEYS,
-            prompt_names=shared.MAIN_PROMPT_NAMES,
-            exclude_models=None,
-        )
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
-        ndfu_df.to_csv(cache_path, index=False)
+    ndfu_df = load_mean_ndfu_records(
+        human_datasets, annotations_dir, cache_dir
+    )
 
     if ndfu_df.empty:
         print("No matched human/LLM annotations; skipping mean nDFU tables.")
@@ -942,6 +971,47 @@ def run_mean_ndfu_step(
             caption=default_caption + note,
             label=f"tab:mean-ndfu-default-vs-human{label_suffix}",
         )
+
+
+# ---------------------------------------------------------------------------
+# nDFU vs. external polarization ratings
+# ---------------------------------------------------------------------------
+
+# Key of the dataset the ratings file refers to (its `instance_id` column is
+# the POPQUORN comment id).
+RATINGS_DATASET_KEY = "popquorn"
+
+
+def run_rating_correlation_step(
+    human_datasets,
+    annotations_dir,
+    cache_dir,
+    ratings_path: Path | None,
+    output_path: Path,
+):
+    """Exports to `output_path` (a CSV, outside the cache) the correlation
+    between per-comment nDFU (human and LLMs, per prompt) and the
+    polarization ratings in `ratings_path`. Skipped when no ratings file is
+    given."""
+    if ratings_path is None:
+        return
+    if RATINGS_DATASET_KEY not in human_datasets:
+        print(
+            f"Dataset {RATINGS_DATASET_KEY} not loaded; "
+            "skipping the nDFU-rating correlation."
+        )
+        return
+
+    ndfu_df = load_mean_ndfu_records(
+        human_datasets, annotations_dir, cache_dir
+    )
+    corr_df = stats.compute_ndfu_rating_correlations(
+        ndfu_df,
+        stats.load_polarization_ratings(ratings_path),
+        dataset_name=human_datasets[RATINGS_DATASET_KEY].get_name(),
+        prompt_names=shared.MAIN_PROMPT_NAMES,
+    )
+    stats.export_ndfu_rating_correlations(corr_df, output_path)
 
 
 # ---------------------------------------------------------------------------
@@ -1108,6 +1178,23 @@ if __name__ == "__main__":
             "written by the human analysis scripts, e.g. output/human/main."
         ),
     )
+    parser.add_argument(
+        "--ratings-path",
+        default=None,
+        help=(
+            "Optional CSV with columns instance_id and polarization_rating "
+            "(POPQUORN comments). If given, the correlation between the "
+            "per-comment nDFU and these ratings is exported to a CSV."
+        ),
+    )
+    parser.add_argument(
+        "--ratings-output-path",
+        default=None,
+        help=(
+            "Where to write the nDFU-rating correlation CSV (default: "
+            "<latex-output-dir>/ndfu_rating_correlations.csv)."
+        ),
+    )
     args = parser.parse_args()
 
     main(
@@ -1125,4 +1212,10 @@ if __name__ == "__main__":
         cache_dir=Path(args.cache_dir),
         human_results_dir=Path(args.human_results_dir),
         exclude_models=EXCLUDED_MODELS,
+        ratings_path=Path(args.ratings_path) if args.ratings_path else None,
+        ratings_output_path=(
+            Path(args.ratings_output_path)
+            if args.ratings_output_path
+            else None
+        ),
     )
