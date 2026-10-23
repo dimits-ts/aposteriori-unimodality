@@ -1734,3 +1734,38 @@ url={https://arxiv.org/abs/2108.12521},
 	url = 	 {https://proceedings.mlr.press/v202/taori23a.html},
 	abstract = 	 {Datasets scraped from the internet have been critical to large-scale machine learning. Yet, its success puts the utility of future internet-derived datasets at potential risk, as model outputs begin to replace human annotations as a source of supervision. In this work, we formalize a system where interactions with one model are recorded as history and scraped as training data in the future. We then analyze its stability over time by tracking changes to a test-time bias statistic (e.g. gender bias of model predictions). We find that the degree of bias amplification is closely linked to whether the model’s outputs behave like samples from the training distribution, a behavior which we characterize and define as uniform faithfulness. Experiments in three conditional prediction scenarios – image classification, visual role-labeling, and language generation – demonstrate that models that exhibit a sampling-like behavior are more faithful and thus more stable. Based on this insight, we propose an intervention to help mitigate and stabilize unstable feedback systems.}
 }
+
+
+@InProceedings{valerio_2021_gold,
+	author="Basile, Valerio",
+	editor="Baldoni, Matteo
+	and Bandini, Stefania",
+	title="It's the End of the Gold Standard as We Know It",
+	booktitle="AIxIA 2020 -- Advances in Artificial Intelligence",
+	year="2021",
+	publisher="Springer International Publishing",
+	address="Cham",
+	pages="441--453",
+	abstract="Supervised machine learning, in particular in Natural Language Processing, is based on the creation of high-quality gold standard datasets for training and benchmarking. The de-facto standard annotation methodologies work well for traditionally relevant tasks in Computational Linguistics. However, critical issues are surfacing when applying old techniques to the study of highly subjective phenomena such as irony and sarcasm, or abusive and offensive language. This paper calls for a paradigm shift, away from monolithic, majority-aggregated gold standards, and towards an inclusive framework that preserves the personal opinions and culturally-driven perspectives of the annotators. New training sets and supervised machine learning techniques will have to be adapted in order to create fair, inclusive, and ultimately more informed models of subjective semantic and pragmatic phenomena. The arguments are backed by a synthetic experiment showing the lack of correlation between the difficulty of an annotation task, its degree of subjectivity, and the quality of the predictions of a supervised classifier trained on the resulting data. A further experiment on real data highlights the beneficial impact of the proposed methodologies in terms of explainability of perspective-aware hate speech detection.",
+	isbn="978-3-030-77091-4"
+}
+
+@inproceedings{fleisig-etal-2024-perspectivist,
+	title = "The Perspectivist Paradigm Shift: Assumptions and Challenges of Capturing Human Labels",
+	author = "Fleisig, Eve  and
+	Blodgett, Su Lin  and
+	Klein, Dan  and
+	Talat, Zeerak",
+	editor = "Duh, Kevin  and
+	Gomez, Helena  and
+	Bethard, Steven",
+	booktitle = "Proceedings of the 2024 Conference of the {N}orth {A}merican Chapter of the {A}ssociation for {C}omputational {L}inguistics: Human Language Technologies (Volume 1: Long Papers)",
+	month = jun,
+	year = "2024",
+	address = "Mexico City, Mexico",
+	publisher = "Association for Computational Linguistics",
+	url = "https://aclanthology.org/2024.naacl-long.126/",
+	doi = "10.18653/v1/2024.naacl-long.126",
+	pages = "2279--2292",
+	abstract = "Longstanding data labeling practices in machine learning involve collecting and aggregating labels from multiple annotators. But what should we do when annotators disagree? Though annotator disagreement has long been seen as a problem to minimize, new perspectivist approaches challenge this assumption by treating disagreement as a valuable source of information. In this position paper, we examine practices and assumptions surrounding the causes of disagreement{--}some challenged by perspectivist approaches, and some that remain to be addressed{--}as well as practical and normative challenges for work operating under these assumptions. We conclude with recommendations for the data labeling pipeline and avenues for future research engaging with subjectivity and disagreement."
+}
