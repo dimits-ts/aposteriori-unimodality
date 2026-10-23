@@ -17,6 +17,7 @@ def main(
     graph_output_dir: Path,
     ablations_dir: Path,
     latex_output_dir: Path,
+    cache_dir: Path,
 ):
     KUMAR_SEED_ABLATION_SEEDS = list(range(10))
     SEED = 42
@@ -27,6 +28,7 @@ def main(
         dataset_path=dataset_path,
         graph_output_dir=graph_output_dir,
         res_output_dir=output_dir,
+        cache_dir=cache_dir,
         num_samples=1_000,
         seed=SEED,
     )
@@ -70,6 +72,7 @@ def main_analysis(
     dataset_path: Path,
     graph_output_dir: Path,
     res_output_dir: Path,
+    cache_dir: Path,
     num_samples: int,
     seed: int,
 ):
@@ -94,6 +97,7 @@ def main_analysis(
         loader=loader,
         res_output_dir=res_output_dir,
     )
+    _ndfu_experiment(loader=loader, cache_dir=cache_dir)
     _main_experiment(
         dataset_path=dataset_path,
         res_output_dir=res_output_dir,
@@ -218,6 +222,14 @@ def _inherent_subsampled_experiment(
     )
 
 
+def _ndfu_experiment(loader: LazyDatasetLoader, cache_dir: Path) -> None:
+    """Per-comment nDFU of the human annotations (cached)."""
+    ndfu_path = run_helper.human_ndfu_path(cache_dir, "kumar")
+    if skip_if_exists(ndfu_path):  # avoid loading the dataset needlessly
+        return
+    run_helper.write_human_ndfu(loader.get(), ndfu_path)
+
+
 def _main_experiment(
     dataset_path: Path, res_output_dir: Path, num_samples: int, seed: int
 ) -> None:
@@ -323,6 +335,7 @@ if __name__ == "__main__":
     parser.add_argument("--graph-output-dir", required=True)
     parser.add_argument("--ablation-dir", required=True)
     parser.add_argument("--latex-output-dir", required=True)
+    parser.add_argument("--cache-dir", required=True)
     args = parser.parse_args()
     main(
         dataset_path=Path(args.dataset_path),
@@ -330,4 +343,5 @@ if __name__ == "__main__":
         graph_output_dir=Path(args.graph_output_dir),
         ablations_dir=Path(args.ablation_dir),
         latex_output_dir=Path(args.latex_output_dir),
+        cache_dir=Path(args.cache_dir),
     )

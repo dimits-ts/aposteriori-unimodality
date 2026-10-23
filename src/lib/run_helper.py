@@ -577,6 +577,62 @@ def write_inherent_polarization_subsampled(
     res.to_csv(output_path, header=True, index_label="comment")
 
 
+def ndfu_bin_count(annotation_lists) -> int:
+    """Number of distinct annotation values over all annotation lists (the
+    number of bins nDFU is computed with)."""
+    all_annotations = [
+        v
+        for lst in annotation_lists
+        if isinstance(lst, (list, np.ndarray))
+        for v in lst
+    ]
+    return len(np.unique(all_annotations)) if all_annotations else 0
+
+
+def per_comment_ndfu(ds: preprocessing.Dataset) -> pd.Series:
+    """nDFU (normalized DFU) of each comment's annotation list, indexed by
+    the comment key of the dataset."""
+    df = ds.get_dataset()
+    annotation_col = ds.get_annotation_column()
+    bins = ndfu_bin_count(df[annotation_col].to_list())
+    if bins == 0:
+        return pd.Series(dtype=float)
+
+    key_col = ds.get_comment_key_column()
+    values = {}
+    for _, row in df.iterrows():
+        annotations = row[annotation_col]
+        if not isinstance(annotations, (list, np.ndarray)) or (
+            len(annotations) == 0
+        ):
+            continue
+        try:
+            values[row[key_col]] = apunim.dfu(
+                annotations, bins=bins, normalized=True
+            )
+        except Exception as e:
+            print(f"Error calculating NDFU for an item: {e}")
+    return pd.Series(values, dtype=float)
+
+
+def human_ndfu_path(cache_dir: Path, name: str) -> Path:
+    """Where the human per-comment nDFU of dataset `name` is cached."""
+    return cache_dir / f"{name}-ndfu.csv"
+
+
+def write_human_ndfu(
+    dataset: preprocessing.Dataset, output_path: Path
+) -> None:
+    """
+    Writes the per-comment nDFU of the human annotations (every comment of
+    the dataset) to `output_path`: columns "comment" (the dataset's comment
+    key) and "ndfu".
+    """
+    res = per_comment_ndfu(dataset).dropna()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    res.to_csv(output_path, header=["ndfu"], index_label="comment")
+
+
 def compute_inherent_polarization_random(
     dataset: preprocessing.Dataset,
     num_bins: int | None = None,

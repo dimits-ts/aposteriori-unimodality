@@ -79,6 +79,7 @@ def main(
     output_dir: Path,
     graph_output_dir: Path,
     ablation_dir: Path,
+    cache_dir: Path,
 ):
     output_dir.mkdir(parents=True, exist_ok=True)
     graph_output_dir.mkdir(parents=True, exist_ok=True)
@@ -99,6 +100,10 @@ def main(
         ds_350, output_dir, name="dices-350", n_repeats=100
     )
 
+    ndfu_path = run_helper.human_ndfu_path(cache_dir, "dices-350")
+    if not skip_if_exists(ndfu_path):
+        run_helper.write_human_ndfu(ds_350, ndfu_path)
+
     results_path = output_dir / "dices-350-results.csv"
     if not skip_if_exists(results_path):
         res = run_helper.run_all_results(ds=ds_350)
@@ -117,6 +122,10 @@ def main(
     run_helper.write_inherent_polarization_subsampled(
         ds_990, output_dir, name="dices-990", n_repeats=100
     )
+
+    ndfu_path = run_helper.human_ndfu_path(cache_dir, "dices-990")
+    if not skip_if_exists(ndfu_path):
+        run_helper.write_human_ndfu(ds_990, ndfu_path)
 
     results_path = output_dir / "dices-990-results.csv"
     if not skip_if_exists(results_path):
@@ -170,6 +179,11 @@ if __name__ == "__main__":
             "experiment, which operates on a subsampled dataset."
         ),
     )
+    parser.add_argument(
+        "--cache-dir",
+        required=True,
+        help="Directory for cached computations (e.g. human nDFU).",
+    )
     args = parser.parse_args()
     main(
         dataset_path_small=Path(args.dataset_small_path),
@@ -177,4 +191,5 @@ if __name__ == "__main__":
         output_dir=Path(args.output_dir),
         graph_output_dir=Path(args.graph_output_dir),
         ablation_dir=Path(args.ablation_dir),
+        cache_dir=Path(args.cache_dir),
     )

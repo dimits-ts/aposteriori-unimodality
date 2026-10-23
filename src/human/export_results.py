@@ -8,12 +8,15 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.ticker import FuncFormatter
+from scipy import stats
 
 from ..lib import graphs, run_helper
 from ..lib.util import (
     SIGNIFICANCE_LEGEND,
     center_table_latex,
     significance_superscript,
+    small_table_latex,
+    trim_numeric_col_latex,
 )
 from ..lib.preprocessing import (
     Dataset,
@@ -49,6 +52,8 @@ def main(
     sap_path: Path,
     latex_output_dir: Path,
     graph_output_dir: Path,
+    cache_dir: Path | None = None,
+    ratings_path: Path | None = None,
 ):
     graphs.graph_setup()
     csv_to_latex(
@@ -68,6 +73,15 @@ def main(
         csv_path=results_dir / "sample_size_polarization.csv",
         output_path=graph_output_dir / "sample_size_polarization.png",
     )
+    if ratings_path is not None:
+        if cache_dir is None:
+            raise ValueError("--cache-dir is required with --ratings-path.")
+        ndfu_rating_correlation_to_latex(
+            cache_dir=cache_dir,
+            ratings_path=ratings_path,
+            output_path=latex_output_dir / "ndfu_rating_correlations.tex",
+            label="tab:human-ndfu-rating-correlations",
+        )
 
     dices350_ds = DicesDataset(dataset_path=dices_small_path, variant="350")
     dices990_ds = DicesDataset(dataset_path=dices_large_path, variant="990")
@@ -116,7 +130,9 @@ def main(
 def _inherent_label(path: Path, stem_suffix: str = "-inherent") -> str:
     """Dataset label from an inherent-polarization CSV name, e.g.
     "dices-350-inherent.csv" -> "Dices 350"."""
-    return " ".join(path.stem.removesuffix(stem_suffix).split("-")).capitalize()
+    return " ".join(
+        path.stem.removesuffix(stem_suffix).split("-")
+    ).capitalize()
 
 
 def _read_inherent(path: Path) -> pd.Series:
@@ -169,8 +185,9 @@ def plot_dfu_histograms(
         for path in file_paths
     }
     subsampled_series = {
-        _inherent_label(Path(path), run_helper.INHERENT_SUBSAMPLED_STEM_SUFFIX):
-        _read_inherent(path)
+        _inherent_label(
+            Path(path), run_helper.INHERENT_SUBSAMPLED_STEM_SUFFIX
+        ): _read_inherent(path)
         for path in (subsampled_paths or [])
     }
 
@@ -501,6 +518,204 @@ def _results_to_latex(
     print(f"Table exported to {output_path.resolve()}")
 
 
+# ---------------------------------------------------------------------------
+# Human nDFU vs. external polarization ratings
+# ---------------------------------------------------------------------------
+
+# Columns of the ratings CSV: one row per rated comment, with the dataset it
+# comes from, its id in that dataset and its 1-5 polarization rating.
+RATING_DATASET_COLUMN = "dataset"
+RATING_KEY_COLUMN = "item_id"
+RATING_TEXT_COLUMN = "text"
+RATING_COLUMN = "polarization_rating"
+
+# Dataset label in the ratings CSV -> (name of its human nDFU cache file, see
+# run_helper.human_ndfu_path; name shown in the table). Also the row order.
+RATING_DATASETS = {
+    "swx": ("popquorn", "POPQUORN"),
+    "sap": ("sap", "Sap et al. 2022"),
+    "dices_990": ("dices-990", "DICES-990"),
+    "dices_350": ("dices-350", "DICES-350"),
+}
+
+
+def load_polarization_ratings(path: Path) -> pd.DataFrame:
+    """
+    Reads a ratings CSV (columns `dataset`, `item_id`, `text` and
+    `polarization_rating`) with one numeric rating per (dataset, comment).
+    Duplicate comments keep their first rating.
+    """
+    df = pd.read_csv(path)
+    required = [
+        RATING_DATASET_COLUMN,
+        RATING_KEY_COLUMN,
+        RATING_TEXT_COLUMN,
+        RATING_COLUMN,
+    ]
+    missing = set(required) - set(df.columns)
+    if missing:
+        raise ValueError(
+            f"{path} is missing required column(s): {sorted(missing)}"
+        )
+    df = df[required].copy()
+    df[RATING_COLUMN] = pd.to_numeric(df[RATING_COLUMN], errors="coerce")
+    df = df.dropna(subset=[RATING_DATASET_COLUMN, RATING_COLUMN])
+    return df.drop_duplicates(
+        [RATING_DATASET_COLUMN, RATING_KEY_COLUMN]
+    ).reset_index(drop=True)
+
+
+def _normalize_text(values: pd.Series) -> pd.Series:
+    """Text with whitespace runs collapsed, for matching comments by text."""
+    return values.astype(str).str.split().str.join(" ")
+
+
+def _match_ndfu_to_ratings(
+    ndfu_df: pd.DataFrame, ratings_df: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    The per-comment nDFU of one dataset (columns `comment`, `ndfu`) joined
+    with its ratings. Comments are matched either on the id (comment ==
+    item_id) or on the comment text (comment == text, for datasets such as
+    Sap et al. that identify their comments by their text); whichever
+    matches more comments is used.
+    """
+    by_id = ndfu_df.assign(
+        _key=pd.to_numeric(ndfu_df["comment"], errors="coerce")
+    ).merge(
+        ratings_df.assign(
+            _key=pd.to_numeric(ratings_df[RATING_KEY_COLUMN], errors="coerce")
+        )
+        .dropna(subset=["_key"])
+        .drop_duplicates("_key")[["_key", RATING_COLUMN]],
+        on="_key",
+    )
+    by_text = ndfu_df.assign(_key=_normalize_text(ndfu_df["comment"])).merge(
+        ratings_df.assign(
+            _key=_normalize_text(ratings_df[RATING_TEXT_COLUMN])
+        ).drop_duplicates("_key")[["_key", RATING_COLUMN]],
+        on="_key",
+    )
+    return by_id if len(by_id) >= len(by_text) else by_text
+
+
+def _correlation_stats(x: pd.Series, y: pd.Series) -> dict:
+    """Spearman and Kendall correlation coefficients of two aligned series
+    (NaN when undefined, e.g. too few points or a constant series)."""
+    out = {"n": len(x), "spearman_rho": np.nan, "kendall_tau": np.nan}
+    if len(x) < 3 or x.nunique() < 2 or y.nunique() < 2:
+        return out
+    out["spearman_rho"] = stats.spearmanr(x, y)[0]
+    out["kendall_tau"] = stats.kendalltau(x, y, variant="b")[0]
+    return out
+
+
+def compute_ndfu_rating_correlations(
+    cache_dir: Path, ratings_df: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Correlates, per dataset, the per-comment nDFU of the human annotations
+    (read from the cache files written by the human scripts, one per
+    dataset) with the polarization rating of the comment.
+
+    One row per dataset of RATING_DATASETS that has ratings and a cache
+    file: `n_rated` (rated comments), `n` (comments with both an nDFU and a
+    rating), Spearman's rho (the main statistic, since the ratings are
+    ordinal) and Kendall's tau-b (robust to the many ties of a 5-point
+    scale). No significance tests are computed.
+    """
+    unknown = sorted(
+        set(ratings_df[RATING_DATASET_COLUMN]) - set(RATING_DATASETS)
+    )
+    if unknown:
+        print(f"Ratings for unknown dataset(s) {unknown} are ignored.")
+
+    records = []
+    for label, (stem, name) in RATING_DATASETS.items():
+        ratings = ratings_df.loc[ratings_df[RATING_DATASET_COLUMN] == label]
+        if ratings.empty:
+            continue
+        ndfu_path = run_helper.human_ndfu_path(cache_dir, stem)
+        if not ndfu_path.exists():
+            print(
+                f"{name}: {ndfu_path} not found; run the dataset's human "
+                "script first. Skipping."
+            )
+            continue
+        ndfu_df = pd.read_csv(ndfu_path)
+        pairs = _match_ndfu_to_ratings(ndfu_df, ratings)
+        if pairs.empty:
+            print(
+                f"{name}: {len(ndfu_df)} nDFU values and {len(ratings)} "
+                "ratings, but none could be matched; check that the ids / "
+                f"texts agree (nDFU comment examples: "
+                f"{ndfu_df['comment'].head(3).tolist()}, rating item_id "
+                f"examples: {ratings[RATING_KEY_COLUMN].head(3).tolist()})."
+            )
+        records.append(
+            {
+                "Dataset": name,
+                "n_rated": len(ratings),
+                **_correlation_stats(pairs["ndfu"], pairs[RATING_COLUMN]),
+            }
+        )
+    return pd.DataFrame(
+        records,
+        columns=["Dataset", "n_rated", "n", "spearman_rho", "kendall_tau"],
+    )
+
+
+def ndfu_rating_correlation_to_latex(
+    cache_dir: Path, ratings_path: Path, output_path: Path, label: str
+) -> None:
+    """
+    LaTeX table of the correlation between the human per-comment nDFU and
+    the polarization ratings: one row per dataset with the number of
+    comments, Spearman's rho and Kendall's tau-b (two decimals).
+    """
+    corr_df = compute_ndfu_rating_correlations(
+        cache_dir, load_polarization_ratings(ratings_path)
+    )
+    if corr_df.empty:
+        print(
+            "No human nDFU values could be matched to the polarization "
+            f"ratings; skipping {output_path}."
+        )
+        return
+
+    table = pd.DataFrame(
+        {
+            "Dataset": corr_df["Dataset"],
+            "$n$": corr_df["n"].astype(str),
+            r"Spearman $\rho$": trim_numeric_col_latex(
+                corr_df["spearman_rho"], ".2f"
+            ),
+            r"Kendall $\tau_b$": trim_numeric_col_latex(
+                corr_df["kendall_tau"], ".2f"
+            ),
+        }
+    ).replace("_", r"\_", regex=True)
+
+    caption = (
+        r"Correlation between the per-comment \ac{ndfu} of the human "
+        "annotations and the polarization ratings, per dataset. $n$ is the "
+        r"number of comments with both an \ac{ndfu} and a rating."
+    )
+    latex_str = table.to_latex(
+        caption=caption,
+        label=label,
+        position="t",
+        escape=False,
+        index=False,
+        column_format="lrrr",
+    )
+    latex_str = small_table_latex(center_table_latex(latex_str))
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(latex_str)
+    print(f"Table exported to {output_path.resolve()}")
+
+
 def plot_sample_size_polarization(csv_path: Path, output_path: Path):
     df = pd.read_csv(csv_path)
 
@@ -563,6 +778,22 @@ if __name__ == "__main__":
         help=("Path to the Kumar dataset."),
     )
     parser.add_argument(
+        "--cache-dir",
+        help=(
+            "Directory with the human nDFU files written by the human "
+            "scripts (required with --ratings-path)."
+        ),
+    )
+    parser.add_argument(
+        "--ratings-path",
+        help=(
+            "Optional CSV with columns dataset, item_id, text and "
+            "polarization_rating. If given, a table of the correlation "
+            "between the human per-comment nDFU and these ratings is "
+            "exported."
+        ),
+    )
+    parser.add_argument(
         "--latex-output-dir",
         required=True,
         help="Directory for the latex tables.",
@@ -582,4 +813,6 @@ if __name__ == "__main__":
         popquorn_offensiveness_path=Path(args.popquorn_path),
         latex_output_dir=Path(args.latex_output_dir),
         graph_output_dir=Path(args.graph_output_dir),
+        cache_dir=Path(args.cache_dir) if args.cache_dir else None,
+        ratings_path=Path(args.ratings_path) if args.ratings_path else None,
     )

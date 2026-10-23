@@ -11,6 +11,7 @@ def main(
     dataset_path: Path,
     output_dir: Path,
     graph_output_dir: Path,
+    cache_dir: Path,
 ):
     output_dir.mkdir(parents=True, exist_ok=True)
     graph_output_dir.mkdir(parents=True, exist_ok=True)
@@ -31,6 +32,10 @@ def main(
     run_helper.write_inherent_polarization_subsampled(
         ds, output_dir, name=name, n_repeats=100
     )
+
+    ndfu_path = run_helper.human_ndfu_path(cache_dir, name)
+    if not skip_if_exists(ndfu_path):
+        run_helper.write_human_ndfu(ds, ndfu_path)
 
     results_path = output_dir / f"{name}-results.csv"
     if not skip_if_exists(results_path):
@@ -59,9 +64,15 @@ if __name__ == "__main__":
         required=True,
         help="Directory for graphs.",
     )
+    parser.add_argument(
+        "--cache-dir",
+        required=True,
+        help="Directory for cached computations (e.g. human nDFU).",
+    )
     args = parser.parse_args()
     main(
         dataset_path=Path(args.dataset_path),
         output_dir=Path(args.output_dir),
         graph_output_dir=Path(args.graph_output_dir),
+        cache_dir=Path(args.cache_dir),
     )

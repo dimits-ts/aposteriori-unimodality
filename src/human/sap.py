@@ -4,9 +4,15 @@ from pathlib import Path
 from ..lib import graphs
 from ..lib.preprocessing import SapDataset
 from ..lib import run_helper
+from ..lib.util import skip_if_exists
 
 
-def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
+def main(
+    dataset_path: Path,
+    output_dir: Path,
+    graph_output_dir: Path,
+    cache_dir: Path,
+):
     graphs.graph_setup()
     ds = SapDataset(dataset_path=dataset_path)
 
@@ -19,6 +25,10 @@ def main(dataset_path: Path, output_dir: Path, graph_output_dir: Path):
     run_helper.write_inherent_polarization_subsampled(
         ds, output_dir, name="sap"
     )
+
+    ndfu_path = run_helper.human_ndfu_path(cache_dir, "sap")
+    if not skip_if_exists(ndfu_path):
+        run_helper.write_human_ndfu(ds, ndfu_path)
 
     res = run_helper.run_all_results(ds)
     res.to_csv(output_dir / "sap-results.csv")
@@ -45,9 +55,15 @@ if __name__ == "__main__":
         required=True,
         help="Directory for graphs.",
     )
+    parser.add_argument(
+        "--cache-dir",
+        required=True,
+        help="Directory for cached computations (e.g. human nDFU).",
+    )
     args = parser.parse_args()
     main(
         dataset_path=Path(args.dataset_path),
         output_dir=Path(args.output_dir),
         graph_output_dir=Path(args.graph_output_dir),
+        cache_dir=Path(args.cache_dir),
     )

@@ -1033,6 +1033,8 @@ We use a single Quadro RTX 6000 GPU for tasks requiring small (7-8B) models and 
 	\input{generated/llm-consistency-cross-model.tex}
 	
 	\input{generated/llm-consistency-cross-model-excluding.tex}
+	
+	\input{generated/ndfu_rating_correlations.tex}
 \end{center}
 
 We examine the following conditions for selecting models and datasets for our LLM annotation experiment. All ablation experiments use a sampled 20\% fraction of the full LLM annotation dataset used in the main text.
@@ -1042,6 +1044,10 @@ We examine the following conditions for selecting models and datasets for our LL
 \paragraph{The LLMs should be prompt insensitive} Small changes in the prompt have been shown to drastically affect LLM output in some tasks depending on the experimental setup \citep{razavi_sensitivity}. In order to verify whether any models are unreliable under our setup, we create two alternative formulations of each prompt without a change in substance using a GPT-5 model (free version), whose outputs we manually verified (see App.~\ref{app:prompts}). Table~\ref{tab:llm-consistency-variants} shows that while most LLMs are relatively robust to changes in formulation, the smaller ones (OLMo-7B, Qwen-7B and LLaMa-8B) are not. They are thus excluded from the annotation study.
 
 \paragraph{The annotation guidelines should be unambiguous} The studies that provided the datasets used in our work (see \S\ref{sec:datasets}) do not include LLM annotation, nor equivalent LLM prompts, which meant we had to generate them from the human annotation guidelines ourselves. This was not a problem in the case of the Sap and Kumar datasets, since the annotation guidelines were short, simple and required minimal edits to be transformed into LLM annotation guidelines. However, the DICES datasets use poorly documented guidelines and the target label we used is an aggregation of multiple annotation tasks. For these reasons the prompt creation is non-trivial and prone to errors. Indeed, Table~\ref{tab:llm-consistency-cross-model} shows that inter-model agreement is extremely low for the DICES datasets, even when we remove the sensitive models (Table~\ref{tab:llm-consistency-cross-model-excluding}). Given that the DICES datasets are (1) problematic w.r.t. inherent polarization (see App.~\ref{app:unpol}), (2) conditioned on several dozen annotations per item (3) difficult to find reliable annotation prompts for LLMs, we decided to exclude them from the annotation study.
+
+\paragraph{Can we Infer Polarization Using Text?} Table~\ref{tab:ndfu-rating-correlations}
+
+
 
 
 \subsection{LLM Annotation Results}
