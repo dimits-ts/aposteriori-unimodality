@@ -43,7 +43,7 @@ import numpy as np
 import pandas as pd
 
 from ..lib import graphs
-from ..lib.util import skip_if_exists
+from ..lib.util import skip_if_exists, stable_seed
 from .plots import (
     DETECTION_RATE_LABEL,
     EFFECT_SIZE_LABEL,
@@ -53,13 +53,11 @@ from .plots import (
     panel_rows,
     plot_detection_panel,
 )
-from .shared import (
-    ALPHA,
+from .methods import ALPHA, run_methods
+from .simulation import (
     DELTAS,
     SIMULATION_BIDIRECTIONAL,
     SIMULATION_UNIDIRECTIONAL,
-    _run_methods,
-    _seed,
     simulate,
 )
 
@@ -165,7 +163,7 @@ def _one(job, n_items):
     """
     n_ann, minority, delta, rep = job
 
-    seed = _seed(n_ann, minority, delta, rep)
+    seed = stable_seed(n_ann, minority, delta, rep)
 
     # Use child RNGs derived from the same seed so that the two
     # simulations are independent but still deterministic.
@@ -205,7 +203,7 @@ def _one(job, n_items):
             "apunim",
         ),
     ]:
-        for method, stat, pvalue in _run_methods(
+        for method, stat, pvalue in run_methods(
             matrix, groups, rep, apunim_label
         ):
             method_rows.append(

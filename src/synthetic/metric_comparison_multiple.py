@@ -53,7 +53,7 @@ import numpy as np
 import pandas as pd
 
 from ..lib import graphs
-from ..lib.util import skip_if_exists
+from ..lib.util import skip_if_exists, stable_seed
 from .plots import (
     DETECTION_RATE_LABEL,
     EFFECT_SIZE_LABEL,
@@ -63,13 +63,11 @@ from .plots import (
     panel_rows,
     plot_detection_panel,
 )
-from .shared import (
-    ALPHA,
+from .methods import ALPHA, run_methods
+from .simulation import (
     DELTAS,
     SIMULATION_BIDIRECTIONAL,
     SIMULATION_UNIDIRECTIONAL,
-    _run_methods,
-    _seed,
     simulate_multigroup,
 )
 
@@ -143,7 +141,7 @@ def _one_multigroup(job, n_items):
     """
     k, n_ann, minority, delta, rep = job
 
-    seed = _seed(k, n_ann, minority, delta, rep)
+    seed = stable_seed(k, n_ann, minority, delta, rep)
 
     rng_uni = np.random.default_rng(seed ^ 0xABCD1234)
     rng_bi = np.random.default_rng(seed ^ 0xDCBA4321)
@@ -161,9 +159,7 @@ def _one_multigroup(job, n_items):
         (matrix_uni, groups_uni, SIMULATION_UNIDIRECTIONAL),
         (matrix_bi, groups_bi, SIMULATION_BIDIRECTIONAL),
     ]:
-        for method, stat, pvalue in _run_methods(
-            matrix, groups, rep, "apunim"
-        ):
+        for method, stat, pvalue in run_methods(matrix, groups, rep, "apunim"):
             method_rows.append(
                 (
                     k,

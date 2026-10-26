@@ -8,7 +8,7 @@ For every dataset and every SDB (sociodemographic background) column, each
 method is run once and produces a single (stat, pvalue) pair. The results are
 cached in one CSV with one row per (dataset, SDB feature, method).
 
-Methods (labels match shared.METHOD_ORDER):
+Methods (labels match methods.METHOD_ORDER):
 
     apunim, Krippendorff delta-alpha, aposteriori unimodality (2024),
     chi-squared (Akhtar et al. 2019)
@@ -20,7 +20,7 @@ store annotations per comment.
 A LaTeX table (ticks / crosses per method and SDB feature, Bonferroni-
 corrected across the features of each dataset) is exported from the cache.
 
-The methods in shared.py expect a dense annotators x items matrix. Real data
+The methods in methods.py expect a dense annotators x items matrix. Real data
 is ragged (each comment has its own annotators), so this module contains
 long-format versions of the methods:
 
@@ -49,14 +49,13 @@ from ..lib.preprocessing import (
     PopquornDataset,
     SapDataset,
 )
-from ..lib.util import skip_if_exists
-from .shared import (
+from ..lib.util import skip_if_exists, stable_seed
+from .methods import (
     ALPHA,
-    TABLE_LABEL,
     METHOD_ORDER,
-    _alpha,
-    _seed,
+    TABLE_LABEL,
     apunim_min_pvalue,
+    krippendorff_alpha,
 )
 
 KUMAR_NUM_SAMPLES = 1_000
@@ -303,13 +302,19 @@ def _one(job) -> list[tuple]:
         (
             METHOD_DELTA_ALPHA,
             *method_delta_alpha(
-                values, groups, codes, _seed(name, feature, "delta-alpha")
+                values,
+                groups,
+                codes,
+                stable_seed(name, feature, "delta-alpha"),
             ),
         ),
         (
             METHOD_ORIGINAL_AU,
             *method_original_au(
-                values, groups, codes, _seed(name, feature, "original-au")
+                values,
+                groups,
+                codes,
+                stable_seed(name, feature, "original-au"),
             ),
         ),
         (METHOD_CHI2, *method_chi2_variance(values, groups)),
@@ -366,7 +371,7 @@ def _pad(values, codes, n_comments):
 
 
 def method_apunim(values, groups, codes):
-    """shared.apunim_min_pvalue, with the rating levels read from the data."""
+    """methods.apunim_min_pvalue, with the rating levels read from the data."""
     return apunim_min_pvalue(
         values, groups, codes, num_bins=_num_bins(values), seed=42
     )
@@ -374,7 +379,7 @@ def method_apunim(values, groups, codes):
 
 def _safe_alpha(matrix):
     try:
-        return _alpha(matrix)
+        return krippendorff_alpha(matrix)
     except ValueError:
         return np.nan
 

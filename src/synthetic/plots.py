@@ -4,8 +4,8 @@ metric_comparison_multiple.py.
 
 Each script keeps its own figure layout; this module draws the panels and
 builds the legend entries so both figures encode methods and simulations
-identically. Kept separate from shared.py so the simulation workers do not
-import matplotlib / seaborn.
+identically. Kept separate from simulation.py and methods.py so the
+simulation workers do not import matplotlib / seaborn.
 """
 
 import matplotlib.pyplot as plt
@@ -13,17 +13,23 @@ import pandas as pd
 import seaborn as sns
 
 from ..lib import graphs
-from .shared import (
-    LEGEND_LABEL,
-    METHOD_ORDER,
-    SIMULATION_BIDIRECTIONAL,
-    SIMULATION_LEGEND_LABEL,
-    SIMULATION_LINESTYLE,
-    SIMULATION_UNIDIRECTIONAL,
-)
+from .methods import LEGEND_LABEL, METHOD_ORDER
+from .simulation import SIMULATION_BIDIRECTIONAL, SIMULATION_UNIDIRECTIONAL
 
 
 SIMULATIONS = [SIMULATION_UNIDIRECTIONAL, SIMULATION_BIDIRECTIONAL]
+
+# Line styles keyed by simulation label.
+SIMULATION_LINESTYLE = {
+    SIMULATION_UNIDIRECTIONAL: "--",
+    SIMULATION_BIDIRECTIONAL: "-",
+}
+
+# Human-readable legend labels for simulation types.
+SIMULATION_LEGEND_LABEL = {
+    SIMULATION_UNIDIRECTIONAL: "Unidirectional",
+    SIMULATION_BIDIRECTIONAL: "Bidirectional",
+}
 # Unidirectional lines are faded so the bidirectional ones stand out.
 SIMULATION_ALPHA = {
     SIMULATION_UNIDIRECTIONAL: 0.3,
@@ -52,7 +58,8 @@ def order_methods(methods: list[str]) -> list[str]:
 def panel_rows(
     df: pd.DataFrame, methods: list[str], **conditions
 ) -> pd.DataFrame:
-    """Rows of one panel, e.g. panel_rows(df, methods, n_ann=20, minority=0.2)."""
+    """Rows of one panel, e.g.
+    panel_rows(df, methods, n_ann=20, minority=0.2)."""
     mask = df["method"].isin(methods)
     for column, value in conditions.items():
         mask &= df[column] == value
@@ -78,7 +85,7 @@ def plot_detection_panel(
 
 def _detection_line(
     ax, sim_df: pd.DataFrame, method_idx: int, simulation: str
-):
+) -> None:
     sns.lineplot(
         data=sim_df,
         x="delta",
@@ -149,15 +156,13 @@ def add_simulation_legend(fig, below=None) -> None:
 def _bottom_of(fig, artist) -> float:
     """Bottom edge of an artist, in figure coordinates."""
     fig.draw_without_rendering()
-    return (
-        artist.get_window_extent().transformed(fig.transFigure.inverted()).y0
-    )
+    extent = artist.get_window_extent()
+    return extent.transformed(fig.transFigure.inverted()).y0
 
 
 def _method_color(method_idx: int):
-    return graphs.COLORBLIND_PALETTE[
-        method_idx % len(graphs.COLORBLIND_PALETTE)
-    ]
+    palette = graphs.COLORBLIND_PALETTE
+    return palette[method_idx % len(palette)]
 
 
 def _method_marker(method_idx: int):

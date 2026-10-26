@@ -1,4 +1,5 @@
 import re
+import zlib
 from pathlib import Path
 
 import pandas as pd
@@ -14,6 +15,15 @@ def skip_if_exists(path: Path) -> bool:
         print(f"Skipping (already exists): {path}")
         return True
     return False
+
+
+def stable_seed(*args) -> int:
+    """
+    Deterministic seed across processes and runs, derived from args.
+    hash() is salted per process, so use crc32 instead.
+    """
+    key = "|".join(str(a) for a in args).encode()
+    return zlib.crc32(key)
 
 
 def center_table_latex(latex_str: str) -> str:
