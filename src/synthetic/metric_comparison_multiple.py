@@ -49,19 +49,24 @@ from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
 import pandas as pd
 
 from ..lib import graphs
 from ..lib.util import skip_if_exists
+from .plots import (
+    DETECTION_RATE_LABEL,
+    EFFECT_SIZE_LABEL,
+    add_simulation_legend,
+    method_legend_handles,
+    order_methods,
+    panel_rows,
+    plot_detection_panel,
+)
 from .shared import (
     ALPHA,
     DELTAS,
-    LEGEND_LABEL,
-    METHOD_ORDER,
     SIMULATION_BIDIRECTIONAL,
-    SIMULATION_LINESTYLE,
     SIMULATION_UNIDIRECTIONAL,
     _run_methods,
     _seed,
@@ -229,12 +234,8 @@ def plot(rows, methods, out_path):
     """
     Plot detection rates faceted by k, one panel per (k, condition).
     """
-    methods = [m for m in METHOD_ORDER if m in methods] + [
-        m for m in methods if m not in METHOD_ORDER
-    ]
-
+    methods = order_methods(methods)
     df = pd.DataFrame(rows)
-    colors = graphs.COLORBLIND_PALETTE
 
     # Build ordered list of (k, n_ann, minority) panels
     panels = [
@@ -254,83 +255,39 @@ def plot(rows, methods, out_path):
     axes = axes.ravel()
 
     for ax, (k, n_ann, minority) in zip(axes, panels):
-        condition_df = df[
-            (df["k"] == k)
-            & (df["n_ann"] == n_ann)
-            & (df["minority"] == minority)
-            & (df["method"].isin(methods))
-        ]
-
-        for i, method in enumerate(methods):
-            method_df = condition_df[condition_df["method"] == method]
-
-            if len(method_df) == 0:
-                continue
-
-            for simulation in [
-                SIMULATION_UNIDIRECTIONAL,
-                SIMULATION_BIDIRECTIONAL,
-            ]:
-                sim_df = method_df[method_df["simulation"] == simulation]
-                opacity = 0.3 if simulation == SIMULATION_UNIDIRECTIONAL else 1
-
-                if len(sim_df) == 0:
-                    continue
-
-                sns.lineplot(
-                    data=sim_df,
-                    x="delta",
-                    y="detected",
-                    estimator="mean",
-                    errorbar="se",
-                    marker=graphs.MARKERS[i % len(graphs.MARKERS)],
-                    color=colors[i % len(colors)],
-                    linestyle=SIMULATION_LINESTYLE[simulation],
-                    lw=1.4,
-                    ms=3.8,
-                    err_style="bars",
-                    err_kws={"capsize": 3},
-                    ax=ax,
-                    legend=False,
-                    alpha=opacity,
-                )
-
-        ax.set_xlabel("")
-        ax.set_ylabel("")
-        ax.set_title(_condition_title(k, n_ann, minority))
-        ax.set_ylim(-0.04, 1.08)
+        plot_detection_panel(
+            ax,
+            panel_rows(df, methods, k=k, n_ann=n_ann, minority=minority),
+            methods,
+            title=_condition_title(k, n_ann, minority),
+        )
 
     for ax in axes[len(panels) :]:
         ax.set_visible(False)
 
-    method_handles = [
-        plt.Line2D(
-            [0],
-            [0],
-            color=colors[i % len(colors)],
-            marker=graphs.MARKERS[i % len(graphs.MARKERS)],
-            linestyle="-",
-            lw=1.4,
-            ms=4.5,
-            label=LEGEND_LABEL.get(m, m),
-        )
-        for i, m in enumerate(methods)
-    ]
-
-    fig.legend(
-        handles=method_handles,
-        loc="lower center",
-        title="Method",
-        ncols=len(method_handles),
-    )
+    _legends(fig, methods)
 
     fig.suptitle(
         "Multi-group ablation: detection when one of k groups drives polarization"
     )
-    fig.supylabel("Detection rate")
-    fig.supxlabel(r"Maximum group effect size $\delta$")
+    fig.supylabel(DETECTION_RATE_LABEL)
+    fig.supxlabel(EFFECT_SIZE_LABEL)
 
     graphs.save_plot(out_path)
+
+
+def _legends(fig, methods):
+    """Method legend in one row below the shared x-label, with the
+    simulation legend beneath it."""
+    method_handles = method_legend_handles(methods)
+    method_legend = fig.legend(
+        handles=method_handles,
+        loc="upper center",
+        bbox_to_anchor=(0.5, 0),
+        title="Method",
+        ncols=len(method_handles),
+    )
+    add_simulation_legend(fig, below=method_legend)
 
 
 if __name__ == "__main__":

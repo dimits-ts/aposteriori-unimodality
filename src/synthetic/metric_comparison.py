@@ -12,13 +12,13 @@ where g_i ~ Uniform(-1/2, 0) for Group A and g_i ~ Uniform(0, 1/2) for
 Group B, drawn once per annotator. The simulations differ only in how p_j
 is sampled:
 
-    Unidirectional (solid lines):
+    Unidirectional (dashed, faded lines):
         p_j ~ Uniform(0, delta)
 
         The group effect is always positive: Group B always rates higher
         than Group A, though by a varying amount across items.
 
-    Bidirectional (dashed lines):
+    Bidirectional (solid lines):
         p_j ~ Uniform(-delta, delta)
 
         The direction of the group effect varies across items, so groups
@@ -39,19 +39,24 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 from matplotlib.transforms import Bbox
-import seaborn as sns
 import numpy as np
 import pandas as pd
 
 from ..lib import graphs
 from ..lib.util import skip_if_exists
+from .plots import (
+    DETECTION_RATE_LABEL,
+    EFFECT_SIZE_LABEL,
+    add_simulation_legend,
+    method_legend_handles,
+    order_methods,
+    panel_rows,
+    plot_detection_panel,
+)
 from .shared import (
     ALPHA,
     DELTAS,
-    LEGEND_LABEL,
-    METHOD_ORDER,
     SIMULATION_BIDIRECTIONAL,
-    SIMULATION_LINESTYLE,
     SIMULATION_UNIDIRECTIONAL,
     _run_methods,
     _seed,
@@ -344,20 +349,17 @@ def plot(rows, methods, out_path, panel_titles=None):
     Columns  ->  minority share (labelled above the top row)
     Titles   ->  free-form, supplied via `panel_titles` (one per entry in
                  CONDITIONS, in the same order)
-    Arrows   ->  "Ideal -> Realistic" left of the rows,
-                 "Ideal -> Minority" above the columns
+    Arrows   ->  ROW_ARROW_LABELS left of the rows,
+                 COL_ARROW_LABELS above the columns
 
     Visual encoding
     ---------------
     Color  + marker  ->  method
-    Line style       ->  simulation type (solid = unidirectional, dashed = bidirectional)
+    Line style       ->  simulation type (dashed and faded = unidirectional,
+                         solid = bidirectional)
     """
-    methods = [m for m in METHOD_ORDER if m in methods] + [
-        m for m in methods if m not in METHOD_ORDER
-    ]
-
+    methods = order_methods(methods)
     df = pd.DataFrame(rows)
-    colors = graphs.COLORBLIND_PALETTE
 
     n_rows, n_cols = len(ROW_VALUES), len(COL_VALUES)
 
@@ -396,53 +398,14 @@ def plot(rows, methods, out_path, panel_titles=None):
     for k, (n_ann, minority) in enumerate(CONDITIONS):
         r = ROW_VALUES.index(n_ann)
         c = COL_VALUES.index(minority)
-        ax = axes[r, c]
         occupied.add((r, c))
 
-        condition_df = df[
-            (df["n_ann"] == n_ann)
-            & (df["minority"] == minority)
-            & (df["method"].isin(methods))
-        ]
-
-        for i, method in enumerate(methods):
-            method_df = condition_df[condition_df["method"] == method]
-
-            if len(method_df) == 0:
-                continue
-
-            for simulation in [
-                SIMULATION_UNIDIRECTIONAL,
-                SIMULATION_BIDIRECTIONAL,
-            ]:
-                sim_df = method_df[method_df["simulation"] == simulation]
-                opacity = 0.3 if simulation == SIMULATION_UNIDIRECTIONAL else 1
-
-                if len(sim_df) == 0:
-                    continue
-
-                sns.lineplot(
-                    data=sim_df,
-                    x="delta",
-                    y="detected",
-                    estimator="mean",
-                    errorbar="se",
-                    marker=graphs.MARKERS[i % len(graphs.MARKERS)],
-                    color=colors[i % len(colors)],
-                    linestyle=SIMULATION_LINESTYLE[simulation],
-                    lw=1.4,
-                    ms=3.8,
-                    err_style="bars",
-                    err_kws={"capsize": 3},
-                    ax=ax,
-                    legend=False,
-                    alpha=opacity,
-                )
-
-        ax.set_xlabel("")
-        ax.set_ylabel("")
-        ax.set_title(panel_titles[k] if panel_titles is not None else "")
-        ax.set_ylim(-0.04, 1.08)
+        plot_detection_panel(
+            axes[r, c],
+            panel_rows(df, methods, n_ann=n_ann, minority=minority),
+            methods,
+            title=panel_titles[k] if panel_titles is not None else "",
+        )
 
     # Margin labels: rows on the left (first column), columns on top.
     # Row labels use the y-label slot and column labels are anchored to the
@@ -480,44 +443,31 @@ def plot(rows, methods, out_path, panel_titles=None):
     for ax in empty_axes:
         ax.axis("off")
 
-    method_handles = [
-        plt.Line2D(
-            [0],
-            [0],
-            color=colors[i % len(colors)],
-            marker=graphs.MARKERS[i % len(graphs.MARKERS)],
-            linestyle="-",
-            lw=1.4,
-            ms=4.5,
-            label=LEGEND_LABEL.get(m, m),
-        )
-        for i, m in enumerate(methods)
-    ]
-
-    # Host the legend in the first empty grid cell; fall back to a
-    # figure-level legend if the grid happens to be full.
-    if empty_axes:
-        empty_axes[0].legend(
-            handles=method_handles,
-            loc="center",
-            title="Method",
-            ncol=2,
-        )
-    else:
-        fig.legend(
-            handles=method_handles,
-            loc="lower right",
-            title="Method",
-        )
+    _legends(fig, empty_axes, methods)
 
     fig.suptitle(
         "Efficacy of IAA and Other Prior Methods on "
         "Systematic Disagreement Attribution"
     )
-    fig.supylabel("Detection rate (higher=better)")
-    fig.supxlabel("Opinion (Mean Rating) Difference Among Groups")
+    fig.supylabel(DETECTION_RATE_LABEL)
+    fig.supxlabel(EFFECT_SIZE_LABEL)
 
     graphs.save_plot(out_path)
+
+
+def _legends(fig, empty_axes, methods):
+    """Method legend in the first empty grid cell (figure-level if the grid
+    happens to be full); the cell is too small to also hold the simulation
+    legend, which goes below the figure as in the multi-group plot."""
+    method_handles = method_legend_handles(methods)
+    if empty_axes:
+        empty_axes[0].legend(
+            handles=method_handles, loc="center", title="Method", ncol=2
+        )
+    else:
+        fig.legend(handles=method_handles, loc="lower right", title="Method")
+
+    add_simulation_legend(fig)
 
 
 if __name__ == "__main__":
