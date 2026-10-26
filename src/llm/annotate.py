@@ -1,5 +1,7 @@
 import argparse
+import logging
 import os
+import sys
 import math
 import copy
 from pathlib import Path
@@ -20,6 +22,9 @@ from ..lib.preprocessing import (
     PopquornDataset,
 )
 
+logger = logging.getLogger("annotate")
+
+LOG_FORMAT = "%(asctime)s %(levelname)s [%(name)s] %(message)s"
 SEED = 42
 MAX_NEW_TOKENS = 3
 MAX_CTX_TOKENS = 512
@@ -56,6 +61,18 @@ def main(
     transformers.set_seed(SEED)
     rng = np.random.default_rng(SEED)
 
+    logger.info(
+        "Starting run: dataset=%s, prompt=%s, model=%s, num_annotators=%d, "
+        "batch_size=%d, sample_fraction=%s, no_persona=%s",
+        dataset_key,
+        instruction_prompt_path,
+        model_name,
+        num_annotators,
+        batch_size,
+        sample_fraction,
+        no_persona,
+    )
+
     ds = load_dataset(dataset_key, dataset_path)
     template = instruction_prompt_path.read_text()
     # in case I forget
@@ -69,6 +86,10 @@ def main(
     # In the no-persona condition every annotator receives the identical
     # prompt; variation comes only from sampling (do_sample=True).
     value_pools = None if no_persona else get_subgroup_value_pools(ds)
+    if value_pools is not None:
+        _warn_if_persona_capped(value_pools, num_annotators)
+
+    logger.info("Loading model %s", model_name)
     generator = load_generator(model_name)
 
     base_n = len(ds.get_dataset())
@@ -81,6 +102,12 @@ def main(
         ds,
         n_samples,
         rng,
+    )
+    logger.info(
+        "Annotating %d of %d comments from %s",
+        len(packets),
+        base_n,
+        ds.get_name(),
     )
 
     rows = []
@@ -122,6 +149,52 @@ def main(
         output_path,
         index=False,
     )
+    logger.info("Wrote %d annotations to %s", len(rows), output_path)
+
+
+def setup_logging(log_file: Path | None) -> None:
+    """Log to stderr and, if given, append to log_file. Warnings from
+    transformers / huggingface_hub and Python warnings go through the same
+    handlers, so they reach the log file too."""
+    handlers = [logging.StreamHandler()]
+    if log_file is not None:
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        handlers.append(
+            logging.FileHandler(log_file, mode="a", encoding="utf-8")
+        )
+
+    # WARNING at the root keeps chatty INFO loggers (e.g. HTTP clients) out.
+    logging.basicConfig(
+        level=logging.WARNING, format=LOG_FORMAT, handlers=handlers, force=True
+    )
+    logger.setLevel(logging.INFO)
+    logging.captureWarnings(True)
+    _route_library_logs()
+
+
+def _route_library_logs() -> None:
+    """The HF libraries attach their own stderr handlers; drop them and let
+    records propagate to the root handlers instead (avoids duplicates)."""
+    transformers.logging.disable_default_handler()
+    transformers.logging.enable_propagation()
+
+    hub_logger = logging.getLogger("huggingface_hub")
+    hub_logger.handlers.clear()
+    hub_logger.propagate = True
+
+
+def _warn_if_persona_capped(
+    value_pools: dict[str, list], num_annotators: int
+) -> None:
+    total = _count_possible_personas(value_pools)
+    if total < num_annotators:
+        logger.warning(
+            "Only %d distinct personas are possible; each comment gets %d "
+            "annotators instead of the requested %d.",
+            total,
+            total,
+            num_annotators,
+        )
 
 
 def load_dataset(dataset_key: str, dataset_path: Path) -> Dataset:
@@ -142,6 +215,9 @@ def load_generator(model_name: str):
         tokenizer=tok,
         device_map="auto",
     )
+    # The model's generation_config sets max_length, which clashes with the
+    # max_new_tokens passed to generate() and warns on every call.
+    generator.model.generation_config.max_length = None
     if tok.pad_token is None:
         tok.pad_token = tok.eos_token
     return generator
@@ -513,17 +589,32 @@ if __name__ == "__main__":
             "persona runs with the same --sample-fraction."
         ),
     )
+    parser.add_argument(
+        "--log-file",
+        default=None,
+        help=(
+            "If set, append log messages (including library warnings and "
+            "errors) to this file, in addition to stderr. The progress bar "
+            "is shown on the terminal only."
+        ),
+    )
 
     args = parser.parse_args()
+    setup_logging(Path(args.log_file) if args.log_file else None)
 
-    main(
-        dataset_key=args.dataset,
-        dataset_path=Path(args.dataset_path),
-        instruction_prompt_path=Path(args.instruction_prompt_path),
-        model_name=args.model_name,
-        output_path=Path(args.output_path),
-        sample_fraction=args.sample_fraction,
-        batch_size=args.batch_size,
-        num_annotators=args.num_annotators,
-        no_persona=args.no_persona,
-    )
+    try:
+        main(
+            dataset_key=args.dataset,
+            dataset_path=Path(args.dataset_path),
+            instruction_prompt_path=Path(args.instruction_prompt_path),
+            model_name=args.model_name,
+            output_path=Path(args.output_path),
+            sample_fraction=args.sample_fraction,
+            batch_size=args.batch_size,
+            num_annotators=args.num_annotators,
+            no_persona=args.no_persona,
+        )
+    except Exception:
+        # Log the traceback so failures show up in the log file.
+        logger.exception("Annotation run failed")
+        sys.exit(1)

@@ -100,7 +100,7 @@ batch_size=20
 instructions_dir="instructions/main"                 # <dir>/<dataset>/*
 adv_instructions_dir="instructions/adversarial"      # <dir>/<dataset>/*
 ablation_instructions_dir="instructions/ablation"    # <dir>/<dataset>/* (paraphrases)
-no_persona_instructions_dir="instructions/main" # <dir>/<dataset>/*
+no_persona_instructions_dir="instructions/no_persona" # <dir>/<dataset>/*
 
 output_dir="output/llm/annotations"
 ablation_output_dir="output/llm/ablations"
@@ -187,12 +187,15 @@ run_annotation() {
     --output-path             "$output_path"
     --batch-size              "$batch_size"
     --num-annotators          "$n_annotators"
+    --log-file                "$target_log"
   )
   [ -n "$sample_fraction" ] && cmd+=(--sample-fraction "$sample_fraction")
   [ -n "$no_persona" ] && cmd+=(--no-persona)
 
-  "${cmd[@]}" 2>&1 | tee -a "$target_log"
-  local status=${PIPESTATUS[0]}
+  # annotate.py writes its own log (incl. library warnings and tracebacks)
+  # to $target_log; the progress bar stays on the terminal only.
+  "${cmd[@]}"
+  local status=$?
 
   if [ "$status" -ne 0 ]; then
     echo "FAILED (exit ${status}): ${label}" | tee -a "$target_log"
