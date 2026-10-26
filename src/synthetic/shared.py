@@ -54,12 +54,20 @@ METHOD_ORDER = [
     "GMM clustering (Checco/Mignemi)",
 ]
 
+# Labels for matplotlib figures. Matplotlib's LaTeX run does not load the
+# paper's acronym package, so \ac{...} cannot be used here.
 LEGEND_LABEL = {
     "apunim": "apunim (ours)",
     "Krippendorff delta-alpha": r"Krippendorff $\Delta\alpha$",
-    "aposteriori unimodality (2024)": r"\ac{au}",
+    "aposteriori unimodality (2024)": "AU",
     "chi-squared (Akhtar et al. 2019)": r"$\chi^2$",
     "GMM clustering (Checco/Mignemi)": "GMM",
+}
+
+# Labels for LaTeX tables included in the paper, where \ac{...} works.
+TABLE_LABEL = {
+    **LEGEND_LABEL,
+    "aposteriori unimodality (2024)": r"\ac{au}",
 }
 
 

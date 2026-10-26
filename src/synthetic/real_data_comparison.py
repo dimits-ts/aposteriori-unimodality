@@ -52,7 +52,7 @@ from ..lib.preprocessing import (
 from ..lib.util import skip_if_exists
 from .shared import (
     ALPHA,
-    LEGEND_LABEL,
+    TABLE_LABEL,
     METHOD_ORDER,
     _alpha,
     _seed,
@@ -150,7 +150,7 @@ def export_latex_table(df: pd.DataFrame, output_path: Path) -> None:
         )
     )
     methods = [m for m in METHOD_ORDER if m in table.columns]
-    table = table[methods].rename(columns=LEGEND_LABEL)
+    table = table[methods].rename(columns=TABLE_LABEL)
 
     # One table column per (dataset, SDB feature), in dataset order.
     features = list(table.index)
