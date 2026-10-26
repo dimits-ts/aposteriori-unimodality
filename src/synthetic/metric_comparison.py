@@ -8,7 +8,9 @@ Both simulations share the same generative model:
 
     y_ij = b_j + g_i * p_j + epsilon_ij
 
-and differ only in how p_j is sampled:
+where g_i ~ Uniform(-1/2, 0) for Group A and g_i ~ Uniform(0, 1/2) for
+Group B, drawn once per annotator. The simulations differ only in how p_j
+is sampled:
 
     Unidirectional (solid lines):
         p_j ~ Uniform(0, delta)
@@ -258,9 +260,6 @@ def run(out_csv: Path, n_items: int, n_reps: int, workers: int) -> None:
 
 
 def _bold(text):
-    # text.usetex is on, so fontweight="bold" is ignored; use \textbf per
-    # line instead (matplotlib lays out each line of a multi-line string
-    # separately, so the command must not span the newline).
     return "\n".join(rf"\textbf{{{line}}}" for line in text.split("\n"))
 
 
@@ -271,7 +270,7 @@ def _row_label(n_ann):
 def _col_label(minority):
     return _bold(
         f"{int(round(minority * 100))}\\%-"
-        f"{int(round((1-minority) * 100))}\\% split"
+        f"{int(round((1-minority) * 100))}\\% group sizes"
     )
 
 

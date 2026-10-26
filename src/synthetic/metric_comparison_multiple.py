@@ -6,12 +6,17 @@ is responsible for it, and the rest behave identically.
 
 Generative model:
 
-    y_ij = b_j + mu_{g_i, j} + epsilon_ij
+    y_ij = b_j + h_i * mu_{g_i, j} + epsilon_ij
 
 where:
 
     b_j:
         Baseline rating for item j, drawn from Uniform(2.5, 3.5).
+
+    h_i:
+        Annotator-specific strength ~ Uniform(0, 1), drawn once per
+        annotator, so polarizing annotators differ in how strongly they
+        shift.
 
     mu_{g, j}:
         Group- and item-specific offset (Option B).
@@ -267,9 +272,7 @@ def plot(rows, methods, out_path):
                 SIMULATION_BIDIRECTIONAL,
             ]:
                 sim_df = method_df[method_df["simulation"] == simulation]
-                opacity = (
-                    0.3 if simulation == SIMULATION_UNIDIRECTIONAL else 1
-                )
+                opacity = 0.3 if simulation == SIMULATION_UNIDIRECTIONAL else 1
 
                 if len(sim_df) == 0:
                     continue
@@ -318,7 +321,7 @@ def plot(rows, methods, out_path):
         handles=method_handles,
         loc="lower center",
         title="Method",
-        ncols=len(method_handles)
+        ncols=len(method_handles),
     )
 
     fig.suptitle(

@@ -116,7 +116,11 @@ def simulate(
             Baseline rating for item j, drawn from Uniform(2.5, 3.5).
 
         g_i:
-            Group membership: -1/2 for group A, +1/2 for group B.
+            Annotator-specific group loading, drawn once per annotator:
+            g_i ~ Uniform(-1/2, 0) for group A,
+            g_i ~ Uniform(0, 1/2) for group B.
+            Groups always pull in opposite directions, but annotators
+            within a group differ in how strongly.
 
         p_j:
             Item-specific polarization effect.
@@ -136,12 +140,22 @@ def simulate(
     else:
         polarization = rng.uniform(-delta, delta, size=n_items)
 
-    group_code = np.where(groups == "B", 0.5, -0.5)
+    group_code = _group_codes(groups, rng)
     shift = group_code[:, None] * polarization[None, :]
     vals = rng.normal(base[None, :] + shift, sigma)
     vals = np.clip(np.round(vals), 1, N_LEVELS)
 
     return vals, groups
+
+
+def _group_codes(groups, rng):
+    """g_i ~ Uniform(-1/2, 0) for group A and Uniform(0, 1/2) for group B."""
+    n_ann = len(groups)
+    return np.where(
+        groups == "B",
+        rng.uniform(0, 0.5, size=n_ann),
+        rng.uniform(-0.5, 0, size=n_ann),
+    )
 
 
 def simulate_multigroup(
@@ -159,12 +173,18 @@ def simulate_multigroup(
 
     Model:
 
-        y_ij = b_j + mu_{g_i, j} + epsilon_ij
+        y_ij = b_j + h_i * mu_{g_i, j} + epsilon_ij
 
     where:
 
         b_j:
             Baseline rating for item j, drawn from Uniform(2.5, 3.5).
+
+        h_i:
+            Annotator-specific strength, drawn once per annotator from
+            Uniform(0, 1). Annotators in the polarizing group all shift in
+            the same direction, but by differing amounts (mirrors g_i in
+            simulate). Irrelevant for non-polarizing groups (mu = 0).
 
         mu_{g, j}:
             Group- and item-specific offset (Option B).
@@ -191,7 +211,8 @@ def simulate_multigroup(
         else:
             pol_effect = rng.uniform(-delta, delta, size=n_items)
 
-        shift[pol_mask] = pol_effect[None, :]
+        strength = rng.uniform(0, 1, size=pol_mask.sum())
+        shift[pol_mask] = strength[:, None] * pol_effect[None, :]
 
     vals = rng.normal(base[None, :] + shift, sigma)
     vals = np.clip(np.round(vals), 1, N_LEVELS)
