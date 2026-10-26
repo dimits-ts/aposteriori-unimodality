@@ -47,7 +47,6 @@ from ..lib.util import skip_if_exists, stable_seed
 from .plots import (
     DETECTION_RATE_LABEL,
     EFFECT_SIZE_LABEL,
-    add_simulation_legend,
     method_legend_handles,
     order_methods,
     panel_rows,
@@ -455,8 +454,11 @@ def plot(rows, methods, out_path, panel_titles=None):
 
 def _legends(fig, empty_axes, methods):
     """Method legend in the first empty grid cell (figure-level if the grid
-    happens to be full); the cell is too small to also hold the simulation
-    legend, which goes below the figure as in the multi-group plot."""
+    happens to be full).
+
+    There is no simulation (line style) legend: at the graphs default font
+    sizes it does not fit in the cell next to the method legend, so line
+    styles are explained in the caption instead."""
     method_handles = method_legend_handles(methods)
     if empty_axes:
         empty_axes[0].legend(
@@ -464,8 +466,6 @@ def _legends(fig, empty_axes, methods):
         )
     else:
         fig.legend(handles=method_handles, loc="lower right", title="Method")
-
-    add_simulation_legend(fig)
 
 
 if __name__ == "__main__":

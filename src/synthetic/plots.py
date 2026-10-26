@@ -37,8 +37,8 @@ SIMULATION_ALPHA = {
 }
 
 LINE_WIDTH = 1.4
-MARKER_SIZE = 3.8
-LEGEND_MARKER_SIZE = 4.5
+MARKER_SIZE = 7
+LEGEND_MARKER_SIZE = 9
 Y_LIM = (-0.04, 1.08)
 # Simulation legend entries are neutral so they read as line styles only.
 SIMULATION_LEGEND_COLOR = "black"
