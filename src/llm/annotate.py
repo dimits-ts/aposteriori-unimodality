@@ -10,8 +10,7 @@ import pandas as pd
 import torch
 import transformers
 from tqdm.auto import tqdm
-from transformers import pipeline
-from transformers import DynamicCache, pipeline
+from transformers import AutoTokenizer, DynamicCache, pipeline
 
 from ..lib.preprocessing import (
     SapDataset,
@@ -47,6 +46,7 @@ def main(
     batch_size: int,
     num_annotators: int,
     sample_fraction: float | None = None,
+    no_persona: bool = False,
 ):
     # Toggle to True if VRAM is under durress
     os.environ.setdefault(
@@ -66,7 +66,9 @@ def main(
             "the user message via PERSONA_SUFFIX."
         )
 
-    value_pools = get_subgroup_value_pools(ds)
+    # In the no-persona condition every annotator receives the identical
+    # prompt; variation comes only from sampling (do_sample=True).
+    value_pools = None if no_persona else get_subgroup_value_pools(ds)
     generator = load_generator(model_name)
 
     base_n = len(ds.get_dataset())
@@ -107,6 +109,7 @@ def main(
                 rng=rng,
                 batch_size=batch_size,
                 num_annotators=num_annotators,
+                no_persona=no_persona,
             )
         )
 
@@ -126,14 +129,19 @@ def load_dataset(dataset_key: str, dataset_path: Path) -> Dataset:
 
 
 def load_generator(model_name: str):
-    kwargs = {"fix_mistral_regex": True} if "mistral" in model_name.lower() else {}
+    # pipeline() has no tokenizer_kwargs argument, so loader flags must be
+    # passed by loading the tokenizer ourselves. fix_mistral_regex is a no-op
+    # for tokenizers that aren't affected.
+    kwargs = (
+        {"fix_mistral_regex": True} if "mistral" in model_name.lower() else {}
+    )
+    tok = AutoTokenizer.from_pretrained(model_name, **kwargs)
     generator = pipeline(
         "text-generation",
         model=model_name,
+        tokenizer=tok,
         device_map="auto",
-        tokenizer_kwargs=kwargs
     )
-    tok = generator.tokenizer
     if tok.pad_token is None:
         tok.pad_token = tok.eos_token
     return generator
@@ -225,16 +233,17 @@ def format_persona(persona: dict[str, str]) -> str:
 
 def build_messages(
     template: str,
-    persona: dict[str, str],
+    persona: dict[str, str] | None,
     text: str,
 ) -> list[dict]:
+    """If persona is None (no-persona condition), the user message is just
+    the comment text, with no PERSONA_SUFFIX appended."""
+    content = text
+    if persona is not None:
+        content += PERSONA_SUFFIX.format(persona=format_persona(persona))
     return [
         {"role": "system", "content": template},
-        {
-            "role": "user",
-            "content": text
-            + PERSONA_SUFFIX.format(persona=format_persona(persona)),
-        },
+        {"role": "user", "content": content},
     ]
 
 
@@ -386,16 +395,23 @@ def annotate_comment(
     rng: np.random.Generator,
     batch_size: int,
     num_annotators: int,
+    no_persona: bool = False,
 ) -> list[dict]:
     """
     Sample up to n distinct personas for this comment,
     then generate one annotation per persona in batches.
+
+    If no_persona is set, num_annotators identical persona-less prompts are
+    used instead, so annotations differ only through sampling.
     """
-    personas = sample_personas(
-        value_pools=value_pools,
-        n=num_annotators,
-        rng=rng,
-    )
+    if no_persona:
+        personas = [None] * num_annotators
+    else:
+        personas = sample_personas(
+            value_pools=value_pools,
+            n=num_annotators,
+            rng=rng,
+        )
 
     batch = [
         build_messages(template=template, persona=p, text=text)
@@ -403,17 +419,22 @@ def annotate_comment(
     ]
     annotations = generate_annotations(generator, batch, batch_size)
 
-    return [
-        {
+    rows = []
+    for i, (persona, annotation) in enumerate(zip(personas, annotations)):
+        row = {
             "model": model_name,
             "instruction_prompt": prompt_name,
             "text_id": text_id,
             "text": text,
-            **persona,
-            "annotation": annotation,
         }
-        for persona, annotation in zip(personas, annotations)
-    ]
+        if persona is None:
+            # No SDB columns exist; an index keeps annotators distinguishable.
+            row["annotator_id"] = i
+        else:
+            row.update(persona)
+        row["annotation"] = annotation
+        rows.append(row)
+    return rows
 
 
 if __name__ == "__main__":
@@ -480,6 +501,18 @@ if __name__ == "__main__":
         required=True,
         help="Number of persona prompts per forward pass.",
     )
+    parser.add_argument(
+        "--no-persona",
+        action="store_true",
+        help=(
+            "Run the no-persona baseline: no sociodemographic persona is "
+            "appended to the prompt, and each comment is annotated "
+            "--num-annotators times with the identical prompt (variation "
+            "comes only from sampling). Output has an annotator_id column "
+            "instead of SDB columns. Comments sampled are the same as in "
+            "persona runs with the same --sample-fraction."
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -492,4 +525,5 @@ if __name__ == "__main__":
         sample_fraction=args.sample_fraction,
         batch_size=args.batch_size,
         num_annotators=args.num_annotators,
+        no_persona=args.no_persona,
     )
