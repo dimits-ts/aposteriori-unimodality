@@ -9,7 +9,7 @@
 \usepackage{pifont}
 \usepackage{booktabs}
 \usepackage{float}
-\usepackage{acronym}
+\usepackage{acro}
 \usepackage{tabularx}
 \usepackage{hyperref}
 \usepackage{url}
@@ -41,6 +41,23 @@
 	\newtheorem{researchquestion}{RQ}
 }
 
+\acsetup{make-links}
+
+\DeclareAcronym{iaa}{short = IAA, long = Inter-Annotator Agreement}
+\DeclareAcronym{sdd}{short = SDD, long = SocioDemographic Dimension}
+\DeclareAcronym{au}{short = AU, long = A Posteriori Unimodality}
+\DeclareAcronym{sysdis}{short = SD, long = Systematic Disagrement}
+\DeclareAcronym{atsysdis}{short = ASD, long = Attributable Systematic Disagrement}
+\DeclareAcronym{unpol}{short = USD, long = Unnatributtable Systematic Disagreement}
+\DeclareAcronym{ndfu}{short = nDFU, long = normalized Distance From Unimodality}
+\DeclareAcronym{nlp}{short = NLP, long = Natural Language Processing}
+\DeclareAcronym{gpl}{short = GPLv3, long = GNU General Public Licence v3}
+\DeclareAcronym{aa}{short = AA, long = African American}
+\DeclareAcronym{hs}{short = HS, long = Hate Speech}
+\DeclareAcronym{gmm}{short = GMM, long = Gaussian Mixture Model}
+\DeclareAcronym{dc}{short = DC, long = Data Coverage}
+\DeclareAcronym{gc}{short = GC, long = Group Coverage}
+\DeclareAcronym{ad}{short = AD, long = Annotation Density}
 
 \newcommand{\warning}[1]{\textcolor{ACMRed}{\textbf{#1}}}
 \newcommand{\sigyes}{\checked}
@@ -118,7 +135,7 @@
 \ccsdesc[100]{Social and professional topics~Age}
 \ccsdesc[100]{Computing methodologies~Language resources}
 
-\keywords{Polarization, Clustering, Annotation, Sociodemographic Characteristics, Persona-Prompting}
+\keywords{Polarization, Clustering, Annotation, Sociodemographic Characteristics, Persona-Prompting, LLM Bias}
 
 \maketitle
 
@@ -169,13 +186,11 @@ Overall, our work indicates that persona-prompting can not be used by itself to 
 %TODO: Gated release section in EC
 We also release a PyPI library implementing our measure and our annotated datasets to aid future research in this topic.\footnote{See Ethical Considerations for export measures relating to gated-release datasets.} All code, environment details, data-processing scripts and our library are released anonymously: library \librarylink, HTML documentation \doclink, replication code \explink. 
 
-\makeatletter
-\AC@reset{unpol}
-\makeatother
-
 \begin{center}
 	\noindent\warning{Content Warning: Controversial and potentially harmful speech is used for demonstration purposes.}
 \end{center}
+
+\acreset{unpol}
 
 
 \section{Background and Related Work}
@@ -269,51 +284,63 @@ A brief overview of the dataset characteristics is provided in Table \ref{tab:da
 \section{Empirically Testing Proposed Methods}
 \label{sec:methods}
 
-\subsection{On Synthetic Data}
-
-\begin{figure}[t]
-	\centering
-	\includegraphics[width=\linewidth]{metric_comparison.png}
-	\caption{\ac{atsysdis} on synthetic distributions. When \ac{atsysdis} exists, the mean of the normal distributions shifts according to the value of the x-axis. The y-axis shows the accuracy of each method when attempting to recover the (known) \ac{sdd} causing polarization. Bars indicate standard error. Dashed lines show the results of a simplified experimental setup, where disagreement always has the same direction.}
-	\label{fig:measures}
-\end{figure}
-
-\paragraph{Experimental Setup} We compare the effectiveness of our method (introduced in \S\ref{sec:apunim}), the \ac{au} framework proposed by \citet{pavlopoulos-likas-2024}, the $\chi^2$ method presented in \citet{akhtar_2019}, \ac{gmm} clustering used in \citet{checco_2017}, and a baseline using \ac{iaa} ($\Delta \alpha$ Krippendorff) on simulated distributions (App.~\ref{app:experiments} for details and assumptions). We use bootstrapping to determine whether a score is statistically significant. Since we construct the distributions, we have knowledge of the \emph{ground-truth} for which \ac{sdd} is explains \ac{atsysdis} (which is not the case for real-life or LLM annotations), which we can inject to test whether it is correctly attributed by each method.
-
-%TODO: Update this with new results
-\paragraph{Generating \ac{atsysdis}} We assume that the annotations for each item $j$  are clustered around a baseline rating $b_j$ (e.g., $b_j=5$ for an obviously toxic comment on a toxicity scale of 1--5). Each annotation is then assigned a random value $\epsilon_{ij}$ which represents general disagreement, and a group-specific value which is shared by all annotators of the same \ac{sdd} group and which represents \ac{atsysdis}. Assuming two groups, the \ac{atsysdis} effect is calculated as $g_i p_j$, where $g_i \in \{-\frac{1}{2}, +\frac{1}{2}\}$ denotes group identity (we can assume that the effect of polarization is different for each annotator, representing how each human internalizes group identity differently.) and $p_j$ controls the magnitude of \ac{atsysdis}. Therefore, annotations are generated according to $y_{ij} = b_j + g_i p_j + \epsilon_{ij}$.
-
-The $p_j$ variable represents our assumptions about real-life polarization.  We therefore sample $p_j$ instead of  We use two simulation setups that differ only in how $p_j$ is defined:
-\begin{enumerate*}
-	\item \textbf{Unidirectional}: $p_j \sim \text{Uniform}(0, \delta)$. The group effect always favors the same group across all items, though its magnitude varies per item.
-	
-	\item \textbf{Bidirectional}: $p_j \sim \text{Uniform}(-\delta, +\delta)$. The direction of the group effect can vary across items, so that groups may systematically disagree in opposite directions on different items.
-\end{enumerate*}
-
-\paragraph{Results} As shown in Fig.~\ref{fig:measures}, \emph{both the $\chi^2$ and \ac{gmm} methods generally fail} at attributing \ac{atsysdis} to any group. \ac{iaa} remains usable when many annotators are available, but underperforms in cases where the examined group is a minority and when a few annotators are available per item (a common case among \ac{nlp} datasets---see \S\ref{sec:datasets}).\footnote{While this figure explores a case with only two groups, ablations with $k=\{3,5,10\}$ groups per \ac{sdd} can be found in App.~\ref{app:ablation}; Fig.~\ref{fig:measures-multiple}.}
-
-
 \subsection{On Real Data}
 
 \input{generated/real_data_comparison.tex}
 
-Table~\ref{tab:real-data-methods} shows a comparison between the different methods when applied to the five datasets introduced in \S\ref{sec:datasets}. The \ac{gmm} method is not run, as it requires the exact same annotators to annotate the items in each dataset, which is not the case for any of our datasets. This limitation makes the test extremely restrictive in realistic annotation settings. We explain our own method in \S\ref{sec:apunim}, as the focus of this experiment is the behavior of other measures on real data.
+We first test prior methods of attributing \ac{atsysdis} to our real-life, human-annotated datasets. Through this comparison we aim to both explore the datasets themselves by finding \acp{sdd} on which multiple methods attribute \ac{atsysdis} and as a sanity-check on the methods themselves.
 
-We find that the \ac{au} method completely fails to attribute polarization to any \ac{sdd}, while the $\chi^2$ method attributes it to every single one. The latter can be explained by the assumptions made by the test; namely that annotations can be pooled across items (discussed in the next section), as well as the power of the test which inflates p-values when the number of observations is large enough. Out of all prior methodologies, \ac{iaa} using Krippendorff's $\alpha$ seems to be the only way of obtaining any results for only a subset of datasets.
+\paragraph{Methods Considered} We compare the effectiveness of our method (introduced in \S\ref{sec:apunim}), the \ac{au} framework proposed by \citet{pavlopoulos-likas-2024}, the $\chi^2$ method presented in \citet{akhtar_2019}, \ac{gmm} clustering used in \citet{checco_2017}, and a baseline using \ac{iaa} ($\Delta \alpha$ Krippendorff) on simulated distributions. In this case, the \ac{gmm} method is not run, as it requires the exact same annotators to annotate the items in each dataset, which is not the case for any of our datasets.\footnote{Regardless of empirical results, this limitation makes the \ac{gmm} method extremely restrictive in realistic annotation settings.}
+
+\paragraph{Results} Table~\ref{tab:real-data-methods} shows whether each of the methods attributes \ac{atsysdis} and on which \acp{sdd}. We observe that:
+\begin{enumerate*}
+	\item Two of the proposed methodologies do not yield any meaningful results. The \ac{au} method fails to find any \ac{atsysdis} attribution pattern in \emph{any} of the \acp{sdd} in any of the datasets, while the $\chi^2$ method reports that \ac{atsysdis} can be attributed \emph{all-but-one} \ac{sdd}.
+	
+	\item In contrast, both \ac{iaa} and our own method report some shared findings across the DICES-350, DICES-990 and Sap datasets, while neither reports any attributable \acp{sdd} in Kumar. In fact, we observe that attributable \acp{sdd} (namely \textit{Education, Race, Gender}) are commonly shared between datasets.
+	
+	\item Unlike \ac{iaa}, own method finds that the POPQUORN dataset does have \acp{sdd} on which \ac{atsysdis} can be attributed.
+\end{enumerate*} 
+The fact that \emph{three of the four currently proposed \ac{atsysdis} attribution metrics are not usable} in any of our datasets is troubling and requires investigation.
 
 
-\subsection{The Issue of Inter-Item Annotation Aggregation}
+\subsection{Diagnosing Proposed Methods With Synthetic Data}
 
 \begin{figure}[t]
 	\centering
-	\includegraphics[width=0.32\linewidth]{ndfu_comment1.png}
-	\includegraphics[width=0.32\linewidth]{ndfu_comment2.png}
-	\includegraphics[width=0.32\linewidth]{ndfu_discussion.png}
-	\caption{Synthetic experiment showing two comments with annotators disagreeing about which one is toxic. Instead of comparing two unimodal distributions (comments viewed separately) with two bimodal distributions (their aggregated annotations), we end up comparing two bimodal distributions during aggregation, obscuring the source of the polarization (explained by gender, but not shown).}
+	\includegraphics[width=\linewidth]{metric_comparison.png}
+	\caption{\ac{atsysdis} attribution quality on synthetic distributions. The x-axis represents the gap in opinion between groups ($\delta$ parameter used in $p_j$). Higher is easier to detect. The y-axis shows the accuracy of each method when attempting to recover the (known) \ac{sdd} causing \ac{atsysdis}. We find that both \ac{iaa} and other proposed methods struggle when presented with realistic annotation scenarios, while our method remains consistent. Dashed lines show the results of a simplified experimental setup, where each group always prefers higher ratings than the other in all items and bars indicate standard error.}
+	\label{fig:measures}
+\end{figure}
+
+\paragraph{Generating \ac{atsysdis}} In both real-life human and LLM annotation we lack a ground truth for \ac{atsysdis}. This limitation can be circumvented by constructing annotation distributions by hand, since we can know which \ac{sdd} explains \ac{atsysdis} and can test whether it is correctly attributed by each method. Additionally, by constructing these distributions we can test these methods in specific annotation scenarios reflected by our choice of parameters. We define an annotation $y_{ij}$ by annotator $i$ for item $j$ as $y_{ij} = b_j + g_i p_j + \epsilon_{ij}$, where:
+\begin{itemize}
+	\item $b_j$  represents a baseline rating around which all annotations for an item $j$  are clustered  (e.g., $b_j=5$ for an obviously toxic comment on a toxicity scale of 1--5).
+	
+	\item $g_i \sim \text{Uniform}(0, \frac{1}{2})$ denotes group identity. We use sampling to represent each annotator internalizing group identity differently.
+	
+	\item $p_j$ represents real-life group polarization. We use two different formulations:
+	\begin{enumerate*}
+		\item \textbf{Unidirectional}: $p_j \sim \text{Uniform}(0, \delta)$. The group always favors higher ratings across all items, though its magnitude varies per item.
+		
+		\item \textbf{Bidirectional}: $p_j \sim \text{Uniform}(-\delta, +\delta)$. Annotators of the same group use systematically higher ratings in some items and lower in others. See Fig.~\ref{fig:ndfu_discussion} for an example.
+	\end{enumerate*}
+	
+	\item $\epsilon_{ij} \sim N(0, 1.8)$ represents general disagreement. 
+\end{itemize}
+We use bootstrapping to determine whether a score is statistically significant and counts as a detection. For each experiment, we create $200$ items across $40$ independent runs, used to calculate standard error. Our hypothetical \ac{sdd} features two groups, although ablations for $k=\{3,5,10\}$ groups per \ac{sdd} are shown in Fig~\ref{fig:measures-multiple} in App.~\ref{app:ablation}.
+
+\paragraph{Sensitivity to per-Item Annotation Counts} Fig.~\ref{fig:measures} shows the performance of each method on our synthetic annotations. \ac{iaa} (orange squares) performs exceptionally in the case of eighty annotators per item even when differences in opinion (y-axis) are small (top-left). \ac{iaa} however requires a larger difference in opinion to detect \ac{atsysdis} when twenty annotators are available (middle-left) and collapses when only six annotators are available per item (bottom left). \ac{iaa} is also sensitive to the size of the compared groups; detection performance degrades significantly when we compare a minority group (16 vs. 64 annotators; plots on the right). On the other hand, the \ac{au} method (blue diamonds) only detects polarization when eighty annotators per item are available and differences in opinion are quantitatively large (top-left), but is resistant to minority group scenarios (top-right). This result is expected; \ac{au} utilizes clustering and is therefore largely invariant to the sizes of the opinion clusters. However, its absolute definition of \ac{atsysdis} attribution (\S\ref{sec:related}) renders it sensitive to noisy opinion histograms, which are common when few annotators per item exist.
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=\linewidth]{ndfu_discussion.png}
+	\caption{Synthetic experiment showing two comments with annotators disagreeing about which one is toxic. Instead of comparing two unimodal distributions (comments viewed separately) with two bimodal distributions (their aggregated annotations), we end up comparing two bimodal distributions during aggregation, obscuring the source of the polarization (explained by gender, but not shown). This is true both for means-effects models, and \ac{ndfu} comparisons between groups.}
 	\label{fig:ndfu_discussion}
 \end{figure}
 
-In Fig.~\ref{fig:measures} we observed that the simple statistical approaches show excellent performance when all groups are polarized in the same way. This is expected, since their assumption of a consistent, fixed means effects, is violated in the second experimental setup. Specifically, both $\chi^2$ and \ac{gmm} aggregate across items before looking for group differences; $\chi^2$ pools all annotations into a single contingency table, while \ac{gmm} clusters annotators by their mean rating across items. In both cases, opposite-direction effects (see Fig.~\ref{fig:ndfu_discussion}) cancel out in the aggregate, making the two groups appear statistically indistinguishable. We can confirm the persistence of this issue using \ac{ndfu} \citep{pavlopoulos-likas-2024}, which is another representation of polarization (Eq.~\ref{eq:ndfu}) in Fig.~\ref{fig:ndfu_discussion}, which shows that two items polarized for the opposite reason may lead to a false negative. We avoid this issue in \S\ref{sec:apunim} by computing annotation statistics item-by-item.
+\paragraph{Inter-Item Annotation Aggregation} The $\chi^2$ and \ac{gmm} methods (green upright and yellow reverse triangles respectively) generally fail at attributing \ac{atsysdis} to any group in the bidirectional polarization scenario (solid lines). However, when defining polarization unidirectionally (dashed, faded lines), they perform exceptionally. This observation suggests that these metrics assume that across items, ratings of group A have a different average than group B. This assumption is valid for the unidirectional polarization scenario, but not the bidirectional one.\footnote{We control for our assumption of a non-fixed $g_i$ group polarization effect via the ablation shown in Fig.~\ref{fig:measures-fixed} in App.~\ref{app:ablation}.} Specifically, $\chi^2$ pools all annotations into a single contingency table, while \ac{gmm} clusters annotators by their mean rating across items. Fig.~\ref{fig:ndfu_discussion} shows a synthetic scenario where both approaches would fail, as bidirectional polarization effects cancel out in the aggregate, making the two groups appear statistically indistinguishable.
+
+\paragraph{Results} Overall, our results suggest that \emph{current metrics for \ac{atsysdis} attribution are sensitive to one or more conditions that may occur in realistic annotation setups} for subjective \ac{nlp} datasets. \ac{iaa} is sensitive to minority groups, which are the subject of many content moderation tasks, but are not evenly represented in most datasets (see Tables~\ref{tab:dices-stats},\ref{tab:sap-stats},\ref{tab:kumar-stats} in App.~\ref{app:ann_details}) and on low annotator counts per item (also common, see Table~\ref{tab:datasets}). The latter is also required by \ac{au}.
 
 \begin{finding}
 	\label{finding:methods}
@@ -548,23 +575,7 @@ We stress that our measure functions strictly as a diagnostic warning signal. An
 
 \section {Acronyms}
 
-\begin{acronym}[WWW]
-	\acro{iaa}[IAA]{Inter-Annotator Agreement}
-	\acro{sdd}[SDD]{SocioDemographic Dimension}
-	\acro{au}[AU]{A Posteriori Unimodality}
-	\acro{sysdis}[SD]{Systematic Disagrement}
-	\acro{atsysdis}[ASD]{Attributable Systematic Disagrement}
-	\acro{unpol}[USD]{Unnatributtable Systematic Disagreement}
-	\acro{ndfu}[nDFU]{normalized Distance From Unimodality}
-	\acro{nlp}[NLP]{Natural Language Processing}
-	\acro{gpl}[GPLv3]{GNU General Public Licence v3}
-	\acro{aa}[AA]{African American}
-	\acro{hs}[HS]{Hate Speech}
-	\acro{gmm}[GMM]{Gaussian Mixture Models}
-	\acro{dc}[DC]{Data Coverage}
-	\acro{gc}[GC]{Group Coverage}
-	\acro{ad}[AD]{Annotation Density}
-\end{acronym}
+\printacronyms
 
 
 \section{Exploratory Analysis}
@@ -876,7 +887,7 @@ Finally, we note that in Fig.~\ref{fig:std_error}, we removed values where there
 \paragraph{Filtering Ineligible items} Because \textit{apunim} is fundamentally designed to quantify polarization, we exclude items that exhibit no measurable polarization ($nDFU(c)=0$). Furthermore, we also exclude items annotated exclusively by a single group (i.e., items where there are no two groups with at least three annotators each), since we require valid histograms for the non-parametric estimation of \ac{ndfu} (see Eq.~\ref{eq:ndfu}). This is an unfortunately common scenario, since many \ac{nlp} datasets feature only $5-6$ annotations per item. In a best-case scenario of 5 annotators split evenly between two groups, we would get a 3-2 split.
 
 
-\section{Exploring UnPol}
+\section{Exploring \ac{unpol}}
 \label{app:unpol}
 
 \paragraph{Why Does it Exist?}
@@ -929,33 +940,65 @@ In order to investigate whether the numerous annotators per items can explain th
 
 \paragraph{How Does it Look Like?}
 Table~\ref{tab:inherent-examples} shows a random sample of items taken from the Sap dataset and their respective \ac{unpol} values (\S\ref{sec:methods}). Note that explicitly toxic or racist items tend to have \ac{unpol} values of zero, alongside clearly unproblematic items. Inversely, more ambiguous and less comprehensible items tend to have larger \ac{unpol} values. This pattern may suggest that \ac{unpol} may be tied to the overall ambiguity of the statements, especially in cases where items may either be interpreted as very toxic, or non-toxic, which agrees with the overall goal of \ac{ndfu} (\S\ref{sec:related}). We include the \ac{unpol} values for each individual item for all four datasets in the supplementary material.
- 
-
-\section{Experiments}
-
-\subsection{Synthetic Examples}
-\label{app:experiments}
-
-This appendix details the synthetic experiments used to illustrate the functionality and behavior of \ac{ndfu}. In all simulations, the bin size is set to $N_{bins}=10$.
-
-\paragraph{Disagreement vs. Polarization}
-To explore the relationship between annotation polarization and disagreement in Fig.~\ref{fig:disagreement-vs-polarization}, we constructed a $2 \times 2$ matrix of synthetic datasets, each drawing from a pool of $N_{annotators}=100$. Polarization is simulated by defining a minority group, which constitutes $20\%$ of the total annotators ($\text{n\_special}=20$). These minority annotators are assigned a targeted mean shift ($\text{mean\_shift}=1$) from the base distribution. The base variance for these distributions is set at $\text{variance}=0.3$. Different types of distributions (unimodal, bimodal, multimodal, uniform) are achieved by controlling the $\text{base\_means}$ and applying variance multipliers (e.g., $\text{variance} \times 3$ for multimodal).
-
-\paragraph{Discussion-Level Polarization}
-We examine \ac{ndfu} scores for three specific textual examples presented in Fig.~\ref{fig:ndfu_discussion}. For the individual items, $N_{annotators}=200$ for each group. In the first case (misogynist item), Men's scores are modeled with $\text{loc}=6$, while Women's scores are modeled with $\text{loc}=2$. In the second case (misandrist item), the roles are reversed. The third visualization combines distributions for men and women derived from the respective single-item distributions.
 
 
-\subsection{Ablations}
+\section{Ablations}
 \label{app:ablation}
 
+\subsection{Synthetic Experiments}
+
 \begin{figure}[t]
-	\includegraphics[width=\linewidth]{metric_comparison_multiple.png}
 	\centering
-	\caption{Polarization group attribution on synthetic distributions. Bars indicate standard error. The setup is identical to the one used for Fig.~\ref{fig:measures}, although in these experiments we consider multiple $k$ annotator groups for each item. Dashed lines show the results of a simplified polarization setup, where polarization always has the same direction.}
+	\includegraphics[width=\linewidth]{metric_comparison_multiple.png}
+	\caption{Detection rate of each method on synthetic data with $k$
+		annotator groups per item, only one of which is polarizing. The setup
+		is otherwise identical to Fig.~\ref{fig:measures}. Panel titles give
+		$k$, the number of annotators per item, and the share of annotators in
+		the polarizing group. Solid lines show bidirectional polarization;
+		dashed, faded lines show unidirectional polarization, where the effect
+		always has the same direction. Bars show the standard error.}
 	\label{fig:measures-multiple}
 \end{figure}
 
-\paragraph{Does Apunim Work for More than Two Groups?} We repeat the experiment comparing apunim to prior methodologies shown in Fig.~\ref{fig:measures} but generalized across multiple groups. As shown in Fig.~\ref{fig:measures-multiple}, apunim stays competitive even in the presence of multiple annotator groups. Note the increased efficiency of many methods when polarization is unidirectional. This pattern indicates that the challenges of bidirectional polarization severely limiting prior approaches may be generalizable to more than two groups.
+\paragraph{Multigroup Synthetic Experiments} We repeat the comparison of
+Fig.~\ref{fig:measures} with $k$ annotator groups per item, only one of
+which is polarizing. As Fig.~\ref{fig:measures-multiple} shows, apunim
+remains competitive with multiple groups. Most methods detect polarization
+more often when it is unidirectional, so the difficulty that bidirectional
+polarization poses for prior methods is likely not limited to two groups.
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=0.45\linewidth]{metric_comparison-fixed-group-effect.png}
+	\includegraphics[width=0.45\linewidth]{metric_comparison_multiple-fixed-group-effect.png}
+	\caption{The experiments of Fig.~\ref{fig:measures} (left) and
+		Fig.~\ref{fig:measures-multiple} (right), rerun with a fixed group
+		effect: every annotator in a group shifts by exactly the same amount
+		($g_i = \pm 1/2$, $h_i = 1$) instead of a sampled amount. All other
+		settings are unchanged. Solid lines show bidirectional polarization;
+		dashed, faded lines show unidirectional polarization. Bars show the
+		standard error.}
+	\label{fig:measures-fixed}
+\end{figure}
+
+\paragraph{Do Fixed Group Effects Affect our Experiments?} In our synthetic
+experiments, annotators within a group do not share the same opinion: each
+annotator's group effect is sampled, with $g_i \sim U(-1/2, 0)$ for one
+group and $g_i \sim U(0, 1/2)$ for the other. In the multigroup experiments,
+each annotator in the polarizing group has a strength $h_i \sim U(0, 1)$.
+To test whether our conclusions depend on this choice, we rerun both
+experiments with a fixed group effect, where every annotator in a group
+shifts by exactly the same amount ($g_i = \pm 1/2$ and $h_i = 1$). All other
+settings, including the conditions, $\delta$ values, and number of
+repetitions, are unchanged. Note that the fixed setting also doubles the
+expected difference between groups at a given $\delta$, so it is both more
+homogeneous and a stronger signal. Fig.~\ref{fig:measures-fixed} shows the
+results.
+% TODO: results
+
+
+
+\subsection{Dataset Sampling}
 
 \input{generated/kumar_sample_size_comparison.tex}
 
@@ -972,6 +1015,8 @@ We examine \ac{ndfu} scores for three specific textual examples presented in Fig
 Astute readers may notice that some variability does exist across differently sized samples for the same examined groups, where for example the sign of the apunim value may switch. We note that the statistically significant values (bold rows) change signs only when the apunim value approaches zero in the largest samples. Thus, the results are not inverted, but rather pushed towards zero. In order to verify that this variability is caused by the sample size, and not by different samples being drawn, we execute a further ablation study. Specifically, we execute the apunim study on the $3000$-sized sample of the dataset, using different subsets of the Kumar dataset. The results can be found in Fig.~\ref{fig:seeds}, where we note that variability is not an issue, except for a couple of cases. These cases seem to represent sparse annotator groups, where missing a few items may genuinely change the value of the apunim measure. These groups however are largely not detected by apunim as significant either way (see Table~\ref{tab:apunim-main}).
 
 
+\subsection{How Many Annotators Does Apunim Need?}
+
 \begin{figure}[t]
 	\centering
 	\includegraphics[width=\linewidth]{apunim_subsampling_robustness.png}
@@ -979,7 +1024,8 @@ Astute readers may notice that some variability does exist across differently si
 	\label{fig:std_error}
 \end{figure}
 
-\paragraph{How Many Annotators Does Apunim Need?} Fig.~\ref{fig:std_error} sows that non-statistically significant results from Table~\ref{tab:apunim-main} remain systematically close to zero, while statistically significant results can be distinguished from very small annotator counts (six annotators for well-balanced groups, $\approx 20$ for poorly split groups such as non-binary annotators in DICES-990). Sampling annotators with replacement also uncovers a new group which systematically disagrees with the others; the Non-Binary annotators in the POPQUORN and DICES-990 datasets. This group was undetectable when partitioning annotator groups with the methodology described in Eq.~\ref{eq:apunim} since only one item is annotated by three \emph{Non-Binary} annotators in POPQUORN and none for DICES-990, but sampling with replacement uncovers a very strong attribution. It is unclear whether this is a methodological artifact, or a new finding unexplored in prior analysis concerning these datasets.
+Fig.~\ref{fig:std_error} sows that non-statistically significant results from Table~\ref{tab:apunim-main} remain systematically close to zero, while statistically significant results can be distinguished from very small annotator counts (six annotators for well-balanced groups, $\approx 20$ for poorly split groups such as non-binary annotators in DICES-990). Sampling annotators with replacement also uncovers a new group which systematically disagrees with the others; the Non-Binary annotators in the POPQUORN and DICES-990 datasets. This group was undetectable when partitioning annotator groups with the methodology described in Eq.~\ref{eq:apunim} since only one item is annotated by three \emph{Non-Binary} annotators in POPQUORN and none for DICES-990, but sampling with replacement uncovers a very strong attribution. It is unclear whether this is a methodological artifact, or a new finding unexplored in prior analysis concerning these datasets.
+
 
 \section{LLM Annotation Procedure}
 \label{app:llms}
