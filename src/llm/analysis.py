@@ -484,6 +484,183 @@ def _comparison_keys(human_datasets) -> list[str]:
 # Cohen's d
 # ---------------------------------------------------------------------------
 
+# Dataset label of the unweighted mean over datasets in the compact table.
+COHENS_D_ALL_LABEL = "All"
+# Layout of the exported Cohen's d table: models as rows, one column group
+# per dataset, one column per prompt. Sized to fit a 455pt text width
+# without \resizebox.
+COHENS_D_FONT_SIZE = r"\footnotesize"
+COHENS_D_TABCOLSEP_PT = 1.5
+COHENS_D_GROUP_GAP_PT = 4
+# Shown for a (model, dataset) pair without results.
+COHENS_D_MISSING = "--"
+
+_TEX_SPECIALS = {
+    "\\": r"\textbackslash{}",
+    "&": r"\&",
+    "%": r"\%",
+    "$": r"\$",
+    "#": r"\#",
+    "_": r"\_",
+}
+
+
+def _tex_escape(text) -> str:
+    return "".join(_TEX_SPECIALS.get(char, char) for char in str(text))
+
+
+def _cohens_d_flat(compact: pd.DataFrame) -> pd.DataFrame:
+    """The compact table with Model and Dataset as columns, whether they
+    are its index or already columns."""
+    if {"Model", "Dataset"} <= set(compact.columns):
+        return compact.reset_index(drop=True)
+    return compact.reset_index()
+
+
+def _cohens_d_cell(value) -> str:
+    """Two decimals, a math minus for negative values, and
+    COHENS_D_MISSING for missing ones. Accepts numbers or strings."""
+    if not isinstance(value, str) and pd.isna(value):
+        return COHENS_D_MISSING
+    text = value.strip() if isinstance(value, str) else f"{value:.2f}"
+    if text in ("", "nan", "NaN"):
+        return COHENS_D_MISSING
+    return f"${text}$" if text.startswith("-") else text
+
+
+def _cohens_d_n_note(flat: pd.DataFrame) -> str:
+    """Caption sentence with the number of comments per dataset; models
+    whose count differs from the usual one are listed in parentheses."""
+    per_dataset = flat.loc[flat["Dataset"] != COHENS_D_ALL_LABEL]
+    parts = []
+    for dataset, group in per_dataset.groupby("Dataset", sort=False):
+        counts = pd.to_numeric(group["n"])
+        usual = int(counts.mode().iloc[0])
+        part = f"{_tex_escape(dataset)}: {usual}"
+        odd = group.loc[counts != usual]
+        if not odd.empty:
+            exceptions = ", ".join(
+                f"{_tex_escape(model)}: {int(n)}"
+                for model, n in zip(odd["Model"], odd["n"])
+            )
+            part += f" ({exceptions})"
+        parts.append(part)
+    if not parts:
+        return ""
+    return "Comments per model: " + "; ".join(parts) + "."
+
+
+def _cohens_d_missing_note(
+    flat: pd.DataFrame, models: list, datasets: list
+) -> str:
+    """Caption sentences for models without results on some datasets."""
+    present = set(zip(flat["Model"], flat["Dataset"]))
+    notes = []
+    for model in models:
+        missing = [
+            str(dataset)
+            for dataset in datasets
+            if dataset != COHENS_D_ALL_LABEL
+            and (model, dataset) not in present
+        ]
+        if missing:
+            notes.append(
+                f"{_tex_escape(model)} has no results for "
+                f"{_tex_escape(', '.join(missing))} ({COHENS_D_MISSING}), "
+                f"so its {COHENS_D_ALL_LABEL} is the mean over its "
+                "remaining datasets."
+            )
+    return " ".join(notes)
+
+
+def _cohens_d_header(datasets: list, prompts: list) -> list[str]:
+    """Dataset group row, the rules under it, and the rotated prompt row."""
+    groups, rules = [], []
+    for i, dataset in enumerate(datasets):
+        first = 2 + i * len(prompts)
+        last = first + len(prompts) - 1
+        groups.append(
+            rf"\multicolumn{{{len(prompts)}}}{{c}}{{{_tex_escape(dataset)}}}"
+        )
+        rules.append(rf"\cmidrule(lr){{{first}-{last}}}")
+    rotated = " & ".join(
+        rf"\rotatebox{{90}}{{{_tex_escape(prompt)}}}" for prompt in prompts
+    )
+    return [
+        " & " + " & ".join(groups) + r" \\",
+        "".join(rules),
+        "Model & " + " & ".join([rotated] * len(datasets)) + r" \\",
+    ]
+
+
+def _cohens_d_rows(
+    flat: pd.DataFrame, models: list, datasets: list, prompts: list
+) -> list[str]:
+    """One row per model; a dataset the model has no results for is
+    shown as COHENS_D_MISSING."""
+    values = flat.set_index(["Model", "Dataset"])[prompts]
+    rows = []
+    for model in models:
+        cells = []
+        for dataset in datasets:
+            if (model, dataset) in values.index:
+                cells += [
+                    _cohens_d_cell(v) for v in values.loc[(model, dataset)]
+                ]
+            else:
+                cells += [COHENS_D_MISSING] * len(prompts)
+        rows.append(f"{_tex_escape(model)} & " + " & ".join(cells) + r" \\")
+    return rows
+
+
+def export_cohens_d_table_latex(
+    compact: pd.DataFrame,
+    output_path: Path,
+    caption: str,
+    label: str,
+    note: str = "",
+) -> None:
+    """
+    Writes the Cohen's d table with models as rows and one column group
+    per dataset (one column per prompt), so it fits the text width without
+    \\resizebox. `compact` is stats.compute_cohens_d_compact_table's
+    output: (Model, Dataset) rows, an `n` column and one column per
+    prompt. The comment counts move from the `n` column to the caption.
+    """
+    flat = _cohens_d_flat(compact)
+    prompts = [c for c in flat.columns if c not in ("Model", "Dataset", "n")]
+    models = list(dict.fromkeys(flat["Model"]))
+    datasets = list(dict.fromkeys(flat["Dataset"]))
+
+    caption_parts = (
+        caption.strip(),
+        _cohens_d_n_note(flat),
+        _cohens_d_missing_note(flat, models, datasets),
+    )
+    full_caption = " ".join(part for part in caption_parts if part) + note
+
+    group_gap = rf"@{{\hspace{{{COHENS_D_GROUP_GAP_PT}pt}}}}"
+    col_spec = "l " + group_gap.join(["r" * len(prompts)] * len(datasets))
+
+    lines = [
+        r"\begin{table}[t]",
+        rf"\caption{{{full_caption}}}",
+        rf"\label{{{label}}}",
+        r"\centering",
+        COHENS_D_FONT_SIZE,
+        rf"\setlength{{\tabcolsep}}{{{COHENS_D_TABCOLSEP_PT}pt}}",
+        rf"\begin{{tabular}}{{{col_spec}}}",
+        r"\toprule",
+        *_cohens_d_header(datasets, prompts),
+        r"\midrule",
+        *_cohens_d_rows(flat, models, datasets, prompts),
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\end{table}",
+    ]
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text("\n".join(lines) + "\n")
+
 
 def _export_cohens_d_variant(
     res_df,
@@ -498,11 +675,12 @@ def _export_cohens_d_variant(
     if variant_df.empty:
         print(f"No Cohen's d results left{note}; skipping table.")
         return
-    stats.export_compact_prompt_table_latex(
+    export_cohens_d_table_latex(
         stats.compute_cohens_d_compact_table(variant_df),
         output_path=latex_output_dir / f"cohens_d{file_suffix}.tex",
-        caption=caption + note,
+        caption=caption,
         label=f"tab:cohens-d{label_suffix}",
+        note=note,
     )
 
 
@@ -511,9 +689,9 @@ def run_cohens_d_step(res_df, latex_output_dir, exclude_models):
     # dropping models from the results gives exactly the table one would
     # get by never running them.
     caption = r"""Cohen's d between the default and each adversarial
-        instruction prompt, computed on the per-comment \ac{ndfu}. Rows give
-        results per model, for each dataset separately and as the unweighted
-        mean over datasets (All); $n$ is the number of comments."""
+        instruction prompt, computed on the per-comment \ac{ndfu}. Results
+        are given per model, for each dataset separately and as the
+        unweighted mean over datasets (All)."""
     for file_suffix, label_suffix, note, models in _model_variants(
         exclude_models
     ):

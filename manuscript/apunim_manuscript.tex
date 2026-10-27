@@ -176,7 +176,7 @@ Furthermore, as human annotation is generally expensive, LLM-as-judge systems ar
 	Since we can not reliably used established approaches, we introduce a new measure which \emph{quantitatively} attributes \ac{sysdis} to specific \acp{sdd}, while being conscious of the limitations present in realistic annotation scenarios (Fig.~\ref{fig:measures}). 
 \end{researchquestion}
 
-\begin{researchquestion}[Which \ac{atsysdis} Patterns are Shared Between Human and LLM Annotators]
+\begin{researchquestion}[Do LLM Annotators Exhibit \ac{sysdis}, and If so, Which  Patterns are Shared Between Them and Humans?]
 	\label{rq:llm}
 	Unlike prior work which framed the question of LLM annotation reliability in terms of human-LLM agreement \citep{dong-etal-2024-llm, gomez-etal-2024-algorithmic, masud-etal-2024-hate} or task-specific performance \citep{gupta2024bias}, we compare human and LLM polarization patterns. We find that human \ac{atsysdis} is explained by gender and ethnicity across five real-life subjective datasets (Finding~\ref{finding:human}). On the other hand, while LLMs using persona-prompting \emph{can} produce polarized annotations, they fail to reproduce any \ac{atsysdis} patterns regardless of instruction prompt, confirming literature suggesting that persona prompting does not consistently influence LLM outputs in the examined tasks (Finding~\ref{finding:llms}).
 \end{researchquestion}
@@ -353,7 +353,7 @@ We use bootstrapping to determine whether a score is statistically significant a
 
 \subsection{Quantifying Attribution to Annotator Dimensions}
 
-We estimate polarization using \ac{ndfu} (see \S\ref{sec:related}; Eq.~\ref{eq:apunim}). Specifically, we measure the unimodality of each group $g$ for an item $c$ as $Pol_g(c) = \textit{nDFU}(A_g(c))$, where $A_g(c)$ is the set of annotations for item $c$ created by annotators belonging to a group $g$. We compare this quantity to the ``apriori'' polarization present in the item c, which is defined as the \emph{expected} (average) unimodality of theoretical groups $\mathrm{Pol}_{\textit{apr}}(c) = \frac{1}{k} \sum_{1}^{k}  \mathrm{nDFU}(A_{random}(c))$, where $A_{random}$ is a random partition and $k$ is a hyperparameter (higher $k$ yields more accurate estimation, at a greater computational cost). Intuitively, a high $\mathrm{Pol}_{\textit{apr}}(c)$ score means that much of the polarization is likely not driven by any single group. 
+We estimate \ac{sysdis} using \ac{ndfu} (see Eq.~\ref{eq:apunim}). Specifically, we measure the \ac{sysdis} of each group $g$ for an item $c$ as $Pol_g(c) = \textit{nDFU}(A_g(c))$, where $A_g(c)$ is the set of annotations for item $c$ created by annotators belonging to a group $g$. We compare this quantity to the ``apriori'' polarization present in the item $c$, which is defined as the \emph{expected} (average) unimodality of theoretical groups $\mathrm{Pol}_{\textit{apr}}(c) = \frac{1}{k} \sum_{1}^{k}  \mathrm{nDFU}(A_{random}(c))$, where $A_{random}$ is a set selected from a random partition of the original annotation set and $k$ is a hyperparameter (higher $k$ yields more accurate estimation, at a greater computational cost). Intuitively, a high $\mathrm{Pol}_{\textit{apr}}(c)$ score means that much of the \ac{sysdis} is likely not driven by any single group.
 
 Since the  $\mathrm{Pol}_{\textit{apr}}(c)$ and $Pol_g(c)$ quantities represent very noisy estimates due to the lack of annotators per item, a direct comparison would not be reliable. We therefore exploit the Law of Large Numbers to compute the statistic on the dataset level and average both quantities for all items in the dataset $D$. Normalizing this difference yields the measure described in Eq.~\ref{eq:ndfu}, which we call \emph{apunim}:
 
@@ -363,14 +363,13 @@ Since the  $\mathrm{Pol}_{\textit{apr}}(c)$ and $Pol_g(c)$ quantities represent 
 \end{equation}
 
 The \emph{sign} of apunim carries information agreement-based attribution does not:
-
 \begin{itemize}
-	\item$\textit{apunim}(g) \approx 0$: The group $g$ does not meaningfully disagree with the other annotators.
-	\item $\textit{apunim}(g) > 0$: The group $g$ has fundamental disagreements with the other annotators. 
+	\item$\textit{apunim}(g) \approx 0$: The group $g$ does not meaningfully disagree with the rest of the annotators.
+	\item $\textit{apunim}(g) > 0$: The group $g$ has fundamental disagreements with the rest of the annotators. 
 	\item $\textit{apunim}(g) < 0$: The annotators of group $g$ are polarized between themselves.
 \end{itemize}
 
-Apunim thus measures the degree to which an annotator group contributes to overall polarization in a set of items. As demonstrated in \S\ref{sec:methods}; Fig.~\ref{fig:measures}, our measure is robust to the number of annotators per item, opposing \ac{atsysdis} effects, and minority groups, validating our initial motivation. Furthermore, unlike some prior methods \citep{akhtar_2019, checco_2017}, apunim allows us to attribute \ac{atsysdis} to a specific group, not just a \ac{sdd} (e.g., only ``men'' instead of ``gender'' as a whole), allowing fine-grained analysis. We include a perturbation-based p-value estimation, which tests whether the observed apunim value of a group $g$ statistically surpasses that of random groups in App.~\ref{app:pvalue} and analyze theoretical design decisions, limitations and computational details in App.~\ref{app:design}.
+Apunim thus measures the degree to which  \ac{atsysdis} can be attributed to an annotator group in a set of items. As demonstrated in Fig.~\ref{fig:measures}, our measure is robust to few annotators per item and imbalanced (minority) group sizes. Furthermore, unlike some prior methods \citep{akhtar_2019, checco_2017}, apunim allows us to attribute \ac{atsysdis} to a specific group, not just a \ac{sdd} (e.g., only ``men'' instead of ``gender'' as a whole), allowing fine-grained analysis. We also include a perturbation-based p-value estimation which we describe in App.~\ref{app:apunim}, which also contains a discussion of theoretical design decisions, limitations and computational details.
 
 
 \subsection{How Are Humans Polarized?}
@@ -443,9 +442,9 @@ Apunim thus measures the degree to which an annotator group contributes to overa
 	\end{minipage}
 \end{table}
 
-\paragraph{Experimental Setup} Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \acp{sdd} can explain the \ac{atsysdis} shown in the five datasets (\S\ref{sec:datasets}). Statistically significant results are presented in Table~\ref{tab:apunim-main}.\footnote{The results are not necessarily contingent on a reliable p-value estimation, as non-statistically significant results have very low ($<0.01$) apunim values. A threshold on the apunim values would produce similar tables.} Note that our analysis is necessarily uni-dimensional due to the lack of annotation meta-data. App.~\ref{app:ablation}; Fig.~\ref{fig:std_error} shows that our results are \emph{robust to small annotator counts}, corroborating the synthetic experiments in Fig.~\ref{fig:measures}. See App.~\ref{app:software} for details on parameters and execution times and App.~\ref{app:full} for the full results.
+Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \acp{sdd} can explain the \ac{atsysdis} shown in the five datasets (\S\ref{sec:datasets}). Statistically significant results are presented in Table~\ref{tab:apunim-main}.\footnote{Full results, including non-significant values are available in Tables~\ref{tab:kumar-results},\ref{tab:sap-results},\ref{tab:dices-350-results},\ref{tab:dices-990-results} and \ref{tab:popquorn-results} in App.~\ref{app:full}.}\footnote{Fig.~\ref{fig:std_error} in App.~\ref{app:ablation} shows that our results are \emph{robust to small annotator counts}, corroborating the synthetic experiments in Fig.~\ref{fig:measures}.} Note that none of the \acp{sdd} in the Kumar dataset cam show statistically significant values, but this is expected, since our methodology requires at least six annotators per item to function. See App.~\ref{app:apunim} for reproducibility details on choice of parameters and execution times. 
 
-\paragraph{Results} \emph{\ac{atsysdis} is consistently attributed to \textbf{ethnicity}} across all datasets excluding DICES-330, confirming prior work suggesting that it is a systematic source of annotator disagreement in \ac{hs} tasks~\citep{goyal2022your}. Additionally, in both DICES-990, Sap and POPQUORN, \ac{atsysdis} is attributed to \textbf{gender}, which is consistent with previous findings~\citep{wojatzki2018women, binns2017like}. None of the \acp{sdd} in the Kumar dataset show statistically significant values, but this is expected, since our methodology requires at least six annotators per item to work reliably.\footnote{Note that \acp{aa} show differently signed apunim values in the two DICES datasets, which may be attributed to these datasets using different labels (see \S\ref{sec:datasets}) and because different ethnic groups are considered in each dataset. Thus, while detection is constant across the two datasets, attribution is not. Additionally, men are a consistent source of \ac{atsysdis} (positive values), while women disagree among themselves (positive values) in DICES-990 and POPQUORN, but the opposite is true for Sap. Unfortunately we can not diagnose these discrepancies, since neither DICES nor Sap include annotation guidelines (Table~\ref{tab:datasets}).}
+We find that \emph{\ac{atsysdis} is consistently attributed to \textbf{ethnicity}} in DICES-990, DICES-350 and POPQUORN (Table~\ref{tab:apunim-main}), confirming prior work suggesting that it is a systematic source of annotator disagreement in \ac{hs} tasks~\citep{goyal2022your}. Specifically, in DICES-990, all four ethnic groups are significant, with the strongest value for \ac{aa} annotators ($0.0995$), followed by White ($-0.0649$), Latino ($-0.0631$) and Other ($0.0340$). In DICES-350, \ac{aa} ($-0.0366$) and Asian ($0.0445$) annotators are significant, and in POPQUORN, \ac{aa} annotators ($-0.1572$). Additionally, in DICES-990, Sap and POPQUORN, \ac{atsysdis} is attributed to \textbf{gender}, which is consistent with previous findings~\citep{wojatzki2018women, binns2017like}. The effect is largest in Sap (Woman $0.2613$, Man $-0.1508$), smaller in DICES-990 (Man $0.0359$, Woman $-0.0271$), and smallest in POPQUORN (Man $0.0081$). \footnote{Note that \acp{aa} show differently signed apunim values in the two DICES datasets ($0.0995$ in DICES-990 vs.\ $-0.0366$ in DICES-350), which may be attributed to these datasets using different labels (see \S\ref{sec:datasets}) and because different ethnic groups are considered in each dataset. Thus, while detection is constant across the two datasets, attribution is not. Additionally, in DICES-990 and POPQUORN men are a source of \ac{atsysdis} (positive values: $0.0359$ and $0.0081$), while women disagree among themselves in DICES-990 (negative value: $-0.0271$), but the opposite is true for Sap (Man $-0.1508$, Woman $0.2613$). Unfortunately we can not diagnose these discrepancies, since neither DICES nor Sap include annotation guidelines (Table~\ref{tab:datasets}).}
 
 \begin{finding}
 	\label{finding:human}
@@ -463,11 +462,12 @@ Apunim thus measures the degree to which an annotator group contributes to overa
 	\input{generated/llm-apunim-significance_excluding.tex}
 \endgroup
 
-\paragraph{Experimental Procedure} We investigate nine open-source LLMs (three not shown in main results because of prompt sensitivity issues) using twenty annotators for the Kumar, Sap and POPQUORN datasets supplied with personas sampled from our human dataset.\footnote{While LLM annotation can be scaled to be arbitrarily large, the choice of twenty annotators is a compromise between practical computation costs and enough annotation density to facilitate exploration. Results including the unreliable models can be found in App.~\ref{app:full}; Tables~\ref{tab:cohens-d},\ref{tab:llm-apunim-significance}.} We also do not annotate the DICES datasets since the LLM annotations are wildly inconsistent (App.~\ref{app:llms}; Table~\ref{tab:llm-consistency-variants}), an issue we can not fix as their original annotation guidelines are not public (Table~\ref{tab:datasets}). Four adversarial prompts are used, which emphasize the importance of the LLMs' personas in different ways (App.~\ref{app:prompts}). 
+\paragraph{Experimental Procedure} We investigate nine open-source LLMs (three not shown in main results because of prompt sensitivity issues\footnote{ In order to ensure that the LLM annotators are not influenced by minute differences in the prompts, we execute an ablation study where we rephrase the main annotation prompt three times and compare outputs. This procedure revealed that three models were especially sensitive to such changes (Table~\ref{tab:llm-consistency-variants} in App.~\ref{app:llms}), which led us to exclude those models from the analysis presented in this manuscript.}) using twenty annotators for the Kumar, Sap and POPQUORN datasets supplied with personas sampled from our human dataset.\footnote{While LLM annotation can be scaled to be arbitrarily large, the choice of twenty annotators is a compromise between practical computation costs and enough annotation density to facilitate exploration. Results including the unreliable models can be found in Tables~\ref{tab:cohens-d},\ref{tab:llm-apunim-significance} in App.~\ref{app:full}.} We also do not annotate any of the DICES datasets since the LLM annotations are wildly inconsistent (see Table~\ref{tab:llm-consistency-variants} in App.~\ref{app:llms}), an issue we can not fix as their original annotation guidelines are not public (Table~\ref{tab:datasets}). We ensure that our LLM annotation study is reproducible by selecting exclusively open-source, locally hosted models and fixing all relevant seeds.\footnote{An ablation study where we repeat annotations multiple times shows that our setup achieves 100\% consistency across all models given the same prompt and input (which is generally not a given \citep{bisbee_2023}).} See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations.
 
-We ensure that our LLM annotation study is reproducible by selecting exclusively open-source, locally hosted models and fixing all relevant seeds. An ablation study where we repeat annotations multiple times shows that our setup achieves 100\% consistency across all models. In order to ensure that the LLM annotators are not influenced by minute differences in the prompts, we execute a second ablation study where we rephrase the main annotation prompt three times and compare outputs. This procedure revealed that three models were especially sensitive to such changes (App.~\ref{app:llms}; Table~\ref{tab:llm-consistency-variants}), which led us to exclude those models from the analysis presented in this manuscript. See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations. We use a parametric test (ANOVA) in our analysis due to the abundance of observations ($N \gg 100$) as well as a multiple hypothesis p-value correction (``Holm-Bonferroni'' \citep{holms}).
+\paragraph{Adversarial Prompts} We test four adversarial prompts that stress the persona in different ways (App.~\ref{app:prompts}). \textit{Persona-focused} asks the model to rate as its persona would perceive the comment. \textit{Direct} makes the persona the only criterion. \textit{Single} has the model pick the persona's most influential trait and rate based on that trait alone. \textit{Stereotype} tells the model to weigh the persona's sensitivities over those of an average person. These prompts do not represent annotation strategies; they only attempt to steer the models towards persona-focused answers.
 
-\paragraph{Do LLMs Exhibit SysDis?} \textbf{Yes}. Table~\ref{tab:mean-ndfu-default-vs-human-excluding} shows that the \ac{ndfu} values exhibited by LLMs when under standard persona prompting can even surpass those of humans. However, manipulating the amount of \ac{atsysdis} through instruction prompting is not reliable. While an ANOVA test shows that the choice of instruction prompt does indeed affect \ac{ndfu} scores across most models, measuring Cohen's d (Table~\ref{tab:cohens-d-excluding}) shows that the effect is generally small ($\lvert d \rvert \leq 0.3$) and inconsistent, with the sign and magnitude of the effect depending on the model and dataset.\footnote{See App.~\ref{app:full}; Table~\ref{tab:mean-ndfu-default-vs-human} for the actual mean \ac{ndfu} values by prompt.}
+
+\paragraph{Do LLMs Exhibit SysDis?} \textbf{Yes}. Table~\ref{tab:mean-ndfu-default-vs-human-excluding} shows that the \ac{ndfu} values exhibited by LLMs when under standard persona prompting can even surpass those of humans. However, manipulating the amount of \ac{atsysdis} through instruction prompting is not reliable. While an ANOVA\footnote{We use a parametric test (ANOVA) in our analysis due to the abundance of observations ($N \gg 100$) as well as a multiple hypothesis p-value correction (Holm-Bonferroni \citep{holms}).} test shows that the choice of instruction prompt does indeed affect \ac{ndfu} scores across most models, measuring Cohen's d (Table~\ref{tab:cohens-d-excluding}) shows that the effect is generally small ($\lvert d \rvert \leq 0.3$) and inconsistent, with the sign and magnitude of the effect depending on the model and dataset.\footnote{See Table~\ref{tab:mean-ndfu-default-vs-human} in App.~\ref{app:full} for the actual mean \ac{ndfu} values by prompt.}
 
 \paragraph{Is the Exhibited SysDis Aligned With Humans?} \textbf{No}. Table~\ref{tab:llm-apunim-significance-excluding} shows that alignment on \ac{atsysdis} between humans and LLMs is rarely achieved. Specifically, we observe:
 \begin{enumerate*}
@@ -532,7 +532,7 @@ As discussed in \S\ref{sec:datasets}, there is a severe lack of datasets contain
 \end{multicols}
 \noindent where $G_c$ is the collection of all subsets $S$ of annotations for an item $c$ such that $\lvert S \rvert \ge 3$ and $S_j$ is a random sample drawn from $G_c$ for $j=1, \dots, k$.
 
-\paragraph{Does It Exist?} We compute the \ac{unpol} for each item across the five datasets. For Sap and Kumar, we use the exhaustive formulation (Eq.~\ref{eq:inherent}), whereas for the two DICES datasets we rely on the Monte Carlo approximation with $k=1000$ (Eq.~\ref{eq:random}). Fig.~\ref{fig:inherent} shows that in all DICES items there exists at least one group that fully accounts for the observed \ac{ndfu} even when repeatedly subsampling down to six annotators.\footnote{$Pol_{inh}^{MC}(c)=0 \Rightarrow Pol_{inh}(c)=0$ due to Eq.~\ref{eq:random}, as is the case of increased $k$ in Eq.~\ref{eq:random}.}\footnote{See App.~\ref{app:ablation} for why this observation could be explained by DICES being structurally different.} Interestingly, this observation does not hold for the Kumar and Sap datasets, despite evaluating all possible annotator groups exhaustively. We also observe that \ac{unpol} typically exists on smaller annotation counts, as evidenced by POPQUORN in Fig~\ref{fig:inherent} and by LLM annotations only exhibiting \ac{unpol} when subsampling down to six annotators per item (App.~\ref{app:llms}; Fig.~\ref{fig:inherent-llms}). See App.~\ref{app:unpol}; Table~\ref{tab:inherent-examples} for examples of items with high \ac{unpol} and App.~\ref{app:llms}; Fig.~\ref{fig:inherent-llms} for \ac{unpol} exhibited by LLMs for each dataset and instruction prompt.
+\paragraph{Does It Exist?} We compute the \ac{unpol} for each item across the five datasets. For Sap and Kumar, we use the exhaustive formulation (Eq.~\ref{eq:inherent}), whereas for the two DICES datasets we rely on the Monte Carlo approximation with $k=1000$ (Eq.~\ref{eq:random}). Fig.~\ref{fig:inherent} shows that in all DICES items there exists at least one group that fully accounts for the observed \ac{ndfu} even when repeatedly subsampling down to six annotators.\footnote{$Pol_{inh}^{MC}(c)=0 \Rightarrow Pol_{inh}(c)=0$ due to Eq.~\ref{eq:random}, as is the case of increased $k$ in Eq.~\ref{eq:random}.}\footnote{See App.~\ref{app:ablation} for why this observation could be explained by DICES being structurally different.} Interestingly, this observation does not hold for the Kumar and Sap datasets, despite evaluating all possible annotator groups exhaustively. We also observe that \ac{unpol} typically exists on smaller annotation counts, as evidenced by POPQUORN in Fig~\ref{fig:inherent} and by LLM annotations only exhibiting \ac{unpol} when subsampling down to six annotators per item (Fig.~\ref{fig:inherent-llms} in App.~\ref{app:llms}). See Table~\ref{tab:inherent-examples} in App.~\ref{app:unpol} for examples of items with high \ac{unpol} and  Fig.~\ref{fig:inherent-llms} in App.~\ref{app:llms} for \ac{unpol} exhibited by LLMs for each dataset and instruction prompt.
 
 \begin{finding}
 	\label{finding:inherent}
@@ -833,9 +833,22 @@ The number of annotators per item for all datasets presented in \S\ref{sec:datas
 
 
 \section{Apunim Details}
+\label{app:apunim}
+
+\subsection{Design Decisions}
+
+\begin{figure}
+	\includegraphics[width=\linewidth]{ndfu_combined.png}
+	\caption{Simulated experiment describing a polarizing comment where men and women agree between themselves, but disagree with the opposite gender.}
+	\label{fig:ndfu-combined}
+\end{figure}
+
+\paragraph{Defining Apriori Polarization} In \S\ref{sec:apunim}, we explained how our methodology needs to compare the polarization between the set of all annotations and those made by a specific group $g$. Direct comparisons are not advisable, since we would be comparing statistics between a set and its subset---in this case, standard practice dictates comparing the subset with its complement; i.e., the in-group vs. the out-group instead of the in-group vs. all the annotations. However, this also would not work; if we apply the subset-vs-complement method in the example of Fig.~\ref{fig:ndfu-combined}, we would end up subtracting the \acp{ndfu} of men and women, which are similar as they are both unimodal distributions, falsely concluding that there is no polarization present.
+
+\paragraph{Filtering Ineligible items} Because \textit{apunim} is fundamentally designed to quantify polarization, we exclude items that exhibit no measurable polarization ($nDFU(c)=0$). Furthermore, we also exclude items annotated exclusively by a single group (i.e., items where there are no two groups with at least three annotators each), since we require valid histograms for the non-parametric estimation of \ac{ndfu} (see Eq.~\ref{eq:ndfu}). This is an unfortunately common scenario, since many \ac{nlp} datasets feature only $5-6$ annotations per item. In a best-case scenario of 5 annotators split evenly between two groups, we would get a 3-2 split.
+
 
 \subsection{Statistical Estimation}
-\label{app:pvalue}
 
 Since annotation histograms may be noisy, we additionally assess whether the observed apunim value could arise by chance. To assess statistical significance, we construct a null distribution of apunim values from the randomized partitions and compare the observed apunim against this distribution using a one-sample Student-\(t\) test. Thus, the null hypothesis states that the observed polarization is indistinguishable from polarization induced by random annotator assignments:
 
@@ -862,7 +875,6 @@ While the test operates on a single group in principle, in practice we often wan
 
 
 \subsection{Software}
-\label{app:software}
 
 \paragraph{Installation and Usage}
 We release the \texttt{apunim} package, which is a Python library that implements both the \ac{ndfu} and apunim calculations, as well as its statistical test. The software is available on PyPi We also provide high-level documentation in HTML format that includes an introduction, guide, and full low-level documentation for each of the two provided functions (\doclink).
@@ -877,14 +889,6 @@ While the library efficiently handles large numbers of annotators through vector
 We hypothesize that this bottleneck is likely caused by repeated creation of numpy arrays, resulting in repeated memory allocations for each subgroup, in each item, for each \ac{sdd}. We plan on profiling and addressing it in the next releases of our software. Until then, we suggest either using multiprocessing for each \ac{sdd} subgroup, or running the different experiments in parallel (indeed, we use the \texttt{gnu-parallel} package~\citep{tange_2025_16944306} for our own experiments). We also note that the Kumar dataset also requires substantial RAM resources, estimated around 42--46GB of dedicated RAM should the whole dataset be considered (this is not a requirement for loading the sample used in this study). The CPU-bound experiments require approximately 3 hours to run, assuming a computer capable of efficient multiprocessing.
 
 Finally, we note that in Fig.~\ref{fig:std_error}, we removed values where there was a lack of items annotated by the specified number of annotators (e.g., only 7\% of items in DICES-990 were annotated by more than 73 annotators---see App.~\ref{app:ann_details}).
-
-
-\subsection{Design Decisions}
-\label{app:design}
-
-\paragraph{Defining Apriori Polarization} In \S\ref{sec:apunim}, we explained how our methodology needs to compare the polarization between the set of all annotations and those made by a specific group $g$. Direct comparisons are not advisable, since we would be comparing statistics between a set and its subset---in this case, standard practice dictates comparing the subset with its complement; i.e., the in-group vs. the out-group instead of the in-group vs. all the annotations. However, this also would not work; if we apply the subset-vs-complement method in the example of Fig.~\ref{fig:ndfu_discussion}, left, we would end up subtracting the \acp{ndfu} of men and women, which are similar as they are both unimodal distributions, falsely concluding that there is no polarization present.
-
-\paragraph{Filtering Ineligible items} Because \textit{apunim} is fundamentally designed to quantify polarization, we exclude items that exhibit no measurable polarization ($nDFU(c)=0$). Furthermore, we also exclude items annotated exclusively by a single group (i.e., items where there are no two groups with at least three annotators each), since we require valid histograms for the non-parametric estimation of \ac{ndfu} (see Eq.~\ref{eq:ndfu}). This is an unfortunately common scenario, since many \ac{nlp} datasets feature only $5-6$ annotations per item. In a best-case scenario of 5 annotators split evenly between two groups, we would get a 3-2 split.
 
 
 \section{Exploring \ac{unpol}}
@@ -1055,12 +1059,14 @@ We use only open-source models, as proprietary models such as OpenAI's GPT-5 yie
 	\end{tabular}
 \end{table}
 
+
 \subsection{Experimental Setup}
-Since each of the datasets in \S\ref{sec:datasets} was annotated using different annotation guidelines and targets we use different instruction prompts for each dataset. The ``default'' annotation prompt is directly extracted from the studies in the case of Sap and Kumar, and inferred from the instruction guidelines used in the DICES datasets with minor modifications. We use standard persona prompting procedures sampled randomly from the available \acp{sdd} in each respective dataset. Twenty LLM annotators are selected for each item and model.
 
-The prompts used in the ablation study were provided by a GPT-5 and a local Gemma-4 (quantized) model by providing the original prompt and instructing it to produce four variants. The tested prompts use different methods to restrict the model's behavior. The initial prompts  (``\textit{Persona}''require the model to adopt a persona's viewpoint to judge the comment. Other prompts (``\textit{direct}'') treat the persona's characteristics as an absolute, non-negotiable rule that overrides standard moderation guidelines. Another approach (``single'') compels the model to perform a persona-based check before submitting its final rating. The most aggressive prompts (``stereotype'') force the model into extreme decision spaces. The full main and ablation annotation prompts can be found in App.~\ref{app:prompts}. 
+\paragraph{Default Prompt} Since each of the datasets in \S\ref{sec:datasets} was annotated using different annotation guidelines and targets we use different instruction prompts for each dataset. The ``default'' annotation prompt is directly extracted from the studies in the case of Sap and Kumar, and inferred from the instruction guidelines used in the DICES datasets with minor modifications. We use standard persona prompting procedures sampled randomly from the available \acp{sdd} in each respective dataset. Twenty LLM annotators are selected for each item and model.
 
-We use a single Quadro RTX 6000 GPU for tasks requiring small (7-8B) models and two such GPUs for the rest. The annotation task, including ablations, requires approximately 300 hours of computation to complete. We use the \texttt{transformers} library to load and manage the LLMs. We release the relevant code in the supplementary material. Our codebase is platform-independent except for three high-level bash scripts and a full environment file is included for reproduction.
+\paragraph{Ablation Prompts} The prompts used in the ablation study were provided by a GPT-5 and a local Gemma-4 (quantized) model by providing the original prompt and instructing it to produce four variants. The tested prompts use different methods to restrict the model's behavior. Besides the default prompt, we test four prompts that make the persona more central to the rating. All four ask the same question about the comment as the default prompt and append the persona description after the comment. They differ only in how they instruct the model to use the persona. \textit{Persona-focused} asks the model to rate the comment as its persona would personally perceive it, based on the persona's characteristics, attitudes, experiences, and sensitivities. \textit{Direct} states that the persona's characteristics are a mandatory prerequisite to consider and that the model must evaluate the comment exclusively as the persona would classify it. \textit{Single} asks the model to first identify the single most influential trait of its persona, and then to derive the rating by matching the comment to that trait alone. \textit{Stereotype} asks the model to be very sensitive to its persona's characteristics and to give substantial weight to the persona's sensitivities, values, experiences, and likely reactions, rather than to the judgment of a generic or average person. The full prompts are in App.~\ref{app:prompts}.
+
+\paragraph{Hardware and Execution Times} We use a single Quadro RTX 6000 GPU for tasks requiring small (7-8B) models and two such GPUs for the rest. The annotation task, including ablations, requires approximately 300 hours of computation to complete. We use the \texttt{transformers} library to load and manage the LLMs. We release the relevant code in the supplementary material. Our codebase is platform-independent except for three high-level bash scripts and a full environment file is included for reproduction.
 
 
 \subsection{Exploratory Analysis}
@@ -1207,11 +1213,29 @@ Reply with a single number only.
 \{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
 
 \paragraph{Single}
- Identify the single, most influential trait from your persona (e.g., 'Intolerance for X,' 'Sensitivity to Y,' 'Strong belief in Z').
+Identify the single, most influential trait from your persona (e.g., 'Intolerance for X,' 'Sensitivity to Y,' 'Strong belief in Z').
 
 Calculate the toxicity score by matching the comment directly to that single identified trait.
 
 Based on this sole variable, what is the toxicity score?
+
+\begin{enumerate}
+	\item Extremely toxic
+	\item Very toxic
+	\item Moderately toxic
+	\item Slightly toxic
+	\item Not at all toxic
+\end{enumerate}
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
+
+
+\paragraph{Stereotype}You are an annotator with a given persona.
+
+When rating the comment, be very sensitive to the specific characteristics of your persona. Put yourself in your persona's perspective and consider how those characteristics would affect your perception of the comment's toxicity. Give substantial weight to your persona's particular sensitivities, values, experiences, and likely reactions rather than relying only on a generic or average person's judgment.
+
+How toxic would your persona find this comment?
+
+Reply with a single number only.
 
 \begin{enumerate}
 	\item Extremely toxic
@@ -1243,7 +1267,7 @@ Reply with a single number only.
 \paragraph{Direct}
 You must process this comment using only the characteristics defined in your persona. The persona's values are the primary, mandatory filter for this task. Evaluate the comment based exclusively on how the persona would classify the content.
 
-In your opinion, how  would your persona find this post? Use a scale ranging from ``not at all'' (1) to ``very much so'' (5).
+In your opinion, how racist would your persona find this post? Use a scale ranging from ``not at all'' (1) to ``very much so'' (5).
 
 Reply with a single number only.
 \{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
@@ -1251,9 +1275,17 @@ Reply with a single number only.
 \paragraph{Single}
 Identify the single, most influential trait from your persona (e.g., 'Intolerance for X,' 'Sensitivity to Y,' 'Strong belief in Z').
 
-Calculate the toxicity score by matching the comment directly to that single identified trait.
+Calculate the racism score by matching the comment directly to that single identified trait.
 
 Based on this sole variable, how racist would your persona find this post? Use a scale ranging from ``not at all'' (1) to ``very much so'' (5).
+
+Reply with a single number only.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
+
+\paragraph{Stereotype}
+When rating the post, be very sensitive to the specific characteristics of your persona. Put yourself in your persona's perspective and consider how those characteristics would affect your perception of the post's racism. Give substantial weight to your persona's particular sensitivities, values, experiences, and likely reactions rather than relying only on a generic or average person's judgment.
+
+In your opinion, how racist would your persona find this post? Use a scale ranging from “not at all” (1) to “very much so” (5).
 
 Reply with a single number only.
 \{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
@@ -1264,15 +1296,7 @@ Reply with a single number only.
 \paragraph{Default}
 You are an annotator.
 
-How offensive do you personally find this comment? 
-\begin{enumerate}
-	\item Extremely offensive
-	\item Very offensive
-	\item Moderately offensive
-	\item Slightly offensive
-	\item Not at all offensive
-\end{enumerate}
-
+In your opinion, how offensive would your persona find this post? Use a scale ranging from “not at all” (1) to “very much so” (5).
 Reply with a single number only.
 \{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
 
@@ -1298,6 +1322,13 @@ Identify the single, most influential trait from your persona (e.g., 'Intoleranc
 Calculate the offensiveness score by matching the comment directly to that single identified trait.
 
 Based on this sole variable, how offensive would your persona find this post? Use a scale ranging from “not at all” (1) to “very much so” (5).
+
+Reply with a single number only.
+\{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
+
+\paragraph{Stereotype} When rating the post, be very sensitive to the specific characteristics of your persona. Put yourself in your persona's perspective and consider how those characteristics would affect your perception of the post's offensiveness. Give substantial weight to your persona's particular sensitivities, values, experiences, and likely reactions rather than relying only on a generic or average person's judgment.
+
+In your opinion, how offensive would your persona find this post? Use a scale ranging from “not at all” (1) to “very much so” (5).
 
 Reply with a single number only.
 \{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.

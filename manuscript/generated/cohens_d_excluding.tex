@@ -1,45 +1,24 @@
 \begin{table}[t]
-\small
-\centering
 \caption{Cohen's d between the default and each adversarial
-        instruction prompt, computed on the per-comment \ac{ndfu}. Rows give
-        results per model, for each dataset separately and as the unweighted
-        mean over datasets (All); $n$ is the number of comments. Excluding the following models: llama8b, olmo7b, qwen7b.}
+        instruction prompt, computed on the per-comment \ac{ndfu}. Results
+        are given per model, for each dataset separately and as the
+        unweighted mean over datasets (All). Comments per model: Sap et al. 2022: 585; Kumar et al. 2021: 1000; POPQUORN: 1500 (qwen32b: 1499). gemma31b has no results for Kumar et al. 2021 (--), so its All is the mean over its remaining datasets. Excluding the following models: llama8b, olmo7b, qwen7b.}
 \label{tab:cohens-d-excluding}
-\begin{tabular}{llrrrrr}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{1.5pt}
+\begin{tabular}{l rrrr@{\hspace{4pt}}rrrr@{\hspace{4pt}}rrrr@{\hspace{4pt}}rrrr}
 \toprule
- &  & n & Stereotype & Persona & Single & Direct \\
-Model & Dataset &  &  &  &  &  \\
+ & \multicolumn{4}{c}{All} & \multicolumn{4}{c}{Sap et al. 2022} & \multicolumn{4}{c}{Kumar et al. 2021} & \multicolumn{4}{c}{POPQUORN} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-9}\cmidrule(lr){10-13}\cmidrule(lr){14-17}
+Model & \rotatebox{90}{Stereotype} & \rotatebox{90}{Persona} & \rotatebox{90}{Single} & \rotatebox{90}{Direct} & \rotatebox{90}{Stereotype} & \rotatebox{90}{Persona} & \rotatebox{90}{Single} & \rotatebox{90}{Direct} & \rotatebox{90}{Stereotype} & \rotatebox{90}{Persona} & \rotatebox{90}{Single} & \rotatebox{90}{Direct} & \rotatebox{90}{Stereotype} & \rotatebox{90}{Persona} & \rotatebox{90}{Single} & \rotatebox{90}{Direct} \\
 \midrule
-\multirow[t]{4}{*}{olmo32b} & All & 3085 & -0.09 & -0.02 & 0.01 & -0.15 \\
- & Sap et al. 2022 & 585 & 0.09 & 0.06 & 0.22 & 0.04 \\
- & Kumar et al. 2021 & 1000 & 0.14 & -0.13 & -0.29 & -0.31 \\
- & POPQUORN & 1500 & -0.50 & -0.00 & 0.10 & -0.19 \\
-\cline{1-7}
-\multirow[t]{4}{*}{qwen32b} & All & 3084 & 0.25 & 0.22 & 0.22 & 0.19 \\
- & Sap et al. 2022 & 585 & 0.32 & 0.13 & -0.09 & 0.09 \\
- & Kumar et al. 2021 & 1000 & 0.17 & 0.21 & 0.51 & 0.31 \\
- & POPQUORN & 1499 & 0.26 & 0.30 & 0.24 & 0.17 \\
-\cline{1-7}
-\multirow[t]{4}{*}{mistral7b} & All & 3085 & 0.13 & 0.03 & 0.10 & 0.05 \\
- & Sap et al. 2022 & 585 & 0.21 & 0.10 & 0.08 & 0.57 \\
- & Kumar et al. 2021 & 1000 & 0.07 & -0.01 & -0.10 & -0.05 \\
- & POPQUORN & 1500 & 0.12 & 0.02 & 0.33 & -0.36 \\
-\cline{1-7}
-\multirow[t]{4}{*}{mistral24b} & All & 3085 & 0.72 & 0.40 & -0.16 & 0.12 \\
- & Sap et al. 2022 & 585 & 0.64 & 0.04 & -0.76 & 0.27 \\
- & Kumar et al. 2021 & 1000 & 0.98 & 0.97 & 0.57 & -0.25 \\
- & POPQUORN & 1500 & 0.55 & 0.20 & -0.30 & 0.35 \\
-\cline{1-7}
-\multirow[t]{4}{*}{gemma7b} & All & 3085 & 0.20 & 0.32 & 0.39 & 0.23 \\
- & Sap et al. 2022 & 585 & 0.18 & 0.48 & 0.57 & 0.15 \\
- & Kumar et al. 2021 & 1000 & 0.10 & -0.08 & -0.40 & -0.07 \\
- & POPQUORN & 1500 & 0.34 & 0.54 & 0.99 & 0.63 \\
-\cline{1-7}
-\multirow[t]{3}{*}{gemma31b} & All & 2085 & 0.42 & 0.31 & 0.00 & 0.63 \\
- & Sap et al. 2022 & 585 & 0.36 & 0.21 & 0.06 & 1.03 \\
- & POPQUORN & 1500 & 0.47 & 0.40 & -0.06 & 0.23 \\
-\cline{1-7}
+olmo32b & $-0.09$ & $-0.02$ & 0.01 & $-0.15$ & 0.09 & 0.06 & 0.22 & 0.04 & 0.14 & $-0.13$ & $-0.29$ & $-0.31$ & $-0.50$ & $-0.00$ & 0.10 & $-0.19$ \\
+qwen32b & 0.25 & 0.22 & 0.22 & 0.19 & 0.32 & 0.13 & $-0.09$ & 0.09 & 0.17 & 0.21 & 0.51 & 0.31 & 0.26 & 0.30 & 0.24 & 0.17 \\
+mistral7b & 0.13 & 0.03 & 0.10 & 0.05 & 0.21 & 0.10 & 0.08 & 0.57 & 0.07 & $-0.01$ & $-0.10$ & $-0.05$ & 0.12 & 0.02 & 0.33 & $-0.36$ \\
+mistral24b & 0.72 & 0.40 & $-0.16$ & 0.12 & 0.64 & 0.04 & $-0.76$ & 0.27 & 0.98 & 0.97 & 0.57 & $-0.25$ & 0.55 & 0.20 & $-0.30$ & 0.35 \\
+gemma7b & 0.20 & 0.32 & 0.39 & 0.23 & 0.18 & 0.48 & 0.57 & 0.15 & 0.10 & $-0.08$ & $-0.40$ & $-0.07$ & 0.34 & 0.54 & 0.99 & 0.63 \\
+gemma31b & 0.42 & 0.31 & 0.00 & 0.63 & 0.36 & 0.21 & 0.06 & 1.03 & -- & -- & -- & -- & 0.47 & 0.40 & $-0.06$ & 0.23 \\
 \bottomrule
 \end{tabular}
 \end{table}
