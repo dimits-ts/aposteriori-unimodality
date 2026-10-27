@@ -403,7 +403,9 @@ def plot_variance_curve(
                 )
 
             # apunim = 0: polarization is explained by chance
-            ax.axhline(0, color="grey", linewidth=0.8, linestyle="--")
+            ax.axhline(
+                0, color="grey", linewidth=0.8, linestyle=graphs.LINESTYLES[1]
+            )
 
             # titles on the top row, x labels on the bottom row only
             ax.set_title(ds_name if row == 0 else "")

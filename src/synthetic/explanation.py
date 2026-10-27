@@ -53,7 +53,10 @@ DISCUSSION_PLOT_BINS = np.linspace(0, 10, 2 * NUM_BINS + 1)
 # Density, so the pooled panel (twice the annotations) shares a y-scale.
 DISCUSSION_HIST_STAT = "density"
 DISCUSSION_TITLE = "Pooling Annotations Across Items Masks ASD"
-MEAN_LINESTYLES = {"Men": "--", "Women": ":"}
+MEAN_LINESTYLES = {
+    "Men": graphs.LINESTYLES[1],  # dashed
+    "Women": graphs.LINESTYLES[2],  # dotted
+}
 # Mean lines are drawn this many times thicker than rcParams lines.
 MEAN_LINEWIDTH_SCALE = 2
 

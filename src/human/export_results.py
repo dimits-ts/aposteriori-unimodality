@@ -29,18 +29,11 @@ from ..lib.preprocessing import (
 MIN_SUPPORT = 50
 SIG_ALPHA = 0.05  # p-value threshold for "statistically significant"
 
-# Explicit marker/linestyle cycles so we can reuse the *same* marker per
-# feature when overlaying filled vs. hollow points. (sns.lineplot's
-# auto-assigned style-index isn't something you can reliably recover
-# after the fact, so we do the cycling ourselves.)
+# Explicit marker cycle so we can reuse the *same* marker per feature when
+# overlaying filled vs. hollow points. (sns.lineplot's auto-assigned
+# style-index isn't something you can reliably recover after the fact, so
+# we do the cycling ourselves.) Line styles live in graphs.LINESTYLES.
 MARKER_CYCLE = ["o", "X", "P", "^", "D", "s", "v", "*", "d", "p"]
-LINESTYLE_CYCLE = [
-    (0, (1, 1)),  # dotted
-    (0, (5, 2)),  # dashed
-    (0, (5, 1, 1, 1)),  # dash-dot
-    (0, (3, 1, 1, 1, 1, 1)),  # dash-dot-dot
-    "solid",
-]
 
 
 def main(
@@ -322,7 +315,7 @@ def plot_annotator_count_histogram_from_datasets(
     ax.set_xlabel(r"\# Annotators")
     ax.set_ylabel(r"Comments (\%)")
     ax.set_title(r"\# Annotators per comment for each dataset")
-    ax.grid(True, linestyle="--", alpha=0.3)
+    ax.grid(True, linestyle=graphs.LINESTYLES[1], alpha=0.3)
     plt.tight_layout()
 
     graphs.save_plot(graph_path)

@@ -21,8 +21,8 @@ SIMULATIONS = [SIMULATION_UNIDIRECTIONAL, SIMULATION_BIDIRECTIONAL]
 
 # Line styles keyed by simulation label.
 SIMULATION_LINESTYLE = {
-    SIMULATION_UNIDIRECTIONAL: "--",
-    SIMULATION_BIDIRECTIONAL: "-",
+    SIMULATION_UNIDIRECTIONAL: graphs.LINESTYLES[1],  # dashed
+    SIMULATION_BIDIRECTIONAL: graphs.LINESTYLES[0],  # solid
 }
 
 # Human-readable legend labels for simulation types.
@@ -115,7 +115,7 @@ def method_legend_handles(methods: list[str]) -> list[plt.Line2D]:
             [0],
             color=_method_color(i),
             marker=_method_marker(i),
-            linestyle="-",
+            linestyle=graphs.LINESTYLES[0],
             lw=LINE_WIDTH,
             ms=LEGEND_MARKER_SIZE,
             label=LEGEND_LABEL.get(m, m),

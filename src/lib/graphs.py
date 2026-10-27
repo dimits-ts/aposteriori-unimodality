@@ -42,6 +42,22 @@ COLORBLIND_PALETTE = [
 MARKERS = ["o", "s", "D", "^", "v", "P", "X"]
 HATCHES = ["//", "\\\\", "++", "oo", "..", "xx", "**", "--"]
 
+# Visually distinct line styles, as (offset, (on, off, ...)) dash tuples so
+# every pattern is explicit. Patterns scale with linewidth (matplotlib's
+# lines.scale_dashes), so they stay distinct at any line weight.
+# Index meaning is fixed; callers pick by index or cycle in order:
+#   0 solid, 1 dashed, 2 dotted, 3 dash-dot, 4 dash-dot-dot,
+#   5 long dash, 6 loosely dotted
+LINESTYLES = [
+    "solid",
+    (0, (5, 2)),
+    (0, (1, 1)),
+    (0, (5, 2, 1, 2)),
+    (0, (5, 2, 1, 2, 1, 2)),
+    (0, (10, 3)),
+    (0, (1, 3)),
+]
+
 DEFAULT_FIGSIZE = (14, 6)
 
 

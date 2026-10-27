@@ -99,15 +99,6 @@ def _draw_annotation_histogram(
     dataset_key: str,
     prompt_name: str,
 ) -> None:
-    _LINESTYLES = [
-        "-",
-        "--",
-        "-.",
-        ":",
-        (0, (3, 1, 1, 1)),
-        (0, (5, 1)),
-        (0, (1, 1)),
-    ]
     human_vals = collect_human_annotations(ds)
     llm_vals = collect_llm_annotations(
         annotations_dir, dataset_key, prompt_name
@@ -123,7 +114,7 @@ def _draw_annotation_histogram(
     sources = ["Human"] + sorted(llm_vals.keys())
     sources = [s for s in sources if s in set(plot_df["source"])]
     palette = dict(zip(sources, graphs.COLORBLIND_PALETTE))
-    linestyle_cycle = itertools.cycle(_LINESTYLES)
+    linestyle_cycle = itertools.cycle(graphs.LINESTYLES)
     dash_map = {s: next(linestyle_cycle) for s in sources}
 
     for source in sources:
@@ -346,7 +337,7 @@ def _draw_prompt_diff_subplot(
         palette=palette,
         ax=ax,
     )
-    ax.axhline(0, color="black", linewidth=0.8, linestyle="--")
+    ax.axhline(0, color="black", linewidth=0.8, linestyle=graphs.LINESTYLES[1])
     ax.set_title(dataset_name)
     ax.set_xlabel("")
     ax.set_ylabel(f"Mean annotation diff vs. {baseline_prompt}")
