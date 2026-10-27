@@ -61,7 +61,7 @@
 \begin{document}
 
 \begin{abstract}
-	LLM annotation is increasingly used as a scalable substitute for human annotations, including in polarized, subjective tasks where humans systematically disagree along group lines. Whether these systems reproduce, ignore, or distort human disagreement patterns is largely untested, in part because most existing methods for attributing \ac{sysdis} have not yet been tested in realistic, subjective annotation settings. This work represents the first empirical study which applies proposed, theoretical methods on large scale, realistic annotation settings. Observing the weaknesses of these methods, we develop a method that not only detects, but also quantifies attribution of \ac{sysdis} to annotator \acp{sdd} and use it to audit nine open-source LLMs against five real-life datasets on subjective \ac{nlp} tasks. Our results show that while persona-prompted LLMs can produce polarized annotations, the exhibited disagreement patterns are not aligned with those of human annotator \acp{sdd}, even when tuning instruction prompts for this purpose. This limitation indicates that applications, studies and resources using persona prompting should include appropriate scoping and evaluation in order to avoid further model miscalibration. Our study also suggests that the structure of current subjective NLP datasets is insufficient, requiring more annotators per item, as we find that not all \ac{sysdis} can be attributed to any combination of known or latent annotator \acp{sdd}.
+	LLM annotation is increasingly used as a scalable substitute for human annotations, including in polarized, subjective tasks where humans systematically disagree along group lines. Whether these systems reproduce, ignore, or distort human disagreement patterns is largely untested, in part because most existing methods for attributing \ac{sysdis} have not yet been tested in realistic, subjective annotation settings. This work represents the first empirical study which applies proposed, theoretical methods on large scale, realistic annotation settings. Observing the weaknesses of these methods, we develop a method that not only detects, but also quantifies attribution of \ac{atsysdis} to annotator \acp{sdd} and use it to audit nine open-source LLMs against five real-life datasets on subjective \ac{nlp} tasks. Our results show that while persona-prompted LLMs can produce polarized annotations, the exhibited disagreement patterns are not aligned with those of human annotator \acp{sdd}, even when tuning instruction prompts for this purpose. This limitation indicates that applications, studies and resources using persona prompting should include appropriate scoping and evaluation in order to avoid further model miscalibration. Our study also suggests that the structure of current subjective NLP datasets is insufficient, requiring more annotators per item, as we find that not all \ac{sysdis} can be attributed to any combination of known or latent annotator \acp{sdd}.
 \end{abstract}
 
 \begin{CCSXML}
@@ -129,7 +129,7 @@
 \begin{figure}[t]
 	\centering
 	\includegraphics[width=\linewidth]{disagreement_vs_polarization.png}
-	\caption{Simulated experiment exploring four scenarios of a \ac{hs} detection task applied to a controversial statement. The variance in annotations across different annotators may cause traditional \acs{iaa} measures to ignore minority opinions, especially when opinions are mixed (top-right).}
+	\caption{Three kinds of disagreement in a hypothetical hate-speech annotations of a controversial comment. Each point is one annotator's rating, from $\heartsuit\heartsuit\heartsuit$ (not hateful) to \textbf{!!!} (very hateful). \emph{Left:} ratings spread uniformly across the scale, an extreme case of disagreement. \emph{Middle:} \acs{sysdis}, where a subset of annotators consistently rates the comment differently from the rest, although the cause is not visible from the ratings alone. \emph{Right:} the same ratings as the middle panel, grouped by religion. Religion, one of the observable \acsp{sdd}, acts as a ``polarizer'' that explains the observed differences in opinion, marking the disagreement as \acs{atsysdis}.}
 	\label{fig:disagreement-vs-polarization}
 \end{figure}
 
@@ -137,7 +137,18 @@
 
 The rise of internet spaces has necessitated research in subjective phenomena such as the detection of harmful content. Annotations are needed to support social science research, the training of automated classifiers and the proactive identification of vulnerable groups \citep{vidgen_2021_directions}. These annotations are frequently released as datasets, which due to their subjective nature typically contain items with very low \ac{iaa} \citep{vidgen_2021_directions}. If ignored, this disagreement may lead to loss of valuable information \citep{pavlopoulos-likas-2024} and provide us with the wrong signal, leading to significant misconfiguration in trained AI systems \citep{uma2021}. For example, toxicity models have disproportionately marked \ac{aa} speech as ``toxic'' \citep{sap-etal-2019-risk}, or systematically ignored minority opinions \citep{quaranto2022dog} in the past.
 
-In practice, researchers usually use \ac{iaa} measures to distinguish between general and \ac{sysdis} (Fig.~\ref{fig:disagreement-vs-polarization}). Traditional measures however hold significant limitations, especially when few annotations per item are available and when the studied \acp{sdd} contain imbalanced groups. Both of these issues are typically present in subjective tasks featuring minorities, which is the exact case where our measures should be reliable. Furthermore, as human annotation is generally expensive, LLM-as-judge systems are increasingly deployed as scalable substitutes for human annotators \citep{rossi_2024, kapania-etal-2025-examining} to acquire a cheaper, ``silver'' supervision signal in place of human-annotated ``gold'' labels.\footnote{What constitutes ``gold'' or ``silver'' labels is not standardized and the terms frequently change definitions between publications. Some advocate against using the term ``gold labels'' for subjective, human annotations \citep{fleisig-etal-2024-perspectivist, valerio_2021_gold}.} It is therefore imperative that \ac{sysdis} by human annotators be preserved by LLMs whose annotations by default gravitate toward the statistical average \citep{bisbee_2023}. Persona-prompting is sometimes used to bypass this limitation, but suffers from its own challenges such as stereotyping and inconsistent annotations \citep{lutz-etal-2025-prompt, liu-etal-2024-evaluating-large}. We therefore ask:
+Current literature lacks precise terminology to describe opinion differences between groups. We thus use the following definitions in this study:
+\begin{enumerate*}
+	\item \textbf{Disagreement} represents any variance among annotators' ratings for the same item, even if minute.
+	\item  \textbf{\ac{sysdis}} is non-random and recurring disagreement. 
+	\item \textbf{\ac{atsysdis}} is \ac{sysdis} that can be attributed to differences in group identity (e.g., background, cultural context, ideology).
+	\item  \textbf{Polarization} is the mechanism with which we can distinguish \ac{sysdis} from \ac{atsysdis}.
+\end{enumerate*}
+In physics, a \emph{polarizer} is an optical filter with which a set of tangled rays can be untangled to ``pure'' signals. In our study, the metaphorical polarizer is each of the \acp{sdd} of an annotator group. If \ac{sysdis} (our ``beam'' in this case) is reduced when considering the groups emerging from an \ac{sdd} (e.g., left-wing/right-wing when considering political orientation), it becomes \ac{atsysdis}. Fig.~\ref{fig:disagreement-vs-polarization} demonstrates this distinction.
+
+Researchers traditionally attempted to distinguish \emph{Disagreement} from \ac{sysdis}, but few studies moved towards discovering \ac{atsysdis}. In both cases, \ac{iaa} metrics are typically used both to distinguish between general disagreement and \ac{sysdis} and to attribute it to specific annotator groups. Traditional metrics however hold significant limitations, especially when few annotations per item are available and when the studied \acp{sdd} contain imbalanced groups. Both of these issues are typically present in subjective tasks featuring minorities, which is the exact case where our measures should be reliable. 
+
+Furthermore, as human annotation is generally expensive, LLM-as-judge systems are increasingly deployed as scalable substitutes for human annotators \citep{rossi_2024, kapania-etal-2025-examining} to acquire a cheaper, ``silver'' supervision signal in place of human-annotated ``gold'' labels.\footnote{What constitutes ``gold'' or ``silver'' labels is not standardized and the terms frequently change definitions between publications. Some advocate against using the term ``gold labels'' for subjective, human annotations \citep{fleisig-etal-2024-perspectivist, valerio_2021_gold}.} It is therefore imperative that \ac{atsysdis} by human annotators be preserved by LLMs whose annotations by default gravitate toward the statistical average \citep{bisbee_2023}. Persona-prompting is sometimes used to bypass this limitation, but suffers from its own challenges such as stereotyping and inconsistent annotations \citep{lutz-etal-2025-prompt, liu-etal-2024-evaluating-large}. We therefore ask:
 
 \begin{researchquestion}[How Do Current Theoretical Polarization Attribution Approaches Behave in Realistic Annotation Scenarios]
 	Our work is the first empirical study applying measures of polarization detection and attribution in real-life subjective datasets, finding that they tend to severely underperform. One of the reasons for this collapse is likely the assumption that annotations can be aggregated across items (Finding~\ref{finding:methods}).
@@ -148,9 +159,9 @@ In practice, researchers usually use \ac{iaa} measures to distinguish between ge
 	Since we can not reliably used established approaches, we introduce a new measure which \emph{quantitatively} attributes \ac{sysdis} to specific \acp{sdd}, while being conscious of the limitations present in realistic annotation scenarios (Fig.~\ref{fig:measures}). 
 \end{researchquestion}
 
-\begin{researchquestion}[Which \ac{sysdis} Patterns are Shared Between Human and LLM Annotators]
+\begin{researchquestion}[Which \ac{atsysdis} Patterns are Shared Between Human and LLM Annotators]
 	\label{rq:llm}
-	Unlike prior work which framed the question of LLM annotation reliability in terms of human-LLM agreement \citep{dong-etal-2024-llm, gomez-etal-2024-algorithmic, masud-etal-2024-hate} or task-specific performance \citep{gupta2024bias}, we compare human and LLM polarization patterns. We find that human \ac{sysdis} is attributed to gender and ethnicity across five real-life subjective datasets (Finding~\ref{finding:human}). On the other hand, while LLMs using persona-prompting \emph{can} produce polarized annotations, they fail to reproduce any \ac{sysdis} patterns regardless of instruction prompt, confirming literature suggesting that persona prompting does not consistently influence LLM outputs in the examined tasks (Finding~\ref{finding:llms}).
+	Unlike prior work which framed the question of LLM annotation reliability in terms of human-LLM agreement \citep{dong-etal-2024-llm, gomez-etal-2024-algorithmic, masud-etal-2024-hate} or task-specific performance \citep{gupta2024bias}, we compare human and LLM polarization patterns. We find that human \ac{atsysdis} is explained by gender and ethnicity across five real-life subjective datasets (Finding~\ref{finding:human}). On the other hand, while LLMs using persona-prompting \emph{can} produce polarized annotations, they fail to reproduce any \ac{atsysdis} patterns regardless of instruction prompt, confirming literature suggesting that persona prompting does not consistently influence LLM outputs in the examined tasks (Finding~\ref{finding:llms}).
 \end{researchquestion}
 
 Overall, our work indicates that persona-prompting can not be used by itself to ensure fair and equitable judgments across \ac{sdd} groups by LLMs. Without careful scoping and task-specific evaluation, persona prompting can lead to LLMs not taking into account minority-group sensitivities, which could compromise proposed applications with autonomous agents in sensitive environments (e.g., content moderation, facilitation). Persona-prompted datasets may also contaminate future LLM training, amplifying existing model biases, and lead to misleading findings in social science research. It also argues for a paradigm shift in the design and construction of subjective datasets; the true bottleneck in current datasets should not the number of annotated items, but rather the \emph{number of annotations per item} (\S\ref{sec:discussion}). Indeed, we discover ``\ac{unpol}'' which can not be observed even when exhaustively considering all possible annotator dimensions in real-life datasets with low annotation counts per item (Finding~\ref{finding:inherent}).
@@ -163,25 +174,19 @@ We also release a PyPI library implementing our measure and our annotated datase
 \makeatother
 
 \begin{center}
-	\noindent\warning{Content Warning: Controversial and potentially harmful speech used for demonstration purposes only.}
+	\noindent\warning{Content Warning: Controversial and potentially harmful speech is used for demonstration purposes.}
 \end{center}
 
 
 \section{Background and Related Work}
 \label{sec:related}
 
-\paragraph{Terminology} We distinguish three definitions used throughout this work:
-\begin{enumerate*}
-	\item \textbf{Disagreement} represents any variance among annotators' ratings for the same item, regardless of its source.
-	\item  \textbf{\ac{sysdis}} is non-random and recurring disagreement, which in this work is assumed to be caused by differences in group identity (e.g., background, cultural context, ideology).
-	\item  \textbf{Polarization} is the underlying societal phenomenon describing genuinely conflicting, opposed viewpoints on the same item.
-\end{enumerate*}
-Specifically, we attempt to find \emph{polarized} \acp{sdd} through the distinction of \emph{\ac{sysdis}} from general \emph{disagreement} in annotations.
+\subsection{Systematic Disagreement Detection}
+Prior work  on analyzing annotations in subjective tasks has shown that \ac{sysdis} may be caused by different points-of-view between groups \citep{davani-etal-2022-dealing, uma2021, goyal2022your}. While current research mostly rests on using \ac{iaa} metrics between groups of a single annotator \ac{sdd}~\citep{davani-etal-2022-dealing, leonardelli-etal-2023-semeval, uma_2022_scaling, ivey-etal-2025-nutmeg, petra_2022_handling, van_der_Velden}, these metrics suffer from severe limitations, which have motivated the development of new approaches.
 
-\paragraph{Inter-Annotator Agreement} Current research on analyzing subjective tasks mostly rests on using \ac{iaa} between groups of a single annotator \ac{sdd}~\citep{davani-etal-2022-dealing, leonardelli-etal-2023-semeval, uma_2022_scaling, ivey-etal-2025-nutmeg, petra_2022_handling, van_der_Velden}, as prior work has shown that consistent, \ac{sysdis} may be caused by different points-of-view between groups \citep{davani-etal-2022-dealing, uma2021, goyal2022your}. \ac{iaa} measures such as Cohen's kappa, Krippendorff's alpha, and Fleiss's kappa aim to distinguish genuine disagreement from random disagreement through statistical chance-correction. However, these measures are often difficult to apply to intergroup \ac{iaa} without extensions or restrictive assumptions (e.g., no missing labels or equal numbers of annotations). They have also been criticized for failing to account for differences arising from social, cultural, and demographic backgrounds~\citep{Feinstein1990, Byrt1993, van_der_Velden, checco_2017}, producing results that are difficult to compare across studies, being sensitive to class imbalance~\citep{Feinstein1990}, and relying on questionable assumptions about chance agreement~\citep{checco_2017}. While recent work has addressed some of these limitations with methods that improve applicability and robustness \citep{van_der_Velden, wong-etal-2021-cross, ivey-etal-2025-nutmeg}, they are much more complex and less intuitive, indicating that \ac{iaa} may not be the correct tool for analysis of minority viewpoints. Ultimately, \ac{iaa} analysis may be useful for exploration and identification of some controversial items, but fails to explain the reason \emph{why} they are controversial \citep{abercrombie-etal-2025-consistency, vitsakis-etal-2023-ilab}.
+\paragraph{Limitations of Inter-Annotator Agreement} \ac{iaa} metrics such as Cohen's kappa, Krippendorff's alpha, and Fleiss's kappa aim to distinguish \ac{sysdis} disagreement from general disagreement through statistical chance-correction. However, these metrics are often difficult to apply to intergroup \ac{iaa} without extensions or restrictive assumptions (e.g., no missing labels or equal numbers of annotations). They have also been criticized for failing to account for differences arising from social, cultural, and demographic backgrounds, producing results that are difficult to compare across studies \citep{Feinstein1990, Byrt1993, van_der_Velden, checco_2017}, being sensitive to class imbalance~\citep{Feinstein1990}, and relying on questionable assumptions about chance agreement~\citep{checco_2017}. While recent work has addressed some of these limitations with methods that improve applicability and robustness \citep{van_der_Velden, wong-etal-2021-cross, ivey-etal-2025-nutmeg}, they are much more complex and less intuitive, indicating that \ac{iaa} may not be the correct tool for analysis of minority viewpoints.
 
-\paragraph{Polarization} There are many competing formulations for estimating polarization besides \ac{iaa}. One \citep{akhtar_2019} utilizes $\chi^2$ to estimate in-group vs out-group variance. Others frame \ac{sysdis} as a cluster identification problem, applying either parametric (GMM) \citep{checco_2017}, or non-parametric~\citep{pavlopoulos-likas-2024, Mignemi2024} approaches to the annotation histograms. For our work, we use a non-parametric disagreement measure, \ac{ndfu}, which has been shown to correlate better with human judgment of disagreement than established measures \citep{pavlopoulos-likas-2024}, although we compare prior approaches in Fig.~\ref{fig:measures}. \ac{ndfu} (Eq.~\ref{eq:ndfu}) takes values in the range $[0,1]$, where values close to $0$ indicate no polarization (i.e., opinions are concentrated around a single mode). Intuitively, \ac{ndfu} measures how prominent secondary peaks are compared to the main peak. The \ac{au} method \citep{pavlopoulos-likas-2024} builds upon \ac{ndfu} stating that if a single item's annotations are multimodal, but unimodal for all annotator subgroups in a specific \ac{sdd}, then polarization is explained by those groups. Though promising, this mechanism operates on the assumption that \emph{all} polarization can be explained by a single split, which we prove to be impossible in many realistic cases (\S\ref{sec:discussion}).
-
+\paragraph{Alternatives} A different approach \citep{akhtar_2019} utilizes $\chi^2$ to estimate in-group vs out-group variance. Others frame \ac{sysdis} detection as a cluster identification problem, applying either parametric (\ac{gmm}) \citep{checco_2017}, or non-parametric~\citep{pavlopoulos-likas-2024, Mignemi2024} approaches to the annotation histograms. For our work, we use a non-parametric disagreement measure, \ac{ndfu}, which has been shown to correlate better with human judgment of disagreement than established measures \citep{pavlopoulos-likas-2024}, as we also verify in Fig.~\ref{fig:measures}. \ac{ndfu} (Eq.~\ref{eq:ndfu}) takes values in the range $[0,1]$, where values close to $0$ indicate no polarization (i.e., opinions are concentrated around a single mode). Intuitively, \ac{ndfu} measures how prominent the maximum secondary peak is compared to the main peak. 
 \begin{equation}
 	\label{eq:ndfu}
 	\mathrm{nDFU}(X) =
@@ -199,43 +204,44 @@ Specifically, we attempt to find \emph{polarized} \acp{sdd} through the distinct
 \end{equation}
 \noindent where, $X$ denotes the set of annotations, $f_i$ the relative frequency of the $i$-th annotation (e.g., the frequency of \texttt{2} in a scale of 1--5), and $m$ the histogram peak.
 
-\paragraph{Persona Prompting} At the time of writing, there is no established taxonomy of persona prompting techniques. Generally, personas may be 
-\begin{enumerate*}
-	\item authored by hand \citep{zhang-etal-2018-personalizing, mazare-etal-2018-training},
-	\item generated using observed annotator attributes \citep{argyle2023_out},
-	\item composed of answers to extensive questionnaires \citep{park2026llmagentsgroundedselfreports},  or recently,
-	\item generated entirely using LLMs \citep{taubenfeld-etal-2024-systematic}.
-\end{enumerate*}
-The prompt itself may be structured \citep{yang-etal-2025-crafting, wang-etal-2025-know, Park2024CharacterGPTAP} or described through natural language \citep{zhang-etal-2018-personalizing, li-etal-2025-far, taubenfeld-etal-2024-systematic}. The effects of these methods on LLMs have not yet been studied and are largely outside the scope of this work. Since our goal is to explore disagreement patterns across LLMs and humans (RQ~\ref{rq:llm}), we select attributes from the human annotators of each dataset, described by a structured field of attributes, in order to facilitate comparisons across experimental conditions.
+\paragraph{What About Attribution?} \ac{iaa} analysis may be useful for exploration and identification of some controversial items, but fails to explain the reason \emph{why} they are controversial \citep{abercrombie-etal-2025-consistency, vitsakis-etal-2023-ilab}. A purpose-designed method for the identification of \ac{atsysdis} is the \ac{au} method \citep{pavlopoulos-likas-2024}, which builds upon \ac{ndfu}. It states that if a single item's annotations are multimodal (contains \ac{sysdis}), but unimodal for all annotator subgroups in a specific \ac{sdd} (contains disagreement but not \ac{sysdis}), then polarization is explained by those groups (\ac{atsysdis}). Though promising, this mechanism operates on the assumption that \emph{all} polarization can be explained by a single \ac{sdd}, which we prove to be impossible in many realistic cases (\S\ref{sec:discussion}).
 
-\paragraph{Persona Reliability} Prior work suggests that LLMs are not necessarily reliable annotators when prompted with personas, as they tend to reproduce stereotypes \citep{lutz-etal-2025-prompt, liu-etal-2024-evaluating-large} and perform unreliably for minority groups \citep{lutz-etal-2025-prompt, kapania-etal-2025-examining}. To address subjectivity in annotation, several \ac{nlp} approaches incorporate annotator metadata into LLM annotation \citep{davani-etal-2023-hate, rottger-etal-2022-two, fleisig-etal-2023-majority, gupta_2023_same}, although evidence suggests that such improvements may be specific to the datasets on which models are trained \citep{lee-etal-2023-large}. A significant limitation is the requirement for annotator metadata, which can be side-stepped through embedding clustering \citep{vitsakis-etal-2024-voices}, at greater computational cost and harder evaluation. We instead posit that directly clustering the annotations provides a comparatively simpler and more interpretable mechanism.
+
+\subsection{Using LLMs for Subjective Annotation}
+
+\paragraph{Persona Prompting} To address subjectivity in annotation, several \ac{nlp} approaches incorporate annotator metadata into LLM annotation \citep{davani-etal-2023-hate, rottger-etal-2022-two, fleisig-etal-2023-majority, gupta_2023_same}. A significant limitation is the requirement for annotator metadata, which can be side-stepped through embedding clustering \citep{vitsakis-etal-2024-voices}, at greater computational cost and harder evaluation. Our approach instead directly clusters the annotations, which we believe provides a comparatively simpler and more interpretable mechanism.
+
+\paragraph{Persona Engineering} At the time of writing, there is no established taxonomy of persona prompting techniques. Generally, personas may be authored by hand \citep{zhang-etal-2018-personalizing, mazare-etal-2018-training}, generated using observed annotator attributes \citep{argyle2023_out}, composed of answers to extensive questionnaires \citep{park2026llmagentsgroundedselfreports},  or recently, generated entirely using LLMs \citep{taubenfeld-etal-2024-systematic}.
+The prompt itself may be structured \citep{yang-etal-2025-crafting, wang-etal-2025-know, Park2024CharacterGPTAP} or described through natural language \citep{zhang-etal-2018-personalizing, li-etal-2025-far, taubenfeld-etal-2024-systematic}. The effects of these methods on LLMs have not yet been studied and are largely outside the scope of this work. Since our goal is to explore disagreement patterns across LLMs and humans (RQ~\ref{rq:llm}), we select attributes from the human annotators of each dataset and format them using JSON instead of natural language, in order to facilitate comparisons across experimental conditions.
+
+\paragraph{Persona Reliability} Prior work suggests that LLMs are not necessarily reliable annotators when prompted with personas, as they tend to reproduce stereotypes \citep{lutz-etal-2025-prompt, liu-etal-2024-evaluating-large} and perform unreliably for minority groups \citep{lutz-etal-2025-prompt, kapania-etal-2025-examining}. Additionally, some evidence suggests that task-specific improvements may be not be replicable outside of the datasets on which models are trained \citep{lee-etal-2023-large}. Our work ultimately supports the view that persona prompting is not reliable by itself in all tasks and must be separately evaluated when used.
 
 
 \section{Datasets}
 \label{sec:datasets}
 
 \begin{table}[ht]
-	\caption{Datasets used in this study. \textit{\#Ann} refers to the number of annotators per item, while the \textit{Guidelines} column describers whether annotation guidelines are provided in the publication introducing the dataset. \textbf{\#\acp{sdd}} refers to  the number of \acp{sdd} (e.g., age, gender, education). }
+	\caption{Datasets used in this study. \textit{\#Ann} refers to the number of annotators per item, while the \textbf{\#\acp{sdd}} refers to  the number of \acp{sdd} (e.g., age, gender, education). \textit{Guid.} describers whether annotation guidelines are provided in the publication introducing the dataset (including documentation and supporting material) and the last two columns denote whether the datasets were usable for analysis of the original (human) annotations and LLM annotation respectively.}
 	\label{tab:datasets}
 	\centering
-	\begin{tabularx}{\linewidth}{lrrrXll}
+	\begin{tabularx}{\linewidth}{lrrrXllll}
 		\toprule
-		\textbf{Dataset} & \textbf{\#Items} & \textbf{\#Ann} & \textbf{\#\acp{sdd}} & \textbf{Text Source} & \textbf{Task} & \textbf{Guidelines}\\
+		\textbf{Dataset} & \textbf{\#Items} & \textbf{\#Ann} & \textbf{\#\acp{sdd}} & \textbf{Text Source} & \textbf{Task} & \textbf{Guid.} & \textbf{Human} & \textbf{LLM}\\
 		\midrule
 		Kumar~\citep{kumar-et-al-2021}
-		& 1000 & 5   & 10 & Twitter, Reddit, 4chan & Toxicity & Yes \\
+		& 1000 & 5   & 10 & Twitter, Reddit, 4chan & Toxicity & Yes & No & Yes\\
 		
 		Sap~\citep{sap-etal-2022-annotators}
-		& 585       & 5--6   & 3  & Twitter & Hate Speech& No  \\
+		& 585       & 5--6   & 3  & Twitter & Hate Speech& No& Yes & Yes  \\
 		
 		DICES-350~\citep{dices}
-		& 350   & 123    & 4  & LLM responses & Hate Speech & No  \\
+		& 350   & 123    & 4  & LLM responses & Hate Speech & No & Yes& No  \\
 		
 		DICES-990~\citep{dices}
-		& 990  & 70--76 & 4 &  LLM responses & Hate Speech& No \\
+		& 990  & 70--76 & 4 &  LLM responses & Hate Speech& No & Yes& No \\
 		
 		POPQUORN~\citep{pei-jurgens-2023-annotator}
-		& 1500 &7--9 & 5 & Reddit & Hate Speech & Yes \\
+		& 1500 &7--9 & 5 & Reddit & Hate Speech & Yes & Yes & Yes \\
 		\bottomrule
 	\end{tabularx}
 \end{table}
@@ -247,8 +253,9 @@ Finding appropriate subjective datasets to test LLMs on is difficult for many re
 	\item many datasets are sampled from the same source, negatively impacting the breadth of possible generalizable findings \citep{vidgen_2021_directions}, and
 	\item annotation guidelines are frequently not included \citep{vidgen_2021_directions}, complicating replication.
 \end{enumerate*} 
-Additionally, meta-studies on subjective datasets \citep{Poletto2021, vidgen_2021_directions} do not give special importance to the sparsity of annotations per item, which is an important consideration; we highlight the extent of this problem and discuss possible solutions in \S\ref{sec:discussion}. Nevertheless, given the current state of research, we aim to provide a methodology that can adapt to this challenging environment. We use five datasets from current \ac{nlp} research that contain \ac{sdd} information at the level of individual annotators:
+Additionally, meta-studies on subjective datasets \citep{Poletto2021, vidgen_2021_directions} do not give special importance to the sparsity of annotations per item, which is an important consideration. \S\ref{sec:discussion} shows that the real bottleneck in many \ac{nlp} datasets is not the amount of recorded \acp{sdd} nor the amount of items, but rather the amount of information (number of annotators) per item. 
 
+We use five datasets from current \ac{nlp} research that contain \ac{sdd} information at the level of individual annotators:
 \begin{itemize}
 	\item The \textit{Kumar} dataset \citep{kumar-et-al-2021} which contains annotations for Toxicity detection.
 	\item The \textit{Sap} ``Breadth of Posts'' dataset with the ``\textit{toyou}'' labels \citep{sap-etal-2022-annotators} for \ac{hs} detection.
@@ -256,7 +263,7 @@ Additionally, meta-studies on subjective datasets \citep{Poletto2021, vidgen_202
 	\item The POPQUORN \citep{pei-jurgens-2023-annotator} dataset using the \textit{``offensiveness''} label for \ac{hs} detection.\footnote{While ``politeness'' labels are included, they may not directly translate to toxicity; comments can simultaneously be toxic and phrased politely. Indeed, toxicity is not mentioned in the methodology of the original POPQUORN dataset and is considered a separate \ac{nlp} task in other work \citep{ziems2024can, lukito-etal-2024-comparing}.}
 \end{itemize}
 
-A brief overview of the dataset characteristics is provided in Table \ref{tab:datasets}. The Kumar dataset is notable for its large scale, featuring over 100,000 annotated items and 10 distinct \acp{sdd}. In contrast, the DICES datasets have fewer annotated items but involve more than an order of magnitude more annotators per item than the others. The POPQUORN dataset presents both a modest number of annotators per item (7-9) and items. In order to allow for a full comparison between human and LLM annotations, we use a sample of 1{,}000 items from the Kumar dataset (\S\ref{sec:llms}). An exploratory analysis of these datasets is available in App.~\ref{app:ann_details},
+A brief overview of the dataset characteristics is provided in Table \ref{tab:datasets}. The Kumar dataset is notable for its large scale, featuring over 100,000 annotated items and 10 distinct \acp{sdd}. In contrast, the DICES datasets have fewer annotated items but involve more than an order of magnitude more annotators per item than the others. The POPQUORN dataset presents both a modest number of annotators per item (7-9) and items. In order to allow for a full comparison between human and LLM annotations, we use a sample of 1{,}000 items from the Kumar dataset (\S\ref{sec:llms}). An exploratory analysis of these datasets is available in App.~\ref{app:ann_details}. Note that not all datasets can be used for all stages of our study; the DICES datasets do not include enough reproducibility information to re-annotate using LLMs, while the Kumar dataset does not include enough human annotations for any methodology to find \ac{atsysdis} (Table~\ref{tab:real-data-methods}).
 
 
 \section{Empirically Testing Proposed Methods}
@@ -267,27 +274,30 @@ A brief overview of the dataset characteristics is provided in Table \ref{tab:da
 \begin{figure}[t]
 	\centering
 	\includegraphics[width=\linewidth]{metric_comparison.png}
-	\caption{\ac{sysdis} attribution on synthetic distributions. When \ac{sysdis} exists, the mean of the normal distributions shifts according to the value of the x-axis. The y-axis shows the accuracy of each method when attempting to recover the (known) \ac{sdd} causing polarization. Bars indicate standard error. Dashed lines show the results of a simplified experimental setup, where disagreement always has the same direction.}
+	\caption{\ac{atsysdis} on synthetic distributions. When \ac{atsysdis} exists, the mean of the normal distributions shifts according to the value of the x-axis. The y-axis shows the accuracy of each method when attempting to recover the (known) \ac{sdd} causing polarization. Bars indicate standard error. Dashed lines show the results of a simplified experimental setup, where disagreement always has the same direction.}
 	\label{fig:measures}
 \end{figure}
 
-\paragraph{Experimental Setup} We compare the effectiveness of our method (introduced in \S\ref{sec:apunim}), the \ac{au} framework proposed by \citet{pavlopoulos-likas-2024}, the $\chi^2$ method presented in \citet{akhtar_2019}, GMM clustering used in \citet{checco_2017}, and a baseline using \ac{iaa} ($\Delta \alpha$ Krippendorff) on simulated distributions (App.~\ref{app:experiments} for details and assumptions). To determine whether a score is statistically significant, we construct a null distribution for each method with the null hypothesis that the group labels are unrelated to the observed annotations. We therefore repeatedly shuffle the labels across annotators, recompute the method's statistic, and use the resulting scores to form the null distribution. Since we construct the distributions, we have knowledge of the \emph{ground-truth} for which \ac{sdd} is causing polarization (which is not the case for real-life or LLM annotations), which we can inject to test whether it is retrieved by each method.
+\paragraph{Experimental Setup} We compare the effectiveness of our method (introduced in \S\ref{sec:apunim}), the \ac{au} framework proposed by \citet{pavlopoulos-likas-2024}, the $\chi^2$ method presented in \citet{akhtar_2019}, \ac{gmm} clustering used in \citet{checco_2017}, and a baseline using \ac{iaa} ($\Delta \alpha$ Krippendorff) on simulated distributions (App.~\ref{app:experiments} for details and assumptions). We use bootstrapping to determine whether a score is statistically significant. Since we construct the distributions, we have knowledge of the \emph{ground-truth} for which \ac{sdd} is explains \ac{atsysdis} (which is not the case for real-life or LLM annotations), which we can inject to test whether it is correctly attributed by each method.
 
-\paragraph{Conditions} Annotations are generated according to $y_{ij} = b_j + g_i p_j + \epsilon_{ij}$,  where $b_j$ is the baseline rating for item $j$, $g_i \in \{-\frac{1}{2}, +\frac{1}{2}\}$ indicates the annotator's group, $p_j$ controls the magnitude and direction of \ac{sysdis} for item $j$, and $\epsilon_{ij}$ is annotation noise. We use two simulation setups that differ only in how $p_j$ is defined:
+%TODO: Update this with new results
+\paragraph{Generating \ac{atsysdis}} We assume that the annotations for each item $j$  are clustered around a baseline rating $b_j$ (e.g., $b_j=5$ for an obviously toxic comment on a toxicity scale of 1--5). Each annotation is then assigned a random value $\epsilon_{ij}$ which represents general disagreement, and a group-specific value which is shared by all annotators of the same \ac{sdd} group and which represents \ac{atsysdis}. Assuming two groups, the \ac{atsysdis} effect is calculated as $g_i p_j$, where $g_i \in \{-\frac{1}{2}, +\frac{1}{2}\}$ denotes group identity (we can assume that the effect of polarization is different for each annotator, representing how each human internalizes group identity differently.) and $p_j$ controls the magnitude of \ac{atsysdis}. Therefore, annotations are generated according to $y_{ij} = b_j + g_i p_j + \epsilon_{ij}$.
+
+The $p_j$ variable represents our assumptions about real-life polarization.  We therefore sample $p_j$ instead of  We use two simulation setups that differ only in how $p_j$ is defined:
 \begin{enumerate*}
 	\item \textbf{Unidirectional}: $p_j \sim \text{Uniform}(0, \delta)$. The group effect always favors the same group across all items, though its magnitude varies per item.
 	
 	\item \textbf{Bidirectional}: $p_j \sim \text{Uniform}(-\delta, +\delta)$. The direction of the group effect can vary across items, so that groups may systematically disagree in opposite directions on different items.
 \end{enumerate*}
 
-\paragraph{Results} As shown in Fig.~\ref{fig:measures}, \emph{both the $\chi^2$ and GMM methods generally fail} at attributing \ac{sysdis} to any group. \ac{iaa} remains usable when many annotators are available, but underperforms in cases where the examined group is a minority and when a few annotators are available per item (a common case among \ac{nlp} datasets---see \S\ref{sec:datasets}).\footnote{While this figure explores a case with only two groups, ablations with $k=\{3,5,10\}$ groups per \ac{sdd} can be found in App.~\ref{app:ablation}; Fig.~\ref{fig:measures-multiple}.}
+\paragraph{Results} As shown in Fig.~\ref{fig:measures}, \emph{both the $\chi^2$ and \ac{gmm} methods generally fail} at attributing \ac{atsysdis} to any group. \ac{iaa} remains usable when many annotators are available, but underperforms in cases where the examined group is a minority and when a few annotators are available per item (a common case among \ac{nlp} datasets---see \S\ref{sec:datasets}).\footnote{While this figure explores a case with only two groups, ablations with $k=\{3,5,10\}$ groups per \ac{sdd} can be found in App.~\ref{app:ablation}; Fig.~\ref{fig:measures-multiple}.}
 
 
 \subsection{On Real Data}
 
 \input{generated/real_data_comparison.tex}
 
-Table~\ref{tab:real-data-methods} shows a comparison between the different methods when applied to the five datasets introduced in \S\ref{sec:datasets}. The GMM method is not run, as it requires the exact same annotators to annotate the items in each dataset, which is not the case for any of our datasets. This limitation makes the test extremely restrictive in realistic annotation settings. We explain our own method in \S\ref{sec:apunim}, as the focus of this experiment is the behavior of other measures on real data.
+Table~\ref{tab:real-data-methods} shows a comparison between the different methods when applied to the five datasets introduced in \S\ref{sec:datasets}. The \ac{gmm} method is not run, as it requires the exact same annotators to annotate the items in each dataset, which is not the case for any of our datasets. This limitation makes the test extremely restrictive in realistic annotation settings. We explain our own method in \S\ref{sec:apunim}, as the focus of this experiment is the behavior of other measures on real data.
 
 We find that the \ac{au} method completely fails to attribute polarization to any \ac{sdd}, while the $\chi^2$ method attributes it to every single one. The latter can be explained by the assumptions made by the test; namely that annotations can be pooled across items (discussed in the next section), as well as the power of the test which inflates p-values when the number of observations is large enough. Out of all prior methodologies, \ac{iaa} using Krippendorff's $\alpha$ seems to be the only way of obtaining any results for only a subset of datasets.
 
@@ -303,11 +313,11 @@ We find that the \ac{au} method completely fails to attribute polarization to an
 	\label{fig:ndfu_discussion}
 \end{figure}
 
-In Fig.~\ref{fig:measures} we observed that the simple statistical approaches show excellent performance when all groups are polarized in the same way. This is expected, since their assumption of a consistent, fixed means effects, is violated in the second experimental setup. Specifically, both $\chi^2$ and GMM aggregate across items before looking for group differences; $\chi^2$ pools all annotations into a single contingency table, while GMM clusters annotators by their mean rating across items. In both cases, opposite-direction effects (see Fig.~\ref{fig:ndfu_discussion}) cancel out in the aggregate, making the two groups appear statistically indistinguishable. We can confirm the persistence of this issue using \ac{ndfu} \citep{pavlopoulos-likas-2024}, which is another representation of polarization (Eq.~\ref{eq:ndfu}) in Fig.~\ref{fig:ndfu_discussion}, which shows that two items polarized for the opposite reason may lead to a false negative. We avoid this issue in \S\ref{sec:apunim} by computing annotation statistics item-by-item.
+In Fig.~\ref{fig:measures} we observed that the simple statistical approaches show excellent performance when all groups are polarized in the same way. This is expected, since their assumption of a consistent, fixed means effects, is violated in the second experimental setup. Specifically, both $\chi^2$ and \ac{gmm} aggregate across items before looking for group differences; $\chi^2$ pools all annotations into a single contingency table, while \ac{gmm} clusters annotators by their mean rating across items. In both cases, opposite-direction effects (see Fig.~\ref{fig:ndfu_discussion}) cancel out in the aggregate, making the two groups appear statistically indistinguishable. We can confirm the persistence of this issue using \ac{ndfu} \citep{pavlopoulos-likas-2024}, which is another representation of polarization (Eq.~\ref{eq:ndfu}) in Fig.~\ref{fig:ndfu_discussion}, which shows that two items polarized for the opposite reason may lead to a false negative. We avoid this issue in \S\ref{sec:apunim} by computing annotation statistics item-by-item.
 
 \begin{finding}
 	\label{finding:methods}
-	Current methodologies attributing \ac{sysdis} generally fail in realistic annotation conditions. One of the reasons is that disagreements may conflict across items, which may compromise cross-item annotation aggregation.
+	Current methodologies revealing \ac{atsysdis} generally fail in realistic annotation conditions. One of the reasons is that disagreements may conflict across items, which may compromise cross-item annotation aggregation.
 \end{finding}
 
 
@@ -316,7 +326,7 @@ In Fig.~\ref{fig:measures} we observed that the simple statistical approaches sh
 
 \subsection{Quantifying Attribution to Annotator Dimensions}
 
-We estimate polarization using \ac{ndfu} (see \S\ref{sec:related}; Eq.~\ref{eq:apunim}). Specifically, we measure the unimodality of each group $g$ for an item $c$ as $Pol_g(c) = \textit{nDFU}(A_g(c))$, where $A_g(c)$ is the set of annotations for item $c$ created by annotators belonging to a group $g$. We compare this quantity to the ``apriori'' polarization present in the item c, which is defined as the \emph{expected} (average) unimodality of theoretical groups $\mathrm{Pol}_{\textit{apr}}(c) = \frac{1}{k} \sum_{1}^{k}  \mathrm{nDFU}(A_{random}(c))$, where $A_{random}$ is a random split and $k$ is a hyperparameter (higher $k$ yields more accurate estimation, at a greater computational cost). Intuitively, a high $\mathrm{Pol}_{\textit{apr}}(c)$ score means that much of the polarization is likely not driven by any single group. 
+We estimate polarization using \ac{ndfu} (see \S\ref{sec:related}; Eq.~\ref{eq:apunim}). Specifically, we measure the unimodality of each group $g$ for an item $c$ as $Pol_g(c) = \textit{nDFU}(A_g(c))$, where $A_g(c)$ is the set of annotations for item $c$ created by annotators belonging to a group $g$. We compare this quantity to the ``apriori'' polarization present in the item c, which is defined as the \emph{expected} (average) unimodality of theoretical groups $\mathrm{Pol}_{\textit{apr}}(c) = \frac{1}{k} \sum_{1}^{k}  \mathrm{nDFU}(A_{random}(c))$, where $A_{random}$ is a random partition and $k$ is a hyperparameter (higher $k$ yields more accurate estimation, at a greater computational cost). Intuitively, a high $\mathrm{Pol}_{\textit{apr}}(c)$ score means that much of the polarization is likely not driven by any single group. 
 
 Since the  $\mathrm{Pol}_{\textit{apr}}(c)$ and $Pol_g(c)$ quantities represent very noisy estimates due to the lack of annotators per item, a direct comparison would not be reliable. We therefore exploit the Law of Large Numbers to compute the statistic on the dataset level and average both quantities for all items in the dataset $D$. Normalizing this difference yields the measure described in Eq.~\ref{eq:ndfu}, which we call \emph{apunim}:
 
@@ -333,7 +343,7 @@ The \emph{sign} of apunim carries information agreement-based attribution does n
 	\item $\textit{apunim}(g) < 0$: The annotators of group $g$ are polarized between themselves.
 \end{itemize}
 
-Apunim thus measures the degree to which an annotator group contributes to overall polarization in a set of items. As demonstrated in \S\ref{sec:methods}; Fig.~\ref{fig:measures}, our measure is robust to the number of annotators per item, opposing \ac{sysdis} effects, and minority groups, validating our initial motivation. Furthermore, unlike some prior methods \citep{akhtar_2019, checco_2017}, apunim allows us to attribute \ac{sysdis} to a specific group, not just a \ac{sdd} (e.g., only ``men'' instead of ``gender'' as a whole), allowing fine-grained analysis. We include a perturbation-based p-value estimation, which tests whether the observed apunim value of a group $g$ statistically surpasses that of random groups in App.~\ref{app:pvalue} and analyze theoretical design decisions, limitations and computational details in App.~\ref{app:design}.
+Apunim thus measures the degree to which an annotator group contributes to overall polarization in a set of items. As demonstrated in \S\ref{sec:methods}; Fig.~\ref{fig:measures}, our measure is robust to the number of annotators per item, opposing \ac{atsysdis} effects, and minority groups, validating our initial motivation. Furthermore, unlike some prior methods \citep{akhtar_2019, checco_2017}, apunim allows us to attribute \ac{atsysdis} to a specific group, not just a \ac{sdd} (e.g., only ``men'' instead of ``gender'' as a whole), allowing fine-grained analysis. We include a perturbation-based p-value estimation, which tests whether the observed apunim value of a group $g$ statistically surpasses that of random groups in App.~\ref{app:pvalue} and analyze theoretical design decisions, limitations and computational details in App.~\ref{app:design}.
 
 
 \subsection{How Are Humans Polarized?}
@@ -406,13 +416,13 @@ Apunim thus measures the degree to which an annotator group contributes to overa
 	\end{minipage}
 \end{table}
 
-\paragraph{Experimental Setup} Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \acp{sdd} can explain the \ac{sysdis} shown in the five datasets (\S\ref{sec:datasets}). Statistically significant results are presented in Table~\ref{tab:apunim-main}.\footnote{The results are not necessarily contingent on a reliable p-value estimation, as non-statistically significant results have very low ($<0.01$) apunim values. A threshold on the apunim values would produce similar tables.} Note that our analysis is necessarily uni-dimensional due to the lack of annotation meta-data. App.~\ref{app:ablation}; Fig.~\ref{fig:std_error} shows that our results are \emph{robust to small annotator counts}, corroborating the synthetic experiments in Fig.~\ref{fig:measures}. See App.~\ref{app:software} for details on parameters and execution times and App.~\ref{app:full} for the full results.
+\paragraph{Experimental Setup} Assuming a confidence level of $\alpha=0.05$ we test whether any of the provided \acp{sdd} can explain the \ac{atsysdis} shown in the five datasets (\S\ref{sec:datasets}). Statistically significant results are presented in Table~\ref{tab:apunim-main}.\footnote{The results are not necessarily contingent on a reliable p-value estimation, as non-statistically significant results have very low ($<0.01$) apunim values. A threshold on the apunim values would produce similar tables.} Note that our analysis is necessarily uni-dimensional due to the lack of annotation meta-data. App.~\ref{app:ablation}; Fig.~\ref{fig:std_error} shows that our results are \emph{robust to small annotator counts}, corroborating the synthetic experiments in Fig.~\ref{fig:measures}. See App.~\ref{app:software} for details on parameters and execution times and App.~\ref{app:full} for the full results.
 
-\paragraph{Results} \emph{\ac{sysdis} is consistently attributed to \textbf{ethnicity}} across all datasets excluding DICES-330, confirming prior work suggesting that it is a systematic source of annotator disagreement in \ac{hs} tasks~\citep{goyal2022your}. Additionally, in both DICES-990, Sap and POPQUORN, \ac{sysdis} is attributed to \textbf{gender}, which is consistent with previous findings~\citep{wojatzki2018women, binns2017like}. None of the \acp{sdd} in the Kumar dataset show statistically significant values, but this is expected, since our methodology requires at least six annotators per item to work reliably.\footnote{Note that \acp{aa} show differently signed apunim values in the two DICES datasets, which may be attributed to these datasets using different labels (see \S\ref{sec:datasets}) and because different ethnic group splits are considered in each dataset. Thus, while detection is constant across the two datasets, attribution is not. Additionally, men are a consistent source of \ac{sysdis} (positive values), while women disagree among themselves (positive values) in DICES-990 and POPQUORN, but the opposite is true for Sap. Unfortunately we can not diagnose these discrepancies, since neither DICES nor Sap include annotation guidelines (Table~\ref{tab:datasets}).}
+\paragraph{Results} \emph{\ac{atsysdis} is consistently attributed to \textbf{ethnicity}} across all datasets excluding DICES-330, confirming prior work suggesting that it is a systematic source of annotator disagreement in \ac{hs} tasks~\citep{goyal2022your}. Additionally, in both DICES-990, Sap and POPQUORN, \ac{atsysdis} is attributed to \textbf{gender}, which is consistent with previous findings~\citep{wojatzki2018women, binns2017like}. None of the \acp{sdd} in the Kumar dataset show statistically significant values, but this is expected, since our methodology requires at least six annotators per item to work reliably.\footnote{Note that \acp{aa} show differently signed apunim values in the two DICES datasets, which may be attributed to these datasets using different labels (see \S\ref{sec:datasets}) and because different ethnic groups are considered in each dataset. Thus, while detection is constant across the two datasets, attribution is not. Additionally, men are a consistent source of \ac{atsysdis} (positive values), while women disagree among themselves (positive values) in DICES-990 and POPQUORN, but the opposite is true for Sap. Unfortunately we can not diagnose these discrepancies, since neither DICES nor Sap include annotation guidelines (Table~\ref{tab:datasets}).}
 
 \begin{finding}
 	\label{finding:human}
-	Ethnicity and gender are consistent causes of \ac{sysdis}, confirming prior literature on Toxicity and \ac{hs} tasks.
+	Ethnicity and gender are consistent causes of \ac{atsysdis}, confirming prior literature on Toxicity and \ac{hs} tasks.
 \end{finding}
 
 
@@ -430,22 +440,21 @@ Apunim thus measures the degree to which an annotator group contributes to overa
 
 We ensure that our LLM annotation study is reproducible by selecting exclusively open-source, locally hosted models and fixing all relevant seeds. An ablation study where we repeat annotations multiple times shows that our setup achieves 100\% consistency across all models. In order to ensure that the LLM annotators are not influenced by minute differences in the prompts, we execute a second ablation study where we rephrase the main annotation prompt three times and compare outputs. This procedure revealed that three models were especially sensitive to such changes (App.~\ref{app:llms}; Table~\ref{tab:llm-consistency-variants}), which led us to exclude those models from the analysis presented in this manuscript. See App.~\ref{app:llms} for the ablation experimental procedure, full results, model details, dataset selection, exploratory analysis, and comparison to human annotations. We use a parametric test (ANOVA) in our analysis due to the abundance of observations ($N \gg 100$) as well as a multiple hypothesis p-value correction (``Holm-Bonferroni'' \citep{holms}).
 
-\paragraph{Do LLMs Exhibit SysDis?} \textbf{Yes}. Table~\ref{tab:mean-ndfu-default-vs-human-excluding} shows that the \ac{ndfu} values exhibited by LLMs when under standard persona prompting can even surpass those of humans. However, manipulating the amount of \ac{sysdis} through instruction prompting is not reliable. While an ANOVA test shows that the choice of instruction prompt does indeed affect \ac{ndfu} scores across most models, measuring Cohen's d (Table~\ref{tab:cohens-d-excluding}) shows that the effect is generally small ($\lvert d \rvert \leq 0.3$) and inconsistent, with the sign and magnitude of the effect depending on the model and dataset.\footnote{See App.~\ref{app:full}; Table~\ref{tab:mean-ndfu-default-vs-human} for the actual mean \ac{ndfu} values by prompt.}
+\paragraph{Do LLMs Exhibit SysDis?} \textbf{Yes}. Table~\ref{tab:mean-ndfu-default-vs-human-excluding} shows that the \ac{ndfu} values exhibited by LLMs when under standard persona prompting can even surpass those of humans. However, manipulating the amount of \ac{atsysdis} through instruction prompting is not reliable. While an ANOVA test shows that the choice of instruction prompt does indeed affect \ac{ndfu} scores across most models, measuring Cohen's d (Table~\ref{tab:cohens-d-excluding}) shows that the effect is generally small ($\lvert d \rvert \leq 0.3$) and inconsistent, with the sign and magnitude of the effect depending on the model and dataset.\footnote{See App.~\ref{app:full}; Table~\ref{tab:mean-ndfu-default-vs-human} for the actual mean \ac{ndfu} values by prompt.}
 
-\paragraph{Is the Exhibited SysDis Aligned With Humans?} \textbf{No}. Table~\ref{tab:llm-apunim-significance-excluding} shows that alignment on \ac{sysdis} between humans and LLMs is rarely achieved. Specifically, we observe:
+\paragraph{Is the Exhibited SysDis Aligned With Humans?} \textbf{No}. Table~\ref{tab:llm-apunim-significance-excluding} shows that alignment on \ac{atsysdis} between humans and LLMs is rarely achieved. Specifically, we observe:
 \begin{enumerate*}
 	\item Low Precision: LLMs tend to produce polarized annotations for groups whose human annotators are not.
 	\item Low Recall: LLMs under-detect where humans find real effects, especially in Sap and POP Gender.
-	\item Where \ac{sysdis} matches, the direction does not (POP; Race, Education).
+	\item Where \ac{atsysdis} matches, the direction does not (POP; Race, Education).
 	\item Where replication is achieved, it is generally on null results (e.g., \textit{Mistral-7B}).
 \end{enumerate*}
-We also find no connection between model size and family on the alignment of \ac{sysdis}.
+We also find no connection between model size and family on the alignment of \ac{atsysdis}.
 
 \begin{finding}
 	\label{finding:llms}
 	While persona-prompted LLMs can produce polarized annotations, they can not replicate human polarization patterns, even when we attempt to align them using prompting.
 \end{finding}
-
 
 
 \subsection{What Does This Mean for LLM Annotation?} 
@@ -479,9 +488,9 @@ As discussed in \S\ref{sec:datasets}, there is a severe lack of datasets contain
 	\label{fig:inherent}
 \end{figure}
 
-\paragraph{Is All \ac{sysdis} Attributable to a \ac{sdd}?} In theory, we would expect all \ac{sysdis} to be attributable to some annotator \ac{sdd}, either one that is observed in our dataset, or latent (e.g., whether the annotators had lunch before their task). Some theoretical models such as \ac{au} make this assumption explicit, with \ac{au} attributing polarization to a \ac{sdd} only when all individual groups show completely unimodal annotation histograms. We posit that this is not the case when datasets are created using few annotators per item.
+\paragraph{Is All \ac{atsysdis} Attributable to a \ac{sdd}?} In theory, we would expect all \ac{atsysdis} to be attributable to some annotator \ac{sdd}, either one that is observed in our dataset, or latent (e.g., whether the annotators had lunch before their task). Some theoretical models such as \ac{au} make this assumption explicit, with \ac{au} attributing polarization to a \ac{sdd} only when all individual groups show completely unimodal annotation histograms. We posit that this is not the case when datasets are created using few annotators per item.
 
-\paragraph{Definition} Formally, the \acf{unpol} for a single item $c$ is the minimum \ac{ndfu} exhibited by any arbitrary group (Eq.~\ref{eq:inherent}). When considered exhaustively, these theoretical, random splits produce both observed and latent groups. Since \ac{ndfu} operates only when a group has at least three annotators (Eq.~\ref{eq:ndfu}), this yields $\sum_{k=3}^{n} \binom{n}{k}$ possible groups, which is computationally intractable for large annotator counts. We can therefore use Monte Carlo sampling by drawing $k$ random partitions with random sizes (Eq.~\ref{eq:random}) which serves as an upper bound (as it considers a strict subset of Eq.~\ref{eq:inherent}).
+\paragraph{Definition} Formally, the \acf{unpol} for a single item $c$ is the minimum \ac{ndfu} exhibited by any arbitrary group (Eq.~\ref{eq:inherent}). When considered exhaustively, these theoretical, random partitions produce both observed and latent groups. Since \ac{ndfu} operates only when a group has at least three annotators (Eq.~\ref{eq:ndfu}), this yields $\sum_{k=3}^{n} \binom{n}{k}$ possible groups, which is computationally intractable for large annotator counts. We can therefore use Monte Carlo sampling by drawing $k$ random partitions with random sizes (Eq.~\ref{eq:random}) which serves as an upper bound (as it considers a strict subset of Eq.~\ref{eq:inherent}).
 
 \begin{multicols}{2}
 	\noindent
@@ -520,7 +529,7 @@ In this work we used proprietary models such as Anthropic's Claude Sonnet 5 and 
 
 \section*{Ethics Statement}
 
-\paragraph{Dual Use Concerns} The primary objective of this study is to identify systemic sources of \ac{sysdis} in subjective \ac{nlp} datasets to facilitate the construction of more fair and reliable AI systems. However, given that our methodology allows for the quantitative attribution of specific annotation patterns to \acp{sdd}, we acknowledge three primary risks inherent in this research.
+\paragraph{Dual Use Concerns} The primary objective of this study is to identify systemic sources of \ac{atsysdis} in subjective \ac{nlp} datasets to facilitate the construction of more fair and reliable AI systems. However, given that our methodology allows for the quantitative attribution of specific annotation patterns to \acp{sdd}, we acknowledge three primary risks inherent in this research.
 \begin{enumerate*}
 	\item \emph{Discriminatory Profiling}: If the measure is applied outside of a dataset quality analysis, its ability to correlate specific opinion patterns with annotator groups could be misused for surveillance or unjust profiling.
 	\item \emph{Automated Bias Amplification}: The diagnostic patterns of disagreement we detect are reflections of human systemic biases. Without human oversight, training subsequent models on these patterns risks automating and entrenching existing societal prejudices.
@@ -543,14 +552,15 @@ We stress that our measure functions strictly as a diagnostic warning signal. An
 	\acro{iaa}[IAA]{Inter-Annotator Agreement}
 	\acro{sdd}[SDD]{SocioDemographic Dimension}
 	\acro{au}[AU]{A Posteriori Unimodality}
-	\acro{sysdis}[SysDis]{Systematic Disagrement}
-	\acro{unpol}[UnPol]{Unnatributtable Polarization}
+	\acro{sysdis}[SD]{Systematic Disagrement}
+	\acro{atsysdis}[ASD]{Attributable Systematic Disagrement}
+	\acro{unpol}[USD]{Unnatributtable Systematic Disagreement}
 	\acro{ndfu}[nDFU]{normalized Distance From Unimodality}
 	\acro{nlp}[NLP]{Natural Language Processing}
 	\acro{gpl}[GPLv3]{GNU General Public Licence v3}
 	\acro{aa}[AA]{African American}
 	\acro{hs}[HS]{Hate Speech}
-	\acro{sd}[SD]{Standard Deviation}
+	\acro{gmm}[GMM]{Gaussian Mixture Models}
 	\acro{dc}[DC]{Data Coverage}
 	\acro{gc}[GC]{Group Coverage}
 	\acro{ad}[AD]{Annotation Density}
@@ -952,11 +962,11 @@ We examine \ac{ndfu} scores for three specific textual examples presented in Fig
 \begin{figure}[t]
 	\includegraphics[width=\linewidth]{kumar1k_seed_ablation.png}
 	\centering
-	\caption{Apunim values on the Kumar dataset ($n_{samples}=1000$) across ten runs with different subsets.  Black bars indicate two \acp{sd}. \acp{sdd} with many groups are more volatile, although all \acp{sdd} broadly keep the same apunim sign across subsets.}
+	\caption{Apunim values on the Kumar dataset ($n_{samples}=1000$) across ten runs with different subsets.  Black bars indicate two standard deviations. \acp{sdd} with many groups are more volatile, although all \acp{sdd} broadly keep the same apunim sign across subsets.}
 	\label{fig:seeds}
 \end{figure}
 
-\paragraph{How Does Dataset Size Influence Apunim?} Since our approach was designed for the small-scale datasets common in \ac{nlp}, we were cautious when testing it on the massive Kumar dataset. Because of the data volume, we analyzed various smaller samples (1{,}000, 3{,}000, 10{,}000, and 30{,}000 items), shown in Table~\ref{tab:num-comments-apunim}. Sample size does not seem to have a consistent effect on apunim values, other than large splits uncovering significant polarization effects in sparsely populated groups (e.g., 65+ yo. in \textit{Age}, ``Prefer Not to Say'' in \textit{Sexual Orientation}, ``Never'' , ``Very Frequently'' in \textit{Toxicity Problem}). The apunim direction stays broadly the same. We also test whether the results in Table~\ref{tab:apunim-main} are an artifact of the dataset split, because of the small sample size used in the study. We repeat the apunim experiment with ten different subsets of the same dataset and record their apunim values, shown in Fig.~\ref{fig:seeds}. We find that most apunim values are stable, save for ``Never'' in \textit{Toxicity Problem}, ``Heterosexual'' in \textit{Sexual Orientation} and ``Neutral'' in \textit{Technology Impact}.
+\paragraph{How Does Dataset Size Influence Apunim?} Since our approach was designed for the small-scale datasets common in \ac{nlp}, we were cautious when testing it on the massive Kumar dataset. Because of the data volume, we analyzed various smaller samples (1{,}000, 3{,}000, 10{,}000, and 30{,}000 items), shown in Table~\ref{tab:num-comments-apunim}. Sample size does not seem to have a consistent effect on apunim values, other than large dataset sizes uncovering significant polarization effects in sparsely populated groups (e.g., 65+ yo. in \textit{Age}, ``Prefer Not to Say'' in \textit{Sexual Orientation}, ``Never'' , ``Very Frequently'' in \textit{Toxicity Problem}). The apunim direction stays broadly the same. We also test whether the results in Table~\ref{tab:apunim-main} are an artifact of the dataset split, because of the small sample size used in the study. We repeat the apunim experiment with ten different subsets of the same dataset and record their apunim values, shown in Fig.~\ref{fig:seeds}. We find that most apunim values are stable, save for ``Never'' in \textit{Toxicity Problem}, ``Heterosexual'' in \textit{Sexual Orientation} and ``Neutral'' in \textit{Technology Impact}.
 
 \paragraph{How Does Sample Selection Influence Apunim?}
 Astute readers may notice that some variability does exist across differently sized samples for the same examined groups, where for example the sign of the apunim value may switch. We note that the statistically significant values (bold rows) change signs only when the apunim value approaches zero in the largest samples. Thus, the results are not inverted, but rather pushed towards zero. In order to verify that this variability is caused by the sample size, and not by different samples being drawn, we execute a further ablation study. Specifically, we execute the apunim study on the $3000$-sized sample of the dataset, using different subsets of the Kumar dataset. The results can be found in Fig.~\ref{fig:seeds}, where we note that variability is not an issue, except for a couple of cases. These cases seem to represent sparse annotator groups, where missing a few items may genuinely change the value of the apunim measure. These groups however are largely not detected by apunim as significant either way (see Table~\ref{tab:apunim-main}).
@@ -965,7 +975,7 @@ Astute readers may notice that some variability does exist across differently si
 \begin{figure}[t]
 	\centering
 	\includegraphics[width=\linewidth]{apunim_subsampling_robustness.png}
-	\caption{\ac{sd} of $apunim$ across items, averaged across $10$ runs, where each item is resampled $100$ times. Shaded areas represent two \acp{sd}.}
+	\caption{Standard deviation of $apunim$ across items, averaged across $10$ runs, where each item is resampled $100$ times. Shaded areas represent two standard deviations.}
 	\label{fig:std_error}
 \end{figure}
 

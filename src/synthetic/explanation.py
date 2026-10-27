@@ -27,6 +27,21 @@ HATCH_MAP = {
     "All": graphs.HATCHES[2],
 }
 
+# Annotator groups for the disagreement plots: 0 = majority, 1 = minority.
+GROUP_LABELS = {0: "Non-Muslim", 1: "Muslim"}
+GROUP_COLORS = {
+    0: graphs.COLORBLIND_PALETTE[0],
+    1: graphs.COLORBLIND_PALETTE[1],
+}
+GROUP_MARKERS = {0: graphs.MARKERS[0], 1: graphs.MARKERS[6]}  # circle, X
+# Style for panels that draw no group distinction.
+UNGROUPED_COLOR = graphs.COLORBLIND_PALETTE[2]
+UNGROUPED_MARKER = graphs.MARKERS[3]  # triangle
+# Wider than graphs.DEFAULT_FIGSIZE to fit three panels side by side.
+DISAGREEMENT_FIGSIZE = (20, 4)
+# How many scale points the minority's opinions are shifted up by.
+MINORITY_SHIFT = 2
+
 
 def main(graph_dir: Path):
     graphs.graph_setup()
@@ -46,108 +61,6 @@ def _discrete_normal(loc, scale, size):
     return vals
 
 
-def _prepare_distributions(n_annotators, variance):
-    # Define special indices for mean shifts (use the first 20% as "Muslims")
-    n_special = int(0.2 * n_annotators)
-    special_indices = list(range(n_special))  # first 20% will get mean_shift=1
-
-    def make_distribution(base_means, special_indices=[], variance=variance):
-        data = []
-        for i in range(n_annotators):
-            mean_shift = 1 if i in special_indices else 0
-            distributions = [
-                _discrete_normal(base_mean + mean_shift, variance, 1)
-                for base_mean in base_means
-            ]
-            combined = (
-                np.mean(distributions)
-                if len(distributions) > 1
-                else distributions[0][0]
-            )
-            data.append(combined)
-        return data
-
-    unimodal = make_distribution([3], variance=variance)
-    bimodal = make_distribution(
-        [3], special_indices=special_indices, variance=variance
-    )
-    multimodal = make_distribution(
-        [1, 3], special_indices=special_indices, variance=variance * 3
-    )
-    uniform = list(np.random.randint(1, 6, n_annotators))
-
-    group_labels = [
-        1 if i in special_indices else 0 for i in range(n_annotators)
-    ]  # 0=Christian, 1=Muslim
-    return unimodal, bimodal, multimodal, uniform, group_labels
-
-
-def _plot_matrix(
-    ax,
-    data,
-    group_labels,
-    title,
-    horizontal_jitter=0.25,
-    vertical_jitter=0.15,
-):
-    color_map = {0: "blue", 1: "green"}
-
-    marker_map = {
-        0: graphs.MARKERS[0],
-        1: graphs.MARKERS[1],
-    }
-
-    # Scatter points for each group separately
-    for group in [0, 1]:
-        idx = [i for i, g in enumerate(group_labels) if g == group]
-
-        x_jittered = np.array(idx) + np.random.uniform(
-            -horizontal_jitter,
-            horizontal_jitter,
-            size=len(idx),
-        )
-
-        y_jittered = np.array([data[i] for i in idx]) + np.random.uniform(
-            -vertical_jitter,
-            vertical_jitter,
-            size=len(idx),
-        )
-
-        ax.scatter(
-            x_jittered,
-            y_jittered,
-            c=color_map[group],
-            marker=marker_map[group],
-            edgecolor="black",
-            s=65,
-            alpha=0.75,
-            linewidth=0.7,
-        )
-
-    ax.set_xlim(-0.5, len(data) - 0.5)
-    ax.set_xticks([])
-    ax.minorticks_off()
-
-    # emoji labels that render in standard unicode fonts
-    ax.set_yticks([1, 2, 3, 4, 5])
-    ax.set_yticklabels(
-        [r"$\heartsuit\heartsuit$", r"$\heartsuit$", "?", "!", "!!"]
-    )
-
-    ax.set_ylim(0.8, 5.2)
-
-    ax.set_title(title, fontweight="bold")
-
-    # remove unnecessary subplot spines
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-
-    # keep left spine for emoji scale
-    ax.spines["left"].set_linewidth(1.0)
-
-    ax.tick_params(axis="x", length=0)
-
-
 def plot_annotation_distributions(
     graph_dir: Path,
     n_annotators=100,
@@ -155,87 +68,135 @@ def plot_annotation_distributions(
     random_seed=42,
 ):
     np.random.seed(random_seed)
+    groups = _group_labels(n_annotators)
 
-    unimodal, bimodal, multimodal, uniform, group_labels = (
-        _prepare_distributions(n_annotators, variance)
+    # Jitter once so the two systematic-disagreement plots
+    # show identical points.
+    mixed = _jitter(_mixed_opinions(n_annotators))
+    split = _jitter(_minority_split_mixed_opinions(groups, variance))
+
+    fig, axs = plt.subplots(1, 3, sharey=True, figsize=DISAGREEMENT_FIGSIZE)
+    _annotation_axis(axs[0], mixed, groups=None, title="Disagreement")
+    _annotation_axis(
+        axs[1], split, groups=None, title="Systematic Disagreement"
+    )
+    _annotation_axis(
+        axs[2],
+        split,
+        groups=groups,
+        title="Attributable\nSystematic Disagreement",
     )
 
-    fig, axs = plt.subplots(2, 2)
-
-    # Low polarization / low disagreement
-    _plot_matrix(
-        axs[1, 0],
-        unimodal,
-        group_labels,
-        title="No disagreements",
-    )
-
-    # High polarization / low disagreement
-    _plot_matrix(
-        axs[0, 0],
-        bimodal,
-        group_labels,
-        title="Minority split",
-    )
-
-    # High polarization / high disagreement
-    _plot_matrix(
-        axs[0, 1],
-        multimodal,
-        group_labels,
-        title="Minority split, mixed opinions",
-    )
-
-    # Low polarization / high disagreement
-    _plot_matrix(
-        axs[1, 1],
-        uniform,
-        group_labels,
-        title="Overall mixed opinions",
-    )
-
-    # clearer matrix-style labels
-    fig.supxlabel(
-        r"Low $\rightarrow$ High disagreement"
-    )
-
-    fig.supylabel(r"Low $\rightarrow$ High polarization")
+    _group_legend(axs[2])
 
     fig.suptitle(
-        r"``\textit{We will never stop in our fight against Radical Islamic Terrorism}''"
+        r"``\textit{We will never stop in our fight against Radical Islamic Terrorism}''",
+        y=1.1,  # clear of the two-line panel title
     )
-
-    legend_handles = [
-        plt.Line2D(
-            [],
-            [],
-            linestyle="",
-            marker=graphs.MARKERS[1],
-            markersize=18,
-            markerfacecolor="green",
-            markeredgecolor="black",
-            label="Muslim",
-        ),
-        plt.Line2D(
-            [],
-            [],
-            linestyle="",
-            marker=graphs.MARKERS[0],
-            markersize=18,
-            markerfacecolor="blue",
-            markeredgecolor="black",
-            label="Non-Muslim",
-        ),
-    ]
-
-    fig.legend(
-        handles=legend_handles,
-        loc="lower center",
-        ncol=2,
-    )
-
     graphs.save_plot(graph_dir / "disagreement_vs_polarization.png")
-    plt.close()
+    plt.close(fig)
+
+
+def _group_labels(n_annotators: int, minority_frac=0.2) -> NDArray[np.int_]:
+    """The first minority_frac of annotators belong to the minority (1)."""
+    n_minority = int(minority_frac * n_annotators)
+    return np.array([1] * n_minority + [0] * (n_annotators - n_minority))
+
+
+def _mixed_opinions(n_annotators: int) -> NDArray[np.float64]:
+    return np.random.randint(1, 6, n_annotators).astype(float)
+
+
+def _minority_split_mixed_opinions(
+    groups: NDArray[np.int_], variance: float
+) -> NDArray[np.float64]:
+    """Each annotator averages two draws around 1 and 3; the minority is
+    shifted up by MINORITY_SHIFT points."""
+    draws = [
+        _discrete_normal(
+            base + MINORITY_SHIFT * groups, variance * 3, len(groups)
+        )
+        for base in (1, 3)
+    ]
+    return np.mean(draws, axis=0)
+
+
+def _jitter(
+    values: NDArray[np.float64],
+    horizontal_jitter=0.25,
+    vertical_jitter=0.15,
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    """One column per annotator, with jitter so overlapping points show."""
+    n = len(values)
+    x = np.arange(n) + np.random.uniform(
+        -horizontal_jitter, horizontal_jitter, n
+    )
+    y = values + np.random.uniform(-vertical_jitter, vertical_jitter, n)
+    return x, y
+
+
+def _annotation_axis(
+    ax,
+    points: tuple[NDArray[np.float64], NDArray[np.float64]],
+    groups: NDArray[np.int_] | None,
+    title: str,
+) -> None:
+    """Scatter of annotations. Without groups, every annotator is drawn in
+    a neutral style and no legend is shown."""
+    x, y = points
+
+    if groups is None:
+        _scatter(ax, x, y, UNGROUPED_COLOR, UNGROUPED_MARKER, label=None)
+    else:
+        for group, label in GROUP_LABELS.items():
+            mask = groups == group
+            _scatter(
+                ax,
+                x[mask],
+                y[mask],
+                GROUP_COLORS[group],
+                GROUP_MARKERS[group],
+                label=label,
+            )
+
+    _style_annotation_axis(ax, n_annotators=len(x), title=title)
+
+
+def _group_legend(ax) -> None:
+    """Legend for the grouped panel only, since the other panels draw
+    no groups."""
+    ax.legend(
+        markerscale=2,
+    )
+
+
+def _scatter(ax, x, y, color: str, marker: str, label: str | None) -> None:
+    ax.scatter(
+        x,
+        y,
+        c=color,
+        marker=marker,
+        edgecolor="black",
+        s=65,
+        alpha=0.75,
+        linewidth=0.7,
+        label=label,
+    )
+
+
+def _style_annotation_axis(ax, n_annotators: int, title: str) -> None:
+    ax.set_xlim(-0.5, n_annotators - 0.5)
+    ax.set_xticks([])
+    ax.minorticks_off()
+
+    # symbolic labels that render under usetex
+    ax.set_yticks([1, 2, 3, 4, 5])
+    ax.set_yticklabels(
+        [r"$\heartsuit\heartsuit\heartsuit$", r"$\heartsuit$", "?", "!", "!!!"]
+    )
+    ax.set_ylim(0.8, 5.2)
+    ax.tick_params(axis="y", labelsize=plt.rcParams["axes.labelsize"])
+    ax.set_title(title)
 
 
 def dfu_plots(graph_dir: Path) -> None:
