@@ -44,8 +44,11 @@ Y_LIM = (-0.04, 1.08)
 SIMULATION_LEGEND_COLOR = "black"
 
 # Figure-level axis labels, identical across both figures.
-DETECTION_RATE_LABEL = "Detection rate (higher=better)"
-EFFECT_SIZE_LABEL = "Opinion (Mean Rating) Difference Among Groups"
+DETECTION_RATE_LABEL = "Detection Rate (higher=better)"
+EFFECT_SIZE_LABEL = (
+    r"Mean Rating Difference $\delta$"
+    " Between Groups (higher is easier to detect)"
+)
 
 
 def order_methods(methods: list[str]) -> list[str]:

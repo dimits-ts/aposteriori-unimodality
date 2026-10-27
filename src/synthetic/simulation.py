@@ -6,6 +6,8 @@ simulate_multigroup() is the k-group model used by
 metric_comparison_multiple.py.
 """
 
+from pathlib import Path
+
 import numpy as np
 
 
@@ -26,6 +28,19 @@ DELTAS = [
 # Simulation labels, stored in the result caches.
 SIMULATION_UNIDIRECTIONAL = "unidirectional"
 SIMULATION_BIDIRECTIONAL = "bidirectional"
+
+# Both experiments run with annotator-specific group effects (default) and
+# with the original fixed group effect, each into its own cache and figure.
+FIXED_GROUP_EFFECT_VARIANTS = (False, True)
+FIXED_GROUP_EFFECT_SUFFIX = "-fixed-group-effect"
+
+
+def variant_path(path: Path, fixed_group_effect: bool) -> Path:
+    """`path` for the default model; `<stem>-fixed-group-effect<suffix>`
+    for the fixed-effect variant, so the two never share a cache/figure."""
+    if not fixed_group_effect:
+        return path
+    return path.with_name(path.stem + FIXED_GROUP_EFFECT_SUFFIX + path.suffix)
 
 
 def _groups(n_ann, minority_frac):
@@ -63,6 +78,7 @@ def simulate(
     minority_frac,
     rng,
     unidirectional: bool,
+    fixed_group_effect: bool = False,
     sigma=SIGMA,
 ):
     """
@@ -83,6 +99,8 @@ def simulate(
             g_i ~ Uniform(0, 1/2) for group B.
             Groups always pull in opposite directions, but annotators
             within a group differ in how strongly.
+            fixed_group_effect=True: g_i = -1/2 for A and +1/2 for B
+            (the original model).
 
         p_j:
             Item-specific polarization effect.
@@ -102,7 +120,7 @@ def simulate(
     else:
         polarization = rng.uniform(-delta, delta, size=n_items)
 
-    group_code = _group_codes(groups, rng)
+    group_code = _group_codes(groups, rng, fixed_group_effect)
     shift = group_code[:, None] * polarization[None, :]
     vals = rng.normal(base[None, :] + shift, sigma)
     vals = np.clip(np.round(vals), 1, N_LEVELS)
@@ -110,8 +128,13 @@ def simulate(
     return vals, groups
 
 
-def _group_codes(groups, rng):
-    """g_i ~ Uniform(-1/2, 0) for group A and Uniform(0, 1/2) for group B."""
+def _group_codes(groups, rng, fixed_group_effect):
+    """g_i ~ Uniform(-1/2, 0) for group A and Uniform(0, 1/2) for group B,
+    or exactly -1/2 / +1/2 if fixed (drawing nothing from rng, so the fixed
+    variant reproduces the original model's random stream)."""
+    if fixed_group_effect:
+        return np.where(groups == "B", 0.5, -0.5)
+
     n_ann = len(groups)
     return np.where(
         groups == "B",
@@ -128,6 +151,7 @@ def simulate_multigroup(
     minority_frac,
     rng,
     unidirectional: bool,
+    fixed_group_effect: bool = False,
     sigma=SIGMA,
 ):
     """
@@ -147,6 +171,7 @@ def simulate_multigroup(
             Uniform(0, 1). Annotators in the polarizing group all shift in
             the same direction, but by differing amounts (mirrors g_i in
             simulate). Irrelevant for non-polarizing groups (mu = 0).
+            fixed_group_effect=True: h_i = 1 (the original model).
 
         mu_{g, j}:
             Group- and item-specific offset (Option B).
@@ -173,7 +198,12 @@ def simulate_multigroup(
         else:
             pol_effect = rng.uniform(-delta, delta, size=n_items)
 
-        strength = rng.uniform(0, 1, size=pol_mask.sum())
+        # No draw when fixed, to reproduce the original random stream.
+        strength = (
+            np.ones(pol_mask.sum())
+            if fixed_group_effect
+            else rng.uniform(0, 1, size=pol_mask.sum())
+        )
         shift[pol_mask] = strength[:, None] * pol_effect[None, :]
 
     vals = rng.normal(base[None, :] + shift, sigma)
