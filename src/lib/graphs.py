@@ -40,7 +40,7 @@ COLORBLIND_PALETTE = [
 ]
 
 MARKERS = ["o", "s", "D", "^", "v", "P", "X"]
-HATCHES = ["..", "\\\\", "++", "oo", "//", "xx", "**", "--"]
+HATCHES = ["//", "\\\\", "++", "oo", "..", "xx", "**", "--"]
 
 DEFAULT_FIGSIZE = (14, 6)
 

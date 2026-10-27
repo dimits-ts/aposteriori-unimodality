@@ -3,10 +3,12 @@ from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patheffects as pe
 import seaborn as sns
 import scipy.stats
 import apunim
 from numpy.typing import NDArray
+from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 
 from ..lib import graphs
@@ -41,6 +43,19 @@ UNGROUPED_MARKER = graphs.MARKERS[3]  # triangle
 DISAGREEMENT_FIGSIZE = (20, 4)
 # How many scale points the minority's opinions are shifted up by.
 MINORITY_SHIFT = 2
+
+# Discussion figure: three panels (comment 1, comment 2, pooled).
+# Rating spread of every group on every comment.
+DISCUSSION_SIGMA = 0.5
+# Shared bin edges so bars line up across panels and groups.
+# Only used for drawing; nDFU is still computed with NUM_BINS.
+DISCUSSION_PLOT_BINS = np.linspace(0, 10, 2 * NUM_BINS + 1)
+# Density, so the pooled panel (twice the annotations) shares a y-scale.
+DISCUSSION_HIST_STAT = "density"
+DISCUSSION_TITLE = "Pooling Annotations Across Items Masks ASD"
+MEAN_LINESTYLES = {"Men": "--", "Women": ":"}
+# Mean lines are drawn this many times thicker than rcParams lines.
+MEAN_LINEWIDTH_SCALE = 2
 
 
 def main(graph_dir: Path):
@@ -276,137 +291,159 @@ def _combined_dfu_plot(
 
 
 def discussion_example(graph_dir: Path) -> None:
-    misogynist_comment = """``Most women do not drive well.''
-    """
-    misandrist_comment = """``Most men need closer friendships,
-    not just romantic support.''"""
-    discussion_comment = f"{misogynist_comment}{misandrist_comment}"
+    """Two comments with opposite (bidirectional) gender polarization,
+    and the pooled annotations of both, as one three-panel figure."""
+    # Each group rates the comment targeting its own gender as more toxic.
+    women_comment2 = _truncated_normal(
+        loc=2, scale=DISCUSSION_SIGMA, size=DIFF_COMMENTS_SIZE
+    )
+    women_comment1 = _truncated_normal(
+        loc=6, scale=DISCUSSION_SIGMA, size=DIFF_COMMENTS_SIZE
+    )
+    men_comment2 = _truncated_normal(
+        loc=6, scale=DISCUSSION_SIGMA, size=DIFF_COMMENTS_SIZE
+    )
+    men_comment1 = _truncated_normal(
+        loc=2, scale=DISCUSSION_SIGMA, size=DIFF_COMMENTS_SIZE
+    )
 
-    d_woman_comment1 = _truncated_normal(
-        loc=2, scale=1, size=DIFF_COMMENTS_SIZE
-    )
-    d_woman_comment2 = _truncated_normal(
-        loc=6, scale=1, size=DIFF_COMMENTS_SIZE
-    )
-    d_man_comment1 = _truncated_normal(loc=6, scale=1, size=DIFF_COMMENTS_SIZE)
-    d_man_comment2 = _truncated_normal(loc=2, scale=1, size=DIFF_COMMENTS_SIZE)
+    panels = [
+        (
+            "``Most women do not drive well.''",
+            men_comment1,
+            women_comment1,
+        ),
+        (
+            "``Most men need closer friendships,\nnot just romantic support.''",
+            men_comment2,
+            women_comment2,
+        ),
+        (
+            "Both comments pooled",
+            np.hstack([men_comment1, men_comment2]),
+            np.hstack([women_comment1, women_comment2]),
+        ),
+    ]
 
-    d_woman = np.hstack([d_woman_comment1, d_woman_comment2])
-    d_man = np.hstack([d_man_comment1, d_man_comment2])
+    # Figure size and fonts come from graphs.graph_setup(); constrained
+    # layout positions the panels, legend and title without manual offsets.
+    fig, axs = plt.subplots(1, len(panels), sharey=True, layout="constrained")
+    for ax, (title, men_annot, women_annot) in zip(axs, panels):
+        _discussion_panel(ax, title, men_annot, women_annot)
 
-    _plot_example_individual(
-        misogynist_comment,
-        d_man_comment1,
-        d_woman_comment1,
-        graph_dir / "ndfu_comment1.png",
+    axs[0].set_ylabel("Density")
+    handles = _discussion_legend_handles()
+    fig.suptitle(DISCUSSION_TITLE)
+    _legend_below(fig, axs, handles)
+
+    graphs.save_plot(graph_dir / "ndfu_discussion.png")
+    plt.close(fig)
+
+
+def _discussion_panel(
+    ax,
+    title: str,
+    men_annot: NDArray[np.float64],
+    women_annot: NDArray[np.float64],
+) -> None:
+    """Histograms per group, a line at each group's mean, and each group's
+    nDFU and mean under the x-axis."""
+    group_annots = {"Men": men_annot, "Women": women_annot}
+
+    for label, annot in group_annots.items():
+        before = len(ax.patches)
+        sns.histplot(
+            annot,
+            bins=DISCUSSION_PLOT_BINS,
+            stat=DISCUSSION_HIST_STAT,
+            alpha=0.6,
+            kde=True,
+            ax=ax,
+            color=COLOR_MAP[label],
+        )
+        # only hatch the bars this call created
+        for patch in ax.patches[before:]:
+            patch.set_hatch(HATCH_MAP[label])
+            patch.set_edgecolor("black")
+
+        ax.axvline(annot.mean(), **_mean_line_style(label))
+
+    # One quantity per line, so labels of neighboring panels never
+    # collide at the default figure width.
+    stats_lines = [
+        f"$nDFU_{{{label}}}="
+        f"{apunim.dfu(annot, bins=NUM_BINS, normalized=True):.3f}$"
+        for label, annot in group_annots.items()
+    ] + [
+        f"$\\mu_{{{label}}}={annot.mean():.2f}$"
+        for label, annot in group_annots.items()
+    ]
+
+    ax.set_title(title)
+    ax.set_xlabel(
+        r"\begin{tabular}{c}Toxicity\\"
+        + r"\\".join(stats_lines)
+        + r"\end{tabular}"
     )
-    _plot_example_individual(
-        misandrist_comment,
-        d_man_comment2,
-        d_woman_comment2,
-        graph_dir / "ndfu_comment2.png",
+    ax.set_xlim(0, 10)
+
+
+def _mean_line_style(label: str) -> dict:
+    """Line style for a group's mean, sized from rcParams at draw time
+    (after graphs.graph_setup() has run). The black outline keeps the
+    line visible over bars of the same color."""
+    linewidth = MEAN_LINEWIDTH_SCALE * plt.rcParams["lines.linewidth"]
+    return {
+        "color": COLOR_MAP[label],
+        "linestyle": MEAN_LINESTYLES[label],
+        "linewidth": linewidth,
+        "path_effects": [
+            pe.Stroke(
+                linewidth=linewidth + plt.rcParams["lines.linewidth"],
+                foreground="black",
+            ),
+            pe.Normal(),
+        ],
+    }
+
+
+def _legend_below(fig, axs, handles) -> None:
+    """Place the legend just below the lowest x-label, after constrained
+    layout has run."""
+    fig.draw_without_rendering()  # run constrained layout once
+    fig.set_layout_engine("none")  # freeze it; the legend must not move panels
+    renderer = fig.canvas.get_renderer()
+    bottom = min(ax.get_tightbbox(renderer).y0 for ax in axs)
+    _, y = fig.transFigure.inverted().transform((0, bottom))
+    fig.legend(
+        handles=handles,
+        loc="upper center",
+        bbox_to_anchor=(0.5, y),
+        ncol=len(handles),
     )
-    _plot_example_individual(
-        discussion_comment,
-        d_woman,
-        d_man,
-        graph_dir / "ndfu_discussion.png",
-    )
+
+
+def _discussion_legend_handles() -> list:
+    handles = [
+        Patch(
+            facecolor=COLOR_MAP[label],
+            edgecolor="black",
+            hatch=HATCH_MAP[label],
+            label=label,
+            alpha=0.6,
+        )
+        for label in ("Men", "Women")
+    ]
+    handles += [
+        Line2D([], [], label=f"Mean ({label})", **_mean_line_style(label))
+        for label in ("Men", "Women")
+    ]
+    return handles
 
 
 def _truncated_normal(loc, scale, lower=0, upper=10, size=100):
     a, b = (lower - loc) / scale, (upper - loc) / scale
     return scipy.stats.truncnorm(a, b, loc=loc, scale=scale).rvs(size)
-
-
-def _plot_example_individual(
-    title: str,
-    women_annot: NDArray[np.float64],
-    men_annot: NDArray[np.float64],
-    graph_path: Path,
-):
-    ndfu_man = apunim.dfu(men_annot, bins=NUM_BINS, normalized=True)
-    ndfu_woman = apunim.dfu(women_annot, bins=NUM_BINS, normalized=True)
-    ndfu_all = apunim.dfu(
-        np.hstack([ndfu_man, ndfu_woman]), bins=NUM_BINS, normalized=True
-    )
-
-    with plt.rc_context(
-        {
-            key: value * 2
-            for key, value in plt.rcParams.items()
-            if key
-            in {
-                "font.size",
-                "axes.titlesize",
-                "axes.labelsize",
-                "xtick.labelsize",
-                "ytick.labelsize",
-                "legend.fontsize",
-            }
-        }
-    ):
-        fig, ax = plt.subplots()
-
-        sns.histplot(
-            men_annot,
-            bins=NUM_BINS,
-            alpha=0.6,
-            kde=True,
-            ax=ax,
-            color=COLOR_MAP["Men"],
-        )
-        men_patches = list(ax.patches)
-
-        sns.histplot(
-            women_annot,
-            bins=NUM_BINS,
-            alpha=0.6,
-            kde=True,
-            ax=ax,
-            color=COLOR_MAP["Women"],
-        )
-        women_patches = ax.patches[len(men_patches) :]
-
-        for patch in men_patches:
-            patch.set_hatch(HATCH_MAP["Men"])
-            patch.set_edgecolor("black")
-
-        for patch in women_patches:
-            patch.set_hatch(HATCH_MAP["Women"])
-            patch.set_edgecolor("black")
-
-        legend_handles = [
-            Patch(
-                facecolor=COLOR_MAP["Men"],
-                edgecolor="black",
-                hatch=HATCH_MAP["Men"],
-                label="Men",
-                alpha=0.6,
-            ),
-            Patch(
-                facecolor=COLOR_MAP["Women"],
-                edgecolor="black",
-                hatch=HATCH_MAP["Women"],
-                label="Women",
-                alpha=0.6,
-            ),
-        ]
-
-        ax.set_title(title)
-        ax.legend(handles=legend_handles, loc="upper right")
-
-        ax.set_xlabel(
-            "Toxicity\n"
-            f"$nDFU_{{Men}}={ndfu_man:.4f}$\n"
-            f"$nDFU_{{Women}}={ndfu_woman:.4f}$\n"
-            f"$nDFU_{{All}}={ndfu_all:.4f}$",
-        )
-        ax.set_ylabel(r"\#Annotations")
-        ax.set_xlim(1, 10)
-
-        graphs.save_plot(graph_path)
-        plt.close()
 
 
 if __name__ == "__main__":

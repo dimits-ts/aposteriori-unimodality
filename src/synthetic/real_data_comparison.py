@@ -65,6 +65,12 @@ METHOD_DELTA_ALPHA = "Krippendorff delta-alpha"
 METHOD_ORIGINAL_AU = "aposteriori unimodality (2024)"
 METHOD_CHI2 = "chi-squared (Akhtar et al. 2019)"
 
+# Dataset names as shown in the LaTeX table. The cache keeps the full names.
+DATASET_TABLE_LABEL = {
+    "Sap et al. 2022": "Sap",
+    "Kumar et al. 2021": "Kumar",
+}
+
 N_PERM_DELTA_ALPHA = 200
 N_PERM_ORIGINAL_AU = 100
 
@@ -129,6 +135,7 @@ def export_latex_table(df: pd.DataFrame, output_path: Path) -> None:
     produced no statistic are not counted as tests and are shown as ---.
     """
     df = df.copy()
+    df["dataset"] = df["dataset"].replace(DATASET_TABLE_LABEL)
     df["dataset"] = df["dataset"].str.replace("_", r"\_", regex=False)
     df["sdb_feature"] = df["sdb_feature"].str.replace("_", r"\_", regex=False)
 
