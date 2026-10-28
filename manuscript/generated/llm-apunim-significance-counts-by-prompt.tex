@@ -1,0 +1,29 @@
+\begin{table}[t]
+\caption{Share of \acp{sdd} that are statistically significant ($p<0.05$) in the human annotations and in each LLM's annotations under each instruction prompt, per dataset; $n$ is the number of dimensions. A dimension counts as significant if at least one of its groups is; human annotations do not depend on the prompt.}
+\label{tab:llm-apunim-significance-counts-by-prompt}
+\centering
+\footnotesize
+\begin{tabular}{lrlc@{\hspace{10pt}}ccccccccc}
+\toprule
+Dataset & $n$ & Prompt & \rotatebox{90}{Human} & \rotatebox{90}{llama8b} & \rotatebox{90}{olmo32b} & \rotatebox{90}{olmo7b} & \rotatebox{90}{qwen32b} & \rotatebox{90}{qwen7b} & \rotatebox{90}{mistral7b} & \rotatebox{90}{mistral24b} & \rotatebox{90}{gemma7b} & \rotatebox{90}{gemma31b} \\
+\midrule
+\multirow{5}{*}{Sap} & \multirow{5}{*}{3} & Default & \multirow{5}{*}{66\%} & 66\% & 33\% & 100\% & 66\% & 66\% & 66\% & 100\% & 33\% & 66\% \\
+ &  & Stereotype &  & 100\% & 33\% & 100\% & 100\% & 66\% & 100\% & 100\% & 33\% & 66\% \\
+ &  & Persona &  & 66\% & 66\% & 100\% & 66\% & 100\% & 100\% & 66\% & 100\% & 66\% \\
+ &  & Single &  & 33\% & 0\% & 66\% & 66\% & 66\% & 33\% & 100\% & 33\% & 66\% \\
+ &  & Direct &  & 66\% & 66\% & 66\% & 100\% & 66\% & 66\% & 100\% & 100\% & 100\% \\
+\midrule
+\multirow{5}{*}{Kumar} & \multirow{5}{*}{13} & Default & \multirow{5}{*}{0\%} & 61\% & 46\% & 84\% & 53\% & 84\% & 46\% & 46\% & 38\% & 30\% \\
+ &  & Stereotype &  & 69\% & 61\% & 84\% & 38\% & 84\% & 69\% & 76\% & 53\% & --- \\
+ &  & Persona &  & 84\% & 61\% & 100\% & 23\% & 46\% & 61\% & 69\% & 69\% & --- \\
+ &  & Single &  & --- & 61\% & 84\% & 46\% & 53\% & 38\% & 30\% & 69\% & --- \\
+ &  & Direct &  & 76\% & 46\% & 100\% & 53\% & 76\% & 38\% & 84\% & 61\% & --- \\
+\midrule
+\multirow{5}{*}{POP} & \multirow{5}{*}{5} & Default & \multirow{5}{*}{60\%} & 40\% & 60\% & 100\% & 80\% & 100\% & 100\% & 100\% & 100\% & 60\% \\
+ &  & Stereotype &  & 100\% & 40\% & 100\% & 100\% & 80\% & 80\% & 100\% & 80\% & 80\% \\
+ &  & Persona &  & 80\% & 60\% & 100\% & 100\% & 100\% & 100\% & 100\% & 100\% & 100\% \\
+ &  & Single &  & 20\% & 80\% & 100\% & 80\% & 80\% & 80\% & 100\% & 100\% & 60\% \\
+ &  & Direct &  & 100\% & 100\% & 100\% & 80\% & 60\% & 100\% & 100\% & 80\% & 40\% \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -47,6 +47,11 @@ The following are produced:
    of its groups is) each model finds statistically significant under each
    prompt, compared with the human findings (llm-apunim-significance.tex; also
    without the models in EXCLUDED_MODELS, with an "_excluding" suffix).
+   Two tables give the share of those dimensions per model and dataset: a
+   concise one for the default prompt (llm-apunim-significance-counts.tex)
+   and a full one per instruction prompt
+   (llm-apunim-significance-counts-by-prompt.tex), also with "_excluding"
+   variants.
 
 6. A CSV of the non-standard answers in the raw LLM annotation files
    (nonstandard_answers_by_model.csv), and an abbreviated LaTeX summary
@@ -240,7 +245,6 @@ def main(
 
     stats.export_ndfu_anova_by_prompt(result_df=res_df, output_path=stats_path)
     run_cohens_d_step(res_df, latex_output_dir, exclude_models)
-    stats.run_exploratory_stats(res_df)
 
 
 # ---------------------------------------------------------------------------
@@ -984,6 +988,11 @@ def run_apunim_prompt_table_step(
         )
 
 
+# Datasets left out of the significance (symbol) table: no human result of
+# kumar can be significant. They are kept in the significance counts.
+SIGNIFICANCE_TABLE_SKIP_KEYS = {"kumar"}
+
+
 def _collect_apunim_significance_inputs(
     apunim_results: dict[str, pd.DataFrame], human_results_dir: Path
 ) -> dict[str, tuple[pd.DataFrame, pd.DataFrame]]:
@@ -991,9 +1000,6 @@ def _collect_apunim_significance_inputs(
     comparison dataset that has human results."""
     inputs = {}
     for key, llm_df in apunim_results.items():
-        # ignore kumar since no human results can be significant
-        if key == "kumar":
-            continue
         human_df = stats.load_human_apunim_results(human_results_dir, key)
         if human_df is None:
             continue
@@ -1029,10 +1035,24 @@ def run_apunim_significance_step(
     inputs = _collect_apunim_significance_inputs(
         apunim_results, human_results_dir
     )
+    table_inputs = {
+        key: value
+        for key, value in inputs.items()
+        if key not in SIGNIFICANCE_TABLE_SKIP_KEYS
+    }
     for file_suffix, label_suffix, note, models in _model_variants(
         exclude_models
     ):
-        by_name = _significance_inputs_by_name(human_datasets, inputs, models)
+        _export_significance_counts(
+            _significance_inputs_by_name(human_datasets, inputs, models),
+            latex_output_dir,
+            file_suffix,
+            label_suffix,
+            note,
+        )
+        by_name = _significance_inputs_by_name(
+            human_datasets, table_inputs, models
+        )
         if not by_name:
             continue
         slot_width_em = (
@@ -1050,7 +1070,35 @@ def run_apunim_significance_step(
             / f"llm-apunim-significance{file_suffix}.tex",
             label=f"tab:llm-apunim-significance{label_suffix}",
             note=note,
+            # if includes extra models, make the table smaller
+            table_size=r"\footnotesize" if len(file_suffix) == 0 else None,
         )
+
+
+def _export_significance_counts(
+    by_name, latex_output_dir, file_suffix, label_suffix, note
+):
+    """Share of PC dimensions each model finds significant, per dataset
+    (including the datasets left out of the significance table):
+    concisely for the default prompt, and in full per prompt."""
+    counts = stats.count_significant_dimensions(
+        by_name, prompt_names=shared.MAIN_PROMPT_NAMES
+    )
+    stats.export_significant_dimension_summary(
+        counts,
+        output_path=latex_output_dir
+        / f"llm-apunim-significance-counts{file_suffix}.tex",
+        label=f"tab:llm-apunim-significance-counts{label_suffix}",
+        note=note,
+    )
+    stats.export_significant_dimension_by_prompt(
+        counts,
+        output_path=latex_output_dir
+        / f"llm-apunim-significance-counts-by-prompt{file_suffix}.tex",
+        label=f"tab:llm-apunim-significance-counts-by-prompt{label_suffix}",
+        prompt_names=shared.MAIN_PROMPT_NAMES,
+        note=note,
+    )
 
 
 # ---------------------------------------------------------------------------

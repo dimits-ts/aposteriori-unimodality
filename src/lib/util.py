@@ -30,7 +30,7 @@ def center_table_latex(latex_str: str) -> str:
     return _append_command_to_table_latex(
         latex_str=latex_str, command=r"\centering"
     )
-
+    
 
 def small_table_latex(latex_str: str, size: str = r"\small") -> str:
     return _append_command_to_table_latex(latex_str=latex_str, command=size)

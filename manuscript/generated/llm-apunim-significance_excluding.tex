@@ -1,7 +1,6 @@
-{\footnotesize
 \setlength{\tabcolsep}{3pt}
 \begin{table}[t]
-\caption{Statistically significant ($p<0.05$) apunim results for each \acp{{sdd}} of the LLM annotator's persona per LLM and dataset compared with the human annotations. A \ac{sdd} counts as significant if at least one of its groups is. Each cell shows one symbol per prompt, in the order default, stereotype, persona, single, direct: \sigcolagree{\sigyes}~both significant, with the same sign (both positive or both negative apunim values) for every group that is significant in both; \sigcolneither{\sigyes}~neither significant; \sigcolsign{$\pm$}~both significant, but the sign of at least one group's effect differs; \sigcoldisagree{\signo}~significant for only one of the two; blank: no LLM result. Excluding the following models: llama8b, olmo7b, qwen7b.}
+\caption{Statistically significant ($p<0.05$) \acp{sdd} of each LLM compared with the human annotations, per dataset. A dimension counts as significant if at least one of its groups is. Each cell shows one symbol per prompt, in the order default, stereotype, persona, single, direct: \sigcolagree{\sigyes}~both significant, with the same sign for every group that is significant in both; \sigcolneither{\sigyes}~neither significant; \sigcolsign{$\pm$}~both significant, but the sign of at least one group's effect differs; \sigcoldisagree{\signo}~significant for only one of the two; blank: no LLM result. Excluding the following models: llama8b, olmo7b, qwen7b.}
 \label{tab:llm-apunim-significance-excluding}
 \begin{tabular}{llcccccc}
 \toprule
@@ -21,4 +20,4 @@ Ds & \ac{sdd} &  &  &  &  &  &  \\
 \bottomrule
 \end{tabular}
 \end{table}
-}
+
