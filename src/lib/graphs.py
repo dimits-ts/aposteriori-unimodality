@@ -1,6 +1,8 @@
 from pathlib import Path
 
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 import pandas as pd
 import seaborn as sns
 import numpy as np
@@ -76,7 +78,8 @@ def polarization_plot(
 
     if not all_annotations:
         print(
-            "Warning: No valid annotations found. Cannot calculate polarization."
+            "Warning: No valid annotations found. "
+            "Cannot calculate polarization."
         )
         return
 
@@ -115,7 +118,8 @@ def polarization_plot(
     plot_df = pd.DataFrame(records)
 
     # Note: Since the categories are now complex strings (e.g., "Race: Asian"),
-    # setting a strict, predefined order is usually necessary for clean visualization.
+    # setting a strict, predefined order is usually necessary for
+    # clean visualization.
     plot_df["PC Dimension"] = pd.Categorical(
         plot_df["PC Dimension"], ordered=True
     )
@@ -142,6 +146,134 @@ def polarization_plot(
 
     save_plot(output_path, dpi)
     plt.close()
+
+
+def read_inherent_csv(path: Path) -> pd.Series:
+    """Inherent-polarization values of a "<name>-inherent*.csv" file (as
+    written by the human, LLM and synthetic scripts), NaNs dropped."""
+    values = pd.read_csv(path).inherent_polarization
+    return values[~np.isnan(values)]
+
+
+def _draw_density_bars(
+    ax, values: pd.Series, edges: np.ndarray, sign: int, color, hatch
+) -> None:
+    """Horizontal density histogram on shared `edges`, drawn to the right
+    of x=0 (sign=1) or mirrored to the left (sign=-1)."""
+    counts, _ = np.histogram(values, bins=edges)
+    widths = np.diff(edges)
+    density = counts / (counts.sum() * widths) if counts.sum() else counts
+    ax.barh(
+        y=edges[:-1],
+        width=sign * density,
+        height=widths,
+        align="edge",
+        color=color,
+        alpha=0.7,
+        hatch=hatch,
+        edgecolor="black",
+        linewidth=0.3,
+    )
+
+
+def plot_mirrored_inherent_histograms(
+    right: dict[str, pd.Series],
+    left: dict[str, pd.Series],
+    output_path: Path,
+    title: str,
+    right_label: str,
+    left_label: str,
+    order: list[str] | None = None,
+    legend_title: str | None = None,
+    bins: int = 30,
+    figsize: tuple[float, float] = (10, 4),
+) -> None:
+    """
+    Mirrored horizontal density histograms of inherent polarization
+    (USD), one colour/hatch per series: `right` is drawn right of the
+    centre line, `left` mirrored to its left. A series present on both
+    sides keeps the same colour and hatch on both, so the two histograms
+    of one series mirror each other.
+
+    Used for the human (one series per dataset), LLM (per model) and
+    synthetic (per number of groups) figures.
+
+    `order` fixes the colour/hatch assignment and the legend order; by
+    default the series are sorted by name. Names in `order` without values
+    are not drawn but keep their colour/hatch slot, so figures sharing an
+    `order` style a series identically. All histograms share one set of
+    bins on [0, 1], so the two sides line up.
+    """
+    style_order = list(order) if order is not None else sorted(right)
+    style_order += sorted((set(right) | set(left)) - set(style_order))
+    # Styles are assigned over the whole `order`, before dropping names
+    # without values, so a series keeps its colour/hatch across figures
+    # that show different subsets of the same order.
+    styles = {
+        name: (
+            COLORBLIND_PALETTE[i % len(COLORBLIND_PALETTE)],
+            HATCHES[i % len(HATCHES)],
+        )
+        for i, name in enumerate(style_order)
+    }
+    names = [n for n in style_order if n in right or n in left]
+    if not names:
+        print(f"No inherent-polarization values; skipping {output_path}.")
+        return
+    edges = np.linspace(0, 1, bins + 1)
+
+    fig, ax = plt.subplots(figsize=figsize)
+
+    for sign, series in ((1, right), (-1, left)):
+        for name in sorted(series):
+            _draw_density_bars(ax, series[name], edges, sign, *styles[name])
+
+    # symmetric x-range so the centre line sits in the middle
+    xmax = max(abs(x) for x in ax.get_xlim())
+    ax.set_xlim(-xmax, xmax)
+    ax.axvline(0, color="black", linewidth=0.8)
+    # densities are positive on both sides
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f"{abs(x):g}"))
+
+    for x, text, ha in (
+        (-0.02, left_label, "right"),
+        (0.02, right_label, "left"),
+    ):
+        ax.text(
+            0.5 + x,
+            0.97,
+            text,
+            transform=ax.transAxes,
+            ha=ha,
+            va="top",
+            fontsize="small",
+        )
+
+    legend_handles = [
+        mpatches.Patch(
+            facecolor=styles[name][0],
+            edgecolor="black",
+            hatch=styles[name][1],
+            label=name,
+            alpha=0.4,
+        )
+        for name in names
+    ]
+
+    ax.set_title(title)
+    ax.set_xlabel("Density")
+    ax.set_ylabel("USD")
+    ax.set_ylim((0, 1))
+
+    ax.legend(
+        handles=legend_handles,
+        title=legend_title,
+        loc="center left",
+        bbox_to_anchor=(1.02, 0.5),
+    )
+
+    save_plot(output_path)
+    plt.close(fig)
 
 
 def save_plot(path: Path, dpi: int = 300) -> None:

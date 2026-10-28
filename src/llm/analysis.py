@@ -53,7 +53,15 @@ The following are produced:
    (llm-apunim-significance-counts-by-prompt.tex), also with "_excluding"
    variants.
 
-6. A CSV of the non-standard answers in the raw LLM annotation files
+6. Mirrored histograms of the per-comment inherent polarization (USD)
+   of each model under the default prompt, pooled over datasets, in the
+   style of the human apriori.png: all personas on the right, at most
+   INHERENT_SUBSAMPLE_SIZE personas per comment on the left
+   (inherent-polarization-by-model.png), and the same per dataset with
+   the models pooled (inherent-polarization-by-dataset.png); both also
+   without the models in EXCLUDED_MODELS, with an "_excluding" suffix.
+
+7. A CSV of the non-standard answers in the raw LLM annotation files
    (nonstandard_answers_by_model.csv), and an abbreviated LaTeX summary
    per model, dataset and status (nonstandard_answers_summary.tex):
    replies that cannot be parsed or are out of range for the dataset.
@@ -106,6 +114,10 @@ INHERENT_SUBSAMPLE_REPEATS = 10
 # are the columns, prompts the rows (all main prompts, as in the table).
 INHERENT_HIST_DATASET_KEYS = ["sap", "kumar", "popquorn"]
 INHERENT_HIST_PROMPT_NAMES = shared.MAIN_PROMPT_NAMES
+
+# Prompt of the per-model (values pooled over all datasets) and per-dataset
+# (values pooled over all models) mirrored inherent-polarization histograms.
+INHERENT_BY_MODEL_PROMPT_NAME = "default"
 
 # Models left out of the "excluding" variants of the tables/plots.
 EXCLUDED_MODELS = ["llama8b", "qwen7b", "olmo7b"]
@@ -1184,22 +1196,22 @@ def run_inherent_polarization_step(
     cache_dir: Path,
     graph_output_dir: Path,
     subsample: polarization.SubsampleSpec | None = None,
-):
+) -> pd.DataFrame:
+    """
+    Per-comment inherent polarization of Human and of *every* model (the
+    long frame of polarization.compute_inherent_polarization_comparison),
+    returned so the per-model figures can choose which models to show.
+    For the annotator-subsampled variant the histogram grid is exported
+    too, without the models in `exclude_models`.
+    """
     # human_results_dir holds the human scripts' own "<dataset>-inherent.csv"
     # outputs (e.g. output/human/main), which are reused as-is for the main
     # run. The per-(dataset, prompt, model) values are cached separately
     # under cache_dir/inherent (the subsampling ablation uses its own
     # folder, since its values differ). Delete the folder to force a
-    # recompute.
+    # recompute. Values are cached per model, so computing all models here
+    # and filtering afterwards costs nothing extra on later runs.
     suffix = "" if subsample is None else f"-{subsample.tag}"
-    caption = polarization.DEFAULT_INHERENT_CAPTION
-    if subsample is not None:
-        caption = (
-            caption.removesuffix(".")
-            + f", after repeatedly subsampling every comment down to at "
-            f"most {subsample.size} annotators ({subsample.n_repeats} "
-            "repeats)."
-        )
 
     inherent_df = polarization.compute_inherent_polarization_comparison(
         human_datasets=human_datasets,
@@ -1208,7 +1220,7 @@ def run_inherent_polarization_step(
         human_results_dir=human_results_dir,
         dataset_keys=MAIN_DATASET_KEYS,
         prompt_names=shared.MAIN_PROMPT_NAMES,
-        exclude_models=set(exclude_models),
+        exclude_models=set(),
         use_monte_carlo=True,
         subsample=subsample,
     )
@@ -1216,9 +1228,11 @@ def run_inherent_polarization_step(
     # Normalized histogram grid of the same per-comment values (datasets as
     # columns, prompts as rows), exported next to the table. Only produced
     # for the annotator-subsampled variant.
-    if subsample is not None:
+    if subsample is not None and not inherent_df.empty:
         plots.plot_inherent_polarization_histogram_grid(
-            long_df=inherent_df,
+            long_df=inherent_df.loc[
+                ~inherent_df["Source"].isin(set(exclude_models))
+            ],
             output_path=(
                 graph_output_dir
                 / f"inherent-polarization{suffix}-histogram.png"
@@ -1226,6 +1240,64 @@ def run_inherent_polarization_step(
             dataset_keys=INHERENT_HIST_DATASET_KEYS,
             prompt_names=INHERENT_HIST_PROMPT_NAMES,
             common_norm=False,
+        )
+
+    return inherent_df
+
+
+def run_inherent_polarization_by_model_step(
+    full_df: pd.DataFrame,
+    subsampled_df: pd.DataFrame,
+    graph_output_dir: Path,
+    exclude_models,
+    subsample_size: int = INHERENT_SUBSAMPLE_SIZE,
+) -> None:
+    """
+    Mirrored USD histograms per model (all personas vs. at most
+    `subsample_size` personas per comment), in the style of the human
+    apriori.png: inherent-polarization-by-model.png with every model, and
+    inherent-polarization-by-model_excluding.png without `exclude_models`.
+    """
+    for file_suffix, _, _, dropped in _model_variants(exclude_models):
+        plots.plot_inherent_polarization_by_model(
+            full_df=full_df,
+            subsampled_df=subsampled_df,
+            output_path=(
+                graph_output_dir
+                / f"inherent-polarization-by-model{file_suffix}.png"
+            ),
+            subsample_size=subsample_size,
+            exclude_models=dropped,
+            prompt_name=INHERENT_BY_MODEL_PROMPT_NAME,
+        )
+
+
+def run_inherent_polarization_by_dataset_step(
+    full_df: pd.DataFrame,
+    subsampled_df: pd.DataFrame,
+    graph_output_dir: Path,
+    exclude_models,
+    subsample_size: int = INHERENT_SUBSAMPLE_SIZE,
+) -> None:
+    """
+    Mirrored USD histograms per dataset, models pooled (all personas vs.
+    at most `subsample_size` personas per comment), in the style of the
+    human apriori.png: inherent-polarization-by-dataset.png pooling every
+    model, and inherent-polarization-by-dataset_excluding.png without
+    `exclude_models`.
+    """
+    for file_suffix, _, _, dropped in _model_variants(exclude_models):
+        plots.plot_inherent_polarization_by_dataset(
+            full_df=full_df,
+            subsampled_df=subsampled_df,
+            output_path=(
+                graph_output_dir
+                / f"inherent-polarization-by-dataset{file_suffix}.png"
+            ),
+            subsample_size=subsample_size,
+            exclude_models=dropped,
+            prompt_name=INHERENT_BY_MODEL_PROMPT_NAME,
+            dataset_keys=MAIN_DATASET_KEYS,
         )
 
 
@@ -1238,8 +1310,12 @@ def run_inherent_polarization_steps(
     cache_dir: Path,
     graph_output_dir: Path,
 ):
-    """Annotator-subsampling ablation (same pipeline, `subsample` set)."""
-    run_inherent_polarization_step(
+    """
+    Inherent polarization with every comment subsampled down to
+    INHERENT_SUBSAMPLE_SIZE annotators (histogram grid) and with all
+    annotators; both feed the per-model mirrored histograms.
+    """
+    subsampled_df = run_inherent_polarization_step(
         human_datasets,
         annotations_dir,
         latex_output_dir,
@@ -1251,6 +1327,27 @@ def run_inherent_polarization_steps(
             size=INHERENT_SUBSAMPLE_SIZE,
             n_repeats=INHERENT_SUBSAMPLE_REPEATS,
         ),
+    )
+    full_df = run_inherent_polarization_step(
+        human_datasets,
+        annotations_dir,
+        latex_output_dir,
+        exclude_models,
+        human_results_dir=human_results_dir,
+        cache_dir=cache_dir,
+        graph_output_dir=graph_output_dir,
+    )
+    run_inherent_polarization_by_model_step(
+        full_df=full_df,
+        subsampled_df=subsampled_df,
+        graph_output_dir=graph_output_dir,
+        exclude_models=exclude_models,
+    )
+    run_inherent_polarization_by_dataset_step(
+        full_df=full_df,
+        subsampled_df=subsampled_df,
+        graph_output_dir=graph_output_dir,
+        exclude_models=exclude_models,
     )
 
 

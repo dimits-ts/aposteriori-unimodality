@@ -498,7 +498,7 @@ def plot_inherent_polarization_histogram_grid(
                     patch.set_edgecolor("black")
                     patch.set_linewidth(0.3)
             ax.set_xlim(0.1, 1)
-            ax.set_xticks([0.1, 0.5, 1.0])   # new
+            ax.set_xticks([0.1, 0.5, 1.0])  # new
             ax.set_ylim(0, 0.3)
             ax.set_ylabel(key.capitalize() if c == 0 else "")
             ax.set_xlabel("")
@@ -508,7 +508,7 @@ def plot_inherent_polarization_histogram_grid(
     fig.supylabel("Proportion of Comments (Stacked)")
     fig.supxlabel(r"Unattributable Polarization ($\geq 0.1$)")
     fig.suptitle(
-        "LLM Annotation Exhibits Different UnPol Patterns From Humans"
+        "LLM Annotation Exhibits Different USD Patterns From Humans"
     )
 
     legend_handles = [
@@ -528,3 +528,130 @@ def plot_inherent_polarization_histogram_grid(
     )
     graphs.save_plot(output_path)
     plt.close(fig)
+
+
+# ---------------------------------------------------------------------------
+# Inherent polarization per model, mirrored like the human apriori.png:
+# all personas on the right, personas subsampled to at most N on the left
+# ---------------------------------------------------------------------------
+
+
+def _inherent_values_by_model(
+    long_df: pd.DataFrame, models: list[str], prompt_name: str
+) -> dict[str, pd.Series]:
+    """Per-comment values of each model in `models` under `prompt_name`,
+    pooled over all datasets. Human rows and empty models are dropped."""
+    df = long_df.loc[long_df["Prompt"] == prompt_name]
+    values = pd.to_numeric(df["value"], errors="coerce")
+    out = {}
+    for model in models:
+        series = values[df["Source"] == model].dropna()
+        if not series.empty:
+            out[model] = series
+    return out
+
+
+def plot_inherent_polarization_by_model(
+    full_df: pd.DataFrame,
+    subsampled_df: pd.DataFrame,
+    output_path: Path,
+    subsample_size: int,
+    exclude_models: set[str] | None = None,
+    prompt_name: str = "default",
+) -> None:
+    """
+    Mirrored histograms of per-comment inherent polarization (USD), one
+    colour/hatch per LLM, in the style of the human apriori.png figure
+    (see graphs.plot_mirrored_inherent_histograms).
+
+    Right of the centre line: every persona-annotation of a comment
+    (`full_df`); left of it: the same comments repeatedly subsampled down
+    to at most `subsample_size` personas (`subsampled_df`). Both are
+    long-format frames from
+    `polarization.compute_inherent_polarization_comparison`; values are
+    pooled over all datasets for `prompt_name`. Human rows are ignored and
+    the models in `exclude_models` are left out.
+    """
+    exclude_models = set(exclude_models or ())
+    sources = set(full_df.get("Source", [])) | set(
+        subsampled_df.get("Source", [])
+    )
+    # Styles follow all models, so a model has the same colour/hatch with
+    # and without the excluded ones.
+    all_models = _order_models(sources - {"Human"})
+    models = [m for m in all_models if m not in exclude_models]
+
+    graphs.plot_mirrored_inherent_histograms(
+        right=_inherent_values_by_model(full_df, models, prompt_name),
+        left=_inherent_values_by_model(subsampled_df, models, prompt_name),
+        output_path=output_path,
+        title="USD of LLM Annotations per Model",
+        right_label="All personas",
+        left_label=rf"Max {subsample_size} personas",
+        order=all_models,
+        legend_title="Model",
+    )
+
+
+def inherent_dataset_label(dataset_key: str) -> str:
+    """Dataset label as in the human apriori.png figure, e.g.
+    "dices-350" -> "Dices 350", so datasets share names (and, with the
+    same sorted order, colours/hatches) across the human and LLM plots."""
+    return " ".join(dataset_key.split("-")).capitalize()
+
+
+def _inherent_values_by_dataset(
+    long_df: pd.DataFrame, models: list[str], prompt_name: str
+) -> dict[str, pd.Series]:
+    """Per-comment values under `prompt_name` of the models in `models`,
+    pooled over those models, keyed by dataset label. Human rows and
+    empty datasets are dropped."""
+    df = long_df.loc[
+        (long_df["Prompt"] == prompt_name) & long_df["Source"].isin(models)
+    ]
+    values = pd.to_numeric(df["value"], errors="coerce")
+    out = {}
+    for key in df["Dataset"].unique():
+        series = values[df["Dataset"] == key].dropna()
+        if not series.empty:
+            out[inherent_dataset_label(key)] = series
+    return out
+
+
+def plot_inherent_polarization_by_dataset(
+    full_df: pd.DataFrame,
+    subsampled_df: pd.DataFrame,
+    output_path: Path,
+    subsample_size: int,
+    exclude_models: set[str] | None = None,
+    prompt_name: str = "default",
+    dataset_keys: list[str] = DATASET_KEYS,
+) -> None:
+    """
+    Mirrored histograms of per-comment LLM inherent polarization (USD),
+    one colour/hatch per dataset, in the style of the human apriori.png
+    figure (see graphs.plot_mirrored_inherent_histograms).
+
+    Right of the centre line: every persona-annotation of a comment
+    (`full_df`); left of it: at most `subsample_size` personas per comment
+    (`subsampled_df`). Values of all models except `exclude_models` are
+    pooled for `prompt_name`, each (comment, model) pair counting once.
+    Datasets are styled in the human figure's (sorted label) order over
+    `dataset_keys`, so each dataset has the same colour/hatch in both.
+    """
+    exclude_models = set(exclude_models or ())
+    sources = set(full_df.get("Source", [])) | set(
+        subsampled_df.get("Source", [])
+    )
+    models = sorted(sources - {"Human"} - exclude_models)
+
+    graphs.plot_mirrored_inherent_histograms(
+        right=_inherent_values_by_dataset(full_df, models, prompt_name),
+        left=_inherent_values_by_dataset(subsampled_df, models, prompt_name),
+        output_path=output_path,
+        title="USD of LLM Annotations per Dataset",
+        right_label="All personas",
+        left_label=rf"Max {subsample_size} personas",
+        order=sorted(inherent_dataset_label(k) for k in dataset_keys),
+        legend_title="Dataset",
+    )

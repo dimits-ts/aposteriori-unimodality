@@ -6,8 +6,6 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-from matplotlib.ticker import FuncFormatter
 from scipy import stats
 
 from ..lib import graphs, run_helper
@@ -128,32 +126,6 @@ def _inherent_label(path: Path, stem_suffix: str = "-inherent") -> str:
     ).capitalize()
 
 
-def _read_inherent(path: Path) -> pd.Series:
-    arr = pd.read_csv(path).inherent_polarization
-    return arr[~np.isnan(arr)]
-
-
-def _draw_density_bars(
-    ax, values: pd.Series, edges: np.ndarray, sign: int, color, hatch
-) -> None:
-    """Horizontal density histogram on shared `edges`, drawn to the right
-    of x=0 (sign=1) or mirrored to the left (sign=-1)."""
-    counts, _ = np.histogram(values, bins=edges)
-    widths = np.diff(edges)
-    density = counts / (counts.sum() * widths) if counts.sum() else counts
-    ax.barh(
-        y=edges[:-1],
-        width=sign * density,
-        height=widths,
-        align="edge",
-        color=color,
-        alpha=0.7,
-        hatch=hatch,
-        edgecolor="black",
-        linewidth=0.3,
-    )
-
-
 def plot_dfu_histograms(
     file_paths: list[Path],
     graph_output_dir: Path,
@@ -162,7 +134,8 @@ def plot_dfu_histograms(
 ):
     """
     Mirrored histograms of unattributable polarization per dataset, with
-    colorblind palette and hatch patterns.
+    colorblind palette and hatch patterns (see
+    graphs.plot_mirrored_inherent_histograms).
 
     Right of the centre line: the full datasets ("<dataset>-inherent.csv").
     Left of it: the same datasets with at most 6 annotators per comment
@@ -170,91 +143,37 @@ def plot_dfu_histograms(
     in the same colour and hatch, so each dataset's two histograms mirror
     each other. A dataset whose subsampled file is missing is only drawn on
     the right, with a printed warning.
-
-    All histograms share one set of bins on [0, 1], so the two sides line up.
     """
     full_series = {
-        _inherent_label(Path(path)): _read_inherent(path)
+        _inherent_label(Path(path)): graphs.read_inherent_csv(path)
         for path in file_paths
     }
     subsampled_series = {
         _inherent_label(
             Path(path), run_helper.INHERENT_SUBSAMPLED_STEM_SUFFIX
-        ): _read_inherent(path)
+        ): graphs.read_inherent_csv(path)
         for path in (subsampled_paths or [])
     }
 
-    # Colours/hatches follow the full datasets, as in the original figure.
-    datasets = sorted(full_series)
-    extra = sorted(set(subsampled_series) - set(datasets))
-    styles = {
-        name: (color, hatch)
-        for name, color, hatch in zip(
-            datasets + extra, graphs.COLORBLIND_PALETTE, graphs.HATCHES
-        )
-    }
-    edges = np.linspace(0, 1, bins + 1)
-
-    for name in sorted(set(datasets) - set(subsampled_series)):
+    for name in sorted(set(full_series) - set(subsampled_series)):
         print(
             f"Warning: no max-{run_helper.INHERENT_SUBSAMPLE_SIZE} file for "
             f"{name}; it is only shown with all annotators. Rerun its script."
         )
 
-    fig, ax = plt.subplots(figsize=(10, 4))
-
-    for sign, series in ((1, full_series), (-1, subsampled_series)):
-        for name in sorted(series):
-            _draw_density_bars(ax, series[name], edges, sign, *styles[name])
-
-    # symmetric x-range so the centre line sits in the middle
-    xmax = max(abs(x) for x in ax.get_xlim())
-    ax.set_xlim(-xmax, xmax)
-    ax.axvline(0, color="black", linewidth=0.8)
-    # densities are positive on both sides
-    ax.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f"{abs(x):g}"))
-
-    size = run_helper.INHERENT_SUBSAMPLE_SIZE
-    for x, text, ha in (
-        (-0.02, rf"Max {size} annotators", "right"),
-        (0.02, "All annotators", "left"),
-    ):
-        ax.text(
-            0.5 + x,
-            0.97,
-            text,
-            transform=ax.transAxes,
-            ha=ha,
-            va="top",
-            fontsize="small",
-        )
-
-    legend_handles = [
-        mpatches.Patch(
-            facecolor=styles[name][0],
-            edgecolor="black",
-            hatch=styles[name][1],
-            label=name,
-            alpha=0.4,
-        )
-        for name in datasets + extra
-    ]
-
-    ax.set_title(
-        "UnPol Frequently Exists in Datasets with Low Annotation Density"
+    # Colours/hatches follow the full datasets, as in the original figure.
+    graphs.plot_mirrored_inherent_histograms(
+        right=full_series,
+        left=subsampled_series,
+        output_path=graph_output_dir / "apriori.png",
+        title=(
+            "UnPol Frequently Exists in Datasets with Low Annotation Density"
+        ),
+        right_label="All annotators",
+        left_label=rf"Max {run_helper.INHERENT_SUBSAMPLE_SIZE} annotators",
+        order=sorted(full_series),
+        bins=bins,
     )
-    ax.set_xlabel("Density")
-    ax.set_ylabel("UnPol")
-    ax.set_ylim((0, 1))
-
-    ax.legend(
-        handles=legend_handles,
-        loc="center left",
-        bbox_to_anchor=(1.02, 0.5),
-    )
-
-    graphs.save_plot(graph_output_dir / "apriori.png")
-    plt.close()
 
 
 def plot_annotator_count_histogram_from_datasets(
