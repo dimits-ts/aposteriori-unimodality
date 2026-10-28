@@ -445,6 +445,27 @@ _SYM_AGREE = r"\sigyes"  # agree on significance (and on sign, if significant)
 _SYM_DISAGREE = r"\signo"  # significant for only one of the two
 _SYM_SIGN_DIFFERS = r"$\pm$"  # both significant, but the sign differs
 
+# Colour macros for the symbols, defined in the paper preamble as
+# \newcommand{\sigcol...}[1]{\textcolor[HTML]{...}{#1}} with colours from
+# graphs.COLORBLIND_PALETTE. Colour only separates the categories; every
+# category is also distinguished by its symbol (or, for the two kinds of
+# agreement, explained in the caption).
+_COL_AGREE_SIGNIFICANT = r"\sigcolagree"  # both significant, same sign
+_COL_AGREE_NEITHER = r"\sigcolneither"  # neither significant
+_COL_SIGN_DIFFERS = r"\sigcolsign"  # both significant, sign differs
+_COL_DISAGREE = r"\sigcoldisagree"  # significant for only one of the two
+
+
+def _colored(color_macro: str, symbol: str) -> str:
+    return rf"{color_macro}{{{symbol}}}"
+
+
+# Coloured symbol per comparison outcome (used in cells and caption alike).
+_CELL_AGREE_SIGNIFICANT = _colored(_COL_AGREE_SIGNIFICANT, _SYM_AGREE)
+_CELL_AGREE_NEITHER = _colored(_COL_AGREE_NEITHER, _SYM_AGREE)
+_CELL_SIGN_DIFFERS = _colored(_COL_SIGN_DIFFERS, _SYM_SIGN_DIFFERS)
+_CELL_DISAGREE = _colored(_COL_DISAGREE, _SYM_DISAGREE)
+
 # Each prompt gets a fixed-width slot (in em), so that the symbols of
 # different rows line up and a prompt without LLM results is simply blank.
 # It can be set per table (`slot_width_em`); the symbols are roughly an em
@@ -535,15 +556,18 @@ def _comparison_symbol(
     llm_significant: bool, human_significant: bool, sign_differs: bool
 ) -> str:
     """
-    How the LLM result for a dimension compares with the human one:
-    agreement (both significant, or neither), disagreement on significance,
-    or both significant but with a different sign for some group.
+    How the LLM result for a dimension compares with the human one, as a
+    coloured symbol: disagreement on significance, both significant but
+    with a different sign for some group, or agreement (both significant,
+    or neither, which get different colours).
     """
     if llm_significant != human_significant:
-        return _SYM_DISAGREE
+        return _CELL_DISAGREE
     if llm_significant and sign_differs:
-        return _SYM_SIGN_DIFFERS
-    return _SYM_AGREE
+        return _CELL_SIGN_DIFFERS
+    if llm_significant:
+        return _CELL_AGREE_SIGNIFICANT
+    return _CELL_AGREE_NEITHER
 
 
 def _llm_cell(
@@ -724,18 +748,20 @@ def export_apunim_significance_table(
         return
     prompts = table_df.attrs.get("prompts", [])
     caption = (
-        rf"Statistically significant ($p<{alpha}$) \acp{{sdd}} of "
-        "each LLM compared with the human annotations, per dataset. A "
-        "dimension counts as significant if at least one of its groups is. "
+        rf"Statistically significant ($p<{alpha}$) apunim results for each "
+        r"\acp{{sdd}} of the LLM annotator's persona per "
+        "LLM and dataset compared with the human annotations. A "
+        r"\ac{sdd} counts as significant if at least one of its groups is. "
         "Each cell shows one symbol per prompt, in the order "
         f"{', '.join(prompts)}: "
-        rf"{_SYM_AGREE}~the LLM and the human annotations agree (both "
-        "significant, with the same sign for every group that is "
-        "significant in both, or neither significant), "
-        rf"{_SYM_DISAGREE}~they disagree on significance (significant for "
-        f"only one of the two), {_SYM_SIGN_DIFFERS}~both are significant "
-        "but the sign of at least one group's effect differs; blank: no "
-        "LLM result." + note
+        rf"{_CELL_AGREE_SIGNIFICANT}~both significant, with the same sign "
+        "(both positive or both negative apunim values) "
+        "for every group that is significant in both; "
+        rf"{_CELL_AGREE_NEITHER}~neither significant; "
+        rf"{_CELL_SIGN_DIFFERS}~both significant, but the sign of at least "
+        "one group's effect differs; "
+        rf"{_CELL_DISAGREE}~significant for only one of the two; "
+        "blank: no LLM result." + note
     )
 
     df = table_df
