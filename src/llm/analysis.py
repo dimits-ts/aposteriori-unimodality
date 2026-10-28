@@ -566,29 +566,6 @@ def _cohens_d_n_note(flat: pd.DataFrame) -> str:
     return "Comments per model: " + "; ".join(parts) + "."
 
 
-def _cohens_d_missing_note(
-    flat: pd.DataFrame, models: list, datasets: list
-) -> str:
-    """Caption sentences for models without results on some datasets."""
-    present = set(zip(flat["Model"], flat["Dataset"]))
-    notes = []
-    for model in models:
-        missing = [
-            str(dataset)
-            for dataset in datasets
-            if dataset != COHENS_D_ALL_LABEL
-            and (model, dataset) not in present
-        ]
-        if missing:
-            notes.append(
-                f"{_tex_escape(model)} has no results for "
-                f"{_tex_escape(', '.join(missing))} ({COHENS_D_MISSING}), "
-                f"so its {COHENS_D_ALL_LABEL} is the mean over its "
-                "remaining datasets."
-            )
-    return " ".join(notes)
-
-
 def _cohens_d_header(datasets: list, prompts: list) -> list[str]:
     """Dataset group row, the rules under it, and the rotated prompt row."""
     groups, rules = [], []
@@ -651,7 +628,6 @@ def export_cohens_d_table_latex(
     caption_parts = (
         caption.strip(),
         _cohens_d_n_note(flat),
-        _cohens_d_missing_note(flat, models, datasets),
     )
     full_caption = " ".join(part for part in caption_parts if part) + note
 
