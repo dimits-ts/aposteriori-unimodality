@@ -182,15 +182,14 @@ Furthermore, as human annotation is generally expensive, LLM-as-judge systems ar
 	Since we can not reliably used established approaches, we introduce a new measure which \emph{quantitatively} attributes \ac{sysdis} to specific \acp{sdd}, while being conscious of the limitations present in realistic annotation scenarios (Fig.~\ref{fig:measures}). 
 \end{researchquestion}
 
-\begin{researchquestion}[Do LLM Annotators Exhibit \ac{atsysdis}, and If so, Which  Patterns are Shared Between Them and Humans]
+\begin{researchquestion}[Do LLM Annotators Exhibit \ac{atsysdis}, and if so, Which  Patterns are Shared Between Them and Humans]
 	\label{rq:llm}
 	Unlike prior work which framed the question of LLM annotation reliability in terms of human-LLM agreement \citep{dong-etal-2024-llm, gomez-etal-2024-algorithmic, masud-etal-2024-hate} or task-specific performance \citep{gupta2024bias}, we compare human and LLM polarization patterns. We find that human \ac{atsysdis} is explained by gender and ethnicity across five real-life subjective datasets (Finding~\ref{finding:human}). On the other hand, while LLMs using persona-prompting \emph{can} produce polarized annotations, they fail to reproduce any \ac{atsysdis} patterns regardless of instruction prompt, confirming literature suggesting that persona prompting does not consistently influence LLM outputs in the examined tasks (Finding~\ref{finding:llms}).
 \end{researchquestion}
 
-Overall, our work indicates that persona-prompting can not be used by itself to ensure fair and equitable judgments across \ac{sdd} groups by LLMs. Without careful scoping and task-specific evaluation, persona prompting can lead to LLMs not taking into account minority-group sensitivities, which could compromise proposed applications with autonomous agents in sensitive environments (e.g., content moderation, facilitation). Persona-prompted datasets may also contaminate future LLM training, amplifying existing model biases, and lead to misleading findings in social science research. It also argues for a paradigm shift in the design and construction of subjective datasets; the true bottleneck in current datasets should not the number of annotated items, but rather the \emph{number of annotations per item} (\S\ref{sec:discussion}). Indeed, we discover ``\ac{unpol}'' which can not be observed even when exhaustively considering all possible annotator dimensions in real-life datasets with low annotation counts per item (Finding~\ref{finding:inherent}).
+Overall, our work indicates that \emph{persona-prompting can not be used by itself to ensure fair and equitable judgments} across \ac{sdd} groups by LLMs. Without careful scoping and task-specific evaluation, persona prompting can lead to LLMs not taking into account minority-group sensitivities, which could compromise proposed applications with autonomous agents in sensitive environments (e.g., content moderation, facilitation) and contaminate future LLM training, amplifying existing model biases, and lead to misleading findings in social science research. Our work also argues that even with recent methodological improvements (e.g., phasing out majority voting), \emph{the field of subjective \ac{nlp} has not adequately addressed the challenge of analyzing multiple perspectives} (\S\ref{sec:discussion}). Most current datasets do not hold an adequate amount of annotator \acp{sdd}, nor enough annotators per item, an issue which has not yet been discussed in literature. Indeed, we discover ``\ac{unpol}'' which can not be observed even when exhaustively considering all possible annotator dimensions in real-life datasets and is caused by low annotation counts per item (Finding~\ref{finding:inherent}).
 
-We also release a PyPI library implementing our measure and our annotated datasets totalling more than $3{,}000{,}000$ LLM annotations to aid future research in this topic.\footnote{See Ethical Considerations for export measures relating to gated-release datasets.} All code, environment details, data-processing scripts and our library are released anonymously: library \librarylink, HTML documentation \doclink, replication code \explink. 
-
+We also release a PyPI library implementing our measure, our LLM annotated datasets totaling more than $3{,}000{,}000$ annotations, as well as the code and reproducibility details to aid future research in this topic.\footnote{Library \librarylink, HTML documentation \doclink, replication code \explink. See Ethical Considerations for export measures relating to gated-release datasets.} 
 \begin{center}
 	\noindent\warning{Content Warning: Controversial and potentially harmful speech is used for demonstration purposes.}
 \end{center}
@@ -523,10 +522,12 @@ As discussed in \S\ref{sec:datasets}, there is a severe lack of datasets contain
 \begin{itemize}
 	\item \ac{dc}: the number of \emph{items} in a dataset. Due to the focus on training and benchmarking datasets in \ac{nlp}, this property is usually the one with the most focus and importance \citep{rossi_2024}.
 	
-	\item \ac{gc}: the number of \emph{annotators} and their distribution across \acp{sdd}. A large annotator pool is required to get sufficient coverage on the examined groups and allows both higher fidelity of each \ac{sdd} and more such \acp{sdd} to be examined.
+	\item \ac{gc}: the number of \emph{annotators} and their distribution across \acp{sdd}. A large annotator pool is required to get sufficient coverage on the examined groups and allows both higher fidelity of each \ac{sdd} and more such \acp{sdd} to be examined. To our knowledge, there are no studies explicitly discussing this property.
 	
-	\item \ac{ad}: the number of \emph{annotators per item}. This property is often neglected in practice, with many datasets \citep{mulki-etal-2019-l, das2024investigatingannotatorbiaslarge, tonneau-etal-2024-languages, kumar2021tweetblmhatespeechdataset, tonneau-etal-2025-hateday} assuming ``gold labels'' can be inferred by three annotators.
+	\item \ac{ad}: the number of \emph{annotators per item}. This property is often neglected in practice, with many datasets \citep{mulki-etal-2019-l, das2024investigatingannotatorbiaslarge, tonneau-etal-2024-languages, kumar2021tweetblmhatespeechdataset, tonneau-etal-2025-hateday} assuming ``gold labels'' can be inferred by three annotators. Similarly to \ac{gc}, we can not find any discussion of this property, with some studies recommending more than three annotators but still defaulting to majority-voting \citep{Beck2023}.
 \end{itemize}
+
+While the field of subjective \ac{nlp} tasks has thankfully moved away from single-annotated items and majority voting, the lack of discussion on \ac{gc} and \ac{ad} suggests that the shift has been incremental rather than substantive. A clear signal can not be always obtained when only a few cursory \acp{sdd} are reported instead of a comprehensive list of both innate characteristics and personal opinions. \footnote{The Kumar dataset is an excellent example of a comprehensive subjective dataset (\S\ref{sec:datasets}.} Likewise, six annotators per item may not be adequate, even when a comprehensive list of \acp{sdd} is known, as we demonstrate in the next section.
 
 
 \subsection{The Case for Annotation Density}
@@ -538,10 +539,10 @@ As discussed in \S\ref{sec:datasets}, there is a severe lack of datasets contain
 	\label{fig:inherent}
 \end{figure}
 
-\paragraph{\ac{unpol}} Some theoretical models such as \ac{au} make the assumption explicit that all \ac{atsysdis} to be attributable to some annotator \ac{sdd}. This assumption has not been empirically verified in real-world annotation settings , however. Formally, the \acf{unpol} for a single item $c$ is the minimum \ac{ndfu} exhibited by any arbitrary group: $\mathrm{Pol}_{inh}(c) = \min_{S \in G_c} \left\{ \mathrm{nDFU}(S) \right\}$, where $G_c$ is the collection of all subsets $S$ of annotations for an item $c$ such that $\lvert S \rvert \ge 3$ and $S_j$ is a random sample drawn from $G_c$ for $j=1, \dots, k$.. When considered exhaustively, these theoretical, random partitions produce both observed and latent groups. Since \ac{ndfu} operates only when a group has at least three annotators (Eq.~\ref{eq:ndfu}), this yields $\sum_{k=3}^{n} \binom{n}{k}$ possible groups, which is computationally intractable for large annotator counts. We can therefore use Monte Carlo sampling by drawing $k$ random partitions with random sizes: $\mathrm{Pol}_{inh}^{MC}(c) = \min_{j=1}^{k} \left\{ \mathrm{nDFU}(S_j) \right\}$, which serves as an upper bound (as it considers a strict subset of $\mathrm{Pol}_{inh}(c)$).
+\paragraph{\ac{unpol}} Some theoretical models such as \ac{au} make the assumption that all \ac{atsysdis} is attributable to some annotator \ac{sdd}, which has not been empirically verified in real-world annotation settings. We define this phenomenon ``\acf{unpol}'' for a single item $c$ as the minimum \ac{ndfu} exhibited by any arbitrary dimension:\footnote{This dimension need not be known in the dataset, as we consider all possible dimensions in our sample, both known and latent. This formulation also covers all possible combinations of such groups.} $\mathrm{Pol}_{inh}(c) = \min_{S \in G_c} \left\{ \mathrm{nDFU}(S) \right\}$, where $G_c$ is the collection of all subsets $S$ of annotations for an item $c$ such that $\lvert S \rvert \ge 3$ and $S_j$ is a random sample drawn from $G_c$ for $j=1, \dots, k$. Since \ac{ndfu} operates only when a group has at least three annotators (Eq.~\ref{eq:ndfu}), this yields $\sum_{k=3}^{n} \binom{n}{k}$ possible groups, which is computationally intractable for large annotator counts. We can therefore use Monte Carlo sampling by drawing $k$ random partitions with random sizes: $\mathrm{Pol}_{inh}^{MC}(c) = \min_{j=1}^{k} \left\{ \mathrm{nDFU}(S_j) \right\}$, which serves as an upper bound (as it considers a strict subset of $\mathrm{Pol}_{inh}(c)$).
 
-\paragraph{Does It Exist?} We compute the \ac{unpol} for each item across the five datasets. For Sap and Kumar, we use the exhaustive formulation, whereas for the two DICES datasets we rely on the MC approximation with $k=1000$. Fig.~\ref{fig:inherent} shows that in all DICES items there exists at least one group that fully accounts for the observed \ac{ndfu} even when repeatedly subsampling down to six annotators.\footnote{See App.~\ref{app:ablation} for why this observation could be explained by DICES being structurally different.} Interestingly, this observation does not hold for the Kumar and Sap datasets, despite evaluating all possible annotator groups exhaustively. We also observe that \ac{unpol} typically exists on smaller annotation counts, as evidenced by POPQUORN in Fig~\ref{fig:inherent}.\footnote{This is also validated on both synthetic and LLM annotated data, as shown by Fig.~\ref{fig:inherent-synthetic-llm} in App.~\ref{app:unpol}. Using adversarial prompting does not seem to influence the amount of \ac{unpol} however, as shown in Fig.~\ref{fig:inherent-llms} in App.~\ref{app:unpol}.} See Table~\ref{tab:inherent-examples} in App.~\ref{app:unpol} for examples of items with high \ac{unpol} and  Fig.~\ref{fig:inherent-llms} in App.~\ref{app:llms} for \ac{unpol} exhibited by LLMs for each dataset and instruction prompt.
-
+%TODO: Increase kappa
+\paragraph{Does It Exist?} We compute the \ac{unpol} for each item across the five datasets. For Sap and Kumar, we use the exhaustive formulation, whereas for the two DICES datasets we rely on the MC approximation with $k=1000$. We also that \ac{unpol} typically exists only on smaller annotation counts, as evidenced in Fig~\ref{fig:inherent}; we observe \ac{unpol} for the Sap/Kumar datasets (which are only annotated by six and five annotators respectively, see Table~\ref{tab:datasets}) and on POPQUORN only when it is subsampled down to six annotators per item. This pattern is also validated on both synthetic and LLM annotated data, as shown by Fig.~\ref{fig:inherent-synthetic-llm} in App.~\ref{app:unpol}.\footnote{See App.~\ref{app:unpol} for hypotheses on what creates \ac{unpol}. Also, examples of items with high \ac{unpol} can be found in Table~\ref{tab:inherent-examples} in App.~\ref{app:unpol}.}\footnote{It is unclear why the DICES datasets do not produce any \ac{unpol} even when repeatedly subsampled. We hypothesize than either $k$ is not large enough (which would make the computation prohibitively expensive), or the annotations themselves may not be as polarized. The latter hypothesis is plausible, as both DICES datasets do feature less polarized comments (see Fig.~\ref{fig:dataset-polarization} in App.~\ref{app:ann_details}) and also because their text targets (LLM responses) may not be as ambiguous as human comments.}
 \begin{finding}
 	\label{finding:inherent}
 	Items may exhibit a degree of \ac{unpol} that cannot be attributed to any known or latent annotator grouping.
@@ -563,7 +564,6 @@ In this work we used proprietary models such as Anthropic's Claude Sonnet 5 and 
 
 
 \section*{Ethics Statement}
-
 \paragraph{Dual Use Concerns} The primary objective of this study is to identify systemic sources of \ac{atsysdis} in subjective \ac{nlp} datasets to facilitate the construction of more fair and reliable AI systems. However, given that our methodology allows for the quantitative attribution of specific annotation patterns to \acp{sdd}, we acknowledge three primary risks inherent in this research.
 \begin{enumerate*}
 	\item \emph{Discriminatory Profiling}: If the measure is applied outside of a dataset quality analysis, its ability to correlate specific opinion patterns with annotator groups could be misused for surveillance or unjust profiling.
@@ -591,7 +591,6 @@ We stress that our measure functions strictly as a diagnostic warning signal. An
 
 The number of annotators per item for all datasets presented in \S\ref{sec:datasets} can be found in Fig.~\ref{fig:ann_counts}, and descriptive statistics can be found in Table~\ref{tab:num-annot}. The DICES-990 dataset has exactly 123 annotations per item, while the other datasets exhibit a few variations around the central mean reported in Table~\ref{tab:datasets}. Interestingly, the sample used from the Kumar dataset exhibits a few items that vastly exceed the promised $5$ number of annotators. We do not include these items, since they are very likely a data error. Tables~\ref{tab:dices-stats},\ref{tab:sap-stats},\ref{tab:kumar-stats} show the annotation counts for each \ac{sdd} group in each dataset.
 
-
 \begin{figure}[t]
 	\centering
 	\includegraphics[width=0.48\linewidth]{sap.png}
@@ -603,14 +602,12 @@ The number of annotators per item for all datasets presented in \S\ref{sec:datas
 	\label{fig:dataset-polarization}
 \end{figure}
 
-
 \begin{figure}[t]
 	\centering
 	\includegraphics[width=0.8\linewidth]{annotator_count_histogram.png}
 	\caption{We calculate the ratio of items for each dataset (y-axis) that had $x$ number of annotators (x-axis). We truncate the x-axis to 130 annotators, disregarding very few items in the Kumar dataset exceeding this threshold (see Table~\ref{tab:num-annot}), which is likely caused by a data error.}
 	\label{fig:ann_counts}
 \end{figure}
-
 
 \input{generated/annotation_count_table.tex}
 
@@ -916,9 +913,6 @@ Unlike disagreement, \ac{unpol} does not provide any information, but rather rep
 \end{hypothesis}
 
 Both of these explanations are plausible and reflect known limitations of most \ac{nlp} datasets. Unfortunately, we can not confirm any of these hypotheses.
-
-\paragraph{Why Do DICES not Exhibit \ac{unpol}?} 
-In order to investigate whether the numerous annotators per items can explain the lack of \ac{unpol} in the DICES datasets (\S\ref{sec:methods}) we gradually subsample the annotators for each item randomly with replacement, starting from five annotators per item, and scaling up to the full complement of annotators in the dataset with a step of two. For each such step, we choose ten annotator samples and compute the maximum \ac{unpol} across all runs. Even with annotator counts similar to the Kumar and DICES datasets, \ac{unpol} remains zero, suggesting that the absence of \ac{unpol} can not be attributed to annotator number alone---rather, it is plausibly a pattern attributable to the DICES datasets themselves. This kind of analysis may be used in the exploratory phase of dataset selection in order to filter out datasets without enough group-specific subjectivity.
 
 \begin{table}[t]
 	\caption{Sample of comments from the Sap dataset and their \ac{unpol}. Note that unambiguously toxic comments can be assigned with zero \ac{unpol}, while more nuanced cases tend to have higher values.}
