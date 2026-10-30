@@ -337,6 +337,7 @@ def discussion_example(graph_dir: Path) -> None:
     axs[0].set_ylabel("Density")
     handles = _discussion_legend_handles()
     fig.suptitle(DISCUSSION_TITLE)
+    fig.supxlabel(f"Annotator ID (1-{DIFF_COMMENTS_SIZE})")
     _legend_below(fig, axs, handles)
 
     graphs.save_plot(graph_dir / "ndfu_discussion.png")
