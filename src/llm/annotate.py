@@ -351,13 +351,17 @@ def _common_prefix_length(all_ids: list[list[int]]) -> int:
 
 
 def _prefill_prefix(model, prefix_ids: torch.Tensor) -> DynamicCache:
-    """Run the shared prefix through the model once and return its KV cache."""
+    """Run the shared prefix through the model once and return its KV cache.
+    Only the cache is needed, so logits are computed for the last position
+    only (full-prefix logits cost prefix_len x vocab floats; with Gemma's
+    262k vocabulary that is 1 MiB per prompt token)."""
     cache = DynamicCache()
     with torch.inference_mode():
         model(
             input_ids=prefix_ids.to(model.device),
             past_key_values=cache,
             use_cache=True,
+            logits_to_keep=1,
         )
     return cache
 

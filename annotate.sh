@@ -27,7 +27,7 @@ no_persona_datasets=("${main_annotation_datasets[@]}")
 # ============================================================
 # Number of GPUs available: 1 or 2. With a single GPU, only models with
 # at most SINGLE_GPU_MAX_PARAMS_B billion parameters are run.
-NUM_GPUS=1
+NUM_GPUS=2
 SINGLE_GPU_MAX_PARAMS_B=25
 
 if [ "$NUM_GPUS" -ne 1 ] && [ "$NUM_GPUS" -ne 2 ]; then
@@ -64,8 +64,8 @@ declare -A model_params_b=(
 )
 
 # Models for the main and ablation runs (all) and the adversarial runs (subset).
-all_models=("olmo32b" "qwen32b" "olmo7b" "qwen7b" "llama8b" "mistral24b" "mistral7b" "gemma7b" "gemma31b")
-adv_models=("olmo32b" "qwen32b" "olmo7b" "qwen7b" "llama8b" "mistral24b" "mistral7b" "gemma7b" "gemma31b")
+all_models=("olmo32b" "qwen32b" "olmo7b" "qwen7b" "llama8b" "mistral24b" "mistral7b" "gemma7b")
+adv_models=("olmo32b" "qwen32b" "olmo7b" "qwen7b" "llama8b" "mistral24b" "mistral7b" "gemma7b")
 
 # With a single GPU, drop models above the parameter limit.
 # filter_models_for_gpus <models_array_name>
@@ -100,7 +100,7 @@ batch_size=20
 instructions_dir="instructions/main"                 # <dir>/<dataset>/*
 adv_instructions_dir="instructions/adversarial"      # <dir>/<dataset>/*
 ablation_instructions_dir="instructions/ablation"    # <dir>/<dataset>/* (paraphrases)
-no_persona_instructions_dir="instructions/no_persona" # <dir>/<dataset>/*
+no_persona_instructions_dir="instructions/main" # <dir>/<dataset>/*
 
 output_dir="output/llm/annotations"
 ablation_output_dir="output/llm/ablations"
