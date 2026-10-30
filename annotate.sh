@@ -106,7 +106,10 @@ output_dir="output/llm/annotations"
 ablation_output_dir="output/llm/ablations"
 ablation_repeat_output_dir="${ablation_output_dir}/repeat"
 ablation_paraphrase_output_dir="${ablation_output_dir}/paraphrase"
-no_persona_output_dir="output/llm/no_persona"
+# No-persona runs go next to the main runs; they are told apart by the
+# "nopersona" prompt name in the file name (see run_annotation).
+no_persona_output_dir="$output_dir"
+no_persona_prompt_name="nopersona"
 
 log_dir="logs"
 log_file="${log_dir}/annotation.log"
@@ -124,8 +127,7 @@ mkdir -p \
   "$output_dir" \
   "$log_dir" \
   "$ablation_repeat_output_dir" \
-  "$ablation_paraphrase_output_dir" \
-  "$no_persona_output_dir"
+  "$ablation_paraphrase_output_dir"
 
 # ============================================================
 # Helpers
@@ -165,9 +167,15 @@ run_annotation() {
   local target_log="$8"
   local no_persona="${9:-}"
 
+  # No-persona runs are named after the condition rather than the prompt
+  # file, so they do not clash with the persona runs of the same prompt.
   local instruction_name
-  instruction_name="$(basename "$instruction_path")"
-  instruction_name="${instruction_name%.*}"
+  if [ -n "$no_persona" ]; then
+    instruction_name="$no_persona_prompt_name"
+  else
+    instruction_name="$(basename "$instruction_path")"
+    instruction_name="${instruction_name%.*}"
+  fi
 
   local label="${dataset} - ${instruction_name}${suffix} x ${model}"
   local output_path="${out_dir}/${dataset}-${instruction_name}-${model}${suffix}.csv"
