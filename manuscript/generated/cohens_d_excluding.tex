@@ -1,24 +1,24 @@
 \begin{table}[t]
 \caption{Cohen's d between the default and each adversarial
-        instruction prompt, computed on the per-comment \ac{ndfu}. Results
-        are given per model, for each dataset separately and as the
-        unweighted mean over datasets (All). Comments per model: Sap et al. 2022: 585; Kumar et al. 2021: 1000; POPQUORN: 1500 (gemma31b: 0). Excluding the following models: llama8b, olmo7b, qwen7b.}
+        instruction prompt, computed on the per-comment \ac{ndfu}.
+        Results are given per model, for each dataset separately and as the
+        unweighted mean over datasets (All). Comments per model: Sap: 585; Kumar: 1000; POPQUORN: 1500 (Gemma 31B: 0).}
 \label{tab:cohens-d-excluding}
 \centering
 \footnotesize
 \setlength{\tabcolsep}{1.5pt}
 \begin{tabular}{l rrrr@{\hspace{4pt}}rrrr@{\hspace{4pt}}rrrr@{\hspace{4pt}}rrrr}
 \toprule
- & \multicolumn{4}{c}{All} & \multicolumn{4}{c}{Sap et al. 2022} & \multicolumn{4}{c}{Kumar et al. 2021} & \multicolumn{4}{c}{POPQUORN} \\
+ & \multicolumn{4}{c}{All} & \multicolumn{4}{c}{Sap} & \multicolumn{4}{c}{Kumar} & \multicolumn{4}{c}{POPQUORN} \\
 \cmidrule(lr){2-5}\cmidrule(lr){6-9}\cmidrule(lr){10-13}\cmidrule(lr){14-17}
 Model & \rotatebox{90}{Stereotype} & \rotatebox{90}{Persona} & \rotatebox{90}{Single} & \rotatebox{90}{Direct} & \rotatebox{90}{Stereotype} & \rotatebox{90}{Persona} & \rotatebox{90}{Single} & \rotatebox{90}{Direct} & \rotatebox{90}{Stereotype} & \rotatebox{90}{Persona} & \rotatebox{90}{Single} & \rotatebox{90}{Direct} & \rotatebox{90}{Stereotype} & \rotatebox{90}{Persona} & \rotatebox{90}{Single} & \rotatebox{90}{Direct} \\
 \midrule
-olmo32b & $-0.04$ & 0.02 & 0.07 & $-0.10$ & 0.09 & 0.06 & 0.26 & 0.06 & 0.14 & $-0.13$ & $-0.29$ & $-0.31$ & $-0.35$ & 0.14 & 0.25 & $-0.05$ \\
-qwen32b & 0.19 & 0.16 & 0.18 & 0.13 & 0.32 & 0.13 & $-0.04$ & 0.09 & 0.17 & 0.21 & 0.51 & 0.31 & 0.08 & 0.13 & 0.07 & $-0.01$ \\
-mistral7b & 0.13 & 0.03 & 0.10 & $-0.20$ & 0.21 & 0.10 & 0.08 & $-0.21$ & 0.07 & $-0.01$ & $-0.10$ & $-0.05$ & 0.11 & 0.01 & 0.31 & $-0.35$ \\
-mistral24b & 0.59 & 0.25 & $-0.32$ & $-0.03$ & 0.64 & 0.04 & $-0.88$ & 0.17 & 0.98 & 0.97 & 0.57 & $-0.25$ & 0.17 & $-0.26$ & $-0.66$ & $-0.00$ \\
-gemma7b & 0.16 & 0.27 & 0.38 & 0.11 & 0.18 & 0.48 & 0.70 & $-0.08$ & 0.10 & $-0.08$ & $-0.40$ & $-0.07$ & 0.20 & 0.41 & 0.85 & 0.49 \\
-gemma31b & 0.36 & 0.21 & 0.02 & 0.07 & 0.36 & 0.21 & 0.02 & 0.07 & -- & -- & -- & -- & $---$ & $---$ & $---$ & $---$ \\
+OLMo 32B & $-0.04$ & 0.02 & 0.07 & $-0.10$ & 0.09 & 0.06 & 0.26 & 0.06 & 0.14 & $-0.13$ & $-0.29$ & $-0.31$ & $-0.35$ & 0.14 & 0.25 & $-0.05$ \\
+Qwen 32B & 0.19 & 0.16 & 0.18 & 0.13 & 0.32 & 0.13 & $-0.04$ & 0.09 & 0.17 & 0.21 & 0.51 & 0.31 & 0.08 & 0.13 & 0.07 & $-0.01$ \\
+Mistral 7B & 0.13 & 0.03 & 0.10 & $-0.20$ & 0.21 & 0.10 & 0.08 & $-0.21$ & 0.07 & $-0.01$ & $-0.10$ & $-0.05$ & 0.11 & 0.01 & 0.31 & $-0.35$ \\
+Mistral 24B & 0.59 & 0.25 & $-0.32$ & $-0.03$ & 0.64 & 0.04 & $-0.88$ & 0.17 & 0.98 & 0.97 & 0.57 & $-0.25$ & 0.17 & $-0.26$ & $-0.66$ & $-0.00$ \\
+Gemma 5B & 0.16 & 0.27 & 0.38 & 0.11 & 0.18 & 0.48 & 0.70 & $-0.08$ & 0.10 & $-0.08$ & $-0.40$ & $-0.07$ & 0.20 & 0.41 & 0.85 & 0.49 \\
+Gemma 31B & 0.36 & 0.21 & 0.02 & 0.07 & 0.36 & 0.21 & 0.02 & 0.07 & -- & -- & -- & -- & $---$ & $---$ & $---$ & $---$ \\
 \bottomrule
 \end{tabular}
 \end{table}

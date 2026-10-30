@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 
-from ..lib import graphs
+from ..lib import graphs, labels
 from ..lib.preprocessing import Dataset
 from .shared import (
     DATASET_KEYS,
@@ -132,11 +132,11 @@ def _draw_annotation_histogram(
             linestyle=dash_map[source],
             linewidth=2.4 if is_human else 1.6,
             alpha=1.0 if is_human else 0.85,
-            label=source,
+            label=labels.model_label(source),
             ax=ax,
         )
 
-    ax.set_title(ds.get_name())
+    ax.set_title(labels.dataset_label(ds.get_name()))
     ax.set_xlabel(f"{ds.get_annotation_column()} value")
     ax.set_ylabel("Proportion")
     legend = ax.get_legend()
@@ -322,7 +322,10 @@ def _draw_prompt_diff_subplot(
         for other in other_prompts
         if f"{other} - {baseline_prompt}" in set(plot_df["Diff"])
     ]
-    model_order = _order_models(set(plot_df["Model"]))
+    model_order = [
+        labels.model_label(m) for m in _order_models(set(plot_df["Model"]))
+    ]
+    plot_df = plot_df.assign(Model=plot_df["Model"].map(labels.model_label))
     palette = dict(zip(diff_order, graphs.COLORBLIND_PALETTE[1:]))
 
     sns.barplot(
@@ -338,7 +341,7 @@ def _draw_prompt_diff_subplot(
         ax=ax,
     )
     ax.axhline(0, color="black", linewidth=0.8, linestyle=graphs.LINESTYLES[1])
-    ax.set_title(dataset_name)
+    ax.set_title(labels.dataset_label(dataset_name))
     ax.set_xlabel("")
     ax.set_ylabel(f"Mean annotation diff vs. {baseline_prompt}")
     ax.tick_params(axis="x", rotation=30)
@@ -500,15 +503,16 @@ def plot_inherent_polarization_histogram_grid(
             ax.set_xlim(0.1, 1)
             ax.set_xticks([0.1, 0.5, 1.0])  # new
             ax.set_ylim(0, 0.3)
-            ax.set_ylabel(key.capitalize() if c == 0 else "")
+            ax.set_ylabel(labels.dataset_label(key) if c == 0 else "")
             ax.set_xlabel("")
             if r == 0:
                 ax.set_title(prompt.capitalize())
 
     fig.supylabel("Proportion of Comments (Stacked)")
-    fig.supxlabel(r"Unattributable Polarization ($\geq 0.1$)")
+    fig.supxlabel(rf"{labels.USD.short} ($\geq 0.1$)")
     fig.suptitle(
-        "LLM Annotation Exhibits Different USD Patterns From Humans"
+        f"LLM Annotation Exhibits Different {labels.USD.short} Patterns "
+        "From Humans"
     )
 
     legend_handles = [
@@ -516,7 +520,7 @@ def plot_inherent_polarization_histogram_grid(
             facecolor=style[s][0],
             edgecolor="black",
             hatch=style[s][1],
-            label=s,
+            label=labels.model_label(s),
             alpha=0.4,
         )
         for s in sources
@@ -581,23 +585,23 @@ def plot_inherent_polarization_by_model(
     all_models = _order_models(sources - {"Human"})
     models = [m for m in all_models if m not in exclude_models]
 
+    def _relabel(values: dict[str, pd.Series]) -> dict[str, pd.Series]:
+        return {labels.model_label(m): s for m, s in values.items()}
+
     graphs.plot_mirrored_inherent_histograms(
-        right=_inherent_values_by_model(full_df, models, prompt_name),
-        left=_inherent_values_by_model(subsampled_df, models, prompt_name),
+        right=_relabel(
+            _inherent_values_by_model(full_df, models, prompt_name)
+        ),
+        left=_relabel(
+            _inherent_values_by_model(subsampled_df, models, prompt_name)
+        ),
         output_path=output_path,
-        title="USD of LLM Annotations per Model",
+        title=f"{labels.USD.short} of LLM Annotations per Model",
         right_label="All personas",
         left_label=rf"Max {subsample_size} personas",
-        order=all_models,
+        order=[labels.model_label(m) for m in all_models],
         legend_title="Model",
     )
-
-
-def inherent_dataset_label(dataset_key: str) -> str:
-    """Dataset label as in the human apriori.png figure, e.g.
-    "dices-350" -> "Dices 350", so datasets share names (and, with the
-    same sorted order, colours/hatches) across the human and LLM plots."""
-    return " ".join(dataset_key.split("-")).capitalize()
 
 
 def _inherent_values_by_dataset(
@@ -614,7 +618,7 @@ def _inherent_values_by_dataset(
     for key in df["Dataset"].unique():
         series = values[df["Dataset"] == key].dropna()
         if not series.empty:
-            out[inherent_dataset_label(key)] = series
+            out[labels.dataset_label(key)] = series
     return out
 
 
@@ -649,9 +653,11 @@ def plot_inherent_polarization_by_dataset(
         right=_inherent_values_by_dataset(full_df, models, prompt_name),
         left=_inherent_values_by_dataset(subsampled_df, models, prompt_name),
         output_path=output_path,
-        title="USD of LLM Annotations per Dataset",
+        title=f"{labels.USD.short} of LLM Annotations per Dataset",
         right_label="All personas",
         left_label=rf"Max {subsample_size} personas",
-        order=sorted(inherent_dataset_label(k) for k in dataset_keys),
+        # Same labels and sorted order as the human apriori.png figure, so
+        # each dataset keeps its colour/hatch across both.
+        order=sorted(labels.dataset_label(k) for k in dataset_keys),
         legend_title="Dataset",
     )

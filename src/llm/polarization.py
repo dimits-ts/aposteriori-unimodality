@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 from tqdm.auto import tqdm
 
-from ..lib import run_helper
+from ..lib import labels, run_helper
 from ..lib.preprocessing import Dataset
 from ..lib.util import (
     skip_if_exists,
@@ -402,7 +402,7 @@ def export_inherent_polarization_table(
         print(f"No inherent-polarization results; skipping {output_path}.")
         return
 
-    df = df.copy()
+    df = labels.relabel_frame(df)  # (Dataset, Source) index -> labels
     prompt_names = df["mean"].columns.tolist()
 
     # Build display DataFrame with formatted "mean ± 2SD" strings per prompt

@@ -41,7 +41,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import chi2_contingency
 
-from ..lib import run_helper
+from ..lib import labels, run_helper
 from ..lib.preprocessing import (
     Dataset,
     DicesDataset,
@@ -64,12 +64,6 @@ METHOD_APUNIM = "apunim"
 METHOD_DELTA_ALPHA = "Krippendorff delta-alpha"
 METHOD_ORIGINAL_AU = "aposteriori unimodality (2024)"
 METHOD_CHI2 = "chi-squared (Akhtar et al. 2019)"
-
-# Dataset names as shown in the LaTeX table. The cache keeps the full names.
-DATASET_TABLE_LABEL = {
-    "Sap et al. 2022": "Sap",
-    "Kumar et al. 2021": "Kumar",
-}
 
 N_PERM_DELTA_ALPHA = 200
 N_PERM_ORIGINAL_AU = 100
@@ -135,7 +129,8 @@ def export_latex_table(df: pd.DataFrame, output_path: Path) -> None:
     produced no statistic are not counted as tests and are shown as ---.
     """
     df = df.copy()
-    df["dataset"] = df["dataset"].replace(DATASET_TABLE_LABEL)
+    # The cache keeps the internal names; display labels from lib.labels.
+    df["dataset"] = df["dataset"].map(labels.dataset_label)
     df["dataset"] = df["dataset"].str.replace("_", r"\_", regex=False)
     df["sdb_feature"] = df["sdb_feature"].str.replace("_", r"\_", regex=False)
 
@@ -179,7 +174,7 @@ def export_latex_table(df: pd.DataFrame, output_path: Path) -> None:
         first = last + 1
 
     feature_header = " & ".join(
-        [r"\ac{sdd}"]
+        [labels.SDD.tex]
         + [rf"\rotatebox{{90}}{{{feature}}}" for _, feature in features]
     )
 
@@ -190,7 +185,8 @@ def export_latex_table(df: pd.DataFrame, output_path: Path) -> None:
     ]
 
     caption = (
-        "Statistical significance of each \\ac{sdd} feature per method. "
+        f"Statistical significance of each {labels.SDD.tex} feature per "
+        "method. "
         f"{TICK}: significant at $p<{ALPHA}$ after Bonferroni correction "
         "across the features of the dataset; "
         f"{CROSS}: not significant."

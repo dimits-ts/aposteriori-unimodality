@@ -8,7 +8,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import stats
 
-from ..lib import graphs, run_helper
+from ..lib import graphs, labels, run_helper
 from ..lib.util import (
     SIGNIFICANCE_LEGEND,
     center_table_latex,
@@ -100,7 +100,7 @@ def main(
 
     ann_size_df = get_annotator_counts_df(datasets)
     stats_df = get_statistics_df(ann_size_df)
-    stats_df.to_latex(
+    stats_df.rename(index=labels.dataset_label).to_latex(
         latex_output_dir / "ann_stats.tex",
         caption=(
             "Descriptive statistics for the number of annotations per dataset."
@@ -120,10 +120,8 @@ def main(
 
 def _inherent_label(path: Path, stem_suffix: str = "-inherent") -> str:
     """Dataset label from an inherent-polarization CSV name, e.g.
-    "dices-350-inherent.csv" -> "Dices 350"."""
-    return " ".join(
-        path.stem.removesuffix(stem_suffix).split("-")
-    ).capitalize()
+    "dices-350-inherent.csv" -> "DICES-350" (see lib.labels)."""
+    return labels.dataset_label(path.stem.removesuffix(stem_suffix))
 
 
 def plot_dfu_histograms(
@@ -167,7 +165,8 @@ def plot_dfu_histograms(
         left=subsampled_series,
         output_path=graph_output_dir / "apriori.png",
         title=(
-            "UnPol Frequently Exists in Datasets with Low Annotation Density"
+            f"{labels.USD.short} Frequently Exists in Datasets with Low "
+            "Annotation Density"
         ),
         right_label="All annotators",
         left_label=rf"Max {run_helper.INHERENT_SUBSAMPLE_SIZE} annotators",
@@ -223,7 +222,7 @@ def plot_annotator_count_histogram_from_datasets(
             x=edges[:-1],
             height=percentage_counts * 100,
             width=(edges[1] - edges[0]),
-            label=dataset_name,
+            label=labels.dataset_label(dataset_name),
             color=selected_color,
             alpha=0.6,
             hatch=selected_hatch,
@@ -320,7 +319,7 @@ def annotation_count_table_to_latex(
     ]
     for name, row in stats_df.iterrows():
         lines.append(
-            f"\t\t{name} & {int(row['count'])} & "
+            f"\t\t{labels.dataset_label(name)} & {int(row['count'])} & "
             f"{_fmt_num(row['mean'])} & "
             f"{_fmt_num(row['std'])} & "
             f"{_fmt_num(row['min'])} & "
@@ -352,12 +351,12 @@ def subgroup_counts_to_latex(
     """
     for ds in datasets:
         counts = pd.concat(
-            get_subgroup_counts(ds), names=[r"\ac{sdd}", "Value"]
+            get_subgroup_counts(ds), names=[labels.SDD.tex, "Value"]
         ).to_frame("Count")
         latex_str = counts.to_latex(
             caption=(
-                f"Number of annotations per subgroup for the {ds.get_name()} "
-                "dataset."
+                "Number of annotations per subgroup for the "
+                f"{labels.dataset_label(ds.get_name())} dataset."
             ),
             label=f"tab:subgroups-{_slug(ds.get_name())}",
             escape=False,
@@ -388,8 +387,8 @@ def _results_to_latex(
     """
     res_df = (
         res_df.replace("_", r"\_", regex=True)
-        .rename(columns={"Unnamed: 1": "Value", "SDB Feature": r"\ac{sdd}"})
-        .set_index([r"\ac{sdd}", "Value"])
+        .rename(columns={"Unnamed: 1": "Value", "SDB Feature": labels.SDD.tex})
+        .set_index([labels.SDD.tex, "Value"])
     )
 
     if "pvalue" in res_df.columns and "apunim" in res_df.columns:
@@ -409,7 +408,8 @@ def _results_to_latex(
     latex_str = res_df.to_latex(
         caption=(
             "Aposteriori unimodality results for the "
-            f"{dataset_name.capitalize()} dataset. "
+            f"{labels.dataset_label(dataset_name.removesuffix('-results'))} "
+            "dataset. "
             "Stars indicate statistical significance: "
             f"{SIGNIFICANCE_LEGEND}"
         ),
@@ -597,7 +597,7 @@ def ndfu_rating_correlation_to_latex(
 
     table = pd.DataFrame(
         {
-            "Dataset": corr_df["Dataset"],
+            "Dataset": corr_df["Dataset"].map(labels.dataset_label),
             "$n$": corr_df["n"].astype(str),
             r"Spearman $\rho$": trim_numeric_col_latex(
                 corr_df["spearman_rho"], ".2f"
@@ -609,9 +609,9 @@ def ndfu_rating_correlation_to_latex(
     ).replace("_", r"\_", regex=True)
 
     caption = (
-        r"Correlation between the per-comment \ac{ndfu} of the human "
-        "annotations and the polarization ratings, per dataset. $n$ is the "
-        r"number of comments with both an \ac{ndfu} and a rating."
+        f"Correlation between the per-comment {labels.NDFU.tex} of the "
+        "human annotations and the polarization ratings, per dataset. $n$ is "
+        f"the number of comments with both an {labels.NDFU.tex} and a rating."
     )
     latex_str = table.to_latex(
         caption=caption,
@@ -638,7 +638,10 @@ def plot_sample_size_polarization(csv_path: Path, output_path: Path):
             list(df["dataset"].unique()).index(dataset)
         ]
         ax.plot(
-            group["sample_size"], group["mean"], label=dataset, color=color
+            group["sample_size"],
+            group["mean"],
+            label=labels.dataset_label(dataset),
+            color=color,
         )
         ax.fill_between(
             group["sample_size"],

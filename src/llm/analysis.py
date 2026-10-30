@@ -73,9 +73,10 @@ drawn for every model and every prompt variant of a given dataset.
 """
 
 import argparse
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
+from typing import NamedTuple
 
 import pandas as pd
 
@@ -87,7 +88,7 @@ from ..lib.preprocessing import (
     PopquornDataset,
 )
 
-from ..lib import graphs
+from ..lib import graphs, labels
 from ..lib.util import (
     skip_if_exists,
     center_table_latex,
@@ -426,7 +427,9 @@ def export_nonstandard_summary_latex(
         "percentage of the model's annotations on that dataset."
     )
     table = summary.assign(
-        incidence=trim_numeric_col_latex(summary["incidence"], ".2f")
+        model=summary["model"].map(labels.model_label),
+        dataset=summary["dataset"].map(labels.dataset_label),
+        incidence=trim_numeric_col_latex(summary["incidence"], ".2f"),
     ).rename(
         columns={
             "model": "Model",
@@ -470,24 +473,30 @@ def run_nonstandard_answers_step(
 # ---------------------------------------------------------------------------
 
 
-def _model_variants(exclude_models):
-    """
-    Variants of a per-model table: all models, and (if any models are
-    excluded) all models but the excluded ones. Yields
-    (file suffix, label suffix, caption note, models to drop).
-    """
-    yield "", "", "", set()
-    if exclude_models:
-        excluded_str = ", ".join(sorted(exclude_models))
-        yield (
-            "_excluding",
-            "-excluding",
-            f" Excluding the following models: {excluded_str}.",
-            set(exclude_models),
-        )
+class ModelVariant(NamedTuple):
+    """One version of a per-model figure or table."""
+
+    file_suffix: str  # appended to the output file name
+    label_suffix: str  # appended to the LaTeX \label{}
+    dropped_models: frozenset[str]  # models left out of this version
 
 
-def _drop_models(df: pd.DataFrame, models: set[str]) -> pd.DataFrame:
+def _model_variants(exclude_models: Iterable[str]) -> list[ModelVariant]:
+    """
+    The versions to export of every per-model figure or table: one with
+    all models and, if `exclude_models` is not empty, a second one without
+    them ("_excluding" file, "-excluding" label).
+    """
+    variants = [ModelVariant("", "", frozenset())]
+    excluded = frozenset(exclude_models)
+    if excluded:
+        variants.append(ModelVariant("_excluding", "-excluding", excluded))
+    return variants
+
+
+def _drop_models(
+    df: pd.DataFrame, models: set[str] | frozenset[str]
+) -> pd.DataFrame:
     """Rows of a long/results frame whose `Model` is not in `models`. A
     frame without a `Model` column (no results at all) is returned as is."""
     if not models or "Model" not in df.columns:
@@ -617,7 +626,6 @@ def export_cohens_d_table_latex(
     output_path: Path,
     caption: str,
     label: str,
-    note: str = "",
 ) -> None:
     """
     Writes the Cohen's d table with models as rows and one column group
@@ -626,7 +634,7 @@ def export_cohens_d_table_latex(
     output: (Model, Dataset) rows, an `n` column and one column per
     prompt. The comment counts move from the `n` column to the caption.
     """
-    flat = _cohens_d_flat(compact)
+    flat = labels.relabel_frame(_cohens_d_flat(compact))
     prompts = [c for c in flat.columns if c not in ("Model", "Dataset", "n")]
     models = list(dict.fromkeys(flat["Model"]))
     datasets = list(dict.fromkeys(flat["Dataset"]))
@@ -635,7 +643,7 @@ def export_cohens_d_table_latex(
         caption.strip(),
         _cohens_d_n_note(flat),
     )
-    full_caption = " ".join(part for part in caption_parts if part) + note
+    full_caption = " ".join(part for part in caption_parts if part)
 
     group_gap = rf"@{{\hspace{{{COHENS_D_GROUP_GAP_PT}pt}}}}"
     col_spec = "l " + group_gap.join(["r" * len(prompts)] * len(datasets))
@@ -661,24 +669,21 @@ def export_cohens_d_table_latex(
 
 
 def _export_cohens_d_variant(
-    res_df,
-    latex_output_dir,
-    caption,
-    file_suffix,
-    label_suffix,
-    note,
-    models,
-):
-    variant_df = _drop_models(res_df, models)
+    res_df: pd.DataFrame,
+    latex_output_dir: Path,
+    caption: str,
+    variant: ModelVariant,
+) -> None:
+    output_path = latex_output_dir / f"cohens_d{variant.file_suffix}.tex"
+    variant_df = _drop_models(res_df, variant.dropped_models)
     if variant_df.empty:
-        print(f"No Cohen's d results left{note}; skipping table.")
+        print(f"No Cohen's d results left; skipping {output_path}.")
         return
     export_cohens_d_table_latex(
         stats.compute_cohens_d_compact_table(variant_df),
-        output_path=latex_output_dir / f"cohens_d{file_suffix}.tex",
+        output_path=output_path,
         caption=caption,
-        label=f"tab:cohens-d{label_suffix}",
-        note=note,
+        label=f"tab:cohens-d{variant.label_suffix}",
     )
 
 
@@ -686,22 +691,12 @@ def run_cohens_d_step(res_df, latex_output_dir, exclude_models):
     # The effect sizes are computed independently per (model, dataset), so
     # dropping models from the results gives exactly the table one would
     # get by never running them.
-    caption = r"""Cohen's d between the default and each adversarial
-        instruction prompt, computed on the per-comment \ac{ndfu}. Results
-        are given per model, for each dataset separately and as the
+    caption = rf"""Cohen's d between the default and each adversarial
+        instruction prompt, computed on the per-comment {labels.NDFU.tex}.
+        Results are given per model, for each dataset separately and as the
         unweighted mean over datasets (All)."""
-    for file_suffix, label_suffix, note, models in _model_variants(
-        exclude_models
-    ):
-        _export_cohens_d_variant(
-            res_df,
-            latex_output_dir,
-            caption,
-            file_suffix,
-            label_suffix,
-            note,
-            models,
-        )
+    for variant in _model_variants(exclude_models):
+        _export_cohens_d_variant(res_df, latex_output_dir, caption, variant)
 
 
 # ---------------------------------------------------------------------------
@@ -768,7 +763,9 @@ def _run_cross_model_consistency_excluding_step(
     output_path = (
         latex_output_dir / "llm-consistency-cross-model-excluding.tex"
     )
-    excluded_str = ", ".join(sorted(exclude_models))
+    excluded_str = ", ".join(
+        labels.model_label(m) for m in sorted(exclude_models)
+    )
     stats.export_latex_table(
         stats.cross_model_consistency_table(
             human_datasets=human_datasets,
@@ -1151,15 +1148,12 @@ def run_apunim_significance_step(
         for key, value in inputs.items()
         if key not in SIGNIFICANCE_TABLE_SKIP_KEYS
     }
-    for file_suffix, label_suffix, note, models in _model_variants(
-        exclude_models
-    ):
+    for variant in _model_variants(exclude_models):
+        file_suffix, label_suffix, models = variant
         _export_significance_counts(
             _significance_inputs_by_name(human_datasets, inputs, models),
             latex_output_dir,
-            file_suffix,
-            label_suffix,
-            note,
+            variant,
         )
         by_name = _significance_inputs_by_name(
             human_datasets, table_inputs, models
@@ -1180,18 +1174,20 @@ def run_apunim_significance_step(
             output_path=latex_output_dir
             / f"llm-apunim-significance{file_suffix}.tex",
             label=f"tab:llm-apunim-significance{label_suffix}",
-            note=note,
             # if includes extra models, make the table smaller
             table_size=r"\footnotesize" if len(file_suffix) == 0 else None,
         )
 
 
 def _export_significance_counts(
-    by_name, latex_output_dir, file_suffix, label_suffix, note
-):
+    by_name: dict[str, tuple[pd.DataFrame, pd.DataFrame]],
+    latex_output_dir: Path,
+    variant: ModelVariant,
+) -> None:
     """Share of PC dimensions each model finds significant, per dataset
     (including the datasets left out of the significance table):
     concisely for the default prompt, and in full per prompt."""
+    file_suffix, label_suffix = variant.file_suffix, variant.label_suffix
     counts = stats.count_significant_dimensions(
         by_name, prompt_names=shared.MAIN_PROMPT_NAMES
     )
@@ -1200,7 +1196,6 @@ def _export_significance_counts(
         output_path=latex_output_dir
         / f"llm-apunim-significance-counts{file_suffix}.tex",
         label=f"tab:llm-apunim-significance-counts{label_suffix}",
-        note=note,
     )
     stats.export_significant_dimension_by_prompt(
         counts,
@@ -1208,7 +1203,6 @@ def _export_significance_counts(
         / f"llm-apunim-significance-counts-by-prompt{file_suffix}.tex",
         label=f"tab:llm-apunim-significance-counts-by-prompt{label_suffix}",
         prompt_names=shared.MAIN_PROMPT_NAMES,
-        note=note,
     )
 
 
@@ -1245,19 +1239,17 @@ def run_mean_ndfu_step(
         print("No matched human/LLM annotations; skipping mean nDFU tables.")
         return
 
-    by_prompt_caption = r"""Mean (SE) per-comment \ac{ndfu} of the human annotations
+    by_prompt_caption = rf"""Mean (SE) per-comment {labels.NDFU.tex} of the human annotations
         and of the LLM annotations under each instruction prompt. Human
         annotations do not depend on the prompt. Rows give results per
         model, pooled over all datasets (All) and for each dataset
         separately; $n$ is the number of comments."""
-    default_caption = r"""Mean (SE) per-comment \ac{ndfu} of the human annotations
+    default_caption = rf"""Mean (SE) per-comment {labels.NDFU.tex} of the human annotations
         and of the LLM annotations under the default prompt, per dataset
         and pooled over all datasets (All). $n$ is the number of
         comments."""
 
-    for file_suffix, label_suffix, note, models in _model_variants(
-        exclude_models
-    ):
+    for file_suffix, label_suffix, models in _model_variants(exclude_models):
         variant_df = _drop_models(ndfu_df, models)
 
         stats.export_compact_prompt_table_latex(
@@ -1266,7 +1258,7 @@ def run_mean_ndfu_step(
             ),
             output_path=latex_output_dir
             / f"mean_ndfu_by_prompt{file_suffix}.tex",
-            caption=by_prompt_caption + note,
+            caption=by_prompt_caption,
             label=f"tab:mean-ndfu-by-prompt{label_suffix}",
         )
 
@@ -1276,7 +1268,7 @@ def run_mean_ndfu_step(
             ),
             output_path=latex_output_dir
             / f"mean_ndfu_default_vs_human{file_suffix}.tex",
-            caption=default_caption + note,
+            caption=default_caption,
             label=f"tab:mean-ndfu-default-vs-human{label_suffix}",
         )
 
@@ -1357,7 +1349,7 @@ def run_inherent_polarization_by_model_step(
     apriori.png: inherent-polarization-by-model.png with every model, and
     inherent-polarization-by-model_excluding.png without `exclude_models`.
     """
-    for file_suffix, _, _, dropped in _model_variants(exclude_models):
+    for file_suffix, _, dropped in _model_variants(exclude_models):
         plots.plot_inherent_polarization_by_model(
             full_df=full_df,
             subsampled_df=subsampled_df,
@@ -1385,7 +1377,7 @@ def run_inherent_polarization_by_dataset_step(
     model, and inherent-polarization-by-dataset_excluding.png without
     `exclude_models`.
     """
-    for file_suffix, _, _, dropped in _model_variants(exclude_models):
+    for file_suffix, _, dropped in _model_variants(exclude_models):
         plots.plot_inherent_polarization_by_dataset(
             full_df=full_df,
             subsampled_df=subsampled_df,

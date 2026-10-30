@@ -11,7 +11,7 @@ from numpy.typing import NDArray
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 
-from ..lib import graphs
+from ..lib import graphs, labels
 
 
 INTUITION_SIZE = 50
@@ -52,7 +52,7 @@ DISCUSSION_SIGMA = 0.5
 DISCUSSION_PLOT_BINS = np.linspace(0, 10, 2 * NUM_BINS + 1)
 # Density, so the pooled panel (twice the annotations) shares a y-scale.
 DISCUSSION_HIST_STAT = "density"
-DISCUSSION_TITLE = "Pooling Annotations Across Items Masks ASD"
+DISCUSSION_TITLE = f"Pooling Annotations Across Items Masks {labels.ASD.short}"
 MEAN_LINESTYLES = {
     "Men": graphs.LINESTYLES[1],  # dashed
     "Women": graphs.LINESTYLES[2],  # dotted

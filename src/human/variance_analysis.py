@@ -12,7 +12,7 @@ from matplotlib.lines import Line2D
 from tqdm.auto import tqdm
 import apunim
 
-from ..lib import graphs, run_helper
+from ..lib import graphs, labels, run_helper
 from ..lib.preprocessing import (
     DicesDataset,
     PopquornDataset,
@@ -408,7 +408,7 @@ def plot_variance_curve(
             )
 
             # titles on the top row, x labels on the bottom row only
-            ax.set_title(ds_name if row == 0 else "")
+            ax.set_title(labels.dataset_label(ds_name) if row == 0 else "")
             ax.set_ylabel(feature.capitalize() if col == 0 else "")
             ax.set_xlabel("")
 

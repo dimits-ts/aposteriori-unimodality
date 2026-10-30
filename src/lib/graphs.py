@@ -8,7 +8,7 @@ import seaborn as sns
 import numpy as np
 import apunim
 
-from . import preprocessing
+from . import labels, preprocessing
 
 # Okabe–Ito palette
 COLORBLIND_PALETTE = [
@@ -136,8 +136,8 @@ def polarization_plot(
     )
 
     ax.set_xlabel("Group")
-    ax.set_ylabel("nDFU")
-    ax.set_title(ds.get_name())
+    ax.set_ylabel(labels.NDFU.short)
+    ax.set_title(labels.dataset_label(ds.get_name()))
 
     ax.set_ylim(-0.05, 1.05)
 
@@ -262,7 +262,7 @@ def plot_mirrored_inherent_histograms(
 
     ax.set_title(title)
     ax.set_xlabel("Density")
-    ax.set_ylabel("USD")
+    ax.set_ylabel(labels.USD.short)
     ax.set_ylim((0, 1))
 
     ax.legend(

@@ -31,7 +31,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
-from ..lib import graphs, run_helper
+from ..lib import graphs, labels, run_helper
 from ..lib.preprocessing import Dataset
 from ..lib.util import stable_seed
 from .simulation import DELTAS, simulate, simulate_multigroup
@@ -46,7 +46,7 @@ UNIDIRECTIONAL = False  # bidirectional simulation
 FIXED_GROUP_EFFECT = False  # annotator-specific group effects
 
 FILE_PREFIX = "synthetic"
-FIGURE_TITLE = "USD in Synthetic Data per Number of Groups"
+FIGURE_TITLE = f"{labels.USD.short} in Synthetic Data per Number of Groups"
 
 
 class SyntheticDataset(Dataset):

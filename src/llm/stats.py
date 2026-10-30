@@ -11,7 +11,7 @@ import pandas as pd
 from scipy import stats
 from statsmodels.stats.multitest import multipletests
 
-from ..lib import run_helper
+from ..lib import labels, run_helper
 from ..lib.util import (
     center_table_latex,
     small_table_latex,
@@ -299,7 +299,7 @@ def per_model_repeat_consistency_table(
 def export_latex_table(
     df: pd.DataFrame, output_path: Path, caption: str, label: str
 ) -> None:
-    df = df.copy()
+    df = labels.relabel_frame(df)
     # very common column in all exported tables in this module
     if "Krippendorff's alpha" in df.columns:
         df["Krippendorff's alpha"] = trim_numeric_col_latex(
@@ -403,19 +403,22 @@ def export_llm_apunim_prompt_table(
             f"skipping {output_path}."
         )
         return
-    df = df.rename(columns={"SDB Feature": r"\ac{sdd}"})
+    df = labels.relabel_frame(df).rename(
+        columns={"SDB Feature": labels.SDD.tex}
+    )
 
     # The prompt columns already hold formatted "value$^{***}$" strings (see
     # _apunim_prompt_cell); they must not be passed through
     # trim_numeric_col_latex, which would turn the starred cells into "---".
     df = df.replace("_", r"\_", regex=True).set_index(
-        [r"\ac{sdd}", "Value", "Model"]
+        [labels.SDD.tex, "Value", "Model"]
     )
 
     latex_str = df.to_latex(
         caption=(
             "Aposteriori unimodality results for the LLM annotations of "
-            f"the {dataset_name} dataset, across instruction prompts. "
+            f"the {labels.dataset_label(dataset_name)} dataset, across "
+            "instruction prompts. "
             r"$^{*}p<0.05$, $^{**}p<0.01$, $^{***}p<0.001$."
         ),
         label=label,
@@ -465,13 +468,6 @@ _CELL_AGREE_SIGNIFICANT = _colored(_COL_AGREE_SIGNIFICANT, _SYM_AGREE)
 _CELL_AGREE_NEITHER = _colored(_COL_AGREE_NEITHER, _SYM_AGREE)
 _CELL_SIGN_DIFFERS = _colored(_COL_SIGN_DIFFERS, _SYM_SIGN_DIFFERS)
 _CELL_DISAGREE = _colored(_COL_DISAGREE, _SYM_DISAGREE)
-
-# Short dataset names for the narrow significance tables.
-_SHORT_DATASET_NAMES = {
-    "Sap et al. 2022": "Sap",
-    "Kumar et al. 2021": "Kumar",
-    "POPQUORN": "POP",
-}
 
 # Each prompt gets a fixed-width slot (in em), so that the symbols of
 # different rows line up and a prompt without LLM results is simply blank.
@@ -756,7 +752,7 @@ def export_apunim_significance_table(
         return
     prompts = table_df.attrs.get("prompts", [])
     caption = (
-        rf"Statistically significant ($p<{alpha}$) \acp{{sdd}} of "
+        rf"Statistically significant ($p<{alpha}$) {labels.SDD.tex_plural} of "
         "each LLM compared with the human annotations, per dataset. A "
         "dimension counts as significant if at least one of its groups is. "
         "Each cell shows one symbol per prompt, in the order "
@@ -770,10 +766,16 @@ def export_apunim_significance_table(
         "blank: no LLM result." + note
     )
 
-    df = table_df
-    df.Dataset = df.Dataset.replace(_SHORT_DATASET_NAMES)
-    df = table_df.rename(columns={"SDB Feature": r"\ac{sdd}", "Dataset": "Ds"})
-    df = df.replace("_", r"\_", regex=True).set_index(["Ds", r"\ac{sdd}"])
+    # Model columns and short dataset names (narrow table).
+    df = labels.relabel_frame(table_df, short=True)
+    df = df.rename(
+        columns={
+            **{c: labels.model_label(c) for c in df.columns},
+            "SDB Feature": labels.SDD.tex,
+            "Dataset": "Ds",
+        }
+    )
+    df = df.replace("_", r"\_", regex=True).set_index(["Ds", labels.SDD.tex])
     latex_str = df.to_latex(
         caption=caption,
         label=label,
@@ -890,7 +892,7 @@ def _ratio_cell(
 
 
 def _count_row_label(name: str) -> str:
-    return _SHORT_DATASET_NAMES.get(name, name).replace("_", r"\_")
+    return labels.dataset_label(name, short=True).replace("_", r"\_")
 
 
 def _model_header(
@@ -898,7 +900,10 @@ def _model_header(
 ) -> str:
     """Header row: the leading columns, then the model names (rotated by
     90 degrees if `rotate`)."""
-    names = [m.replace("_", r"\_") for m in [HUMAN_LABEL] + llm_models]
+    names = [
+        labels.model_label(m).replace("_", r"\_")
+        for m in [HUMAN_LABEL] + llm_models
+    ]
     if rotate:
         names = [rf"\rotatebox{{90}}{{{name}}}" for name in names]
     return " & ".join(leading + names) + r" \\"
@@ -1301,6 +1306,7 @@ def export_compact_prompt_table_latex(
     caption: str,
     label: str,
 ) -> None:
+    compact_df = labels.relabel_frame(compact_df)
     latex_str = compact_df.to_latex(
         caption=caption,
         label=label,
@@ -1326,6 +1332,10 @@ def export_default_mean_ndfu_latex(
     table_df: pd.DataFrame, output_path: Path, caption: str, label: str
 ) -> None:
     n_groups = len(table_df.columns) // 2
+    # Model index; dataset names are the top column level.
+    table_df = labels.relabel_frame(table_df).rename(
+        columns=labels.dataset_label, level=0
+    )
     latex_str = table_df.to_latex(
         caption=caption,
         label=label,
