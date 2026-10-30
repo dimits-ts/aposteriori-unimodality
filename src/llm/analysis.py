@@ -523,7 +523,7 @@ COHENS_D_ALL_LABEL = "All"
 # Layout of the exported Cohen's d table: models as rows, one column group
 # per dataset, one column per prompt. Sized to fit a 455pt text width
 # without \resizebox.
-COHENS_D_FONT_SIZE = r"\footnotesize"
+COHENS_D_FONT_SIZE = r"\normalsize"
 COHENS_D_TABCOLSEP_PT = 1.5
 COHENS_D_GROUP_GAP_PT = 4
 # Shown for a (model, dataset) pair without results.
@@ -1325,6 +1325,12 @@ def _missing_no_persona_annotations(
     return missing
 
 
+def _read_ndfu_records(path: Path) -> pd.DataFrame:
+    """Cached mean-nDFU records, with text_id always read as a string (it
+    mixes numeric and non-numeric ids across datasets)."""
+    return pd.read_csv(path, dtype={"text_id": str})
+
+
 def run_mean_ndfu_step(
     human_datasets,
     annotations_dir,
@@ -1337,7 +1343,7 @@ def run_mean_ndfu_step(
     # written without olmo7b/llama8b and would be silently reused.)
     cache_path = cache_dir / "mean_ndfu_records_all_models.csv"
     if skip_if_exists(cache_path):
-        ndfu_df = pd.read_csv(cache_path)
+        ndfu_df = _read_ndfu_records(cache_path)
     else:
         ndfu_df = stats.compute_mean_ndfu_records(
             human_datasets=human_datasets,
@@ -1358,7 +1364,7 @@ def run_mean_ndfu_step(
     missing = _missing_no_persona_annotations(human_datasets, annotations_dir)
     no_persona_cache_path = cache_dir / "mean_ndfu_records_no_persona.csv"
     if not missing and skip_if_exists(no_persona_cache_path):
-        no_persona_df = pd.read_csv(no_persona_cache_path)
+        no_persona_df = _read_ndfu_records(no_persona_cache_path)
     else:
         no_persona_df = stats.compute_mean_ndfu_records(
             human_datasets=human_datasets,
@@ -1372,6 +1378,12 @@ def run_mean_ndfu_step(
             no_persona_cache_path.parent.mkdir(parents=True, exist_ok=True)
             no_persona_df.to_csv(no_persona_cache_path, index=False)
 
+    # Comments are matched across these frames by text_id, so its type must
+    # agree: a cached CSV gives strings where freshly computed records may
+    # give integers, and "123" != 123 would silently drop the rows.
+    ndfu_df["text_id"] = ndfu_df["text_id"].astype(str)
+    no_persona_df["text_id"] = no_persona_df["text_id"].astype(str)
+
     if ndfu_df.empty:
         print("No matched human/LLM annotations; skipping mean nDFU tables.")
         return
@@ -1384,8 +1396,8 @@ def run_mean_ndfu_step(
     default_caption = rf"""Mean (SE) per-comment {labels.NDFU.tex} of the human annotations
         and of the LLM annotations under the default prompt, without a
         persona (No Persona) and with a sociodemographic persona (With
-        Persona), per model and dataset. Human annotations do not depend
-        on the prompt."""
+        Persona) with default instruction prompting (no adversarial prompts), 
+        per model and dataset."""
 
     for file_suffix, label_suffix, models in _model_variants(exclude_models):
         variant_df = _drop_models(ndfu_df, models)

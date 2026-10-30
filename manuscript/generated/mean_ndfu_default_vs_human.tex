@@ -2,8 +2,8 @@
 \caption{Mean (SE) per-comment \ac{ndfu} of the human annotations
         and of the LLM annotations under the default prompt, without a
         persona (No Persona) and with a sociodemographic persona (With
-        Persona), per model and dataset. Human annotations do not depend
-        on the prompt.}
+        Persona) with default instruction prompting (no adversarial prompts), 
+        per model and dataset.}
 \label{tab:mean-ndfu-default-vs-human}
 \centering
 \normalsize
@@ -14,14 +14,14 @@
 Model & No Persona & With Persona & No Persona & With Persona & No Persona & With Persona \\
 \midrule
 Human & \multicolumn{2}{c}{0.38 (0.01)} & \multicolumn{2}{c}{0.42 (0.01)} & \multicolumn{2}{c}{0.31 (0.01)} \\
-Llama 8B & 0.35 (0.01) & 0.52 (0.01) & 0.39 (0.01) & 0.40 (0.01) & -- & 0.41 (0.01) \\
-OLMo 32B & 0.19 (0.01) & 0.24 (0.01) & 0.34 (0.01) & 0.51 (0.01) & -- & 0.46 (0.01) \\
-OLMo 7B & 0.56 (0.01) & 0.66 (0.01) & 0.56 (0.01) & 0.68 (0.01) & -- & 0.69 (0.01) \\
-Qwen 32B & 0.05 (0.01) & 0.18 (0.01) & 0.06 (0.01) & 0.19 (0.01) & -- & 0.25 (0.01) \\
-Qwen 7B & 0.13 (0.01) & 0.30 (0.01) & 0.26 (0.01) & 0.51 (0.01) & -- & 0.26 (0.01) \\
-Mistral 7B & 0.15 (0.01) & 0.21 (0.01) & 0.31 (0.01) & 0.37 (0.01) & -- & 0.40 (0.01) \\
-Mistral 24B & 0.08 (0.01) & 0.25 (0.01) & 0.08 (0.01) & 0.25 (0.01) & -- & 0.33 (0.01) \\
-Gemma 5B & 0.16 (0.01) & 0.19 (0.01) & 0.14 (0.01) & 0.22 (0.01) & -- & 0.15 (0.01) \\
+Llama 8B & 0.35 (0.01) & 0.52 (0.01) & 0.39 (0.01) & 0.40 (0.01) & 0.56 (0.01) & 0.41 (0.01) \\
+OLMo 32B & 0.19 (0.01) & 0.24 (0.01) & 0.34 (0.01) & 0.51 (0.01) & 0.34 (0.01) & 0.46 (0.01) \\
+OLMo 7B & 0.56 (0.01) & 0.66 (0.01) & 0.56 (0.01) & 0.68 (0.01) & 0.64 (0.01) & 0.69 (0.01) \\
+Qwen 32B & 0.05 (0.01) & 0.18 (0.01) & 0.06 (0.01) & 0.19 (0.01) & 0.06 (0.00) & 0.25 (0.01) \\
+Qwen 7B & 0.13 (0.01) & 0.30 (0.01) & 0.26 (0.01) & 0.51 (0.01) & 0.14 (0.01) & 0.26 (0.01) \\
+Mistral 7B & 0.15 (0.01) & 0.21 (0.01) & 0.31 (0.01) & 0.37 (0.01) & 0.25 (0.01) & 0.40 (0.01) \\
+Mistral 24B & 0.08 (0.01) & 0.25 (0.01) & 0.08 (0.01) & 0.25 (0.01) & 0.15 (0.01) & 0.33 (0.01) \\
+Gemma 5B & 0.16 (0.01) & 0.19 (0.01) & 0.14 (0.01) & 0.22 (0.01) & 0.14 (0.01) & 0.15 (0.01) \\
 Gemma 31B & 0.01 (0.00) & 0.04 (0.01) & -- & 0.09 (0.01) & -- & -- \\
 \bottomrule
 \end{tabularx}

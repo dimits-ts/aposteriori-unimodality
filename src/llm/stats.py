@@ -933,7 +933,7 @@ def _count_table_latex(
         rf"\caption{{{caption}}}",
         rf"\label{{{label}}}",
         r"\centering",
-        r"\footnotesize",
+        r"\normalsize",
         rf"\begin{{tabular}}{{{col_spec}}}",
         r"\toprule",
         *body,
