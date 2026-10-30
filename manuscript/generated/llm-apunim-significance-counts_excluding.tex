@@ -1,5 +1,5 @@
 \begin{table}[t]
-\caption{Share of \acp{sdd} that are statistically significant ($p<0.05$) in the human annotations and in each LLM's annotations under the default prompt, per dataset; $n$ is the number of dimensions. A dimension counts as significant if at least one of its groups is. Excluding the following models: llama8b, olmo7b, qwen7b.}
+\caption{Share of \acp{sdd} that are statistically significant ($p<0.05$) in the human annotations and in each LLM's annotations under the default prompt, per dataset; $n$ is the number of dimensions. A dimension counts as significant if at least one of its groups is. $^\dagger$: ratio over fewer dimensions, as the model has results for only some of them. Excluding the following models: llama8b, olmo7b, qwen7b.}
 \label{tab:llm-apunim-significance-counts-excluding}
 \centering
 \footnotesize
@@ -9,7 +9,7 @@ Dataset & $n$ & Human & olmo32b & qwen32b & mistral7b & mistral24b & gemma7b & g
 \midrule
 Sap & 3 & 66\% & 33\% & 66\% & 66\% & 100\% & 33\% & 66\% \\
 Kumar & 13 & 0\% & 46\% & 53\% & 46\% & 46\% & 38\% & 30\% \\
-POP & 5 & 60\% & 60\% & 80\% & 100\% & 100\% & 100\% & 60\% \\
+POP & 5 & 60\% & 100\% & 80\% & 100\% & 100\% & 60\% & --- \\
 \bottomrule
 \end{tabular}
 \end{table}

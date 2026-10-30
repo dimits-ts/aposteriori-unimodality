@@ -73,6 +73,8 @@ drawn for every model and every prompt variant of a given dataset.
 """
 
 import argparse
+from collections.abc import Iterator
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 import pandas as pd
@@ -152,6 +154,7 @@ def main(
     human_results_dir: Path,
     exclude_models: list[str],
     prompt_name: str = "default",
+    n_workers: int = 1,
 ):
     graphs.graph_setup()
     graph_output_dir.mkdir(parents=True, exist_ok=True)
@@ -188,7 +191,7 @@ def main(
     # apunim results for every comparison dataset, computed (or loaded from
     # the cache) once and shared by the apunim table steps below.
     apunim_results = load_apunim_results(
-        human_datasets, annotations_dir, cache_dir
+        human_datasets, annotations_dir, cache_dir, n_workers=n_workers
     )
 
     run_histogram_step(
@@ -485,8 +488,11 @@ def _model_variants(exclude_models):
 
 
 def _drop_models(df: pd.DataFrame, models: set[str]) -> pd.DataFrame:
-    """Rows of a long/results frame whose `Model` is not in `models`."""
-    return df.loc[~df["Model"].isin(models)] if models else df
+    """Rows of a long/results frame whose `Model` is not in `models`. A
+    frame without a `Model` column (no results at all) is returned as is."""
+    if not models or "Model" not in df.columns:
+        return df
+    return df.loc[~df["Model"].isin(models)]
 
 
 def _comparison_keys(human_datasets) -> list[str]:
@@ -826,9 +832,24 @@ def run_repeat_consistency_step(
 # ---------------------------------------------------------------------------
 
 
+# Columns of an apunim results frame (stats.compute_llm_apunim_by_prompt).
+APUNIM_COLUMNS = [
+    "SDB Feature",
+    "Value",
+    "Model",
+    "Prompt",
+    "apunim",
+    "pvalue",
+    "support",
+]
+
+
 def _read_apunim_cache(cache_path: Path) -> pd.DataFrame:
+    # Without a cache, start from an empty frame that still has the result
+    # columns: a dataset none of whose pairs produce results stays empty,
+    # and the steps downstream select columns such as "Model".
     if not cache_path.exists():
-        return pd.DataFrame()
+        return pd.DataFrame(columns=APUNIM_COLUMNS)
     long_df = pd.read_csv(cache_path)
     # Older caches were written with the DataFrame index as a column.
     return long_df.loc[:, ~long_df.columns.str.startswith("Unnamed")]
@@ -877,6 +898,23 @@ def _pending_apunim_pairs(
     return pending
 
 
+def _apunim_pair_kwargs(
+    annotations_dir: Path,
+    key: str,
+    prompt_name: str,
+    model: str,
+    all_models: set[str],
+) -> dict:
+    """Arguments of stats.compute_llm_apunim_by_prompt for one (model,
+    prompt) pair: every other model of the prompt is excluded."""
+    return dict(
+        annotations_dir=annotations_dir,
+        dataset_key=key,
+        prompt_names=[prompt_name],
+        exclude_models=all_models - {model},
+    )
+
+
 def _compute_apunim_pair(
     annotations_dir: Path,
     key: str,
@@ -886,54 +924,139 @@ def _compute_apunim_pair(
 ) -> pd.DataFrame:
     print(f"Computing apunim: {key} / {prompt_name} / {model}")
     return stats.compute_llm_apunim_by_prompt(
-        annotations_dir=annotations_dir,
-        dataset_key=key,
-        prompt_names=[prompt_name],
-        exclude_models=all_models - {model},
+        **_apunim_pair_kwargs(
+            annotations_dir, key, prompt_name, model, all_models
+        )
     )
 
 
-def _load_or_compute_apunim(
-    annotations_dir: Path, cache_dir: Path, key: str
-) -> pd.DataFrame:
+def _iter_apunim_pairs_serial(
+    annotations_dir: Path,
+    pending: list[tuple[str, str, str, set[str]]],
+) -> Iterator[tuple[str, pd.DataFrame]]:
+    for key, prompt_name, model, all_models in pending:
+        yield key, _compute_apunim_pair(
+            annotations_dir, key, prompt_name, model, all_models
+        )
+
+
+def _iter_apunim_pairs_parallel(
+    annotations_dir: Path,
+    pending: list[tuple[str, str, str, set[str]]],
+    n_workers: int,
+) -> Iterator[tuple[str, pd.DataFrame]]:
     """
-    apunim results for every model and prompt of one dataset, cached in
-    cache_dir/apunim_<key>.csv.
+    Runs the pairs in a pool of `n_workers` processes and yields
+    (dataset key, results) in order of completion. The worker is
+    stats.compute_llm_apunim_by_prompt itself (a function of an importable
+    module), so it pickles under every start method, including spawn and
+    forkserver. If a pair fails, the pairs not started yet are cancelled,
+    the ones already running are still yielded (and so cached) as they
+    finish, and the first error is then re-raised.
+    """
+    executor = ProcessPoolExecutor(max_workers=n_workers)
+    try:
+        futures = {}
+        for key, prompt_name, model, all_models in pending:
+            print(f"Queued apunim: {key} / {prompt_name} / {model}")
+            future = executor.submit(
+                stats.compute_llm_apunim_by_prompt,
+                **_apunim_pair_kwargs(
+                    annotations_dir, key, prompt_name, model, all_models
+                ),
+            )
+            futures[future] = (key, prompt_name, model)
+
+        error = None
+        for future in as_completed(futures):
+            if future.cancelled():
+                continue
+            key, prompt_name, model = futures[future]
+            try:
+                result = future.result()
+            except Exception as exc:
+                print(f"Failed apunim: {key} / {prompt_name} / {model}")
+                if error is None:
+                    error = exc
+                    for other in futures:
+                        other.cancel()
+                continue
+            print(f"Finished apunim: {key} / {prompt_name} / {model}")
+            yield key, result
+        if error is not None:
+            raise error
+    finally:
+        executor.shutdown(wait=True, cancel_futures=True)
+
+
+def _iter_apunim_pairs(
+    annotations_dir: Path,
+    pending: list[tuple[str, str, str, set[str]]],
+    n_workers: int,
+) -> Iterator[tuple[str, pd.DataFrame]]:
+    """(dataset key, results) of every pending (key, prompt, model,
+    all models) pair; in a process pool if n_workers > 1."""
+    n_workers = min(n_workers, len(pending))
+    if n_workers <= 1:
+        return _iter_apunim_pairs_serial(annotations_dir, pending)
+    print(f"Computing {len(pending)} apunim pairs with {n_workers} processes.")
+    return _iter_apunim_pairs_parallel(annotations_dir, pending, n_workers)
+
+
+def _apunim_cache_path(cache_dir: Path, key: str) -> Path:
+    return cache_dir / f"apunim_{key}.csv"
+
+
+def load_apunim_results(
+    human_datasets,
+    annotations_dir: Path,
+    cache_dir: Path,
+    n_workers: int = 1,
+) -> dict[str, pd.DataFrame]:
+    """
+    dataset key -> apunim results (every model and prompt), for every
+    comparison dataset, cached in cache_dir/apunim_<key>.csv. Computed once
+    and shared by the apunim-by-prompt tables and the significant-PC-
+    dimension tables.
 
     The cache is checked per (model, prompt) pair -- the unit apunim is run
     on -- so annotation runs that are still in progress are handled: pairs
     already in the cache are never recomputed, pairs whose annotation file
     appears later are added on the next run, and the cache is rewritten
     after every pair, so an interrupted run keeps what it finished.
+
+    The pending pairs of all datasets are computed together, in a pool of
+    `n_workers` processes when n_workers > 1. Results are written to the
+    cache by this (parent) process only, as each pair finishes.
     """
-    cache_path = cache_dir / f"apunim_{key}.csv"
-    long_df = _read_apunim_cache(cache_path)
-    n_rows_before = len(long_df)
-
-    pending = _pending_apunim_pairs(
-        annotations_dir, key, _cached_apunim_pairs(long_df)
-    )
-    for prompt_name, model, all_models in pending:
-        new_df = _compute_apunim_pair(
-            annotations_dir, key, prompt_name, model, all_models
-        )
-        long_df = _update_apunim_cache(long_df, new_df, cache_path)
-
-    if len(long_df) == n_rows_before:
-        print(f"Skipping (nothing new to compute): {cache_path}")
-    return long_df
-
-
-def load_apunim_results(
-    human_datasets, annotations_dir: Path, cache_dir: Path
-) -> dict[str, pd.DataFrame]:
-    """dataset key -> apunim results (every model and prompt), for every
-    comparison dataset. Computed once and shared by the apunim-by-prompt
-    tables and the significant-PC-dimension tables."""
-    return {
-        key: _load_or_compute_apunim(annotations_dir, cache_dir, key)
-        for key in _comparison_keys(human_datasets)
+    keys = _comparison_keys(human_datasets)
+    results = {
+        key: _read_apunim_cache(_apunim_cache_path(cache_dir, key))
+        for key in keys
     }
+    n_rows_before = {key: len(df) for key, df in results.items()}
+
+    pending = [
+        (key, prompt_name, model, all_models)
+        for key in keys
+        for prompt_name, model, all_models in _pending_apunim_pairs(
+            annotations_dir, key, _cached_apunim_pairs(results[key])
+        )
+    ]
+    for key, new_df in _iter_apunim_pairs(annotations_dir, pending, n_workers):
+        results[key] = _update_apunim_cache(
+            results[key], new_df, _apunim_cache_path(cache_dir, key)
+        )
+
+    for key in keys:
+        if results[key].empty:
+            print(f"Warning: no apunim results for {key}.")
+        elif len(results[key]) == n_rows_before[key]:
+            print(
+                "Skipping (nothing new to compute): "
+                f"{_apunim_cache_path(cache_dir, key)}"
+            )
+    return results
 
 
 # ---------------------------------------------------------------------------
@@ -1327,6 +1450,13 @@ def run_inherent_polarization_steps(
     )
 
 
+def _positive_int(value: str) -> int:
+    n = int(value)
+    if n < 1:
+        raise argparse.ArgumentTypeError(f"must be >= 1, got {value}")
+    return n
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=(
@@ -1407,6 +1537,16 @@ if __name__ == "__main__":
             "written by the human analysis scripts, e.g. output/human/main."
         ),
     )
+    parser.add_argument(
+        "--n-workers",
+        type=_positive_int,
+        default=1,
+        help=(
+            "Number of worker processes for the apunim computation (one "
+            "task per dataset/prompt/model pair not yet cached). Only that "
+            "step is parallelized. Default: 1 (no multiprocessing)."
+        ),
+    )
     args = parser.parse_args()
 
     main(
@@ -1424,4 +1564,5 @@ if __name__ == "__main__":
         cache_dir=Path(args.cache_dir),
         human_results_dir=Path(args.human_results_dir),
         exclude_models=EXCLUDED_MODELS,
+        n_workers=args.n_workers,
     )
