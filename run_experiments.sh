@@ -30,6 +30,8 @@ JOBS=(
 
 'metric_comparison_multiple|python -m src.synthetic.metric_comparison_multiple --cache-path=cache/metric-comparison-multiple.csv --graph-output-path=graphs/metric_comparison_multiple.png'
 
+'synthetic_inherent_polarization|python -m src.synthetic.inherent_polarization --cache-dir=cache/synthetic-inherent --graph-output-path=graphs/synthetic_inherent_polarization.png'
+
 'real_data_comparison|python -m src.synthetic.real_data_comparison --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --cache-dir=cache --popquorn-path=data/datasets/popquorn_offensiveness.csv --latex-output-dir=manuscript/generated --sap-path=data/datasets/sap.csv --kumar-path=data/datasets/kumar.json'
 
 'human_comparison|python -m src.synthetic.human_comparison --dices-350-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-990-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --sap-path=data/datasets/sap.csv --kumar-path=data/datasets/kumar.json --cache-dir=cache --latex-output-dir=manuscript/generated'

@@ -71,7 +71,7 @@ def _compute_inherent(
 
 def _cached_series(cached_path: Path, compute_fn) -> pd.Series:
     """Read `cached_path` if it exists, else compute and write it."""
-    if skip_if_exists(cached_path):
+    if skip_if_exists(cached_path, quiet=True):
         series = pd.read_csv(cached_path, index_col="comment")[
             "inherent_polarization"
         ]
@@ -115,7 +115,7 @@ def _human_inherent_polarization(
         )
 
     cached_path = human_results_dir / f"{dataset_key}-inherent.csv"
-    if skip_if_exists(cached_path):
+    if skip_if_exists(cached_path, quiet=True):
         series = pd.read_csv(cached_path, index_col="comment")[
             "inherent_polarization"
         ]

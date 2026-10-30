@@ -445,6 +445,34 @@ _SYM_AGREE = r"\sigyes"  # agree on significance (and on sign, if significant)
 _SYM_DISAGREE = r"\signo"  # significant for only one of the two
 _SYM_SIGN_DIFFERS = r"$\pm$"  # both significant, but the sign differs
 
+# Colour macros for the symbols, defined in the paper preamble as
+# \newcommand{\sigcol...}[1]{\textcolor[HTML]{...}{#1}} with colours from
+# graphs.COLORBLIND_PALETTE. Colour only separates the categories; every
+# category is also distinguished by its symbol (or, for the two kinds of
+# agreement, explained in the caption).
+_COL_AGREE_SIGNIFICANT = r"\sigcolagree"  # both significant, same sign
+_COL_AGREE_NEITHER = r"\sigcolneither"  # neither significant
+_COL_SIGN_DIFFERS = r"\sigcolsign"  # both significant, sign differs
+_COL_DISAGREE = r"\sigcoldisagree"  # significant for only one of the two
+
+
+def _colored(color_macro: str, symbol: str) -> str:
+    return rf"{color_macro}{{{symbol}}}"
+
+
+# Coloured symbol per comparison outcome (used in cells and caption alike).
+_CELL_AGREE_SIGNIFICANT = _colored(_COL_AGREE_SIGNIFICANT, _SYM_AGREE)
+_CELL_AGREE_NEITHER = _colored(_COL_AGREE_NEITHER, _SYM_AGREE)
+_CELL_SIGN_DIFFERS = _colored(_COL_SIGN_DIFFERS, _SYM_SIGN_DIFFERS)
+_CELL_DISAGREE = _colored(_COL_DISAGREE, _SYM_DISAGREE)
+
+# Short dataset names for the narrow significance tables.
+_SHORT_DATASET_NAMES = {
+    "Sap et al. 2022": "Sap",
+    "Kumar et al. 2021": "Kumar",
+    "POPQUORN": "POP",
+}
+
 # Each prompt gets a fixed-width slot (in em), so that the symbols of
 # different rows line up and a prompt without LLM results is simply blank.
 # It can be set per table (`slot_width_em`); the symbols are roughly an em
@@ -535,15 +563,18 @@ def _comparison_symbol(
     llm_significant: bool, human_significant: bool, sign_differs: bool
 ) -> str:
     """
-    How the LLM result for a dimension compares with the human one:
-    agreement (both significant, or neither), disagreement on significance,
-    or both significant but with a different sign for some group.
+    How the LLM result for a dimension compares with the human one, as a
+    coloured symbol: disagreement on significance, both significant but
+    with a different sign for some group, or agreement (both significant,
+    or neither, which get different colours).
     """
     if llm_significant != human_significant:
-        return _SYM_DISAGREE
+        return _CELL_DISAGREE
     if llm_significant and sign_differs:
-        return _SYM_SIGN_DIFFERS
-    return _SYM_AGREE
+        return _CELL_SIGN_DIFFERS
+    if llm_significant:
+        return _CELL_AGREE_SIGNIFICANT
+    return _CELL_AGREE_NEITHER
 
 
 def _llm_cell(
@@ -718,6 +749,7 @@ def export_apunim_significance_table(
     label: str,
     alpha: float = SIGNIFICANCE_ALPHA,
     note: str = "",
+    table_size: str | None = None,
 ) -> None:
     if table_df.empty:
         print(f"No apunim significance results; skipping {output_path}.")
@@ -729,19 +761,17 @@ def export_apunim_significance_table(
         "dimension counts as significant if at least one of its groups is. "
         "Each cell shows one symbol per prompt, in the order "
         f"{', '.join(prompts)}: "
-        rf"{_SYM_AGREE}~the LLM and the human annotations agree (both "
-        "significant, with the same sign for every group that is "
-        "significant in both, or neither significant), "
-        rf"{_SYM_DISAGREE}~they disagree on significance (significant for "
-        f"only one of the two), {_SYM_SIGN_DIFFERS}~both are significant "
-        "but the sign of at least one group's effect differs; blank: no "
-        "LLM result." + note
+        rf"{_CELL_AGREE_SIGNIFICANT}~both significant, with the same sign "
+        "for every group that is significant in both; "
+        rf"{_CELL_AGREE_NEITHER}~neither significant; "
+        rf"{_CELL_SIGN_DIFFERS}~both significant, but the sign of at least "
+        "one group's effect differs; "
+        rf"{_CELL_DISAGREE}~significant for only one of the two; "
+        "blank: no LLM result." + note
     )
 
     df = table_df
-    df.Dataset = df.Dataset.replace(
-        {"Sap et al. 2022": "Sap", "POPQUORN": "POP"}
-    )
+    df.Dataset = df.Dataset.replace(_SHORT_DATASET_NAMES)
     df = table_df.rename(columns={"SDB Feature": r"\ac{sdd}", "Dataset": "Ds"})
     df = df.replace("_", r"\_", regex=True).set_index(["Ds", r"\ac{sdd}"])
     latex_str = df.to_latex(
@@ -754,13 +784,286 @@ def export_apunim_significance_table(
         longtable=False,
         column_format="ll" + "c" * len(df.columns),
     )
-    latex_str = (
-        "{\\footnotesize\n\\setlength{\\tabcolsep}{3pt}\n" + latex_str + "}\n"
-    )
+    latex_str = "\\setlength{\\tabcolsep}{3pt}\n" + latex_str + "\n"
+    if table_size is not None:
+        latex_str = small_table_latex(latex_str, size=table_size)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(latex_str)
     print(f"Table exported to {output_path.resolve()}")
+
+
+# ---------------------------------------------------------------------------
+# Number of significant PC dimensions per model and dataset (and prompt)
+# ---------------------------------------------------------------------------
+
+# Prompt label of the human rows in count_significant_dimensions.
+_HUMAN_PROMPT = "human"
+_COUNT_MISSING = "---"
+# Marks a ratio over fewer dimensions than the dataset has.
+_PARTIAL_MARK = r"$^\dagger$"
+
+
+def count_significant_dimensions(
+    inputs: dict[str, tuple[pd.DataFrame, pd.DataFrame]],
+    prompt_names: list[str] = MAIN_PROMPT_NAMES,
+    alpha: float = SIGNIFICANCE_ALPHA,
+) -> pd.DataFrame:
+    """
+    One row per (Dataset, Model, Prompt): how many PC dimensions are
+    significant (`significant`) out of those with results (`tested`), with
+    significance decided as in the significance table
+    (_dimension_significance). `inputs` is the same mapping as for
+    build_apunim_significance_table; the human results are included as
+    Model HUMAN_LABEL, Prompt "human".
+    """
+    rows = []
+    for dataset_name, (human_df, llm_df) in inputs.items():
+        rows.append(
+            _dimension_count(
+                dataset_name, HUMAN_LABEL, _HUMAN_PROMPT, human_df, alpha
+            )
+        )
+        for (model, prompt), pair_df in llm_df.groupby(
+            ["Model", "Prompt"], sort=False
+        ):
+            if prompt in prompt_names:
+                rows.append(
+                    _dimension_count(
+                        dataset_name, model, prompt, pair_df, alpha
+                    )
+                )
+    return pd.DataFrame(
+        rows,
+        columns=["Dataset", "Model", "Prompt", "significant", "tested"],
+    )
+
+
+def _dimension_count(
+    dataset_name: str, model: str, prompt: str, df: pd.DataFrame, alpha: float
+) -> dict:
+    significance = _dimension_significance(df, alpha)
+    return {
+        "Dataset": dataset_name,
+        "Model": model,
+        "Prompt": prompt,
+        "significant": sum(significance.values()),
+        "tested": len(significance),
+    }
+
+
+def _count_layout(
+    counts: pd.DataFrame,
+) -> tuple[list[str], list[tuple[list[str], str]], dict[str, int]]:
+    """(LLM models in order; row groups, one per dataset, as
+    (datasets, label); label -> number of PC dimensions)."""
+    llm_models = _order_models(set(counts["Model"]) - {HUMAN_LABEL})
+    datasets = list(dict.fromkeys(counts["Dataset"]))
+    n_dims = counts.groupby("Dataset")["tested"].max().to_dict()
+    groups = [([d], d) for d in datasets]
+    return llm_models, groups, n_dims
+
+
+def _ratio_cell(
+    counts: pd.DataFrame,
+    model: str,
+    prompt: str,
+    datasets: list[str],
+    n_dimensions: int,
+) -> str:
+    """Share of the tested PC dimensions that `model` finds significant
+    under `prompt`, over `datasets`.
+    Marked with _PARTIAL_MARK if the model has results for fewer than
+    `n_dimensions` dimensions."""
+    if model == HUMAN_LABEL:
+        prompt = _HUMAN_PROMPT
+    rows = counts.loc[
+        (counts["Model"] == model)
+        & (counts["Prompt"] == prompt)
+        & counts["Dataset"].isin(datasets)
+    ]
+    tested = rows["tested"].sum()
+    if tested == 0:
+        return _COUNT_MISSING
+    ratio = rf"{int(rows['significant'].sum() / tested*100)}\%"
+    return ratio if tested == n_dimensions else ratio + _PARTIAL_MARK
+
+
+def _count_row_label(name: str) -> str:
+    return _SHORT_DATASET_NAMES.get(name, name).replace("_", r"\_")
+
+
+def _model_header(
+    leading: list[str], llm_models: list[str], rotate: bool = False
+) -> str:
+    """Header row: the leading columns, then the model names (rotated by
+    90 degrees if `rotate`)."""
+    names = [m.replace("_", r"\_") for m in [HUMAN_LABEL] + llm_models]
+    if rotate:
+        names = [rf"\rotatebox{{90}}{{{name}}}" for name in names]
+    return " & ".join(leading + names) + r" \\"
+
+
+def _model_col_spec(leading: str, n_llm_models: int) -> str:
+    """Leading columns, the Human column, a gap, then one per LLM."""
+    return leading + r"c@{\hspace{10pt}}" + "c" * n_llm_models
+
+
+def _count_caption_note(counts: pd.DataFrame) -> str:
+    """Explains _PARTIAL_MARK, if the table uses it."""
+    n_dims = counts.groupby("Dataset")["tested"].transform("max")
+    if not (counts["tested"] < n_dims).any():
+        return ""
+    return (
+        f" {_PARTIAL_MARK}: ratio over fewer dimensions, as the model has "
+        "results for only some of them."
+    )
+
+
+def _count_table_latex(
+    caption: str, label: str, col_spec: str, body: list[str]
+) -> str:
+    lines = [
+        r"\begin{table}[t]",
+        rf"\caption{{{caption}}}",
+        rf"\label{{{label}}}",
+        r"\centering",
+        r"\footnotesize",
+        rf"\begin{{tabular}}{{{col_spec}}}",
+        r"\toprule",
+        *body,
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\end{table}",
+    ]
+    table = "\n".join(lines) + "\n"
+    return table
+
+
+def _write_count_table(latex_str: str, output_path: Path) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(latex_str)
+    print(f"Table exported to {output_path.resolve()}")
+
+
+def export_significant_dimension_summary(
+    counts: pd.DataFrame,
+    output_path: Path,
+    label: str,
+    prompt_name: str = "default",
+    alpha: float = SIGNIFICANCE_ALPHA,
+    note: str = "",
+) -> None:
+    """
+    Concise table: one row per dataset, a column with the number
+    of PC dimensions (n), then one column per model (Human first) with the
+    share of dimensions found significant under `prompt_name`.
+    """
+    if counts.empty:
+        print(f"No significance counts; skipping {output_path}.")
+        return
+    llm_models, groups, n_dims = _count_layout(counts)
+
+    body = [_model_header(["Dataset", "$n$"], llm_models), r"\midrule"]
+    for datasets, name in groups:
+        cells = [
+            _ratio_cell(counts, m, prompt_name, datasets, n_dims[name])
+            for m in [HUMAN_LABEL] + llm_models
+        ]
+        row = [_count_row_label(name), str(n_dims[name]), *cells]
+        body.append(" & ".join(row) + r" \\")
+
+    caption = (
+        rf"Share of \acp{{sdd}} that are statistically significant "
+        rf"($p<{alpha}$) in the human annotations and in each LLM's "
+        f"annotations under the {prompt_name} prompt, per dataset; $n$ is "
+        "the number of dimensions. A dimension counts as significant if at "
+        "least one of its groups is." + _count_caption_note(counts) + note
+    )
+    _write_count_table(
+        _count_table_latex(
+            caption, label, _model_col_spec("lr", len(llm_models)), body
+        ),
+        output_path,
+    )
+
+
+def export_significant_dimension_by_prompt(
+    counts: pd.DataFrame,
+    output_path: Path,
+    label: str,
+    prompt_names: list[str] = MAIN_PROMPT_NAMES,
+    alpha: float = SIGNIFICANCE_ALPHA,
+    note: str = "",
+) -> None:
+    """
+    Full table: for each dataset, one row per prompt, with the
+    number of PC dimensions (n) and one column per model (Human first)
+    holding the share of dimensions found significant. Human annotations
+    do not depend on the prompt, so their value spans the dataset's rows.
+    """
+    if counts.empty:
+        print(f"No significance counts; skipping {output_path}.")
+        return
+    llm_models, groups, n_dims = _count_layout(counts)
+    prompts = [p for p in prompt_names if p in set(counts["Prompt"])]
+
+    body = [
+        _model_header(["Dataset", "$n$", "Prompt"], llm_models, rotate=True)
+    ]
+    for datasets, name in groups:
+        body.append(r"\midrule")
+        body += _by_prompt_rows(
+            counts, datasets, name, prompts, llm_models, n_dims[name]
+        )
+
+    caption = (
+        rf"Share of \acp{{sdd}} that are statistically significant "
+        rf"($p<{alpha}$) in the human annotations and in each LLM's "
+        "annotations under each instruction prompt, per dataset; $n$ is the "
+        "number of dimensions. A dimension counts as significant if at least "
+        "one of its groups is; human annotations do not depend on the prompt."
+        + _count_caption_note(counts)
+        + note
+    )
+    _write_count_table(
+        _count_table_latex(
+            caption, label, _model_col_spec("lrl", len(llm_models)), body
+        ),
+        output_path,
+    )
+
+
+def _by_prompt_rows(
+    counts: pd.DataFrame,
+    datasets: list[str],
+    name: str,
+    prompts: list[str],
+    llm_models: list[str],
+    n_dimensions: int,
+) -> list[str]:
+    """One row per prompt for one dataset group; the dataset name, n and
+    the human value span the group's rows."""
+
+    def spanning(text: str) -> str:
+        return rf"\multirow{{{len(prompts)}}}{{*}}{{{text}}}"
+
+    human = _ratio_cell(counts, HUMAN_LABEL, "", datasets, n_dimensions)
+    rows = []
+    for i, prompt in enumerate(prompts):
+        first = i == 0
+        lead = [
+            spanning(_count_row_label(name)) if first else "",
+            spanning(str(n_dimensions)) if first else "",
+            prompt.capitalize().replace("_", r"\_"),
+            spanning(human) if first else "",
+        ]
+        cells = [
+            _ratio_cell(counts, m, prompt, datasets, n_dimensions)
+            for m in llm_models
+        ]
+        rows.append(" & ".join(lead + cells) + r" \\")
+    return rows
 
 
 def _apunim_prompt_cell(row: pd.Series) -> str:
@@ -1266,19 +1569,3 @@ def build_default_mean_ndfu_table(
     out.columns = pd.MultiIndex.from_tuples(out.columns)
     out.index.name = "Model"
     return out
-
-
-def _significance_ratio(res_df: pd.DataFrame, col: str) -> pd.Series:
-    total = res_df[col].value_counts()
-    significant = res_df.loc[res_df.reject_null, col].value_counts()
-    significant = significant.reindex(total.index, fill_value=0)
-    return significant.astype(str) + " / " + total.astype(str)
-
-
-def run_exploratory_stats(res_df: pd.DataFrame) -> None:
-    print("Statistically significant / total (model, dataset) tests by model:")
-    print(_significance_ratio(res_df, "Model"))
-    print(
-        "Statistically significant / total (model, dataset) tests by dataset:"
-    )
-    print(_significance_ratio(res_df, "Dataset"))

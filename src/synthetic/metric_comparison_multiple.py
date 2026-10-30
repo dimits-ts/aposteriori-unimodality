@@ -66,9 +66,11 @@ from .plots import (
 from .methods import ALPHA, run_methods
 from .simulation import (
     DELTAS,
+    FIXED_GROUP_EFFECT_VARIANTS,
     SIMULATION_BIDIRECTIONAL,
     SIMULATION_UNIDIRECTIONAL,
     simulate_multigroup,
+    variant_path,
 )
 
 
@@ -101,14 +103,35 @@ def main(
     n_reps: int,
     workers: int,
 ) -> None:
+    """Export the figure for both group-effect variants (see
+    simulation.variant_path for the file names)."""
     graphs.graph_setup()
 
+    for fixed in FIXED_GROUP_EFFECT_VARIANTS:
+        _export(
+            variant_path(cache_path, fixed),
+            variant_path(graph_output_path, fixed),
+            n_items,
+            n_reps,
+            workers,
+            fixed_group_effect=fixed,
+        )
+
+
+def _export(
+    cache_path: Path,
+    graph_output_path: Path,
+    n_items: int,
+    n_reps: int,
+    workers: int,
+    fixed_group_effect: bool,
+) -> None:
     cache_path.parent.mkdir(parents=True, exist_ok=True)
 
     if skip_if_exists(cache_path):
         print(f"loading cached results from {cache_path}")
     else:
-        run(cache_path, n_items, n_reps, workers)
+        run(cache_path, n_items, n_reps, workers, fixed_group_effect)
 
     with open(cache_path, newline="") as fh:
         rows = list(csv.DictReader(fh))
@@ -132,7 +155,7 @@ def main(
 # ------------------------------------------------------------------- runner
 
 
-def _one_multigroup(job, n_items):
+def _one_multigroup(job, n_items, fixed_group_effect):
     """
     Run both simulations for a single (k, n_ann, minority, delta, rep) job.
 
@@ -147,10 +170,24 @@ def _one_multigroup(job, n_items):
     rng_bi = np.random.default_rng(seed ^ 0xDCBA4321)
 
     matrix_uni, groups_uni = simulate_multigroup(
-        n_items, n_ann, k, delta, minority, rng_uni, unidirectional=True
+        n_items,
+        n_ann,
+        k,
+        delta,
+        minority,
+        rng_uni,
+        unidirectional=True,
+        fixed_group_effect=fixed_group_effect,
     )
     matrix_bi, groups_bi = simulate_multigroup(
-        n_items, n_ann, k, delta, minority, rng_bi, unidirectional=False
+        n_items,
+        n_ann,
+        k,
+        delta,
+        minority,
+        rng_bi,
+        unidirectional=False,
+        fixed_group_effect=fixed_group_effect,
     )
 
     method_rows = []
@@ -178,7 +215,13 @@ def _one_multigroup(job, n_items):
     return method_rows
 
 
-def run(out_csv: Path, n_items: int, n_reps: int, workers: int) -> None:
+def run(
+    out_csv: Path,
+    n_items: int,
+    n_reps: int,
+    workers: int,
+    fixed_group_effect: bool = False,
+) -> None:
     jobs = [
         (k, n_ann, minority, delta, rep)
         for k, conditions in CONDITIONS_MULTIGROUP.items()
@@ -207,7 +250,11 @@ def run(out_csv: Path, n_items: int, n_reps: int, workers: int) -> None:
             ]
         )
 
-        worker = functools.partial(_one_multigroup, n_items=n_items)
+        worker = functools.partial(
+            _one_multigroup,
+            n_items=n_items,
+            fixed_group_effect=fixed_group_effect,
+        )
 
         with ProcessPoolExecutor(max_workers=workers) as executor:
             for result in executor.map(worker, jobs, chunksize=4):
@@ -258,13 +305,14 @@ def plot(rows, methods, out_path):
             title=_condition_title(k, n_ann, minority),
         )
 
-    for ax in axes[len(panels) :]:
+    for ax in axes[len(panels):]:
         ax.set_visible(False)
 
     _legends(fig, methods)
 
     fig.suptitle(
-        "Multi-group ablation: detection when one of k groups drives polarization"
+        "Multi-group ablation: detection when one of k groups "
+        "drives polarization"
     )
     fig.supylabel(DETECTION_RATE_LABEL)
     fig.supxlabel(EFFECT_SIZE_LABEL)

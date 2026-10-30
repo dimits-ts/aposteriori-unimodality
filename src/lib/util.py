@@ -5,14 +5,16 @@ from pathlib import Path
 import pandas as pd
 
 
-def skip_if_exists(path: Path) -> bool:
+def skip_if_exists(path: Path, quiet: bool = False) -> bool:
     """
-    Returns True (and prints a message) if `path` already exists, so the
-    caller can skip recomputing it. Centralized here so every experiment
-    step uses the same check/logging behavior.
+    Returns True if `path` already exists, so the caller can skip
+    recomputing it, and prints a message unless `quiet` (e.g. inside
+    progress bars, which plain prints break up). Centralized here so every
+    experiment step uses the same check/logging behavior.
     """
     if path.exists():
-        print(f"Skipping (already exists): {path}")
+        if not quiet:
+            print(f"Skipping (already exists): {path}")
         return True
     return False
 

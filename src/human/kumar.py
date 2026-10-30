@@ -306,7 +306,7 @@ def _seed_ablation(
     g.set_titles("{col_name}")
     g.set_axis_labels("", "Apunim")
     g.set_xticklabels(rotation=90)
-    g.refline(y=0, color="gray", linestyle="--", linewidth=1)
+    g.refline(y=0, color="gray", linestyle=graphs.LINESTYLES[1], linewidth=1)
     g.figure.suptitle(
         f"Mean Apunim across {len(seeds)} seeds, by subgroup", y=1.02
     )

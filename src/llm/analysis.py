@@ -47,8 +47,21 @@ The following are produced:
    of its groups is) each model finds statistically significant under each
    prompt, compared with the human findings (llm-apunim-significance.tex; also
    without the models in EXCLUDED_MODELS, with an "_excluding" suffix).
+   Two tables give the share of those dimensions per model and dataset: a
+   concise one for the default prompt (llm-apunim-significance-counts.tex)
+   and a full one per instruction prompt
+   (llm-apunim-significance-counts-by-prompt.tex), also with "_excluding"
+   variants.
 
-6. A CSV of the non-standard answers in the raw LLM annotation files
+6. Mirrored histograms of the per-comment inherent polarization (USD)
+   of each model under the default prompt, pooled over datasets, in the
+   style of the human apriori.png: all personas on the right, at most
+   INHERENT_SUBSAMPLE_SIZE personas per comment on the left
+   (inherent-polarization-by-model.png), and the same per dataset with
+   the models pooled (inherent-polarization-by-dataset.png); both also
+   without the models in EXCLUDED_MODELS, with an "_excluding" suffix.
+
+7. A CSV of the non-standard answers in the raw LLM annotation files
    (nonstandard_answers_by_model.csv), and an abbreviated LaTeX summary
    per model, dataset and status (nonstandard_answers_summary.tex):
    replies that cannot be parsed or are out of range for the dataset.
@@ -101,6 +114,10 @@ INHERENT_SUBSAMPLE_REPEATS = 10
 # are the columns, prompts the rows (all main prompts, as in the table).
 INHERENT_HIST_DATASET_KEYS = ["sap", "kumar", "popquorn"]
 INHERENT_HIST_PROMPT_NAMES = shared.MAIN_PROMPT_NAMES
+
+# Prompt of the per-model (values pooled over all datasets) and per-dataset
+# (values pooled over all models) mirrored inherent-polarization histograms.
+INHERENT_BY_MODEL_PROMPT_NAME = "default"
 
 # Models left out of the "excluding" variants of the tables/plots.
 EXCLUDED_MODELS = ["llama8b", "qwen7b", "olmo7b"]
@@ -240,7 +257,6 @@ def main(
 
     stats.export_ndfu_anova_by_prompt(result_df=res_df, output_path=stats_path)
     run_cohens_d_step(res_df, latex_output_dir, exclude_models)
-    stats.run_exploratory_stats(res_df)
 
 
 # ---------------------------------------------------------------------------
@@ -484,6 +500,159 @@ def _comparison_keys(human_datasets) -> list[str]:
 # Cohen's d
 # ---------------------------------------------------------------------------
 
+# Dataset label of the unweighted mean over datasets in the compact table.
+COHENS_D_ALL_LABEL = "All"
+# Layout of the exported Cohen's d table: models as rows, one column group
+# per dataset, one column per prompt. Sized to fit a 455pt text width
+# without \resizebox.
+COHENS_D_FONT_SIZE = r"\footnotesize"
+COHENS_D_TABCOLSEP_PT = 1.5
+COHENS_D_GROUP_GAP_PT = 4
+# Shown for a (model, dataset) pair without results.
+COHENS_D_MISSING = "--"
+
+_TEX_SPECIALS = {
+    "\\": r"\textbackslash{}",
+    "&": r"\&",
+    "%": r"\%",
+    "$": r"\$",
+    "#": r"\#",
+    "_": r"\_",
+}
+
+
+def _tex_escape(text) -> str:
+    return "".join(_TEX_SPECIALS.get(char, char) for char in str(text))
+
+
+def _cohens_d_flat(compact: pd.DataFrame) -> pd.DataFrame:
+    """The compact table with Model and Dataset as columns, whether they
+    are its index or already columns."""
+    if {"Model", "Dataset"} <= set(compact.columns):
+        return compact.reset_index(drop=True)
+    return compact.reset_index()
+
+
+def _cohens_d_cell(value) -> str:
+    """Two decimals, a math minus for negative values, and
+    COHENS_D_MISSING for missing ones. Accepts numbers or strings."""
+    if not isinstance(value, str) and pd.isna(value):
+        return COHENS_D_MISSING
+    text = value.strip() if isinstance(value, str) else f"{value:.2f}"
+    if text in ("", "nan", "NaN"):
+        return COHENS_D_MISSING
+    return f"${text}$" if text.startswith("-") else text
+
+
+def _cohens_d_n_note(flat: pd.DataFrame) -> str:
+    """Caption sentence with the number of comments per dataset; models
+    whose count differs from the usual one are listed in parentheses."""
+    per_dataset = flat.loc[flat["Dataset"] != COHENS_D_ALL_LABEL]
+    parts = []
+    for dataset, group in per_dataset.groupby("Dataset", sort=False):
+        counts = pd.to_numeric(group["n"])
+        usual = int(counts.mode().iloc[0])
+        part = f"{_tex_escape(dataset)}: {usual}"
+        odd = group.loc[counts != usual]
+        if not odd.empty:
+            exceptions = ", ".join(
+                f"{_tex_escape(model)}: {int(n)}"
+                for model, n in zip(odd["Model"], odd["n"])
+            )
+            part += f" ({exceptions})"
+        parts.append(part)
+    if not parts:
+        return ""
+    return "Comments per model: " + "; ".join(parts) + "."
+
+
+def _cohens_d_header(datasets: list, prompts: list) -> list[str]:
+    """Dataset group row, the rules under it, and the rotated prompt row."""
+    groups, rules = [], []
+    for i, dataset in enumerate(datasets):
+        first = 2 + i * len(prompts)
+        last = first + len(prompts) - 1
+        groups.append(
+            rf"\multicolumn{{{len(prompts)}}}{{c}}{{{_tex_escape(dataset)}}}"
+        )
+        rules.append(rf"\cmidrule(lr){{{first}-{last}}}")
+    rotated = " & ".join(
+        rf"\rotatebox{{90}}{{{_tex_escape(prompt)}}}" for prompt in prompts
+    )
+    return [
+        " & " + " & ".join(groups) + r" \\",
+        "".join(rules),
+        "Model & " + " & ".join([rotated] * len(datasets)) + r" \\",
+    ]
+
+
+def _cohens_d_rows(
+    flat: pd.DataFrame, models: list, datasets: list, prompts: list
+) -> list[str]:
+    """One row per model; a dataset the model has no results for is
+    shown as COHENS_D_MISSING."""
+    values = flat.set_index(["Model", "Dataset"])[prompts]
+    rows = []
+    for model in models:
+        cells = []
+        for dataset in datasets:
+            if (model, dataset) in values.index:
+                cells += [
+                    _cohens_d_cell(v) for v in values.loc[(model, dataset)]
+                ]
+            else:
+                cells += [COHENS_D_MISSING] * len(prompts)
+        rows.append(f"{_tex_escape(model)} & " + " & ".join(cells) + r" \\")
+    return rows
+
+
+def export_cohens_d_table_latex(
+    compact: pd.DataFrame,
+    output_path: Path,
+    caption: str,
+    label: str,
+    note: str = "",
+) -> None:
+    """
+    Writes the Cohen's d table with models as rows and one column group
+    per dataset (one column per prompt), so it fits the text width without
+    \\resizebox. `compact` is stats.compute_cohens_d_compact_table's
+    output: (Model, Dataset) rows, an `n` column and one column per
+    prompt. The comment counts move from the `n` column to the caption.
+    """
+    flat = _cohens_d_flat(compact)
+    prompts = [c for c in flat.columns if c not in ("Model", "Dataset", "n")]
+    models = list(dict.fromkeys(flat["Model"]))
+    datasets = list(dict.fromkeys(flat["Dataset"]))
+
+    caption_parts = (
+        caption.strip(),
+        _cohens_d_n_note(flat),
+    )
+    full_caption = " ".join(part for part in caption_parts if part) + note
+
+    group_gap = rf"@{{\hspace{{{COHENS_D_GROUP_GAP_PT}pt}}}}"
+    col_spec = "l " + group_gap.join(["r" * len(prompts)] * len(datasets))
+
+    lines = [
+        r"\begin{table}[t]",
+        rf"\caption{{{full_caption}}}",
+        rf"\label{{{label}}}",
+        r"\centering",
+        COHENS_D_FONT_SIZE,
+        rf"\setlength{{\tabcolsep}}{{{COHENS_D_TABCOLSEP_PT}pt}}",
+        rf"\begin{{tabular}}{{{col_spec}}}",
+        r"\toprule",
+        *_cohens_d_header(datasets, prompts),
+        r"\midrule",
+        *_cohens_d_rows(flat, models, datasets, prompts),
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\end{table}",
+    ]
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text("\n".join(lines) + "\n")
+
 
 def _export_cohens_d_variant(
     res_df,
@@ -498,11 +667,12 @@ def _export_cohens_d_variant(
     if variant_df.empty:
         print(f"No Cohen's d results left{note}; skipping table.")
         return
-    stats.export_compact_prompt_table_latex(
+    export_cohens_d_table_latex(
         stats.compute_cohens_d_compact_table(variant_df),
         output_path=latex_output_dir / f"cohens_d{file_suffix}.tex",
-        caption=caption + note,
+        caption=caption,
         label=f"tab:cohens-d{label_suffix}",
+        note=note,
     )
 
 
@@ -511,9 +681,9 @@ def run_cohens_d_step(res_df, latex_output_dir, exclude_models):
     # dropping models from the results gives exactly the table one would
     # get by never running them.
     caption = r"""Cohen's d between the default and each adversarial
-        instruction prompt, computed on the per-comment \ac{ndfu}. Rows give
-        results per model, for each dataset separately and as the unweighted
-        mean over datasets (All); $n$ is the number of comments."""
+        instruction prompt, computed on the per-comment \ac{ndfu}. Results
+        are given per model, for each dataset separately and as the
+        unweighted mean over datasets (All)."""
     for file_suffix, label_suffix, note, models in _model_variants(
         exclude_models
     ):
@@ -806,6 +976,11 @@ def run_apunim_prompt_table_step(
         )
 
 
+# Datasets left out of the significance (symbol) table: no human result of
+# kumar can be significant. They are kept in the significance counts.
+SIGNIFICANCE_TABLE_SKIP_KEYS = {"kumar"}
+
+
 def _collect_apunim_significance_inputs(
     apunim_results: dict[str, pd.DataFrame], human_results_dir: Path
 ) -> dict[str, tuple[pd.DataFrame, pd.DataFrame]]:
@@ -813,9 +988,6 @@ def _collect_apunim_significance_inputs(
     comparison dataset that has human results."""
     inputs = {}
     for key, llm_df in apunim_results.items():
-        # ignore kumar since no human results can be significant
-        if key == "kumar":
-            continue
         human_df = stats.load_human_apunim_results(human_results_dir, key)
         if human_df is None:
             continue
@@ -851,10 +1023,24 @@ def run_apunim_significance_step(
     inputs = _collect_apunim_significance_inputs(
         apunim_results, human_results_dir
     )
+    table_inputs = {
+        key: value
+        for key, value in inputs.items()
+        if key not in SIGNIFICANCE_TABLE_SKIP_KEYS
+    }
     for file_suffix, label_suffix, note, models in _model_variants(
         exclude_models
     ):
-        by_name = _significance_inputs_by_name(human_datasets, inputs, models)
+        _export_significance_counts(
+            _significance_inputs_by_name(human_datasets, inputs, models),
+            latex_output_dir,
+            file_suffix,
+            label_suffix,
+            note,
+        )
+        by_name = _significance_inputs_by_name(
+            human_datasets, table_inputs, models
+        )
         if not by_name:
             continue
         slot_width_em = (
@@ -872,7 +1058,35 @@ def run_apunim_significance_step(
             / f"llm-apunim-significance{file_suffix}.tex",
             label=f"tab:llm-apunim-significance{label_suffix}",
             note=note,
+            # if includes extra models, make the table smaller
+            table_size=r"\footnotesize" if len(file_suffix) == 0 else None,
         )
+
+
+def _export_significance_counts(
+    by_name, latex_output_dir, file_suffix, label_suffix, note
+):
+    """Share of PC dimensions each model finds significant, per dataset
+    (including the datasets left out of the significance table):
+    concisely for the default prompt, and in full per prompt."""
+    counts = stats.count_significant_dimensions(
+        by_name, prompt_names=shared.MAIN_PROMPT_NAMES
+    )
+    stats.export_significant_dimension_summary(
+        counts,
+        output_path=latex_output_dir
+        / f"llm-apunim-significance-counts{file_suffix}.tex",
+        label=f"tab:llm-apunim-significance-counts{label_suffix}",
+        note=note,
+    )
+    stats.export_significant_dimension_by_prompt(
+        counts,
+        output_path=latex_output_dir
+        / f"llm-apunim-significance-counts-by-prompt{file_suffix}.tex",
+        label=f"tab:llm-apunim-significance-counts-by-prompt{label_suffix}",
+        prompt_names=shared.MAIN_PROMPT_NAMES,
+        note=note,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -958,22 +1172,22 @@ def run_inherent_polarization_step(
     cache_dir: Path,
     graph_output_dir: Path,
     subsample: polarization.SubsampleSpec | None = None,
-):
+) -> pd.DataFrame:
+    """
+    Per-comment inherent polarization of Human and of *every* model (the
+    long frame of polarization.compute_inherent_polarization_comparison),
+    returned so the per-model figures can choose which models to show.
+    For the annotator-subsampled variant the histogram grid is exported
+    too, without the models in `exclude_models`.
+    """
     # human_results_dir holds the human scripts' own "<dataset>-inherent.csv"
     # outputs (e.g. output/human/main), which are reused as-is for the main
     # run. The per-(dataset, prompt, model) values are cached separately
     # under cache_dir/inherent (the subsampling ablation uses its own
     # folder, since its values differ). Delete the folder to force a
-    # recompute.
+    # recompute. Values are cached per model, so computing all models here
+    # and filtering afterwards costs nothing extra on later runs.
     suffix = "" if subsample is None else f"-{subsample.tag}"
-    caption = polarization.DEFAULT_INHERENT_CAPTION
-    if subsample is not None:
-        caption = (
-            caption.removesuffix(".")
-            + f", after repeatedly subsampling every comment down to at "
-            f"most {subsample.size} annotators ({subsample.n_repeats} "
-            "repeats)."
-        )
 
     inherent_df = polarization.compute_inherent_polarization_comparison(
         human_datasets=human_datasets,
@@ -982,7 +1196,7 @@ def run_inherent_polarization_step(
         human_results_dir=human_results_dir,
         dataset_keys=MAIN_DATASET_KEYS,
         prompt_names=shared.MAIN_PROMPT_NAMES,
-        exclude_models=set(exclude_models),
+        exclude_models=set(),
         use_monte_carlo=True,
         subsample=subsample,
     )
@@ -990,9 +1204,11 @@ def run_inherent_polarization_step(
     # Normalized histogram grid of the same per-comment values (datasets as
     # columns, prompts as rows), exported next to the table. Only produced
     # for the annotator-subsampled variant.
-    if subsample is not None:
+    if subsample is not None and not inherent_df.empty:
         plots.plot_inherent_polarization_histogram_grid(
-            long_df=inherent_df,
+            long_df=inherent_df.loc[
+                ~inherent_df["Source"].isin(set(exclude_models))
+            ],
             output_path=(
                 graph_output_dir
                 / f"inherent-polarization{suffix}-histogram.png"
@@ -1000,6 +1216,64 @@ def run_inherent_polarization_step(
             dataset_keys=INHERENT_HIST_DATASET_KEYS,
             prompt_names=INHERENT_HIST_PROMPT_NAMES,
             common_norm=False,
+        )
+
+    return inherent_df
+
+
+def run_inherent_polarization_by_model_step(
+    full_df: pd.DataFrame,
+    subsampled_df: pd.DataFrame,
+    graph_output_dir: Path,
+    exclude_models,
+    subsample_size: int = INHERENT_SUBSAMPLE_SIZE,
+) -> None:
+    """
+    Mirrored USD histograms per model (all personas vs. at most
+    `subsample_size` personas per comment), in the style of the human
+    apriori.png: inherent-polarization-by-model.png with every model, and
+    inherent-polarization-by-model_excluding.png without `exclude_models`.
+    """
+    for file_suffix, _, _, dropped in _model_variants(exclude_models):
+        plots.plot_inherent_polarization_by_model(
+            full_df=full_df,
+            subsampled_df=subsampled_df,
+            output_path=(
+                graph_output_dir
+                / f"inherent-polarization-by-model{file_suffix}.png"
+            ),
+            subsample_size=subsample_size,
+            exclude_models=dropped,
+            prompt_name=INHERENT_BY_MODEL_PROMPT_NAME,
+        )
+
+
+def run_inherent_polarization_by_dataset_step(
+    full_df: pd.DataFrame,
+    subsampled_df: pd.DataFrame,
+    graph_output_dir: Path,
+    exclude_models,
+    subsample_size: int = INHERENT_SUBSAMPLE_SIZE,
+) -> None:
+    """
+    Mirrored USD histograms per dataset, models pooled (all personas vs.
+    at most `subsample_size` personas per comment), in the style of the
+    human apriori.png: inherent-polarization-by-dataset.png pooling every
+    model, and inherent-polarization-by-dataset_excluding.png without
+    `exclude_models`.
+    """
+    for file_suffix, _, _, dropped in _model_variants(exclude_models):
+        plots.plot_inherent_polarization_by_dataset(
+            full_df=full_df,
+            subsampled_df=subsampled_df,
+            output_path=(
+                graph_output_dir
+                / f"inherent-polarization-by-dataset{file_suffix}.png"
+            ),
+            subsample_size=subsample_size,
+            exclude_models=dropped,
+            prompt_name=INHERENT_BY_MODEL_PROMPT_NAME,
+            dataset_keys=MAIN_DATASET_KEYS,
         )
 
 
@@ -1012,8 +1286,12 @@ def run_inherent_polarization_steps(
     cache_dir: Path,
     graph_output_dir: Path,
 ):
-    """Annotator-subsampling ablation (same pipeline, `subsample` set)."""
-    run_inherent_polarization_step(
+    """
+    Inherent polarization with every comment subsampled down to
+    INHERENT_SUBSAMPLE_SIZE annotators (histogram grid) and with all
+    annotators; both feed the per-model mirrored histograms.
+    """
+    subsampled_df = run_inherent_polarization_step(
         human_datasets,
         annotations_dir,
         latex_output_dir,
@@ -1025,6 +1303,27 @@ def run_inherent_polarization_steps(
             size=INHERENT_SUBSAMPLE_SIZE,
             n_repeats=INHERENT_SUBSAMPLE_REPEATS,
         ),
+    )
+    full_df = run_inherent_polarization_step(
+        human_datasets,
+        annotations_dir,
+        latex_output_dir,
+        exclude_models,
+        human_results_dir=human_results_dir,
+        cache_dir=cache_dir,
+        graph_output_dir=graph_output_dir,
+    )
+    run_inherent_polarization_by_model_step(
+        full_df=full_df,
+        subsampled_df=subsampled_df,
+        graph_output_dir=graph_output_dir,
+        exclude_models=exclude_models,
+    )
+    run_inherent_polarization_by_dataset_step(
+        full_df=full_df,
+        subsampled_df=subsampled_df,
+        graph_output_dir=graph_output_dir,
+        exclude_models=exclude_models,
     )
 
 
