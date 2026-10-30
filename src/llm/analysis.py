@@ -37,7 +37,7 @@ The following are produced:
 4. Two compact LaTeX tables of the mean per-comment nDFU of the human
    annotations and of the LLM annotations (mean_ndfu_by_prompt.tex: every
    instruction prompt; mean_ndfu_default_vs_human.tex: default prompt
-   only), per model and dataset (see stats.build_mean_ndfu_table). The
+   only, next to the no-persona baseline runs), per model and dataset (see stats.build_mean_ndfu_table). The
    same tables, and the Cohen's d table (cohens_d.tex), are also exported
    without the models in EXCLUDED_MODELS (files with an "_excluding"
    suffix).
@@ -73,6 +73,7 @@ drawn for every model and every prompt variant of a given dataset.
 """
 
 import argparse
+import logging
 from collections.abc import Iterable, Iterator
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
@@ -96,6 +97,8 @@ from ..lib.util import (
     trim_numeric_col_latex,
 )
 from . import polarization, stats, shared, plots
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Run configuration (only used by this script)
@@ -560,25 +563,20 @@ def _cohens_d_cell(value) -> str:
 
 
 def _cohens_d_n_note(flat: pd.DataFrame) -> str:
-    """Caption sentence with the number of comments per dataset; models
-    whose count differs from the usual one are listed in parentheses."""
+    """Caption sentence with the number of comments per dataset, given as
+    a range if it differs between models."""
     per_dataset = flat.loc[flat["Dataset"] != COHENS_D_ALL_LABEL]
+    counts = pd.to_numeric(per_dataset["n"]).groupby(
+        per_dataset["Dataset"], sort=False
+    )
     parts = []
-    for dataset, group in per_dataset.groupby("Dataset", sort=False):
-        counts = pd.to_numeric(group["n"])
-        usual = int(counts.mode().iloc[0])
-        part = f"{_tex_escape(dataset)}: {usual}"
-        odd = group.loc[counts != usual]
-        if not odd.empty:
-            exceptions = ", ".join(
-                f"{_tex_escape(model)}: {int(n)}"
-                for model, n in zip(odd["Model"], odd["n"])
-            )
-            part += f" ({exceptions})"
-        parts.append(part)
+    for dataset, n in counts:
+        low, high = int(n.min()), int(n.max())
+        n_str = str(low) if low == high else f"{low}--{high}"
+        parts.append(f"{_tex_escape(dataset)}: {n_str}")
     if not parts:
         return ""
-    return "Comments per model: " + "; ".join(parts) + "."
+    return "Number of comments: " + "; ".join(parts) + "."
 
 
 def _cohens_d_header(datasets: list, prompts: list) -> list[str]:
@@ -666,6 +664,93 @@ def export_cohens_d_table_latex(
     ]
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text("\n".join(lines) + "\n")
+
+
+# Layout of the default-prompt mean nDFU table: a tabularx spanning the
+# full line width, so the value columns share the spare width evenly and
+# adjacent "mean (SE)" cells never touch. Needs \\usepackage{tabularx}.
+MEAN_NDFU_FONT_SIZE = r"\normalsize"
+MEAN_NDFU_TABLE_WIDTH = r"\linewidth"
+# Centered paragraph column that stretches to fill the table width.
+MEAN_NDFU_VALUE_COL = r">{\centering\arraybackslash}X"
+
+
+def _mean_ndfu_header(datasets: list, sub_cols: list) -> list[str]:
+    """Dataset group row, the rules under it, and the column labels."""
+    groups, rules = [], []
+    for i, dataset in enumerate(datasets):
+        first = 2 + i * len(sub_cols)
+        last = first + len(sub_cols) - 1
+        groups.append(
+            rf"\multicolumn{{{len(sub_cols)}}}{{c}}{{{_tex_escape(dataset)}}}"
+        )
+        rules.append(rf"\cmidrule(lr){{{first}-{last}}}")
+    sub_header = " & ".join(_tex_escape(col) for col in sub_cols)
+    return [
+        " & " + " & ".join(groups) + r" \\",
+        "".join(rules),
+        "Model & " + " & ".join([sub_header] * len(datasets)) + r" \\",
+    ]
+
+
+def export_mean_ndfu_default_table_latex(
+    table_df: pd.DataFrame,
+    output_path: Path,
+    caption: str,
+    label: str,
+) -> None:
+    """
+    Writes the default-prompt mean nDFU table as a full-width tabularx:
+    models as rows, one column group per dataset with a No Persona / With
+    Persona column each. `table_df` is
+    stats.build_default_mean_ndfu_table's output. The Human value does not
+    depend on the prompt and spans both columns of its dataset.
+    """
+    datasets = list(dict.fromkeys(table_df.columns.get_level_values(0)))
+    sub_cols = list(dict.fromkeys(table_df.columns.get_level_values(1)))
+
+    def _cell(value) -> str:
+        text = str(value).strip()
+        return COHENS_D_MISSING if text in ("", "---", "nan") else text
+
+    rows = []
+    for model, row in table_df.iterrows():
+        if model == stats.HUMAN_LABEL:
+            cells = [
+                rf"\multicolumn{{{len(sub_cols)}}}{{c}}"
+                rf"{{{_cell(row[(d, sub_cols[0])])}}}"
+                for d in datasets
+            ]
+        else:
+            cells = [_cell(row[(d, c)]) for d in datasets for c in sub_cols]
+        rows.append(
+            f"{_tex_escape(labels.model_label(model))} & "
+            + " & ".join(cells)
+            + r" \\"
+        )
+
+    n_value_cols = len(sub_cols) * len(datasets)
+    col_spec = rf"l*{{{n_value_cols}}}{{{MEAN_NDFU_VALUE_COL}}}"
+    lines = [
+        r"\begin{table}[t]",
+        rf"\caption{{{caption.strip()}}}",
+        rf"\label{{{label}}}",
+        r"\centering",
+        MEAN_NDFU_FONT_SIZE,
+        rf"\begin{{tabularx}}{{{MEAN_NDFU_TABLE_WIDTH}}}{{{col_spec}}}",
+        r"\toprule",
+        *_mean_ndfu_header(
+            [labels.dataset_label(d) for d in datasets], sub_cols
+        ),
+        r"\midrule",
+        *rows,
+        r"\bottomrule",
+        r"\end{tabularx}",
+        r"\end{table}",
+    ]
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text("\n".join(lines) + "\n")
+    print(f"Table exported to {output_path.resolve()}")
 
 
 def _export_cohens_d_variant(
@@ -1211,6 +1296,35 @@ def _export_significance_counts(
 # ---------------------------------------------------------------------------
 
 
+def _missing_no_persona_annotations(
+    human_datasets, annotations_dir: Path
+) -> list[Path]:
+    """
+    The expected no-persona annotation files ("<dataset>-nopersona-<model>
+    .csv") that do not exist, for every model that has default-prompt
+    annotations for a dataset. Each missing file (or a missing annotations
+    directory) is logged as a warning; the matching table cells are then
+    left empty.
+    """
+    if not annotations_dir.is_dir():
+        logger.warning("Annotations directory not found: %s", annotations_dir)
+        return [annotations_dir]
+    missing = []
+    for dataset_key in _comparison_keys(human_datasets):
+        default_files = shared.find_annotation_files(
+            annotations_dir, dataset_key, "default"
+        )
+        for model in default_files:
+            path = (
+                annotations_dir
+                / f"{dataset_key}-{stats.NO_PERSONA_PROMPT_NAME}-{model}.csv"
+            )
+            if not path.is_file():
+                logger.warning("Missing no-persona annotations: %s", path)
+                missing.append(path)
+    return missing
+
+
 def run_mean_ndfu_step(
     human_datasets,
     annotations_dir,
@@ -1235,6 +1349,29 @@ def run_mean_ndfu_step(
         cache_path.parent.mkdir(parents=True, exist_ok=True)
         ndfu_df.to_csv(cache_path, index=False)
 
+    # The no-persona baseline runs (LLM rows only), cached separately so
+    # the records above need not be recomputed. Only used by the
+    # default-vs-human table. Every model run on the default prompt should
+    # have a no-persona run too; missing files are logged and their cells
+    # left empty. Results are only cached once no file is missing, so a
+    # cache written before all files existed is never reused.
+    missing = _missing_no_persona_annotations(human_datasets, annotations_dir)
+    no_persona_cache_path = cache_dir / "mean_ndfu_records_no_persona.csv"
+    if not missing and skip_if_exists(no_persona_cache_path):
+        no_persona_df = pd.read_csv(no_persona_cache_path)
+    else:
+        no_persona_df = stats.compute_mean_ndfu_records(
+            human_datasets=human_datasets,
+            annotations_dir=annotations_dir,
+            dataset_keys=shared.PROMPT_COMPARISON_DATASET_KEYS,
+            prompt_names=[stats.NO_PERSONA_PROMPT_NAME],
+            exclude_models=None,
+            include_human=False,
+        )
+        if not missing:
+            no_persona_cache_path.parent.mkdir(parents=True, exist_ok=True)
+            no_persona_df.to_csv(no_persona_cache_path, index=False)
+
     if ndfu_df.empty:
         print("No matched human/LLM annotations; skipping mean nDFU tables.")
         return
@@ -1245,9 +1382,10 @@ def run_mean_ndfu_step(
         model, pooled over all datasets (All) and for each dataset
         separately; $n$ is the number of comments."""
     default_caption = rf"""Mean (SE) per-comment {labels.NDFU.tex} of the human annotations
-        and of the LLM annotations under the default prompt, per dataset
-        and pooled over all datasets (All). $n$ is the number of
-        comments."""
+        and of the LLM annotations under the default prompt, without a
+        persona (No Persona) and with a sociodemographic persona (With
+        Persona), per model and dataset. Human annotations do not depend
+        on the prompt."""
 
     for file_suffix, label_suffix, models in _model_variants(exclude_models):
         variant_df = _drop_models(ndfu_df, models)
@@ -1262,9 +1400,14 @@ def run_mean_ndfu_step(
             label=f"tab:mean-ndfu-by-prompt{label_suffix}",
         )
 
-        stats.export_default_mean_ndfu_latex(
+        export_mean_ndfu_default_table_latex(
             stats.build_default_mean_ndfu_table(
-                variant_df, prompt_name="default"
+                pd.concat(
+                    [variant_df, _drop_models(no_persona_df, models)],
+                    ignore_index=True,
+                ),
+                prompt_name="default",
+                no_persona_prompt_name=stats.NO_PERSONA_PROMPT_NAME,
             ),
             output_path=latex_output_dir
             / f"mean_ndfu_default_vs_human{file_suffix}.tex",
@@ -1450,6 +1593,13 @@ def _positive_int(value: str) -> int:
 
 
 if __name__ == "__main__":
+    # Warnings from every library, but INFO only from this project, so
+    # third-party INFO messages (e.g. matplotlib's font lookup) stay hidden.
+    logging.basicConfig(
+        level=logging.WARNING,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
+    logging.getLogger("src").setLevel(logging.INFO)
     parser = argparse.ArgumentParser(
         description=(
             "Compare human vs. LLM annotations: normalized histograms, "

@@ -1328,38 +1328,21 @@ def export_compact_prompt_table_latex(
     print(f"Table exported to {output_path.resolve()}")
 
 
-def export_default_mean_ndfu_latex(
-    table_df: pd.DataFrame, output_path: Path, caption: str, label: str
-) -> None:
-    n_groups = len(table_df.columns) // 2
-    # Model index; dataset names are the top column level.
-    table_df = labels.relabel_frame(table_df).rename(
-        columns=labels.dataset_label, level=0
-    )
-    latex_str = table_df.to_latex(
-        caption=caption,
-        label=label,
-        position="t",
-        escape=True,
-        index=True,
-        multicolumn=True,
-        multicolumn_format="c",
-        column_format="l" + "rr" * n_groups,
-    )
-    latex_str = center_table_latex(latex_str)
-    latex_str = small_table_latex(latex_str)
-
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(latex_str)
-    print(f"Table exported to {output_path.resolve()}")
-
-
 # ---------------------------------------------------------------------------
 # Mean nDFU: human annotations vs. LLM annotations (per instruction prompt)
 # ---------------------------------------------------------------------------
 
 HUMAN_LABEL = "Human"
 _SPAN_MARK = "@@SPAN@@"
+
+# Prompt name of the no-persona baseline runs (llm_annotate.py
+# --no-persona), i.e. the files "<dataset>-nopersona-<model>.csv" in the
+# annotations directory, next to the persona runs.
+NO_PERSONA_PROMPT_NAME = "nopersona"
+
+# Column labels of the default-prompt mean nDFU table.
+NO_PERSONA_COLUMN = "No Persona"
+WITH_PERSONA_COLUMN = "With Persona"
 
 
 # Per-comment nDFU (shared with the human analysis scripts).
@@ -1373,13 +1356,15 @@ def compute_mean_ndfu_records(
     prompt_names: list[str] = MAIN_PROMPT_NAMES,
     exclude_models: set[str] | None = APUNIM_TABLE_EXCLUDE_MODELS,
     sample_prompt: str = "default",
+    include_human: bool = True,
 ) -> pd.DataFrame:
     """
     Long-format per-comment nDFU, one row per (Dataset, Model, Prompt,
     text_id). Human rows have Model == HUMAN_LABEL and Prompt == "human";
     they are computed on the comments actually sampled for the LLM runs
     (see `_human_sample_dataset`), so human and LLM nDFU are comparable
-    comment by comment.
+    comment by comment. With `include_human=False` only LLM rows are
+    returned (e.g. to add further prompts to an existing set of records).
     """
     exclude_models = set(exclude_models or ())
     records = []
@@ -1408,14 +1393,15 @@ def compute_mean_ndfu_records(
         if human_ds is None:
             continue
         dataset_name = human_datasets[dataset_key].get_name()
-        records.extend(
-            _emit(
-                dataset_name,
-                HUMAN_LABEL,
-                "human",
-                _per_comment_ndfu(human_ds),
+        if include_human:
+            records.extend(
+                _emit(
+                    dataset_name,
+                    HUMAN_LABEL,
+                    "human",
+                    _per_comment_ndfu(human_ds),
+                )
             )
-        )
 
         for prompt_name in prompt_names:
             files = find_annotation_files(
@@ -1436,7 +1422,10 @@ def compute_mean_ndfu_records(
                     )
                 )
 
-    return pd.DataFrame(records)
+    # Explicit columns so an empty result still round-trips through a CSV.
+    return pd.DataFrame(
+        records, columns=["Dataset", "Model", "Prompt", "text_id", "ndfu"]
+    )
 
 
 def _mean_se_str(values: pd.Series) -> str:
@@ -1539,43 +1528,54 @@ def build_mean_ndfu_table(
 def build_default_mean_ndfu_table(
     ndfu_df: pd.DataFrame,
     prompt_name: str = "default",
-    pooled_label: str = "All",
+    no_persona_prompt_name: str = NO_PERSONA_PROMPT_NAME,
 ) -> pd.DataFrame:
     """
-    Human row first, then one row per model. For each dataset (plus a
-    pooled `pooled_label` group) an `n` column (comments) and a
-    "Mean (SE)" column with the mean per-comment nDFU. Model rows only use
-    comments that also appear in the human sample.
+    Human row first, then one row per model. For each dataset a
+    NO_PERSONA_COLUMN column with the mean (SE) per-comment nDFU under
+    `no_persona_prompt_name` and a WITH_PERSONA_COLUMN column with the same
+    under `prompt_name` (columns are a (Dataset, column) MultiIndex). Model
+    rows only use comments that also appear in the human sample. Human
+    annotations do not depend on the prompt, so the Human row holds the
+    same value in both columns of a dataset (the exporter merges them).
     """
     human_df = ndfu_df.loc[ndfu_df["Model"] == HUMAN_LABEL]
+    columns = {
+        NO_PERSONA_COLUMN: no_persona_prompt_name,
+        WITH_PERSONA_COLUMN: prompt_name,
+    }
     llm_df = ndfu_df.loc[
-        (ndfu_df["Model"] != HUMAN_LABEL) & (ndfu_df["Prompt"] == prompt_name)
+        (ndfu_df["Model"] != HUMAN_LABEL)
+        & ndfu_df["Prompt"].isin(set(columns.values()))
     ]
     datasets = _datasets_in_order(human_df)
 
-    def _fill(row: dict, label: str, sub: pd.DataFrame) -> None:
-        row[(label, "n")] = str(len(sub)) if len(sub) else "---"
-        row[(label, "Mean (SE)")] = _mean_se_str(sub["ndfu"])
+    human_row = {}
+    for d in datasets:
+        value = _mean_se_str(human_df.loc[human_df["Dataset"] == d, "ndfu"])
+        for col in columns:
+            human_row[(d, col)] = value
 
-    def _make_row(source: pd.DataFrame, restrict: bool) -> dict:
-        row, pooled_parts = {}, []
+    def _model_row(model_df: pd.DataFrame) -> dict:
+        row = {}
         for d in datasets:
-            sub = source.loc[source["Dataset"] == d]
-            if restrict:
-                ids = set(human_df.loc[human_df["Dataset"] == d, "text_id"])
-                sub = sub[sub["text_id"].isin(ids)]
-            _fill(row, d, sub)
-            pooled_parts.append(sub)
-        _fill(row, pooled_label, pd.concat(pooled_parts))
+            ids = set(human_df.loc[human_df["Dataset"] == d, "text_id"])
+            for col, prompt in columns.items():
+                sub = model_df.loc[
+                    (model_df["Dataset"] == d)
+                    & (model_df["Prompt"] == prompt)
+                    & model_df["text_id"].isin(ids)
+                ]
+                row[(d, col)] = _mean_se_str(sub["ndfu"])
         return row
 
-    rows = {HUMAN_LABEL: _make_row(human_df, restrict=False)}
+    rows = {HUMAN_LABEL: human_row}
     for model in _order_models(set(llm_df["Model"])):
-        rows[model] = _make_row(
-            llm_df.loc[llm_df["Model"] == model], restrict=True
-        )
+        rows[model] = _model_row(llm_df.loc[llm_df["Model"] == model])
 
     out = pd.DataFrame.from_dict(rows, orient="index")
-    out.columns = pd.MultiIndex.from_tuples(out.columns)
+    out.columns = pd.MultiIndex.from_tuples(
+        out.columns, names=["Dataset", None]
+    )
     out.index.name = "Model"
     return out
