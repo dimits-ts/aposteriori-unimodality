@@ -111,6 +111,7 @@ def plot_annotation_distributions(
         r"``\textit{We will never stop in our fight against Radical Islamic Terrorism}''",
         y=1.1,  # clear of the two-line panel title
     )
+    fig.supxlabel(f"Annotator ID (1-{DIFF_COMMENTS_SIZE})")
     graphs.save_plot(graph_dir / "disagreement_vs_polarization.png")
     plt.close(fig)
 
@@ -337,7 +338,6 @@ def discussion_example(graph_dir: Path) -> None:
     axs[0].set_ylabel("Density")
     handles = _discussion_legend_handles()
     fig.suptitle(DISCUSSION_TITLE)
-    fig.supxlabel(f"Annotator ID (1-{DIFF_COMMENTS_SIZE})")
     _legend_below(fig, axs, handles)
 
     graphs.save_plot(graph_dir / "ndfu_discussion.png")

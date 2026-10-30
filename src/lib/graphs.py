@@ -311,8 +311,17 @@ def graph_setup() -> None:
             "savefig.bbox": "tight",
             "savefig.pad_inches": 0.02,
             # Fonts
+            # Same fonts as the ACM acmart class: Linux Libertine for text,
+            # newtxmath (Libertine variant) for math. With usetex the font
+            # comes from the LaTeX preamble below; font.serif only names a
+            # font matplotlib knows for usetex, so it does not log "No
+            # LaTeX-compatible font found". The preamble loads after it.
             "font.family": "serif",
-            "font.serif": ["Liberation Serif", "Nimbus Roman"],
+            "font.serif": ["Computer Modern Roman"],
+            "text.latex.preamble": (
+                r"\usepackage[tt=false,type1=true]{libertine}"
+                r"\usepackage[libertine]{newtxmath}"
+            ),
             "font.size": 18,
             "axes.titlesize": 24,
             "axes.labelsize": 22,
