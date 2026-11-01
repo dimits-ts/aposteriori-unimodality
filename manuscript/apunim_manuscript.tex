@@ -463,7 +463,6 @@ We find that \emph{\ac{asd} is consistently attributed to \textbf{ethnicity}} in
 \label{sec:llms}
 %TODO: Gemma31b kumar
 \input{generated/mean_ndfu_default_vs_human_excluding.tex}
-\input{generated/cohens_d_excluding.tex}
 \input{generated/llm-apunim-significance-counts_excluding.tex}
 \input{generated/llm-apunim-significance_excluding.tex}
 
@@ -481,21 +480,18 @@ We also do not annotate any of the DICES datasets since the LLM annotations are 
 
 We also test four adversarial prompts that stress the importance of the LLM's persona in different ways (App.~\ref{app:prompts}). \textit{Persona-focused} asks the model to rate as its persona would perceive the comment. \textit{Direct} makes the persona the only criterion. \textit{Single} has the model pick the persona's most influential trait and rate based on that trait alone. \textit{Stereotype} tells the model to weigh the persona's sensitivities over those of an average person. These prompts do not represent annotation strategies; they only attempt to steer the models towards persona-focused answers.
 
-%TODO: Answer question 1 when results become available
-\paragraph{Do LLMs Exhibit \ac{sd}?} \textbf{Yes}. Table~\ref{tab:mean-ndfu-default-vs-human-excluding} shows that the \ac{ndfu} values exhibited by LLMs when under standard persona-prompting can even surpass those of humans. However, manipulating the amount of \ac{asd} through instruction prompting is not reliable. While an ANOVA\footnote{We use a parametric test (ANOVA) in our analysis due to the abundance of observations ($N \gg 100$) as well as a multiple hypothesis p-value correction (Holm-Bonferroni \citep{holms}).} test shows that the choice of instruction prompt does indeed affect \ac{ndfu} scores across most models, measuring Cohen's $d$ (Table~\ref{tab:cohens-d-excluding}) shows that the effect is generally small ($\lvert d \rvert \leq 0.3$) and inconsistent, with the sign and magnitude of the effect depending on the model and dataset.\footnote{See Table~\ref{tab:mean-ndfu-default-vs-human} in App.~\ref{app:full} for the actual mean \ac{ndfu} values by prompt.}
+\paragraph{Do LLMs Exhibit \ac{sd}?} \textbf{Yes}. Table~\ref{tab:mean-ndfu-default-vs-human-excluding} shows that the \ac{ndfu} values  exhibited by LLMs are always non-negative and can even surpass those of humans (OLMo32B, Kumar: $0.34$). Using persona-prompting \emph{always} increases \ac{sd} for all models and datasets.\footnote{However, manipulating the amount of \ac{sd} through instruction prompting is not reliable, as discussed in Table~\ref{tab:cohens-d} in App.~\ref{app:llms}.}
 
-%TODO: Use numbers once results become available
-\paragraph{Can LLMs exhibit any \ac{asd}?} \textbf{Yes}. Table~\ref{tab:llm-apunim-significance-counts-excluding} shows the percentage of \acp{sdd} where at least one of the constituent groups show statistically significant apunim results. We observe that LLM annotations frequently produce \ac{asd}.\footnote{Table~\ref{tab:llm-apunim-significance-counts} includes all LLMs and Table~\ref{tab:llm-apunim-significance-counts-by-prompt} distinguishes between different adversarial prompts in App.~\ref{app:full}.}
+\paragraph{Can LLMs exhibit \ac{asd}?} \textbf{Yes}. Table~\ref{tab:llm-apunim-significance-counts-excluding} shows the percentage of \acp{sdd} where at least one of the constituent groups show statistically significant apunim results. Under the default prompt, between 33\% and 100\% of Sap dimensions, 30\% and 53\% of Kumar dimensions, and 60\% and 100\% of POP dimensions are significant (the exception is Gemma 31B on POP, with 0\%). This holds even for Kumar, where the human annotations show no significant \ac{sdd} at all (0 of 13), yet every LLM flags 4 to 7 of them.\footnote{Table~\ref{tab:llm-apunim-significance-counts} includes all LLMs and Table~\ref{tab:llm-apunim-significance-counts-by-prompt} distinguishes between different adversarial prompts in App.~\ref{app:full}.}
 
-%TODO: Use numbers once results become available
-\paragraph{Is LLM  \ac{asd} Aligned With Humans?} \textbf{No}. Table~\ref{tab:llm-apunim-significance-excluding} describes whether an \ac{sdd} produces statistically significant results using apunim and compares it with the human apunim results (Table~\ref{tab:apunim-main}). We observe that alignment on \ac{asd} between humans and LLMs is rarely achieved. Specifically, we observe:
+\paragraph{Is LLM \ac{asd} Aligned With Humans?} \textbf{No}. Table~\ref{tab:llm-apunim-significance-excluding} compares whether an \ac{sdd} is statistically significant under apunim for each LLM and for the humans (Table~\ref{tab:apunim-main}). Humans show significant \acp{sdd} for Age and Gender in Sap (e.g., Man $-0.151$, Woman $+0.261$) and for Education, Occupation and Race in POP (e.g., Black $-0.157$); Ethnicity (Sap) and Age and Gender (POP) show none. Only 33\% of the 240 cases\footnote{A \emph{case} is one model--prompt pair evaluated on one \ac{sdd} of a dataset (6 models $\times$ 5 prompts $\times$ 8 dimensions), i.e., one symbol in Table~\ref{tab:llm-apunim-significance-excluding}. A case agrees with the humans if both are significant with the same sign, or both are not significant.} agree with the humans on significance and sign (55 both significant with the same sign, 23 both null). Specifically:
 \begin{enumerate*}
-	\item Low Precision: LLMs tend to produce polarized annotations for groups whose human annotators are not.
-	\item Low Recall: LLMs under-detect where humans find real effects, especially in Sap and POP Gender.
-	\item Where \ac{asd} matches, the direction does not (POP; Race, Education).
-	\item Where replication is achieved, it is generally on null results (e.g., \textit{Mistral-7B}).
+	\item \textbf{Low Precision}: LLMs produce polarized annotations where humans do not. On the three dimensions where humans find no effect, the LLM is significant in 74\% of cases (Ethnicity (Sap): 25 of 30; Age and Gender (POP): 42 of 60). On Kumar, LLMs flag 30--53\% of dimensions against 0\% for humans (Tab.~\ref{tab:llm-apunim-significance-counts-excluding}).
+	\item \textbf{Low Recall}: LLMs miss real human effects in 32\% of cases on human-significant dimensions, most often for Gender (Sap), at 60\% of cases (5 of 6 models under the default prompt). Age (Sap) is missed in 5 of 30 cases, and Education, Occupation and Race (POP) in 28\%.
+	\item \textbf{Direction rarely matches}: in 46\% of the 102 cases where both are significant (47 cases), the sign of at least one group differs. This holds for 16 of 37 cases on Sap (Age: 12 of 25, with Qwen 32B in all five prompts) and 31 of 65 on POP (Race: 12 of 22; Occupation: 10 of 21; Education: 9 of 22).
+	\item \textbf{Null results rarely replicate}: only 26\% of cases on human-null dimensions (23 of 90) are also null for the LLM (Ethnicity (Sap): 5; Age (POP): 7; Gender (POP): 11), and Mistral 7B accounts for 8 of them.
 \end{enumerate*}
-We also find no connection between model size and family on the alignment of \ac{asd}.
+We find no connection between model size or family and alignment.
 
 \begin{finding}
 	\label{finding:llms}
@@ -532,13 +528,6 @@ While the field of subjective \ac{nlp} tasks has thankfully moved away from sing
 \paragraph{\ac{usd}} Some theoretical models such as \ac{au} make the assumption that all \ac{asd} is attributable to some annotator \ac{sdd}, which has not been empirically verified in real-world annotation settings. We define this phenomenon ``\ac{usd}'' for a single item $c$ as the minimum \ac{ndfu} exhibited by any arbitrary dimension:\footnote{This dimension need not be known in the dataset, as we consider all possible dimensions in our sample, both known and latent. This formulation also covers all possible combinations of such groups.} $\mathrm{Pol}_{inh}(c) = \min_{S \in G_c} \left\{ \mathrm{nDFU}(S) \right\}$, where $G_c$ is the collection of all subsets $S$ of annotations for an item $c$ such that $\lvert S \rvert \ge 3$ and $S_j$ is a random sample drawn from $G_c$ for $j=1, \dots, k$. Since \ac{ndfu} operates only when a group has at least three annotators (Eq.~\ref{eq:ndfu}), this yields $\sum_{k=3}^{n} \binom{n}{k}$ possible groups, which is computationally intractable for large annotator counts. We can therefore use Monte Carlo sampling by drawing $k$ random partitions with random sizes: $\mathrm{Pol}_{inh}^{MC}(c) = \min_{j=1}^{k} \left\{ \mathrm{nDFU}(S_j) \right\}$, which serves as an upper bound (as it considers a strict subset of $\mathrm{Pol}_{inh}(c)$).
 
 \paragraph{Does It Exist?} We compute the \ac{usd} for each item across the five datasets. For Sap and Kumar, we use the exhaustive formulation, whereas for the two DICES datasets we rely on the MC approximation with $k=1000$. Fig~\ref{fig:inherent} shows that across our five datasets, three of them show a non-insignificant amount of items with \ac{usd}.\footnote{It is unclear why the DICES datasets do not produce any \ac{usd} even when repeatedly subsampled. We hypothesize that the annotations themselves may not be as polarized as to allow \ac{usd} as both DICES datasets do feature less polarized comments (see Fig.~\ref{fig:dataset-polarization} in App.~\ref{app:ann_details}). It is plausible that their text targets (LLM responses) may not be as ambiguous as human comments.} \ac{usd} typically seems to exist only on smaller annotation counts; the Sap and Kumar datasets only hold six and five annotators respectively per item, while POPQUORN shows \ac{usd} only when it is subsampled down to six annotators per item. This pattern is also validated on both synthetic and LLM annotated data, as shown by Fig.~\ref{fig:inherent-synthetic-llm} in App.~\ref{app:usd}.
-
-\paragraph{Why Does it Exist?} Given the observation that \ac{usd} only exists on low annotation counts per item, we hold the following two hypotheses:
-\begin{enumerate*}
-	\item \ac{usd} is caused directly by the low number of annotators per item, providing insufficient overall information on \ac{sd}.
-	\item \ac{usd} arises from the presence of partially represented groups within the annotator pool which may go undetected if they are represented by only one or two annotators, as \ac{ndfu} is undefined for these groups. 
-\end{enumerate*}
-Unfortunately, there is no way for us to verify whether any of the two hypotheses are correct.\footnote{Examples of items with high \ac{usd} can be found in Table~\ref{tab:inherent-examples} in App.~\ref{app:usd}.}
 
 \begin{finding}
 	\label{finding:inherent}
@@ -896,6 +885,12 @@ Finally, we note that in Fig.~\ref{fig:std_error}, we removed values where there
 \section{Exploring \ac{usd}}
 \label{app:usd}
 
+\paragraph{Why Does it Exist?} Given the observation that \ac{usd} only exists on low annotation counts per item, we hold the following two hypotheses:
+\begin{enumerate*}
+	\item \ac{usd} is caused directly by the low number of annotators per item, providing insufficient overall information on \ac{sd}.
+	\item \ac{usd} arises from the presence of partially represented groups within the annotator pool which may go undetected if they are represented by only one or two annotators, as \ac{ndfu} is undefined for these groups. 
+\end{enumerate*}
+Unfortunately, there is no way for us to verify whether any of the two hypotheses are correct.\footnote{Examples of items with high \ac{usd} can be found in Table~\ref{tab:inherent-examples} in App.~\ref{app:usd}.}
 
 \begin{table}[t]
 	\caption{Sample of comments from the Sap dataset and their \ac{usd}. Note that unambiguously toxic comments can be assigned with zero \ac{usd}, while more nuanced cases tend to have higher values.}
@@ -1089,6 +1084,7 @@ We use only open-source models, as proprietary models such as OpenAI's GPT-5 yie
 \paragraph{Dropped Responses} Table~\ref{tab:nonstandard-answers} shows a breakdown of failure modes across models and datasets. Most failed answers stem from the model refusing to provide any number in their response. Some attempt to initiate a Chain of Thought response, which is truncated due to us forcing a three-token limit on LLM answers. Others refuse to respond due to safety tuning. Finally, some (and especially the smaller Gemma model) seem to produce degenerate integer outputs. The full file of failed responses can be found in the Supplementary Material.
 
 
+%TODO: Standardize paragraph naming
 \subsection{Annotation Ablations}
 
 \begin{center}
@@ -1101,6 +1097,8 @@ We use only open-source models, as proprietary models such as OpenAI's GPT-5 yie
 	\input{generated/llm-consistency-cross-model-excluding.tex}
 	
 	\input{generated/ndfu_rating_correlations.tex}
+	
+	\input{generated/cohens_d_excluding.tex}
 \end{center}
 
 We examine the following conditions for selecting models and datasets for our LLM annotation experiment. All ablation experiments use a sampled 20\% fraction of the full LLM annotation dataset used in the main text.
@@ -1110,6 +1108,8 @@ We examine the following conditions for selecting models and datasets for our LL
 \paragraph{The LLMs should be prompt insensitive} Small changes in the prompt have been shown to drastically affect LLM output in some tasks depending on the experimental setup \citep{razavi_sensitivity}. In order to verify whether any models are unreliable under our setup, we create two alternative formulations of each prompt without a change in substance using a GPT-5 model (free version), whose outputs we manually verified (see App.~\ref{app:prompts}). Table~\ref{tab:llm-consistency-variants} shows that while most LLMs are relatively robust to changes in formulation, the smaller ones (OLMo-7B, Qwen-7B and LLaMa-8B) are not. They are thus excluded from the annotation study.
 
 \paragraph{The annotation guidelines should be unambiguous} The studies that provided the datasets used in our work (see \S\ref{sec:datasets}) do not include LLM annotation, nor equivalent LLM prompts, which meant we had to generate them from the human annotation guidelines ourselves. This was not a problem in the case of the Sap and Kumar datasets, since the annotation guidelines were short, simple and required minimal edits to be transformed into LLM annotation guidelines. However, the DICES datasets use poorly documented guidelines and the target label we used is an aggregation of multiple annotation tasks. For these reasons the prompt creation is non-trivial and prone to errors. Indeed, Table~\ref{tab:llm-consistency-cross-model} shows that inter-model agreement is extremely low for the DICES datasets, even when we remove the sensitive models (Table~\ref{tab:llm-consistency-cross-model-excluding}). Given that the DICES datasets are (1) problematic w.r.t. inherent polarization (see App.~\ref{app:usd}), (2) conditioned on several dozen annotations per item (3) difficult to find reliable annotation prompts for LLMs, we decided to exclude them from the annotation study.
+
+\paragraph{Do Adversarial Prompts Influence the Amount of \ac{sd} in LLM Annotations?} While an ANOVA\footnote{We use a parametric test (ANOVA) in our analysis due to the abundance of observations ($N \gg 100$) as well as a multiple hypothesis p-value correction (Holm-Bonferroni \citep{holms}).} test shows that the choice of instruction prompt does indeed affect \ac{ndfu} scores across most models, measuring Cohen's $d$ (Table~\ref{tab:cohens-d-excluding}) shows that the effect is generally small ($\lvert d \rvert \leq 0.3$) and inconsistent, with the sign and magnitude of the effect depending on the model and dataset.\footnote{See Table~\ref{tab:mean-ndfu-default-vs-human} in App.~\ref{app:full} for the actual mean \ac{ndfu} values by prompt.}
 
 
 \subsection{LLM Annotation Results}
