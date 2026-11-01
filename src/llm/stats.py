@@ -470,7 +470,7 @@ _CELL_SIGN_DIFFERS = _colored(_COL_SIGN_DIFFERS, _SYM_SIGN_DIFFERS)
 _CELL_DISAGREE = _colored(_COL_DISAGREE, _SYM_DISAGREE)
 
 # Each prompt gets a fixed-width slot (in em), so that the symbols of
-# different rows line up and a prompt without LLM results is simply blank.
+# different rows line up.
 # It can be set per table (`slot_width_em`); the symbols are roughly an em
 # wide, so much narrower slots make them touch.
 DEFAULT_SLOT_WIDTH_EM = 1.2
@@ -580,21 +580,16 @@ def _llm_cell(
     slot_width_em: float = DEFAULT_SLOT_WIDTH_EM,
 ) -> str:
     """
-    One slot per prompt (in prompt order); a prompt without an LLM result is
-    a blank slot, and a model without any result gives an empty cell. A
-    dimension missing from the human results counts as not significant.
-    `sign_differs` says, per prompt, whether some group's sign differs from
-    the human one; `slot_width_em` is the width of each prompt slot.
+    One slot per prompt (in prompt order). A dimension without a result
+    counts as not significant, on either side: for the LLM, this happens
+    when apunim found no polarized comments with enough annotations per
+    group (all p-values NaN, or the run skipped). `sign_differs` says, per
+    prompt, whether some group's sign differs from the human one;
+    `slot_width_em` is the width of each prompt slot.
     """
-    if all(llm is None for llm in llm_results):
-        return ""
     return "".join(
         _slot(
-            (
-                ""
-                if llm is None
-                else _comparison_symbol(llm, bool(human_significant), differs)
-            ),
+            _comparison_symbol(bool(llm), bool(human_significant), differs),
             slot_width_em,
         )
         for llm, differs in zip(llm_results, sign_differs)
@@ -709,7 +704,8 @@ def build_apunim_significance_table(
 
     A model cell holds one symbol per prompt (in `prompt_names` order)
     saying how the model's result for the dimension compares with the human
-    one (see _comparison_symbol); a prompt without results is blank.
+    one (see _comparison_symbol); a missing result counts as not
+    significant.
     `slot_width_em` sets the width of each prompt slot, i.e. the cell size.
     The prompts used are stored in `.attrs["prompts"]`.
     """
@@ -762,8 +758,9 @@ def export_apunim_significance_table(
         rf"{_CELL_AGREE_NEITHER}~neither significant; "
         rf"{_CELL_SIGN_DIFFERS}~both significant, but the sign of at least "
         "one group's effect differs; "
-        rf"{_CELL_DISAGREE}~significant for only one of the two; "
-        "blank: no LLM result." + note
+        rf"{_CELL_DISAGREE}~significant for only one of the two. A "
+        "dimension without an LLM result (no polarized comments with enough "
+        "annotations per group) counts as not significant." + note
     )
 
     # Model columns and short dataset names (narrow table).
