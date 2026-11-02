@@ -155,6 +155,7 @@
 	\includegraphics[width=\linewidth]{disagreement_vs_polarization.png}
 	\caption{Three kinds of disagreement in a hypothetical hate-speech annotations of a controversial comment. Each point is one annotator's rating, from $\heartsuit\heartsuit\heartsuit$ (not hateful) to \textbf{!!!} (very hateful). \emph{Left:} ratings spread uniformly across the scale, an extreme case of \acs{gd}. \emph{Middle:} \acs{sd}, where a subset of annotators consistently rate the comment differently from the rest, although the cause is not visible from the ratings alone. \emph{Right:} the same ratings as the middle panel, grouped by religion. Religion, one of the observable \acsp{sdd}, acts as a ``polarizer'' that explains the observed differences in opinion, marking the disagreement as \acs{asd}.}
 	\label{fig:disagreement-vs-polarization}
+	\Description{Three scatter panels (Disagreement, Systematic Disagreement, Attributable Systematic Disagreement) with annotator ID on the x-axis and a rating scale from $\heartsuit\heartsuit\heartsuit$ to !!! on the y-axis. The first is scattered randomly, the second shows a high cluster on the left, and the third colours that cluster as Muslim and the rest as Non-Muslim.}
 \end{figure}
 
 \acresetall
@@ -316,6 +317,7 @@ We first test prior methods of attributing \ac{asd} to our real-life, human-anno
 	\includegraphics[width=\linewidth]{metric_comparison.png}
 	\caption{\ac{asd} attribution quality on synthetic distributions. The x-axis represents the gap in opinion between groups ($\delta$ parameter used in $p_j$). Higher is easier to detect. The y-axis shows the accuracy of each method when attempting to recover the (known) \ac{sdd} causing \ac{asd}. We find that both \ac{iaa} and other proposed methods struggle when presented with realistic annotation scenarios, while our method remains consistent. Dashed lines show the results of a simplified experimental setup, where each group always prefers higher ratings than the other in all items and bars indicate standard error.}
 	\label{fig:measures}
+	\Description{5-panel grids of detection rate against mean rating difference $\delta$. Panels are labelled Exceptional, Competitive, Struggle and Collapse, running from 80 annotators per item down to 6. Five coloured lines (apunim, Krippendorff $\Delta alpha$, \ac{au}, $chi^2$, \ac{gmm}) each have a faded dashed twin. In the first, apunim is a fairly flat line well above most of the others.}
 \end{figure}
 
 \paragraph{Generating \ac{asd}} In both real-life human and LLM annotation we lack a ground truth for \ac{asd}. This limitation can be circumvented by constructing annotation distributions by hand, since we can know which \ac{sdd} explains \ac{asd} and can test whether it is correctly attributed by each method. Additionally, by constructing these distributions we can test these methods in specific annotation scenarios reflected by our choice of parameters. We define an annotation $y_{ij}$ by annotator $i$ for item $j$ as $y_{ij} = b_j + g_i p_j + \epsilon_{ij}$, where:
@@ -342,6 +344,7 @@ We use bootstrapping to determine whether a score is statistically significant a
 	\includegraphics[width=\linewidth]{ndfu_discussion.png}
 	\caption{Synthetic experiment showing two comments with annotators disagreeing about which one is toxic. Instead of comparing two unimodal distributions (comments viewed separately) with two bimodal distributions (their aggregated annotations), we end up comparing two bimodal distributions during aggregation, obscuring the source of the polarization (explained by gender, but not shown). This is true both for means-effects models, and \ac{ndfu} comparisons between groups.}
 	\label{fig:ndfu_discussion}
+	\Description{Three panels of density histograms for two opposing comments, then both pooled. The first two show the groups cleanly separated, with nDFU ≈ 0. The pooled panel shows two overlapping humps with matching means, nDFU of about 0.5–0.7, and a vertical line at about 4.}
 \end{figure}
 
 \paragraph{Inter-Item Annotation Aggregation} The $\chi^2$ and \ac{gmm} methods (green upright and yellow reverse triangles respectively) generally fail at attributing \ac{asd} to any group in the bidirectional polarization scenario (solid lines). However, when defining polarization unidirectionally (dashed, faded lines), they perform exceptionally. This observation suggests that these metrics assume that across items, ratings of group A have a different average than group B. This assumption is valid for the unidirectional polarization scenario, but not the bidirectional one.\footnote{We control for our assumption of a non-fixed $g_i$ group polarization effect via the ablation shown in Fig.~\ref{fig:measures-fixed} in App.~\ref{app:ablation}.} Specifically, $\chi^2$ pools all annotations into a single contingency table, while \ac{gmm} clusters annotators by their mean rating across items. Fig.~\ref{fig:ndfu_discussion} shows a synthetic scenario where both approaches would fail, as bidirectional polarization effects cancel out in the aggregate, making the two groups appear statistically indistinguishable.
@@ -522,6 +525,7 @@ While the field of subjective \ac{nlp} tasks has thankfully moved away from sing
 	\includegraphics[width=\linewidth]{apriori.png}
 	\caption{\ac{usd} across our datasets (\S\ref{sec:datasets}). Contrary to assumptions made in prior work, \ac{usd} is commonly non-zero and can even reach $\textit{nDFU} = 1$ in datasets with low annotator counts (see Table~\ref{tab:datasets}). The left side of the figure shows the same datasets, where annotations are subsampled 100 times down to six annotators and their \ac{usd} is averaged.}
 	\label{fig:inherent}
+	\Description{Back-to-back horizontal histogram (left is ``Max 6 annotators'', right is ``All annotators'') with \ac{usd} on the y-axis. Almost everything sits at $USD \approx 0$ as long bars. Thin bars show up at $USD \approx 0.5$ for Kumar and Sap, a small tapering stack for POPQUORN, and one tiny bar at $1.0$.}
 \end{figure}
 
 \paragraph{\ac{usd}} Some theoretical models such as \ac{au} make the assumption that all \ac{asd} is attributable to some annotator \ac{sdd}, which has not been empirically verified in real-world annotation settings. We define this phenomenon (\ac{usd}) for a single item $c$ as the minimum \ac{ndfu} exhibited by any arbitrary dimension: $\mathrm{P}_{inh}(c) = \min_{S \in G_c} \left\{ \mathrm{nDFU}(S) \right\}$, where $G_c$ is the collection of all subsets $S$ of annotations for an item $c$ such that $\lvert S \rvert \ge 3$ and $S_j$ is a random sample drawn from $G_c$ for $j=1, \dots, k$. Since \ac{ndfu} operates only when a group has at least three annotators (Eq.~\ref{eq:ndfu}), this yields $\sum_{k=3}^{n} \binom{n}{k}$ possible groups, which is computationally intractable for large annotator counts. We can therefore use Monte Carlo sampling by drawing $k$ random partitions with random sizes: $\mathrm{P}_{inh}^{MC}(c) = \min_{j=1}^{k} \left\{ \mathrm{nDFU}(S_j) \right\}$, which serves as an upper bound (as it considers a strict subset of $\mathrm{P}_{inh}(c)$). In the exhaustive case (or when $k \geq \lvert G_c \rvert$), \ac{usd} represents results for all observable, latent and multidimensional combinations of \acp{sdd}, as it exhaustively covers all mathematically possible groups.
@@ -587,6 +591,7 @@ The number of annotators per item for all datasets presented in \S\ref{sec:datas
 	\includegraphics[width=0.48\linewidth]{popquorn.png}
 	\caption{Boxplots of dataset polarization for the human datasets considered in this paper for all groups in each examined \ac{sdd}.}
 	\label{fig:dataset-polarization}
+	\Description{All four have \ac{ndfu} on the y-axis and one coloured box per group (age, education, gender, race and so on). DICES-350: 13 near-identical, very flat boxes close to 0, each with the same column of outliers up to about 0.7. DICES-990: Same layout with 14 groups. The boxes are still low and flat, but the outliers are denser and reach about 0.82. Kumar: About 60 narrow boxes with a much larger spread. Medians are around 0.33, boxes run from about 0.25 to 0.5, whiskers span 0 to 1, and outliers sit at 1.0. A few groups, like Age: Under 18, are just flat lines. POPQUORN: 30-odd boxes with medians around 0.25, most boxes spanning about 0.14 to 0.4, whiskers reaching 0 to 1, and scattered outliers at 0.8 and 1.0. Sap: 11 boxes with medians around 0.33. Hispanic and nonbinary are visibly lower, and Middle Eastern is a flat line.}
 \end{figure}
 
 \begin{figure}[t]
@@ -594,6 +599,7 @@ The number of annotators per item for all datasets presented in \S\ref{sec:datas
 	\includegraphics[width=0.8\linewidth]{annotator_count_histogram.png}
 	\caption{We calculate the ratio of items for each dataset (y-axis) that had $x$ number of annotators (x-axis). We truncate the x-axis to 130 annotators, disregarding very few items in the Kumar dataset exceeding this threshold (see Table~\ref{tab:num-annot}), which is likely caused by a data error.}
 	\label{fig:ann_counts}
+	\Description{Histogram of the percentage of comments by number of annotators. Kumar, Sap and POPQUORN are tight bars near 3–10 annotators. DICES-990 is a small cluster around 70–75, and DICES-350 is one tall bar at about 122.}
 \end{figure}
 
 \input{generated/annotation_count_table.tex}
@@ -833,6 +839,7 @@ The number of annotators per item for all datasets presented in \S\ref{sec:datas
 	\includegraphics[width=\linewidth]{ndfu_combined.png}
 	\caption{Simulated experiment describing a polarizing comment where men and women agree between themselves, but disagree with the opposite gender.}
 	\label{fig:ndfu-combined}
+	\Description{Overlaid histograms of toxicity (0–10) for the comment ``Most women can’t drive well''. Men form a low cluster (about 1–3) and women a high cluster (about 7–9). The combined histogram is bimodal, with nDFU values printed beneath.}
 \end{figure}
 
 \paragraph{Defining Apriori Polarization} In \S\ref{sec:apunim}, we explained how our methodology needs to compare the polarization between the set of all annotations and those made by a specific group $g$. Direct comparisons are not advisable, since we would be comparing statistics between a set and its subset---in this case, standard practice dictates comparing the subset with its complement; i.e., the in-group vs. the out-group instead of the in-group vs. all the annotations. However, this also would not work; if we apply the subset-vs-complement method in the example of Fig.~\ref{fig:ndfu-combined}, we would end up subtracting the \acp{ndfu} of men and women, which are similar as they are both unimodal distributions, falsely concluding that there is no polarization present.
@@ -859,7 +866,7 @@ Since annotation histograms may be noisy, we additionally assess whether the obs
 \end{equation}
 \noindent where \(\bar{\textit{apunim}}_{\mathrm{rand}}(d,g)\) denotes the average apunim values obtained from $t$ randomized annotator partitions.
 
-We account for the presence of multiple subgroups in each \ac{sdd} using a multiple-hypothesis correction. Since our test is parametric (App.~\ref{app:pvalue}), it assumes that there exist (1) enough data-points to reliably run the means-test, (2) enough annotations per \ac{sdd} group to estimate \acp{ndfu}, (3) the apunim values of the random partitions are independent and identically distributed. Condition (1) can be safely assumed for most datasets, because they feature enough items to reliably assume normal residuals (see \S\ref{sec:datasets}). We discuss condition (2) in \S\ref{sec:discussion}. Condition (3) is partly fulfilled; the partitions are identically distributed, but may be dependent on the sample distribution. 
+We account for the presence of multiple subgroups in each \ac{sdd} using a multiple-hypothesis correction. Since our test is parametric (App.~\ref{app:apunim}), it assumes that there exist (1) enough data-points to reliably run the means-test, (2) enough annotations per \ac{sdd} group to estimate \acp{ndfu}, (3) the apunim values of the random partitions are independent and identically distributed. Condition (1) can be safely assumed for most datasets, because they feature enough items to reliably assume normal residuals (see \S\ref{sec:datasets}). We discuss condition (2) in \S\ref{sec:discussion}. Condition (3) is partly fulfilled; the partitions are identically distributed, but may be dependent on the sample distribution. 
 
 Replacing the parametric means test with a non-parametric alternative would relax assumptions about the underlying distribution but would not resolve the potential dependence between the random apunims. We initially attempted to implement a permutation test on the empirical (random apunim) distribution, but this resulted in excessive computational costs.
 
@@ -932,12 +939,14 @@ Table~\ref{tab:inherent-examples} shows a random sample of items taken from the 
 	\includegraphics[width=0.85\linewidth]{synthetic_inherent_polarization.png}
 	\caption{\ac{usd} for LLM annotations grouped by dataset (top-left) and model (top-right) as well as for the synthetic simulations used in \S\ref{sec:methods} (bottom). LLM annotations include models that were excluded due to prompt sensitivity.}
 	\label{fig:inherent-synthetic-llm}
+	\Description{Back-to-back horizontal histograms (left is ``Max 6 personas'', right is ``All personas'') of USD for LLM annotations. Nearly all the mass is a long bar at $USD \approx 0$, with only small stubs above it.}
 \end{figure}
 
 \begin{figure}[t]
 	\includegraphics[width=\linewidth]{inherent-polarization-subsampled-n6-histogram.png}
 	\caption{Normalized histograms showing the \ac{usd} exhibited by each model when truncating annotation to six annotations, compared to human annotations for each dataset. Some LLMs fail to show any \ac{usd}, while the rest show far less than humans. Note that the graph does not include zero \ac{usd}, and the y-axis is truncated to $[0, 0.3]$.}
 	\label{fig:inherent-llms}
+	\Description{$3 \times 5$ grid (rows are Sap, Kumar, POPQUORN; columns are prompt types Default, Stereotype, Persona, Single, Direct) of stacked histograms. LLM bars cluster at low USD (around $0.1-0.3$), while Human bars in dark grey appear as a separate spike near $0.5$ for Sap and Kumar.}
 \end{figure}
 
 \paragraph{Can We Produce it Synthetically?} Fig.~\ref{fig:inherent-synthetic-llm} shows the \ac{usd} of LLM annotations and of the synthetic simulations of \S\ref{sec:methods}, using the same layout as for the human datasets: all annotators (right) against at most six annotators per comment (left). Looking at the synthetic annotations, we note that \ac{usd} is generally produced irrespective of number of groups per hypothetical \ac{sdd}.  With respect to LLM annotation, we observe that prompt-unstable models are the largest contributors of \ac{usd}, indicating that the latter may be linked with \ac{gd} (variance) rather than \ac{sd}. 
@@ -961,6 +970,7 @@ In all cases, including human annotations (Fig.~\ref{fig:inherent}), low annotat
 		dashed, faded lines show unidirectional polarization, where the effect
 		always has the same direction. Bars show the standard error.}
 	\label{fig:measures-multiple}
+	\Description{$3 \times 2$ grids of small panels (k = 3, 5 and 10 groups). apunim is a flat line at 1.0 in nearly every panel, and the other methods rise gradually or stay near 0.}
 \end{figure}
 
 \paragraph{Multigroup Synthetic Experiments} We repeat the comparison of
@@ -982,6 +992,7 @@ polarization poses for prior methods is likely not limited to two groups.
 		dashed, faded lines show unidirectional polarization. Bars show the
 		standard error.}
 	\label{fig:measures-fixed}
+	\Description{$3 \times 2$ grids of small panels (k = 3, 5 and 10 groups). apunim is a flat line at 1.0 in nearly every panel, and the other methods rise gradually to 1.0.}
 \end{figure}
 
 \paragraph{Do Fixed Group Effects Affect our Experiments?} In our synthetic
@@ -1010,6 +1021,7 @@ results.
 	\centering
 	\caption{Apunim values on the Kumar dataset ($n_{samples}=1000$) across ten runs with different subsets.  Black bars indicate two standard deviations. \acp{sdd} with many groups are more volatile, although all \acp{sdd} broadly keep the same apunim sign across subsets.}
 	\label{fig:seeds}
+	\Description{Grid of about 13 small panels (Age, Education, Ethnicity and so on), each showing apunim means with error bars. Nearly all sit at 0, with a few big error bars (Homosexual, Never, Asian).}
 \end{figure}
 
 \paragraph{How Does Dataset Size Influence Apunim?} Since our approach was designed for the small-scale datasets common in \ac{nlp}, we were cautious when testing it on the massive Kumar dataset. Because of the data volume, we analyzed various smaller samples (1{,}000, 3{,}000, 10{,}000, and 30{,}000 items), shown in Table~\ref{tab:num-comments-apunim}. Sample size does not seem to have a consistent effect on apunim values, other than large dataset sizes uncovering significant polarization effects in sparsely populated groups (e.g., 65+ yo. in \textit{Age}, ``Prefer Not to Say'' in \textit{Sexual Orientation}, ``Never'' , ``Very Frequently'' in \textit{Toxicity Problem}). The apunim direction stays broadly the same. We also test whether the results in Table~\ref{tab:apunim-main} are an artifact of the dataset split, because of the small sample size used in the study. We repeat the apunim experiment with ten different subsets of the same dataset and record their apunim values, shown in Fig.~\ref{fig:seeds}. We find that most apunim values are stable, save for ``Never'' in \textit{Toxicity Problem}, ``Heterosexual'' in \textit{Sexual Orientation} and ``Neutral'' in \textit{Technology Impact}.
@@ -1025,6 +1037,7 @@ Astute readers may notice that some variability does exist across differently si
 	\includegraphics[width=\linewidth]{apunim_subsampling_robustness.png}
 	\caption{Standard deviation of $apunim$ across items, averaged across $10$ runs, where each item is resampled $100$ times. Shaded areas represent two standard deviations.}
 	\label{fig:std_error}
+	\Description{$2 \times 3$ grid of line plots (rows are gender and ethnicity; columns are DICES-350, DICES-990 and POPQUORN). Lines are mostly near 0 with shaded bands. Variance is high at small annotator counts, with a notable high line for non-binary in POPQUORN (about 0.5–0.6, very wide band).}
 \end{figure}
 
 Fig.~\ref{fig:std_error} sows that non-statistically significant results from Table~\ref{tab:apunim-main} remain systematically close to zero, while statistically significant results can be distinguished from very small annotator counts (six annotators for well-balanced groups, $\approx 20$ for poorly split groups such as non-binary annotators in DICES-990). Sampling annotators with replacement also uncovers a new group which systematically disagrees with the others; the Non-Binary annotators in the POPQUORN and DICES-990 datasets. This group was undetectable when partitioning annotator groups with the methodology described in Eq.~\ref{eq:apunim} since only one item is annotated by three \emph{Non-Binary} annotators in POPQUORN and none for DICES-990, but sampling with replacement uncovers a very strong attribution. It is unclear whether this is a methodological artifact, or a new finding unexplored in prior analysis concerning these datasets.
@@ -1075,6 +1088,7 @@ We use only open-source models, as proprietary models such as OpenAI's GPT-5 yie
 	\includegraphics[width=\linewidth]{human_vs_llm_histograms.png}
 	\caption{Annotation frequencies for humans and each LLM in the primary annotation task using the default prompt.}
 	\label{fig:llm-human-frequencies}
+	\Description{Three step-histograms (Sap, Kumar, POPQUORN) of rating proportions from 1 to 5. A thick black line for humans is heavily weighted toward 1. About nine coloured dashed and dotted LLM lines are spread much more evenly or skewed elsewhere.}
 \end{figure*}
 \paragraph{Frequencies} Fig.~\ref{fig:llm-human-frequencies} shows the different annotation frequencies of LLMs and human annotators in the same dataset split. Across all datasets, we observe a consistent mismatch between human and LLM annotation distributions. For the DICES-350 and DICES-990 harmfulness tasks, human annotations are heavily concentrated at the lowest harmfulness value, whereas most LLMs assign substantially more probability to moderate and high harmfulness values. A similar pattern appears in the \citet{sap-etal-2022-annotators} racism dataset: human judgments are concentrated at low racism scores, while LLMs produce broader distributions with considerably more mass at higher scores, particularly values 4--5. The \citep{kumar-et-al-2021} toxicity results show the same general trend, with humans assigning most probability to zero toxicity while LLMs distribute their predictions across higher toxicity levels, often peaking around values 2--4. Importantly, the magnitude of this discrepancy varies across models; some LLMs are closer to the human distribution, while others show substantially stronger shifts toward higher scores.
 
