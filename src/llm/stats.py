@@ -4,6 +4,7 @@ annotation agreement and significance.
 """
 
 from pathlib import Path
+from typing import Callable
 
 import krippendorff
 import numpy as np
@@ -12,6 +13,7 @@ from scipy import stats
 from statsmodels.stats.multitest import multipletests
 
 from ..lib import labels, run_helper
+from ..lib.preprocessing import Dataset
 from ..lib.util import (
     SIGNIFICANCE_LEVELS,
     center_table_latex,
@@ -1347,36 +1349,55 @@ WITH_PERSONA_COLUMN = "With Persona"
 _per_comment_ndfu = run_helper.per_comment_ndfu
 
 
-def compute_mean_ndfu_records(
+def per_comment_mean_annotation(ds: Dataset) -> pd.Series:
+    """Mean annotation of each comment's annotation list (non-numeric and
+    missing values ignored), indexed by the comment key of the dataset."""
+    df = ds.get_dataset()
+    annotation_col = ds.get_annotation_column()
+    key_col = ds.get_comment_key_column()
+    values = {}
+    for key, annotations in zip(df[key_col], df[annotation_col]):
+        if not isinstance(annotations, (list, np.ndarray)):
+            continue
+        numeric = pd.to_numeric(pd.Series(annotations), errors="coerce")
+        if numeric.notna().any():
+            values[key] = float(numeric.mean())
+    return pd.Series(values, dtype=float)
+
+
+def _compute_per_comment_records(
     human_datasets: HumanDatasets,
     annotations_dir: Path,
-    dataset_keys: list[str] = PROMPT_COMPARISON_DATASET_KEYS,
-    prompt_names: list[str] = MAIN_PROMPT_NAMES,
-    exclude_models: set[str] | None = APUNIM_TABLE_EXCLUDE_MODELS,
-    sample_prompt: str = "default",
-    include_human: bool = True,
+    per_comment: Callable[[Dataset], pd.Series],
+    value_col: str,
+    dataset_keys: list[str],
+    prompt_names: list[str],
+    exclude_models: set[str] | None,
+    sample_prompt: str,
+    include_human: bool,
 ) -> pd.DataFrame:
     """
-    Long-format per-comment nDFU, one row per (Dataset, Model, Prompt,
-    text_id). Human rows have Model == HUMAN_LABEL and Prompt == "human";
-    they are computed on the comments actually sampled for the LLM runs
-    (see `_human_sample_dataset`), so human and LLM nDFU are comparable
+    Long-format per-comment values (`per_comment` of each dataset, in
+    column `value_col`), one row per (Dataset, Model, Prompt, text_id).
+    Human rows have Model == HUMAN_LABEL and Prompt == "human"; they are
+    computed on the comments actually sampled for the LLM runs (see
+    `_human_sample_dataset`), so human and LLM values are comparable
     comment by comment. With `include_human=False` only LLM rows are
     returned (e.g. to add further prompts to an existing set of records).
     """
     exclude_models = set(exclude_models or ())
     records = []
 
-    def _emit(dataset_name, model, prompt, ndfu: pd.Series):
+    def _emit(dataset_name, model, prompt, values: pd.Series):
         return [
             {
                 "Dataset": dataset_name,
                 "Model": model,
                 "Prompt": prompt,
                 "text_id": text_id,
-                "ndfu": value,
+                value_col: value,
             }
-            for text_id, value in ndfu.dropna().items()
+            for text_id, value in values.dropna().items()
         ]
 
     for dataset_key in dataset_keys:
@@ -1394,10 +1415,7 @@ def compute_mean_ndfu_records(
         if include_human:
             records.extend(
                 _emit(
-                    dataset_name,
-                    HUMAN_LABEL,
-                    "human",
-                    _per_comment_ndfu(human_ds),
+                    dataset_name, HUMAN_LABEL, "human", per_comment(human_ds)
                 )
             )
 
@@ -1413,16 +1431,61 @@ def compute_mean_ndfu_records(
                 )
                 records.extend(
                     _emit(
-                        dataset_name,
-                        model,
-                        prompt_name,
-                        _per_comment_ndfu(llm_ds),
+                        dataset_name, model, prompt_name, per_comment(llm_ds)
                     )
                 )
 
     # Explicit columns so an empty result still round-trips through a CSV.
     return pd.DataFrame(
-        records, columns=["Dataset", "Model", "Prompt", "text_id", "ndfu"]
+        records, columns=["Dataset", "Model", "Prompt", "text_id", value_col]
+    )
+
+
+def compute_mean_ndfu_records(
+    human_datasets: HumanDatasets,
+    annotations_dir: Path,
+    dataset_keys: list[str] = PROMPT_COMPARISON_DATASET_KEYS,
+    prompt_names: list[str] = MAIN_PROMPT_NAMES,
+    exclude_models: set[str] | None = APUNIM_TABLE_EXCLUDE_MODELS,
+    sample_prompt: str = "default",
+    include_human: bool = True,
+) -> pd.DataFrame:
+    """Per-comment nDFU records (column "ndfu"), see
+    _compute_per_comment_records."""
+    return _compute_per_comment_records(
+        human_datasets,
+        annotations_dir,
+        per_comment=_per_comment_ndfu,
+        value_col="ndfu",
+        dataset_keys=dataset_keys,
+        prompt_names=prompt_names,
+        exclude_models=exclude_models,
+        sample_prompt=sample_prompt,
+        include_human=include_human,
+    )
+
+
+def compute_mean_annotation_records(
+    human_datasets: HumanDatasets,
+    annotations_dir: Path,
+    dataset_keys: list[str] = PROMPT_COMPARISON_DATASET_KEYS,
+    prompt_names: list[str] = MAIN_PROMPT_NAMES,
+    exclude_models: set[str] | None = APUNIM_TABLE_EXCLUDE_MODELS,
+    sample_prompt: str = "default",
+    include_human: bool = True,
+) -> pd.DataFrame:
+    """Per-comment mean annotation records (column "annotation"), see
+    _compute_per_comment_records and per_comment_mean_annotation."""
+    return _compute_per_comment_records(
+        human_datasets,
+        annotations_dir,
+        per_comment=per_comment_mean_annotation,
+        value_col="annotation",
+        dataset_keys=dataset_keys,
+        prompt_names=prompt_names,
+        exclude_models=exclude_models,
+        sample_prompt=sample_prompt,
+        include_human=include_human,
     )
 
 
@@ -1580,16 +1643,13 @@ def build_default_mean_ndfu_table(
 
 
 # ---------------------------------------------------------------------------
-# Spearman correlation of per-comment nDFU: human vs. LLM, per prompt
+# Spearman correlation of per-comment values: human vs. LLM, per prompt
 # ---------------------------------------------------------------------------
 
 # Prompts of the correlation table, in column order: the no-persona
 # baseline first, then the persona runs (default and adversarial prompts).
 CORRELATION_PROMPT_NAMES = [NO_PERSONA_PROMPT_NAME, *MAIN_PROMPT_NAMES]
 
-# Marks a correlation computed over fewer comments than the row's n (the
-# model has no annotations for that prompt on some of the comments).
-_CORR_PARTIAL_MARK = r"\dagger"
 _CORR_MISSING = "---"
 
 
@@ -1608,89 +1668,74 @@ def _spearman(x: pd.Series, y: pd.Series) -> tuple[float, float]:
     return float(res.statistic), float(res.pvalue)
 
 
-def _matched_model_records(
-    human_df: pd.DataFrame, model_df: pd.DataFrame, prompts: list[str]
-) -> pd.DataFrame:
-    """
-    The model's records restricted, per dataset, to the comments that the
-    human sample and every prompt the model has for that dataset share, so
-    that all prompts of a model are compared on the same comments.
-    """
-    matched = []
-    for dataset, sub in model_df.groupby("Dataset", sort=False):
-        ids = set(human_df.loc[human_df["Dataset"] == dataset, "text_id"])
-        for p in prompts:
-            prompt_ids = set(sub.loc[sub["Prompt"] == p, "text_id"])
-            if prompt_ids:
-                ids &= prompt_ids
-        matched.append(sub[sub["text_id"].isin(ids)])
-    if not matched:
-        return model_df.iloc[0:0]
-    return pd.concat(matched, ignore_index=True)
-
-
-def compute_human_llm_ndfu_correlations(
-    ndfu_df: pd.DataFrame,
+def compute_human_llm_correlations(
+    records_df: pd.DataFrame,
+    value_col: str = "annotation",
     prompt_names: list[str] = CORRELATION_PROMPT_NAMES,
     correction_method: str | None = "holm",
 ) -> pd.DataFrame:
     """
-    Overall Spearman correlation between the per-comment nDFU of the human
-    annotations and of each model's annotations, per (model, prompt).
+    Spearman correlation, across the comments of a dataset, between a
+    per-comment value of the human annotations and of each model's
+    annotations, per (model, dataset, prompt); by default the value is the
+    mean annotation of each comment.
 
-    `ndfu_df` holds the long records of compute_mean_ndfu_records (human
-    rows have Model == HUMAN_LABEL); include the no-persona records to get
-    the no-persona column. Comments are matched by (Dataset, text_id) and
-    pooled over all datasets ("overall"). Within a model, only comments
-    that the human sample and every prompt the model has for a dataset
-    share are used (see _matched_model_records).
+    `records_df` holds long records with a `value_col` column, e.g. from
+    compute_mean_annotation_records (human rows have Model ==
+    HUMAN_LABEL); include the no-persona records to get the no-persona
+    column. Comments are matched by text_id. For each (model, dataset),
+    only the comments that the human sample and every prompt the model has
+    for that dataset share are used, so all of its prompts are compared
+    on the same `n` comments.
 
-    Returns one row per (Model, Prompt) with `n` (matched comments),
-    `n_model` (the model's matched comments over all of its prompts, i.e.
-    the row's n in the table), `spearman_rho`, `p_raw` and, unless
-    `correction_method` is None, `p_corrected` (corrected over every
-    correlation in the result).
+    Returns one row per (Model, Dataset, Prompt) with `n`, `spearman_rho`,
+    `p_raw` and, unless `correction_method` is None, `p_corrected`
+    (corrected over every correlation in the result).
     """
-    human_df = ndfu_df.loc[
-        ndfu_df["Model"] == HUMAN_LABEL, ["Dataset", "text_id", "ndfu"]
-    ]
+    is_human = records_df["Model"] == HUMAN_LABEL
+    human_df = records_df.loc[is_human, ["Dataset", "text_id", value_col]]
     human_df = human_df.drop_duplicates(["Dataset", "text_id"])
-    llm_df = ndfu_df.loc[
-        (ndfu_df["Model"] != HUMAN_LABEL)
-        & ndfu_df["Prompt"].isin(set(prompt_names))
+    llm_df = records_df.loc[
+        ~is_human & records_df["Prompt"].isin(set(prompt_names))
     ]
 
     records = []
     for model in _order_models(set(llm_df["Model"])):
-        model_df = llm_df.loc[llm_df["Model"] == model]
-        matched = _matched_model_records(human_df, model_df, prompt_names)
-        n_model = len(matched[["Dataset", "text_id"]].drop_duplicates())
-        for prompt in prompt_names:
-            pairs = matched.loc[
-                matched["Prompt"] == prompt, ["Dataset", "text_id", "ndfu"]
-            ].merge(
-                human_df,
-                on=["Dataset", "text_id"],
-                suffixes=("_llm", "_human"),
-                validate="one_to_one",
-            )
-            if pairs.empty:
+        for dataset in _datasets_in_order(human_df):
+            sub = llm_df.loc[
+                (llm_df["Model"] == model) & (llm_df["Dataset"] == dataset)
+            ]
+            if sub.empty:
                 continue
-            rho, p = _spearman(pairs["ndfu_human"], pairs["ndfu_llm"])
-            records.append(
-                {
-                    "Model": model,
-                    "Prompt": prompt,
-                    "n": len(pairs),
-                    "n_model": n_model,
-                    "spearman_rho": rho,
-                    "p_raw": p,
-                }
+            human = human_df.loc[human_df["Dataset"] == dataset].set_index(
+                "text_id"
+            )[value_col]
+            by_prompt = {
+                prompt: g.set_index("text_id")[value_col]
+                for prompt, g in sub.groupby("Prompt")
+            }
+            ids = set(human.index).intersection(
+                *(set(v.index) for v in by_prompt.values())
             )
+            ids = sorted(ids)
+            for prompt in prompt_names:
+                if prompt not in by_prompt:
+                    continue
+                rho, p = _spearman(human.loc[ids], by_prompt[prompt].loc[ids])
+                records.append(
+                    {
+                        "Model": model,
+                        "Dataset": dataset,
+                        "Prompt": prompt,
+                        "n": len(ids),
+                        "spearman_rho": rho,
+                        "p_raw": p,
+                    }
+                )
 
     out = pd.DataFrame(
         records,
-        columns=["Model", "Prompt", "n", "n_model", "spearman_rho", "p_raw"],
+        columns=["Model", "Dataset", "Prompt", "n", "spearman_rho", "p_raw"],
     )
     if correction_method is None or out.empty:
         return out
@@ -1704,23 +1749,15 @@ def compute_human_llm_ndfu_correlations(
 
 
 def _correlation_cell(row: pd.Series, p_col: str) -> str:
-    """rho as a math expression, with significance stars and
-    _CORR_PARTIAL_MARK (if over fewer than the row's n comments) as one
-    superscript."""
+    """rho as a math expression, with significance stars as superscript."""
     if pd.isna(row["spearman_rho"]):
         return _CORR_MISSING
-    sup = next(
-        (
-            stars
-            for threshold, stars in SIGNIFICANCE_LEVELS
-            if row[p_col] < threshold
-        ),
+    stars = next(
+        (s for threshold, s in SIGNIFICANCE_LEVELS if row[p_col] < threshold),
         "",
     )
-    if row["n"] < row["n_model"]:
-        sup += _CORR_PARTIAL_MARK
     value = f"{row['spearman_rho']:.2f}"
-    return f"${value}^{{{sup}}}$" if sup else f"${value}$"
+    return f"${value}^{{{stars}}}$" if stars else f"${value}$"
 
 
 def build_human_llm_correlation_table(
@@ -1728,12 +1765,12 @@ def build_human_llm_correlation_table(
     prompt_names: list[str] = CORRELATION_PROMPT_NAMES,
 ) -> pd.DataFrame:
     """
-    One row per model (index Model) with its number of matched comments
-    (`n`) and one column per prompt in `prompt_names` that has results,
-    holding the formatted Spearman rho (stars from the corrected p-values
-    if present, else the raw ones). The prompts used are stored in
-    `.attrs["prompts"]`; `.attrs["has_partial"]` says whether any cell uses
-    fewer comments than its row's n.
+    One row per (Model, Dataset) of `corr_df` (index levels Model and
+    Dataset, in the order of compute_human_llm_correlations) with its
+    number of comments (`n`) and one column per prompt in `prompt_names`
+    that has results, holding the formatted Spearman rho (stars from the
+    corrected p-values if present, else the raw ones). The prompts used
+    are stored in `.attrs["prompts"]`.
     """
     if corr_df.empty:
         return pd.DataFrame()
@@ -1742,15 +1779,16 @@ def build_human_llm_correlation_table(
     df["cell"] = df.apply(_correlation_cell, axis=1, p_col=p_col)
 
     prompts = [p for p in prompt_names if p in set(df["Prompt"])]
-    models = _order_models(set(df["Model"]))
-    wide = df.pivot(index="Model", columns="Prompt", values="cell")
-    wide = wide.reindex(index=models, columns=prompts).fillna(_CORR_MISSING)
-    n = df.groupby("Model")["n_model"].first().reindex(models)
+    rows = pd.MultiIndex.from_frame(df[["Model", "Dataset"]].drop_duplicates())
+    wide = df.set_index(["Model", "Dataset", "Prompt"])["cell"].unstack(
+        "Prompt"
+    )
+    wide = wide.reindex(index=rows, columns=prompts).fillna(_CORR_MISSING)
+    n = df.groupby(["Model", "Dataset"])["n"].first().reindex(rows)
     wide.insert(0, "n", n.astype(int).astype(str))
     wide.columns.name = None
 
     wide.attrs["prompts"] = prompts
-    wide.attrs["has_partial"] = bool((df["n"] < df["n_model"]).any())
     wide.attrs["corrected"] = p_col == "p_corrected"
     return wide
 
@@ -1762,10 +1800,11 @@ def export_human_llm_correlation_table(
     label: str,
 ) -> None:
     """
-    Models as rows; an n column, then one column per prompt (no-persona
-    baseline first, separated by a small gap) under a common "Spearman's
-    rho" header. Notes on the significance stars and _CORR_PARTIAL_MARK
-    are appended to `caption`.
+    One block of rows per model (one row per dataset; the model named on
+    the block's first row, blocks separated by a rule); a dataset and an n
+    column, then one column per prompt (no-persona baseline first,
+    separated by a small gap) under a common "Spearman's rho" header. A
+    note on the significance stars is appended to `caption`.
     """
     if table_df.empty:
         print(f"No human-LLM correlations; skipping {output_path}.")
@@ -1773,8 +1812,7 @@ def export_human_llm_correlation_table(
     prompts = table_df.attrs["prompts"]
     n_prompts = len(prompts)
 
-    notes = [caption.strip()]
-    notes.append(
+    significance = (
         ("Holm-corrected " if table_df.attrs.get("corrected") else "")
         + "significance: "
         + ", ".join(
@@ -1783,42 +1821,41 @@ def export_human_llm_correlation_table(
         )
         + "."
     )
-    if table_df.attrs.get("has_partial"):
-        notes.append(
-            rf"${{}}^{_CORR_PARTIAL_MARK}$: computed over fewer than $n$ "
-            "comments, as the model lacks annotations under this prompt for "
-            "some of them."
-        )
 
     first_gap = (
         r"@{\hspace{10pt}}"
         if prompts and prompts[0] == NO_PERSONA_PROMPT_NAME and n_prompts > 1
         else ""
     )
-    col_spec = "lr" + (
+    col_spec = "llr" + (
         "r" + first_gap + "r" * (n_prompts - 1) if n_prompts else ""
     )
 
     header = [
-        rf" & & \multicolumn{{{n_prompts}}}{{c}}{{Spearman's $\rho$}} \\",
-        rf"\cmidrule(lr){{3-{2 + n_prompts}}}",
-        "Model & $n$ & "
+        rf" & & & \multicolumn{{{n_prompts}}}{{c}}{{Spearman's $\rho$}} \\",
+        rf"\cmidrule(lr){{4-{3 + n_prompts}}}",
+        "Model & Dataset & $n$ & "
         + " & ".join(_prompt_column_label(p) for p in prompts)
         + r" \\",
     ]
     body = []
-    for model, row in table_df.iterrows():
-        cells = [row["n"], *(row[p] for p in prompts)]
-        body.append(
-            labels.model_label(model).replace("_", r"\_")
-            + " & "
-            + " & ".join(cells)
-            + r" \\"
-        )
+    previous_model = None
+    for (model, dataset), row in table_df.iterrows():
+        new_model = model != previous_model
+        if new_model and previous_model is not None:
+            body.append(r"\midrule")
+        previous_model = model
+        cells = [
+            labels.model_label(model).replace("_", r"\_") if new_model else "",
+            labels.dataset_label(dataset).replace("_", r"\_"),
+            row["n"],
+            *(row[p] for p in prompts),
+        ]
+        body.append(" & ".join(cells) + r" \\")
 
     lines = [
         r"\begin{table}[t]",
-        rf"\caption{{{' '.join(notes)}}}",
+        rf"\caption{{{caption.strip()} {significance}}}",
         rf"\label{{{label}}}",
         r"\centering",
         r"\small",

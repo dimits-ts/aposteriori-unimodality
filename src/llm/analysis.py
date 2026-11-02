@@ -1,84 +1,39 @@
 """
-Compares human annotations against LLM-generated annotations produced by
+Compares the human annotations with the LLM annotations of
 llm_annotate.py / annotate_experiments.sh.
 
-The following are produced:
+Figures (graph_output_dir):
+  human_vs_llm_histograms.png
+  llm_prompt_mean_diff.png
+  inherent-polarization-subsampled-n6-histogram.png
+      Cache: inherent-subsampled-n6/<dataset>-<prompt>-<source>-inherent.csv
+  inherent-polarization-by-model[_excluding].png
+  inherent-polarization-by-dataset[_excluding].png
+      Cache: inherent/<dataset>-<prompt>-<model>-inherent.csv and the
+      subsampled cache above; the human values of the full run are read
+      from human_results_dir/<dataset>-inherent.csv.
 
-1. A grid of normalized histograms (one subplot per dataset) overlaying the
-   human annotation distribution with each LLM's annotation distribution,
-   for the "default" prompt.
-
-1b. A grid of bar charts (one subplot per dataset) showing, per model, the
-    mean difference (+/- standard error) between that model's annotations
-    under the "stereotype"/"persona" prompts and under the "default"
-    prompt, computed item-by-item on matched (comment, persona) pairs
-    (see plot_prompt_mean_diff).
-
-2. Three LaTeX tables built on Krippendorff's alpha (ordinal):
-     - Cross-model consistency: for each dataset, how consistent the six
-       LLMs are with each other when given the *same* (default) prompt.
-     - Cross-variant consistency: for each (dataset, model), how consistent
-       that model is with itself across the three paraphrased prompt
-       variants used in the paraphrase ablation
-       (instructions/ablation/<dataset>/variant{1,2,3}.txt).
-     - Repeat consistency: for each (dataset, model), how consistent that
-       model is with itself across repeated runs of the *same* prompt (the
-       "-run0".."-runN" repeat ablation in output/ablations/repeat).
-
-3. Aposteriori-unimodality (apunim) results for the LLM annotations, using
-   the same underlying analysis as sap.py / dices.py / kumar.py
-   (run_helper.run_all_results), but exported as a single LaTeX
-   table per dataset -- one row per (SDB Feature, Value, Model), one
-   column per prompt (default/stereotype/persona) -- rather than
-   per-(dataset, model) "-results.csv"/"-inherent.csv" files. Restricted
-   to the datasets the adversarial prompts were actually run on
-   (shared.PROMPT_COMPARISON_DATASET_KEYS); all models are included.
-
-4. Two compact LaTeX tables of the mean per-comment nDFU of the human
-   annotations and of the LLM annotations (mean_ndfu_by_prompt.tex: every
-   instruction prompt; mean_ndfu_default_vs_human.tex: default prompt
-   only, next to the no-persona baseline runs), per model and dataset (see stats.build_mean_ndfu_table). The
-   same tables, and the Cohen's d table (cohens_d.tex), are also exported
-   without the models in EXCLUDED_MODELS (files with an "_excluding"
-   suffix).
-
-4b. A LaTeX table of the overall Spearman correlation between the human
-    and each model's per-comment nDFU, pooled over datasets, for the
-    no-persona baseline and every instruction prompt
-    (human_llm_ndfu_spearman.tex; also with an "_excluding" variant; see
-    stats.compute_human_llm_ndfu_correlations).
-
-5. A single LaTeX table, over all datasets, of which PC dimensions (SDB
-   features such as age or gender; a dimension counts as significant if any
-   of its groups is) each model finds statistically significant under each
-   prompt, compared with the human findings (llm-apunim-significance.tex; also
-   without the models in EXCLUDED_MODELS, with an "_excluding" suffix).
-   Two tables give the share of those dimensions per model and dataset: a
-   concise one for the default prompt (llm-apunim-significance-counts.tex)
-   and a full one per instruction prompt
-   (llm-apunim-significance-counts-by-prompt.tex), also with "_excluding"
-   variants.
-
-6. Mirrored histograms of the per-comment inherent polarization (USD)
-   of each model under the default prompt, pooled over datasets, in the
-   style of the human apriori.png: all personas on the right, at most
-   INHERENT_SUBSAMPLE_SIZE personas per comment on the left
-   (inherent-polarization-by-model.png), and the same per dataset with
-   the models pooled (inherent-polarization-by-dataset.png); both also
-   without the models in EXCLUDED_MODELS, with an "_excluding" suffix.
-
-7. A CSV of the non-standard answers in the raw LLM annotation files
-   (nonstandard_answers_by_model.csv), and an abbreviated LaTeX summary
-   per model, dataset and status (nonstandard_answers_summary.tex):
-   replies that cannot be parsed or are out of range for the dataset.
-   Both kinds are NaN in every other step: shared.load_llm_df drops
-   annotations outside the dataset's valid range (VALID_ANNOTATION_VALUES
-   of the lib.preprocessing dataset class: 1-5, or -1/0/1 for DICES).
-
-Rows are matched across files (models, or prompt variants) using the
-comment id ("text_id") together with the sampled persona's characteristics,
-since llm_annotate.py is seeded so that the same comments/personas are
-drawn for every model and every prompt variant of a given dataset.
+LaTeX tables (latex_output_dir):
+  nonstandard_answers_summary.tex
+  llm-consistency-cross-model.tex
+  llm-consistency-cross-model-excluding.tex
+  llm-consistency-variants.tex
+  llm-consistency-repeats.tex
+  llm-apunim-by-prompt-<dataset>.tex
+      Cache: apunim_<dataset>.csv
+  llm-apunim-significance[_excluding].tex
+  llm-apunim-significance-counts[_excluding].tex
+  llm-apunim-significance-counts-by-prompt[_excluding].tex
+      Cache: apunim_<dataset>.csv
+  mean_ndfu_by_prompt[_excluding].tex
+  mean_ndfu_default_vs_human[_excluding].tex
+      Cache: mean_ndfu_records_all_models.csv,
+      mean_ndfu_records_no_persona.csv
+  human_llm_annotation_spearman.tex
+      Cache: mean_annotation_records_inherent_datasets_all_models.csv,
+      mean_annotation_records_inherent_datasets_no_persona.csv
+  cohens_d[_excluding].tex
+      Cache: polarization_by_instruction_anova_by_model_dataset.csv
 """
 
 import argparse
@@ -129,6 +84,9 @@ INHERENT_SUBSAMPLE_REPEATS = 10
 # Grid of the subsampled inherent-polarization histogram figure: datasets
 # are the columns, prompts the rows (all main prompts, as in the table).
 INHERENT_HIST_DATASET_KEYS = ["sap", "kumar", "popquorn"]
+
+# Datasets of the human-LLM annotation correlation table (no DICES).
+CORRELATION_DATASET_KEYS = INHERENT_HIST_DATASET_KEYS
 INHERENT_HIST_PROMPT_NAMES = shared.MAIN_PROMPT_NAMES
 
 # Prompt of the per-model (values pooled over all datasets) and per-dataset
@@ -239,8 +197,8 @@ def main(
     run_mean_ndfu_step(
         ndfu_df, no_persona_df, latex_output_dir, exclude_models
     )
-    run_ndfu_correlation_step(
-        ndfu_df, no_persona_df, latex_output_dir, exclude_models
+    run_annotation_correlation_step(
+        human_datasets, annotations_dir, cache_dir, latex_output_dir
     )
 
     run_inherent_polarization_steps(
@@ -801,7 +759,6 @@ def run_histogram_step(
         annotations_dir=annotations_dir,
         output_path=output_path,
         prompt_name=prompt_name,
-        # skip dices as they are not annotated
         dataset_keys=INHERENT_HIST_DATASET_KEYS,
     )
 
@@ -1301,20 +1258,22 @@ def _export_significance_counts(
 
 
 def _missing_no_persona_annotations(
-    human_datasets, annotations_dir: Path
+    human_datasets, annotations_dir: Path, dataset_keys=None
 ) -> list[Path]:
     """
     The expected no-persona annotation files ("<dataset>-nopersona-<model>
     .csv") that do not exist, for every model that has default-prompt
     annotations for a dataset. Each missing file (or a missing annotations
     directory) is logged as a warning; the matching table cells are then
-    left empty.
+    left empty. `dataset_keys` defaults to _comparison_keys(human_datasets).
     """
     if not annotations_dir.is_dir():
         logger.warning("Annotations directory not found: %s", annotations_dir)
         return [annotations_dir]
     missing = []
-    for dataset_key in _comparison_keys(human_datasets):
+    if dataset_keys is None:
+        dataset_keys = _comparison_keys(human_datasets)
+    for dataset_key in dataset_keys:
         default_files = shared.find_annotation_files(
             annotations_dir, dataset_key, "default"
         )
@@ -1329,54 +1288,64 @@ def _missing_no_persona_annotations(
     return missing
 
 
-def _read_ndfu_records(path: Path) -> pd.DataFrame:
-    """Cached mean-nDFU records, with text_id always read as a string (it
+def _read_records(path: Path) -> pd.DataFrame:
+    """Cached per-comment records, with text_id always read as a string (it
     mixes numeric and non-numeric ids across datasets)."""
     return pd.read_csv(path, dtype={"text_id": str})
 
 
-def load_mean_ndfu_records(
-    human_datasets, annotations_dir: Path, cache_dir: Path
+def _load_per_comment_records(
+    human_datasets,
+    annotations_dir: Path,
+    cache_dir: Path,
+    compute_records,
+    cache_stem: str,
+    dataset_keys: list[str] = shared.PROMPT_COMPARISON_DATASET_KEYS,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
-    (per-comment nDFU records of the human annotations and of every model
-    under every main prompt, the same for the no-persona runs; LLM rows
-    only), see stats.compute_mean_ndfu_records. Both are cached in
-    cache_dir and shared by the mean nDFU tables and the human-LLM
-    correlation table.
+    (records of the human annotations and of every model under every main
+    prompt, the same for the no-persona runs; LLM rows only), computed by
+    `compute_records` (stats.compute_mean_ndfu_records or
+    stats.compute_mean_annotation_records) for `dataset_keys`, and cached
+    in cache_dir as <cache_stem>_all_models.csv and
+    <cache_stem>_no_persona.csv. The cache is not keyed by the datasets,
+    so a different set of datasets needs a different `cache_stem`.
     """
     # Computed for every model; the "excluding" variants are filtered from
-    # these records. (New cache name: the old mean_ndfu_records.csv was
-    # written without olmo7b/llama8b and would be silently reused.)
-    cache_path = cache_dir / "mean_ndfu_records_all_models.csv"
+    # these records.
+    cache_path = cache_dir / f"{cache_stem}_all_models.csv"
     if skip_if_exists(cache_path):
-        ndfu_df = _read_ndfu_records(cache_path)
+        records_df = _read_records(cache_path)
     else:
-        ndfu_df = stats.compute_mean_ndfu_records(
+        records_df = compute_records(
             human_datasets=human_datasets,
             annotations_dir=annotations_dir,
-            dataset_keys=shared.PROMPT_COMPARISON_DATASET_KEYS,
+            dataset_keys=dataset_keys,
             prompt_names=shared.MAIN_PROMPT_NAMES,
             exclude_models=None,
         )
         cache_path.parent.mkdir(parents=True, exist_ok=True)
-        ndfu_df.to_csv(cache_path, index=False)
+        records_df.to_csv(cache_path, index=False)
 
     # The no-persona baseline runs (LLM rows only), cached separately so
-    # the records above need not be recomputed. Only used by the
-    # default-vs-human table. Every model run on the default prompt should
-    # have a no-persona run too; missing files are logged and their cells
-    # left empty. Results are only cached once no file is missing, so a
-    # cache written before all files existed is never reused.
-    missing = _missing_no_persona_annotations(human_datasets, annotations_dir)
-    no_persona_cache_path = cache_dir / "mean_ndfu_records_no_persona.csv"
+    # the records above need not be recomputed. Every model run on the
+    # default prompt should have a no-persona run too; missing files are
+    # logged and their cells left empty. Results are only cached once no
+    # file is missing, so a cache written before all files existed is
+    # never reused.
+    missing = _missing_no_persona_annotations(
+        human_datasets,
+        annotations_dir,
+        [k for k in dataset_keys if k in human_datasets],
+    )
+    no_persona_cache_path = cache_dir / f"{cache_stem}_no_persona.csv"
     if not missing and skip_if_exists(no_persona_cache_path):
-        no_persona_df = _read_ndfu_records(no_persona_cache_path)
+        no_persona_df = _read_records(no_persona_cache_path)
     else:
-        no_persona_df = stats.compute_mean_ndfu_records(
+        no_persona_df = compute_records(
             human_datasets=human_datasets,
             annotations_dir=annotations_dir,
-            dataset_keys=shared.PROMPT_COMPARISON_DATASET_KEYS,
+            dataset_keys=dataset_keys,
             prompt_names=[stats.NO_PERSONA_PROMPT_NAME],
             exclude_models=None,
             include_human=False,
@@ -1388,9 +1357,42 @@ def load_mean_ndfu_records(
     # Comments are matched across these frames by text_id, so its type must
     # agree: a cached CSV gives strings where freshly computed records may
     # give integers, and "123" != 123 would silently drop the rows.
-    ndfu_df["text_id"] = ndfu_df["text_id"].astype(str)
+    records_df["text_id"] = records_df["text_id"].astype(str)
     no_persona_df["text_id"] = no_persona_df["text_id"].astype(str)
-    return ndfu_df, no_persona_df
+    return records_df, no_persona_df
+
+
+def load_mean_ndfu_records(
+    human_datasets, annotations_dir: Path, cache_dir: Path
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Per-comment nDFU records (main prompts, no-persona runs), for the
+    mean nDFU tables. (Cache name: the old mean_ndfu_records.csv was
+    written without olmo7b/llama8b and would be silently reused.)"""
+    return _load_per_comment_records(
+        human_datasets,
+        annotations_dir,
+        cache_dir,
+        stats.compute_mean_ndfu_records,
+        cache_stem="mean_ndfu_records",
+    )
+
+
+def load_mean_annotation_records(
+    human_datasets, annotations_dir: Path, cache_dir: Path
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Per-comment mean annotation records (main prompts, no-persona
+    runs) of the CORRELATION_DATASET_KEYS datasets, for the human-LLM
+    correlation table."""
+    return _load_per_comment_records(
+        human_datasets,
+        annotations_dir,
+        cache_dir,
+        stats.compute_mean_annotation_records,
+        # Named after the datasets: an earlier cache with all datasets
+        # ("mean_annotation_records_*") must not be reused.
+        cache_stem="mean_annotation_records_inherent_datasets",
+        dataset_keys=CORRELATION_DATASET_KEYS,
+    )
 
 
 def run_mean_ndfu_step(
@@ -1443,45 +1445,49 @@ def run_mean_ndfu_step(
         )
 
 
-def run_ndfu_correlation_step(
-    ndfu_df: pd.DataFrame,
-    no_persona_df: pd.DataFrame,
+def run_annotation_correlation_step(
+    human_datasets,
+    annotations_dir: Path,
+    cache_dir: Path,
     latex_output_dir: Path,
-    exclude_models,
 ):
     """
-    Overall (pooled over datasets) Spearman correlation between the human
-    and each model's per-comment nDFU, under the no-persona baseline and
-    every main prompt (human_llm_ndfu_spearman.tex, plus an "_excluding"
-    variant). The Holm correction is applied per table, over its cells.
+    Spearman correlation, across the comments of each
+    CORRELATION_DATASET_KEYS dataset, between the mean human annotation
+    and each model's mean annotation of a comment, for every model under
+    the no-persona baseline and every main prompt
+    (human_llm_annotation_spearman.tex; see
+    stats.compute_human_llm_correlations). The Holm correction is applied
+    over all of the table's cells.
     """
-    if ndfu_df.empty:
+    records_df, no_persona_df = load_mean_annotation_records(
+        human_datasets, annotations_dir, cache_dir
+    )
+    if records_df.empty:
         print("No matched human/LLM annotations; skipping correlation table.")
         return
-    records = pd.concat([ndfu_df, no_persona_df], ignore_index=True)
+    records = pd.concat([records_df, no_persona_df], ignore_index=True)
 
-    caption = rf"""Spearman correlation between the per-comment
-        {labels.NDFU.tex} of the human annotations and of each LLM's
-        annotations, without a persona (No Persona) and with a
-        sociodemographic persona under each instruction prompt. Comments
-        are pooled over all datasets; $n$ is the number of comments per
-        model, shared by all of its prompts."""
+    caption = r"""Spearman correlation, across the comments of each
+        dataset, between the mean human annotation of a comment and each
+        LLM's mean annotation of it, without a persona (No Persona) and
+        with a sociodemographic persona under each instruction prompt. $n$
+        is the number of comments, shared by all prompts of a row."""
 
-    for file_suffix, label_suffix, models in _model_variants(exclude_models):
-        corr_df = stats.compute_human_llm_ndfu_correlations(
-            _drop_models(records, models),
-            prompt_names=stats.CORRELATION_PROMPT_NAMES,
-            correction_method="holm",
-        )
-        stats.export_human_llm_correlation_table(
-            stats.build_human_llm_correlation_table(
-                corr_df, prompt_names=stats.CORRELATION_PROMPT_NAMES
-            ),
-            output_path=latex_output_dir
-            / f"human_llm_ndfu_spearman{file_suffix}.tex",
-            caption=caption,
-            label=f"tab:human-llm-ndfu-spearman{label_suffix}",
-        )
+    corr_df = stats.compute_human_llm_correlations(
+        records,
+        value_col="annotation",
+        prompt_names=stats.CORRELATION_PROMPT_NAMES,
+        correction_method="holm",
+    )
+    stats.export_human_llm_correlation_table(
+        stats.build_human_llm_correlation_table(
+            corr_df, prompt_names=stats.CORRELATION_PROMPT_NAMES
+        ),
+        output_path=latex_output_dir / "human_llm_annotation_spearman.tex",
+        caption=caption,
+        label="tab:human-llm-annotation-spearman",
+    )
 
 
 # ---------------------------------------------------------------------------

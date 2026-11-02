@@ -1,10 +1,10 @@
 model,status,answer,count,n_total_model,rate
-gemma31b,unparsed,Please provide the,103,198500,0.0005188916876574307
-gemma31b,unparsed,Since you didn,3,198500,1.5113350125944585e-05
-gemma31b,unparsed,Since no post,2,198500,1.0075566750629723e-05
-gemma31b,unparsed,Since there is,2,198500,1.0075566750629723e-05
-gemma31b,unparsed,Since you did,1,198500,5.0377833753148614e-06
-gemma31b,unparsed,Unable to provide,1,198500,5.0377833753148614e-06
+gemma31b,unparsed,Please provide the,105,308500,0.0003403565640194489
+gemma31b,unparsed,Since you didn,3,308500,9.724473257698542e-06
+gemma31b,unparsed,Since no post,2,308500,6.482982171799028e-06
+gemma31b,unparsed,Since there is,2,308500,6.482982171799028e-06
+gemma31b,unparsed,Since you did,1,308500,3.241491085899514e-06
+gemma31b,unparsed,Unable to provide,1,308500,3.241491085899514e-06
 gemma7b,out_of_range,0,21,308500,6.807131280388978e-05
 gemma7b,unparsed,Please provide the,342,308500,0.0011085899513776337
 gemma7b,unparsed,thought,9,308500,2.9173419773095624e-05
