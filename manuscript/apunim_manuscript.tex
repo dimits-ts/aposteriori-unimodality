@@ -225,7 +225,7 @@ Prior work on analyzing annotations in subjective tasks has shown that \ac{sd} m
 \end{equation}
 \noindent where, $X$ denotes the set of annotations, $f_i$ the relative frequency of the $i$-th annotation (e.g., the frequency of \texttt{2} in a scale of 1--5), and $m$ the histogram peak.
 
-\paragraph{What About Attribution?} \ac{iaa} analysis may be useful for exploration and identification of some controversial items, but fails to explain the reason \emph{why} they are controversial \citep{abercrombie-etal-2025-consistency, vitsakis-etal-2023-ilab}. A purpose-designed method for the identification of \ac{asd} is the \ac{au} method \citep{pavlopoulos-likas-2024}, which builds upon \ac{ndfu}. It states that if a single item's annotations are multimodal (contains \ac{sd}), but unimodal for all annotator subgroups in a specific \ac{sdd} (contains \ac{gd} but not \ac{sd}), then polarization is explained by those groups (\ac{asd}). Though promising, this mechanism operates on the assumption that \emph{all} polarization can be explained by a single \ac{sdd}, which we prove to be impossible in many realistic cases (\S\ref{sec:discussion}).
+\paragraph{What About Attribution?} \ac{iaa} may be useful for exploration and identification of some controversial items, but fails to explain the reason \emph{why} they are controversial \citep{abercrombie-etal-2025-consistency, vitsakis-etal-2023-ilab}. A purpose-designed method for the identification of \ac{asd} is \ac{au} \citep{pavlopoulos-likas-2024}, which builds upon \ac{ndfu}. It states that if a single item's annotations are multimodal (contains \ac{sd}), but unimodal for all annotator subgroups in a specific \ac{sdd} (contains \ac{gd} but not \ac{sd}), then polarization is explained by those groups (\ac{asd}). Though promising, this mechanism operates on the assumption that \emph{all} polarization can be explained by a single \ac{sdd}, which we prove to be impossible in many realistic cases (\S\ref{sec:discussion}).
 
 
 \subsection{Using LLMs for Subjective Annotation}
@@ -300,13 +300,13 @@ We first test prior methods of attributing \ac{asd} to our real-life, human-anno
 
 \paragraph{Results} Table~\ref{tab:real-data-methods} shows whether each of the methods attributes \ac{asd} and on which \acp{sdd}. We observe that:
 \begin{enumerate*}
-	\item Two of the proposed methodologies do not yield any meaningful results. The \ac{au} method fails to find any \ac{asd} attribution pattern in \emph{any} of the \acp{sdd} in any of the datasets, while the $\chi^2$ method reports that \ac{asd} can be attributed to \emph{all} \ac{sdd} except for one (Gender in Kumar).\footnote{It could be argued that this result suggests a genuine social phenomenon where \ac{sd} is attributed to every single observable \ac{sdd}. However, this universality is implausible given five datasets and twenty-nine \acp{sdd}, and is impractical for analysis. If \ac{sd} can be attributed to almost all \acp{sdd}, the important question becomes which contribute the most, or more than average. Indeed, this is how our measure, introduced in \S\ref{sec:apunim}, operates.}
+	\item Two of the proposed methodologies do not yield any meaningful results. The \ac{au} method fails to find any \ac{asd} attribution pattern in \emph{any} of the \acp{sdd} in any of the datasets, while the $\chi^2$ method reports that \ac{asd} can be attributed to \emph{all} \ac{sdd} except for one (Gender in Kumar). The fact that \emph{three of the four currently proposed \ac{asd} attribution metrics are not usable} in any of our datasets is troubling and requires investigation.\footnote{It could be argued that this result suggests a genuine social phenomenon where \ac{sd} is attributed to every single observable \ac{sdd}. However, this universality is implausible given five datasets and twenty-nine \acp{sdd}, and is impractical for analysis. If \ac{sd} can be attributed to almost all \acp{sdd}, the important question becomes which contribute the most, or more than average. Indeed, this is how our measure, introduced in \S\ref{sec:apunim}, operates.}
 	
-	\item In contrast, both \ac{iaa} and our own method report some shared findings across the DICES-350, DICES-990 and Sap datasets, while neither reports any attributable \acp{sdd} in Kumar. In fact, we observe that attributable \acp{sdd} (namely \textit{Education, Race, Gender}) are commonly shared between datasets.
+	\item In contrast, both \ac{iaa} and our own method report some shared findings across the DICES-350, DICES-990 and Sap datasets, while neither reports any attributable \acp{sdd} in Kumar. We also observe that attributable \acp{sdd} (namely \textit{Education, Race, Gender}) are commonly shared between datasets.
 	
-	\item Unlike \ac{iaa}, own method finds that the POPQUORN dataset does have \acp{sdd} on which \ac{asd} can be attributed.
+	\item Unlike \ac{iaa}, our method finds \ac{asd} on POPQUORN.
 \end{enumerate*} 
-The fact that \emph{three of the four currently proposed \ac{asd} attribution metrics are not usable} in any of our datasets is troubling and requires investigation.
+
 
 
 \subsection{Diagnosing Proposed Methods With Synthetic Data}
@@ -361,7 +361,7 @@ We use bootstrapping to determine whether a score is statistically significant a
 
 We estimate \ac{sd} using \ac{ndfu} (see Eq.~\ref{eq:apunim}). Specifically, we measure the \ac{sd} of each group $g$ for an item $c$ as $P_g(c) = \textit{nDFU}(A_g(c))$, where $A_g(c)$ is the set of annotations for item $c$ created by annotators belonging to a group $g$. We compare this quantity to the ``apriori'' polarization present in the item $c$, which is defined as the \emph{expected} (average) unimodality of theoretical groups $\mathrm{P}_{\textit{apr}}(c) = \frac{1}{k} \sum_{1}^{k}  \mathrm{nDFU}(A_{r}(c))$, where $A_{r}$ is a set selected from a random partition of the original annotation set and $k$ is a hyperparameter (higher $k$ yields more accurate estimation, at a greater computational cost). Intuitively, a high $\mathrm{P}_{\textit{apr}}(c)$ score means that much of the \ac{sd} is likely not driven by any single group.
 
-Since the  $\mathrm{P}_{\textit{apr}}(c)$ and $P_g(c)$ quantities represent very noisy estimates due to the lack of annotators per item, a direct comparison would not be reliable. We therefore exploit the Law of Large Numbers to compute the statistic on the dataset level and average both quantities for all items in the dataset $D$. Normalizing this difference yields the measure described in Eq.~\ref{eq:ndfu}, which we call \emph{apunim}:
+Since both $\mathrm{P}_{\textit{apr}}(c)$ and $P_g(c)$ represent noisy estimates due to the lack of annotators per item, a direct comparison would not be reliable. We exploit the Law of Large Numbers to compute the statistic on the dataset level and average both quantities for all items in the dataset $D$. Normalizing yields the measure described in Eq.~\ref{eq:ndfu}, which we call \emph{apunim}:
 
 \begin{equation}
 	\label{eq:apunim}
@@ -461,7 +461,6 @@ We find that \emph{\ac{asd} is consistently attributed to \textbf{ethnicity}} in
 
 \subsection{How is \acp{asd} Attributed to LLMs?}
 
-%TODO: Gemma31b kumar
 \input{generated/mean_ndfu_default_vs_human_excluding.tex}
 \input{generated/llm-apunim-significance-counts_excluding.tex}
 \input{generated/llm-apunim-significance_excluding.tex}
@@ -480,16 +479,16 @@ We also do not annotate any of the DICES datasets since the LLM annotations are 
 
 We also test four adversarial prompts that stress the importance of the LLM's persona in different ways (App.~\ref{app:prompts}). \textit{Persona-focused} asks the model to rate as its persona would perceive the comment. \textit{Direct} makes the persona the only criterion. \textit{Single} has the model pick the persona's most influential trait and rate based on that trait alone. \textit{Stereotype} tells the model to weigh the persona's sensitivities over those of an average person. These prompts do not represent annotation strategies; they only attempt to steer the models towards persona-focused answers.
 
-\paragraph{Do LLMs Exhibit \ac{sd}?} \textbf{Yes}. Table~\ref{tab:mean-ndfu-default-vs-human-excluding} shows that the \ac{ndfu} values  exhibited by LLMs are always non-negative and can even surpass those of humans (OLMo32B, Kumar: $0.34$). Using persona-prompting \emph{always} increases \ac{sd} for all models and datasets.\footnote{However, manipulating the amount of \ac{sd} through instruction prompting is not reliable, as discussed in Table~\ref{tab:cohens-d} in App.~\ref{app:llms}.}
+\paragraph{Do LLMs Exhibit \ac{sd}?} \textbf{Yes}. Table~\ref{tab:mean-ndfu-default-vs-human-excluding} shows that the \ac{ndfu} values  exhibited by LLMs are always non-negative and can even surpass those of humans (OLMo32B, Kumar: $0.34$). Using persona-prompting \emph{always} increases \ac{sd}.\footnote{However, manipulating the amount of \ac{sd} through instruction prompting is not reliable, as discussed in Table~\ref{tab:cohens-d} in App.~\ref{app:llms}.}
 
 \paragraph{Can LLMs exhibit \ac{asd}?} \textbf{Yes}. Table~\ref{tab:llm-apunim-significance-counts-excluding} shows the percentage of \acp{sdd} where at least one of the constituent groups show statistically significant apunim results. Under the default prompt, between 33\% and 100\% of Sap dimensions, 30\% and 53\% of Kumar dimensions, and 60\% and 100\% of POP dimensions are significant (the exception is Gemma 31B on POP, with 0\%). This holds even for Kumar, where the human annotations show no significant \ac{sdd} at all (0 of 13), yet every LLM flags 4 to 7 of them.\footnote{Table~\ref{tab:llm-apunim-significance-counts} includes all LLMs and Table~\ref{tab:llm-apunim-significance-counts-by-prompt} distinguishes between different adversarial prompts in App.~\ref{app:full}.}
 
-\paragraph{Is LLM \ac{asd} Aligned With Humans?} \textbf{No}. Table~\ref{tab:llm-apunim-significance-excluding} compares whether an \ac{sdd} is statistically significant under apunim for each LLM and for the humans (Table~\ref{tab:apunim-main}). Humans show significant \acp{sdd} for Age and Gender in Sap (e.g., Man $-0.151$, Woman $+0.261$) and for Education, Occupation and Race in POP (e.g., Black $-0.157$); Ethnicity (Sap) and Age and Gender (POP) show none. Only 33\% of the 240 cases\footnote{A \emph{case} is one model--prompt pair evaluated on one \ac{sdd} of a dataset (6 models $\times$ 5 prompts $\times$ 8 dimensions), i.e., one symbol in Table~\ref{tab:llm-apunim-significance-excluding}. A case agrees with the humans if both are significant with the same sign, or both are not significant.} agree with the humans on significance and sign (55 both significant with the same sign, 23 both null). Specifically:
+\paragraph{Is LLM \ac{asd} Aligned With Humans?} \textbf{No}. Table~\ref{tab:llm-apunim-significance-excluding} compares whether an \ac{sdd} is statistically significant under apunim for each LLM and for the humans (Table~\ref{tab:apunim-main}). Humans show significant \acp{sdd} for Age and Gender in Sap (e.g., Man $-0.151$, Woman $+0.261$) and for Education, Occupation and Race in POP (e.g., Black $-0.157$); Ethnicity (Sap) and Age and Gender (POP) show none. Only 30\% of the 240 cases\footnote{A \emph{case} is one model--prompt pair evaluated on one \ac{sdd} of a dataset (6 models $\times$ 5 prompts $\times$ 8 dimensions), i.e., one symbol in Table~\ref{tab:llm-apunim-significance-excluding}. A case agrees with the humans if both are significant with the same sign, or both are not significant.} agree with the humans on significance and sign (61 both significant with the same sign, 11 both null). Specifically:
 \begin{enumerate*}
-	\item \textbf{Low Precision}: LLMs produce polarized annotations where humans do not. On the three dimensions where humans find no effect, the LLM is significant in 74\% of cases (Ethnicity (Sap): 25 of 30; Age and Gender (POP): 42 of 60). On Kumar, LLMs flag 30--53\% of dimensions against 0\% for humans (Tab.~\ref{tab:llm-apunim-significance-counts-excluding}).
-	\item \textbf{Low Recall}: LLMs miss real human effects in 32\% of cases on human-significant dimensions, most often for Gender (Sap), at 60\% of cases (5 of 6 models under the default prompt). Age (Sap) is missed in 5 of 30 cases, and Education, Occupation and Race (POP) in 28\%.
-	\item \textbf{Direction rarely matches}: in 46\% of the 102 cases where both are significant (47 cases), the sign of at least one group differs. This holds for 16 of 37 cases on Sap (Age: 12 of 25, with Qwen 32B in all five prompts) and 31 of 65 on POP (Race: 12 of 22; Occupation: 10 of 21; Education: 9 of 22).
-	\item \textbf{Null results rarely replicate}: only 26\% of cases on human-null dimensions (23 of 90) are also null for the LLM (Ethnicity (Sap): 5; Age (POP): 7; Gender (POP): 11), and Mistral 7B accounts for 8 of them.
+	\item \textbf{Low Precision}: LLMs produce polarized annotations where humans do not. On the three dimensions where humans find no effect, the LLM is significant in 88\% of cases (Ethnicity (Sap): 27 of 30; Age and Gender (POP): 52 of 60). On Kumar, LLMs flag 30--53\% of dimensions against 0\% for humans (Tab.~\ref{tab:llm-apunim-significance-counts-excluding}).
+	\item \textbf{Low Recall}: LLMs miss real human effects in 27\% of cases on human-significant dimensions, most often for Gender (Sap), at 67\% of cases (4 of 6 models under the default prompt). Age (Sap) is missed in 8 of 30 cases, and Education, Occupation and Race (POP) in 14\%.
+	\item \textbf{Direction rarely matches}: in 44\% of the 109 cases where both are significant (48 cases), the sign of at least one group differs. This holds for 7 of 32 cases on Sap (Age: 6 of 22, with Mistral 24B in four of five prompts) and 41 of 77 on POP (Race: 16 of 27; Occupation: 11 of 23; Education: 14 of 27).
+	\item \textbf{Null results rarely replicate}: only 12\% of cases on human-null dimensions (11 of 90) are also null for the LLM (Ethnicity (Sap): 3; Age (POP): 2; Gender (POP): 6), and Mistral 24B accounts for 5 of them.
 \end{enumerate*}
 We find no connection between model size or family and alignment.
 
@@ -525,7 +524,7 @@ While the field of subjective \ac{nlp} tasks has thankfully moved away from sing
 	\label{fig:inherent}
 \end{figure}
 
-\paragraph{\ac{usd}} Some theoretical models such as \ac{au} make the assumption that all \ac{asd} is attributable to some annotator \ac{sdd}, which has not been empirically verified in real-world annotation settings. We define this phenomenon ``\ac{usd}'' for a single item $c$ as the minimum \ac{ndfu} exhibited by any arbitrary dimension:\footnote{This dimension need not be known in the dataset, as we consider all possible dimensions in our sample, both known and latent. This formulation also covers all possible combinations of such groups.} $\mathrm{Pol}_{inh}(c) = \min_{S \in G_c} \left\{ \mathrm{nDFU}(S) \right\}$, where $G_c$ is the collection of all subsets $S$ of annotations for an item $c$ such that $\lvert S \rvert \ge 3$ and $S_j$ is a random sample drawn from $G_c$ for $j=1, \dots, k$. Since \ac{ndfu} operates only when a group has at least three annotators (Eq.~\ref{eq:ndfu}), this yields $\sum_{k=3}^{n} \binom{n}{k}$ possible groups, which is computationally intractable for large annotator counts. We can therefore use Monte Carlo sampling by drawing $k$ random partitions with random sizes: $\mathrm{Pol}_{inh}^{MC}(c) = \min_{j=1}^{k} \left\{ \mathrm{nDFU}(S_j) \right\}$, which serves as an upper bound (as it considers a strict subset of $\mathrm{Pol}_{inh}(c)$).
+\paragraph{\ac{usd}} Some theoretical models such as \ac{au} make the assumption that all \ac{asd} is attributable to some annotator \ac{sdd}, which has not been empirically verified in real-world annotation settings. We define this phenomenon (\ac{usd}) for a single item $c$ as the minimum \ac{ndfu} exhibited by any arbitrary dimension: $\mathrm{P}_{inh}(c) = \min_{S \in G_c} \left\{ \mathrm{nDFU}(S) \right\}$, where $G_c$ is the collection of all subsets $S$ of annotations for an item $c$ such that $\lvert S \rvert \ge 3$ and $S_j$ is a random sample drawn from $G_c$ for $j=1, \dots, k$. Since \ac{ndfu} operates only when a group has at least three annotators (Eq.~\ref{eq:ndfu}), this yields $\sum_{k=3}^{n} \binom{n}{k}$ possible groups, which is computationally intractable for large annotator counts. We can therefore use Monte Carlo sampling by drawing $k$ random partitions with random sizes: $\mathrm{P}_{inh}^{MC}(c) = \min_{j=1}^{k} \left\{ \mathrm{nDFU}(S_j) \right\}$, which serves as an upper bound (as it considers a strict subset of $\mathrm{P}_{inh}(c)$). In the exhaustive case (or when $k \geq \lvert G_c \rvert$), \ac{usd} represents results for all observable, latent and multidimensional combinations of \acp{sdd}, as it exhaustively covers all mathematically possible groups.
 
 \paragraph{Does It Exist?} We compute the \ac{usd} for each item across the five datasets. For Sap and Kumar, we use the exhaustive formulation, whereas for the two DICES datasets we rely on the MC approximation with $k=1000$. Fig~\ref{fig:inherent} shows that across our five datasets, three of them show a non-insignificant amount of items with \ac{usd}.\footnote{It is unclear why the DICES datasets do not produce any \ac{usd} even when repeatedly subsampled. We hypothesize that the annotations themselves may not be as polarized as to allow \ac{usd} as both DICES datasets do feature less polarized comments (see Fig.~\ref{fig:dataset-polarization} in App.~\ref{app:ann_details}). It is plausible that their text targets (LLM responses) may not be as ambiguous as human comments.} \ac{usd} typically seems to exist only on smaller annotation counts; the Sap and Kumar datasets only hold six and five annotators respectively per item, while POPQUORN shows \ac{usd} only when it is subsampled down to six annotators per item. This pattern is also validated on both synthetic and LLM annotated data, as shown by Fig.~\ref{fig:inherent-synthetic-llm} in App.~\ref{app:usd}.
 
@@ -564,6 +563,8 @@ We stress that our measure functions strictly as a diagnostic warning signal. An
 
 \paragraph{Prompts Used} This study uses adversarial prompts which explicitly instruct the model to change its outputs according to their persona prompts. The purpose of these prompts is to test the LLMs under an extreme case of prompt engineering and are not to be used for generalized usage. The use of these prompts may degrade model performance, increase the risk of stereotyping and produce misleading results.
 
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{refs}
 
 \appendix
 
@@ -1046,12 +1047,12 @@ We use only open-source models, as proprietary models such as OpenAI's GPT-5 yie
 		\midrule
 		\texttt{OLMo}~\citep{groeneveld-etal-2024-olmo} & \texttt{2 (0325)} & 32B & 2025 \\
 		\texttt{Qwen}~\citep{qwen2025qwen25technicalreport} & \texttt{2.5} & 32B & 2024 \\
-		\texttt{OLMo}~\citep{olmo2026olmo3} & \texttt{3} & 7B & 2025 \\
+		\texttt{OLMo}~\citep{olmo2026olmo3} & \texttt{3} &  & 2025 \\
 		\texttt{Qwen}~\citep{qwen2025qwen25technicalreport} & \texttt{2.5} & 7B & 2024 \\
 		\texttt{LLaMa}~\citep{grattafiori2024llama3herdmodels} & \texttt{3.1} & 8B & 2024 \\
 		\texttt{Mistral}~\citep{jiang2023mistral7b} & \texttt{Small 3 (2501)} & 24B & 2025 \\
 		\texttt{Mistral}~\citep{jiang2023mistral7b} & \texttt{v0.3} & 7B & 2024 \\
-		\texttt{Gemma}~\citep{gemma4} & \texttt{4} & E2B & 2026 \\
+		\texttt{Gemma}~\citep{gemma4} & \texttt{4} & 5B & 2026 \\
 		\texttt{Gemma}~\citep{gemma4} & \texttt{4} & 31B & 2026 \\
 		\bottomrule
 	\end{tabular}
@@ -1069,18 +1070,20 @@ We use only open-source models, as proprietary models such as OpenAI's GPT-5 yie
 
 \subsection{Exploratory Analysis}
 
-%TODO: Fix the figure and place other graphs here
 \begin{figure*}[t]
 	\centering
 	\includegraphics[width=\linewidth]{human_vs_llm_histograms.png}
 	\caption{Annotation frequencies for humans and each LLM in the primary annotation task using the default prompt.}
 	\label{fig:llm-human-frequencies}
 \end{figure*}
-
 \paragraph{Frequencies} Fig.~\ref{fig:llm-human-frequencies} shows the different annotation frequencies of LLMs and human annotators in the same dataset split. Across all datasets, we observe a consistent mismatch between human and LLM annotation distributions. For the DICES-350 and DICES-990 harmfulness tasks, human annotations are heavily concentrated at the lowest harmfulness value, whereas most LLMs assign substantially more probability to moderate and high harmfulness values. A similar pattern appears in the \citet{sap-etal-2022-annotators} racism dataset: human judgments are concentrated at low racism scores, while LLMs produce broader distributions with considerably more mass at higher scores, particularly values 4--5. The \citep{kumar-et-al-2021} toxicity results show the same general trend, with humans assigning most probability to zero toxicity while LLMs distribute their predictions across higher toxicity levels, often peaking around values 2--4. Importantly, the magnitude of this discrepancy varies across models; some LLMs are closer to the human distribution, while others show substantially stronger shifts toward higher scores.
 
-\input{generated/nonstandard_answers_summary.tex}
+\input{generated/human_llm_annotation_spearman.tex}
+\paragraph{Correlation With Human Judgments} Table~\ref{tab:human-llm-annotation-spearman} reports Spearman's $\rho$ between human and LLM ratings. For each comment, we computed the mean human rating, which is necessary since LLM personas are sampled at random rather than matched to individual human annotators, and therefore ratings can only be compared at the comment level. We then computed the Spearman correlation between the human and the LLM means across comments, separately for each dataset (Sap, Kumar, POPQUORN). P-values were corrected for multiple comparisons with the Holm \citep{holms} method over all correlations in the table. 
 
+Agreement between human and LLM ratings is weaks, which is expected from Fig.~\ref{fig:llm-human-frequencies}. Most correlations lie between 0.05 and 0.25, and the highest is 0.45 (Qwen 7B, Persona). Adding a persona does not improve agreement and often lowers it: Llama 8B drops from 0.33 without a persona to 0.18 with the default prompt, and Mistral 7B from 0.25 to 0.15. The instruction prompt matters little for the larger models, with OLMo 32B and Qwen 32B staying between 0.14 and 0.18 across all prompts, but it disrupts some smaller ones: Llama 8B falls from 0.18 under the default prompt to between −0.01 and 0.10 under the others, and Gemma 5B to −0.03 under Stereotype and −0.01 under Direct (Qwen 7B is the exception, reaching 0.45 under Persona and 0.40 under Single, against 0.23 under the default prompt). Model size does not predict agreement since Qwen 7B, Mistral 7B and Gemma 5B all feature better alignment than their larger counterparts. We stress that this analysis is exploratory only and primarily used to enable comparisons with relevant literature. Averaging annotations in situations where bi-modality is common should be avoided.
+
+\input{generated/nonstandard_answers_summary.tex}
 \paragraph{Dropped Responses} Table~\ref{tab:nonstandard-answers} shows a breakdown of failure modes across models and datasets. Most failed answers stem from the model refusing to provide any number in their response. Some attempt to initiate a Chain of Thought response, which is truncated due to us forcing a three-token limit on LLM answers. Others refuse to respond due to safety tuning. Finally, some (and especially the smaller Gemma model) seem to produce degenerate integer outputs. The full file of failed responses can be found in the Supplementary Material.
 
 
@@ -1120,7 +1123,9 @@ We examine the following conditions for selecting models and datasets for our LL
 	\input{generated/llm-apunim-by-prompt-sap.tex}
 	\input{generated/llm-apunim-by-prompt-popquorn.tex}
 \endgroup
- Tables~\ref{tab:llm-apunim-by-prompt-kumar},\ref{tab:llm-apunim-by-prompt-sap},\ref{tab:llm-apunim-by-prompt-popquorn} show the apunim results for the LLM annotation task on the Kumar, Sap and POPQUORN datasets respectively. Apunim values are largely model-dependent, but no other concrete pattern can be discerned. 
+
+\paragraph{Full Apunim Results}
+Tables~\ref{tab:llm-apunim-by-prompt-kumar},\ref{tab:llm-apunim-by-prompt-sap},\ref{tab:llm-apunim-by-prompt-popquorn} show the apunim results for the LLM annotation task on the Kumar, Sap and POPQUORN datasets respectively. Apunim values are largely model-dependent, but no other concrete pattern can be discerned. 
 
 
 \section{Full Results}
@@ -1132,6 +1137,7 @@ We examine the following conditions for selecting models and datasets for our LL
 \input{generated/dices-990-results.tex}
 \input{generated/popquorn-results.tex}
 \input{generated/mean_ndfu_by_prompt.tex}
+
 \paragraph{Human Annotation} Tables~\ref{tab:kumar-results},\ref{tab:sap-results},\ref{tab:dices-350-results},\ref{tab:dices-990-results} and \ref{tab:popquorn-results} show the full apunim results for the Kumar, Sap, DICES-350, DICES-990 and POPQUORN datasets respectively. Note that the results for Kumar are unreliable since they rely on a small minority of items where annotation counts happened to be over five, while our methodology requires six annotators per item to be reliable (see \S\ref{sec:apunim}). We nevertheless provide the full results. Table~\ref{tab:mean-ndfu-by-prompt} shows the mean \ac{ndfu} of the LLM annotations for each of the four instruction prompts used in the study and those of the human annotators.
 
 \input{generated/mean_ndfu_default_vs_human.tex}
@@ -1143,6 +1149,7 @@ Tables~\ref{tab:cohens-d},\ref{tab:llm-consistency-cross-model},\ref{tab:llm-apu
 \input{generated/llm-apunim-significance-counts.tex}
 \input{generated/llm-apunim-significance-counts-by-prompt.tex}
 \paragraph{Human-LLM Polarization Comparison} Table~\ref{tab:llm-apunim-significance-counts} mirrors Table~\ref{tab:llm-apunim-significance-counts-excluding} but includes the LLMs showing poor consistency in annotation (Table~\ref{tab:llm-consistency-cross-model}). Table~\ref{tab:llm-apunim-significance-counts-by-prompt} includes the same analysis, but distinguishes between different adversarial prompts.
+
 
 \section{Prompts Used}
 \label{app:prompts}
@@ -1606,8 +1613,5 @@ Base your rating on what the comment actually says or clearly implies, including
 Respond with only the corresponding number: 1, 2, 3, 4, or 5.
 \{\{Comment\}\}. Annotate as a person with these characteristics: \{\{persona\}\}.
 
-
-\bibliographystyle{ACM-Reference-Format}
-\bibliography{refs}
 
 \end{document}
