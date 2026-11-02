@@ -350,6 +350,22 @@ class KumarDataset(Dataset):
 
         df = df.reset_index()
 
+        # The raw toxicity ratings are 0-4; shift them to 1-5, the scale of
+        # the other datasets and of VALID_ANNOTATION_VALUES.
+
+        df["toxic_score"] = df["toxic_score"].apply(
+            lambda scores: [s + 1 for s in scores]
+        )
+        unexpected = (
+            set(df["toxic_score"].explode().dropna())
+            - KumarDataset.VALID_ANNOTATION_VALUES
+        )
+        if unexpected:
+            raise ValueError(
+                f" {len(unexpected)} Kumar toxicity ratings outside "
+                f"{sorted(KumarDataset.VALID_ANNOTATION_VALUES)}"
+            )
+
         df = df.rename(
             columns={
                 "personally_seen_toxic_content": "Seen Toxicity",
@@ -368,6 +384,7 @@ class KumarDataset(Dataset):
                 "technology_impact": "Technology Impact",
             }
         )
+
         return df
 
     @staticmethod
