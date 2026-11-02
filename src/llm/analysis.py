@@ -481,10 +481,6 @@ def _comparison_keys(human_datasets) -> list[str]:
 
 # Dataset label of the unweighted mean over datasets in the compact table.
 COHENS_D_ALL_LABEL = "All"
-# Layout of the exported Cohen's d table: models as rows, one column group
-# per dataset, one column per prompt. Sized to fit a 455pt text width
-# without \resizebox.
-COHENS_D_FONT_SIZE = r"\normalsize"
 COHENS_D_TABCOLSEP_PT = 1.5
 COHENS_D_GROUP_GAP_PT = 4
 # Shown for a (model, dataset) pair without results.
@@ -585,6 +581,7 @@ def export_cohens_d_table_latex(
     output_path: Path,
     caption: str,
     label: str,
+    table_size: str
 ) -> None:
     """
     Writes the Cohen's d table with models as rows and one column group
@@ -612,7 +609,7 @@ def export_cohens_d_table_latex(
         rf"\caption{{{full_caption}}}",
         rf"\label{{{label}}}",
         r"\centering",
-        COHENS_D_FONT_SIZE,
+        table_size,
         rf"\setlength{{\tabcolsep}}{{{COHENS_D_TABCOLSEP_PT}pt}}",
         rf"\begin{{tabular}}{{{col_spec}}}",
         r"\toprule",
@@ -730,6 +727,11 @@ def _export_cohens_d_variant(
         output_path=output_path,
         caption=caption,
         label=f"tab:cohens-d{variant.label_suffix}",
+        table_size = (
+            r"\footnotesize"
+            if len(variant.dropped_models) == 0
+            else r"\normalsize"
+        )
     )
 
 
@@ -1196,10 +1198,17 @@ def run_apunim_significance_step(
     }
     for variant in _model_variants(exclude_models):
         file_suffix, label_suffix, models = variant
+        table_size = (
+            r"\footnotesize"
+            if len(variant.dropped_models) == 0
+            else r"\normalsize"
+        )
+
         _export_significance_counts(
             _significance_inputs_by_name(human_datasets, inputs, models),
             latex_output_dir,
             variant,
+            table_size=table_size
         )
         by_name = _significance_inputs_by_name(
             human_datasets, table_inputs, models
@@ -1229,6 +1238,7 @@ def _export_significance_counts(
     by_name: dict[str, tuple[pd.DataFrame, pd.DataFrame]],
     latex_output_dir: Path,
     variant: ModelVariant,
+    table_size: str,
 ) -> None:
     """Share of PC dimensions each model finds significant, per dataset
     (including the datasets left out of the significance table):
@@ -1242,6 +1252,7 @@ def _export_significance_counts(
         output_path=latex_output_dir
         / f"llm-apunim-significance-counts{file_suffix}.tex",
         label=f"tab:llm-apunim-significance-counts{label_suffix}",
+        table_size=table_size,
     )
     stats.export_significant_dimension_by_prompt(
         counts,
@@ -1249,6 +1260,7 @@ def _export_significance_counts(
         / f"llm-apunim-significance-counts-by-prompt{file_suffix}.tex",
         label=f"tab:llm-apunim-significance-counts-by-prompt{label_suffix}",
         prompt_names=shared.MAIN_PROMPT_NAMES,
+        table_size=table_size,
     )
 
 

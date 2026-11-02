@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Callable
 
 import krippendorff
+from matplotlib.pyplot import table
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -926,14 +927,14 @@ def _count_caption_note(counts: pd.DataFrame) -> str:
 
 
 def _count_table_latex(
-    caption: str, label: str, col_spec: str, body: list[str]
+    caption: str, label: str, col_spec: str, body: list[str], table_size: str
 ) -> str:
     lines = [
         r"\begin{table}[t]",
         rf"\caption{{{caption}}}",
         rf"\label{{{label}}}",
         r"\centering",
-        r"\normalsize",
+        table_size,
         rf"\begin{{tabular}}{{{col_spec}}}",
         r"\toprule",
         *body,
@@ -941,8 +942,8 @@ def _count_table_latex(
         r"\end{tabular}",
         r"\end{table}",
     ]
-    table = "\n".join(lines) + "\n"
-    return table
+    table_str = "\n".join(lines) + "\n"
+    return table_str
 
 
 def _write_count_table(latex_str: str, output_path: Path) -> None:
@@ -955,6 +956,7 @@ def export_significant_dimension_summary(
     counts: pd.DataFrame,
     output_path: Path,
     label: str,
+    table_size: str,
     prompt_name: str = "default",
     alpha: float = SIGNIFICANCE_ALPHA,
     note: str = "",
@@ -987,7 +989,11 @@ def export_significant_dimension_summary(
     )
     _write_count_table(
         _count_table_latex(
-            caption, label, _model_col_spec("lr", len(llm_models)), body
+            caption,
+            label,
+            _model_col_spec("lr", len(llm_models)),
+            body,
+            table_size=table_size,
         ),
         output_path,
     )
@@ -997,6 +1003,7 @@ def export_significant_dimension_by_prompt(
     counts: pd.DataFrame,
     output_path: Path,
     label: str,
+    table_size: str,
     prompt_names: list[str] = MAIN_PROMPT_NAMES,
     alpha: float = SIGNIFICANCE_ALPHA,
     note: str = "",
@@ -1033,7 +1040,11 @@ def export_significant_dimension_by_prompt(
     )
     _write_count_table(
         _count_table_latex(
-            caption, label, _model_col_spec("lrl", len(llm_models)), body
+            caption,
+            label,
+            _model_col_spec("lrl", len(llm_models)),
+            body,
+            table_size=table_size,
         ),
         output_path,
     )
