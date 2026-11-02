@@ -137,8 +137,8 @@ def _draw_annotation_histogram(
         )
 
     ax.set_title(labels.dataset_label(ds.get_name()))
-    ax.set_xlabel(f"{ds.get_annotation_column()} value")
-    ax.set_ylabel("Proportion")
+    ax.set_xlabel(f"{ds.get_annotation_column()}")
+    ax.set_ylabel("")
     legend = ax.get_legend()
     if legend is not None:
         legend.remove()
@@ -148,9 +148,9 @@ def plot_annotation_histograms(
     human_datasets: HumanDatasets,
     annotations_dir: Path,
     output_path: Path,
+    dataset_keys: list[str],
     prompt_name: str = "default",
     ncols: int = 2,
-    dataset_keys: list[str] = DATASET_KEYS,
 ) -> None:
     dataset_keys = _available_dataset_keys(human_datasets, dataset_keys)
     fig, axes, nrows = _subplot_grid(len(dataset_keys), ncols)
@@ -180,15 +180,8 @@ def plot_annotation_histograms(
         f"Human vs. LLM annotation distributions ({prompt_name} prompt)",
         y=1.02,
     )
-    fig.legend(
-        handles,
-        ordered_labels,
-        loc="lower center",
-        bbox_to_anchor=(0.5, -0.02),
-        ncol=len(ordered_labels),
-        frameon=False,
-    )
-    fig.tight_layout(rect=(0, 0.06, 1, 1))
+    fig.supylabel("Proportion")
+    fig.legend(handles, ordered_labels, loc="lower right", ncols=2)
     graphs.save_plot(output_path)
     plt.close(fig)
 
