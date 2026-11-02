@@ -16,9 +16,10 @@ from pathlib import Path
 import pandas as pd
 
 from ..lib.preprocessing import (
+    DATASET_CLASSES,
     Dataset,
-    SubsampledView,
     LazyDatasetLoader,
+    SubsampledView,
 )
 
 # ---------------------------------------------------------------------------
@@ -203,9 +204,41 @@ def find_annotation_files(
     return out
 
 
+def dataset_key_of_file(path: Path) -> str:
+    """
+    Dataset key of an annotation file named "<key>-<prompt>-<model>
+    [-run<N>].csv". Longest keys first, so that a key that is a prefix of
+    another cannot match the wrong one.
+    """
+    for key in sorted(DATASET_CLASSES, key=len, reverse=True):
+        if path.name.startswith(f"{key}-"):
+            return key
+    raise ValueError(
+        f"Cannot tell the dataset of {path}: its name does not start with "
+        f"any of {sorted(DATASET_CLASSES)}."
+    )
+
+
+def out_of_range(cleaned: pd.Series, valid: frozenset[int]) -> pd.Series:
+    """Parsed annotations (see _clean_annotation) that are not NaN but not
+    in `valid` either."""
+    return cleaned.notna() & ~cleaned.isin(valid)
+
+
 def load_llm_df(path: Path) -> pd.DataFrame:
+    """
+    An llm_annotate.py output CSV, with an added "annotation_clean" column:
+    the reply parsed to an integer (see _clean_annotation), NaN if it
+    cannot be parsed or is outside the dataset's valid range
+    (VALID_ANNOTATION_VALUES of the lib.preprocessing class of the
+    dataset key in the file name). The
+    raw "annotation" column is kept as is.
+    """
     df = pd.read_csv(path)
-    df["annotation_clean"] = _clean_annotation(df["annotation"])
+    cleaned = _clean_annotation(df["annotation"])
+    dataset_cls = DATASET_CLASSES[dataset_key_of_file(path)]
+    valid = dataset_cls.VALID_ANNOTATION_VALUES
+    df["annotation_clean"] = cleaned.mask(out_of_range(cleaned, valid))
     return df
 
 

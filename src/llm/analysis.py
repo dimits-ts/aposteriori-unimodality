@@ -71,6 +71,9 @@ The following are produced:
    (nonstandard_answers_by_model.csv), and an abbreviated LaTeX summary
    per model, dataset and status (nonstandard_answers_summary.tex):
    replies that cannot be parsed or are out of range for the dataset.
+   Both kinds are NaN in every other step: shared.load_llm_df drops
+   annotations outside the dataset's valid range (VALID_ANNOTATION_VALUES
+   of the lib.preprocessing dataset class: 1-5, or -1/0/1 for DICES).
 
 Rows are matched across files (models, or prompt variants) using the
 comment id ("text_id") together with the sampled persona's characteristics,
@@ -88,6 +91,7 @@ from typing import NamedTuple
 import pandas as pd
 
 from ..lib.preprocessing import (
+    DATASET_CLASSES,
     LazyDatasetLoader,
     DicesDataset,
     SapDataset,
@@ -138,15 +142,6 @@ EXCLUDED_MODELS = ["llama8b", "qwen7b", "olmo7b"]
 # size. The all-models version has more columns, so its cells are narrower.
 SIGNIFICANCE_SLOT_WIDTH_ALL_MODELS_EM = 0.9
 SIGNIFICANCE_SLOT_WIDTH_EXCLUDING_EM = stats.DEFAULT_SLOT_WIDTH_EM
-
-# Valid annotation values per dataset key.
-VALID_ANNOTATION_VALUES = {
-    "dices-350": {-1, 0, 1},
-    "dices-990": {-1, 0, 1},
-    "sap": {1, 2, 3, 4, 5},
-    "kumar": {1, 2, 3, 4, 5},
-    "popquorn": {1, 2, 3, 4, 5},
-}
 
 
 def main(
@@ -285,16 +280,16 @@ _STATUS_LABELS = {"unparsed": "Unparsed", "out_of_range": "Out of range"}
 def _annotation_status(annotation: pd.Series, valid: set) -> pd.Series:
     """
     Per-reply status, judged with the parser the analysis uses
-    (shared._clean_annotation): "unparsed" (no integer found, dropped
-    downstream), "out_of_range" (integer not valid for the dataset; NOT
-    dropped by the pipeline), or NA for a reply that parses to a valid
+    (shared._clean_annotation): "unparsed" (no integer found) or
+    "out_of_range" (integer not valid for the dataset), both NaN in
+    shared.load_llm_df and so dropped downstream, or NA for a reply that parses to a valid
     value (including replies that only parse after cleaning).
     """
     cleaned = shared._clean_annotation(annotation)
 
     status = pd.Series(pd.NA, index=annotation.index, dtype="object")
     status[cleaned.isna()] = "unparsed"
-    status[cleaned.notna() & ~cleaned.isin(valid)] = "out_of_range"
+    status[shared.out_of_range(cleaned, valid)] = "out_of_range"
     return status
 
 
@@ -337,7 +332,7 @@ def _nonstandard_counts_for_dataset(
     annotations_dir: Path, key: str, totals: dict[tuple[str, str], int]
 ) -> list[pd.DataFrame]:
     """Counts for every prompt and model of one dataset."""
-    valid = VALID_ANNOTATION_VALUES[key]
+    valid = DATASET_CLASSES[key].VALID_ANNOTATION_VALUES
     frames = []
     for prompt_name in shared.MAIN_PROMPT_NAMES:
         files = shared.find_annotation_files(annotations_dir, key, prompt_name)
@@ -433,8 +428,8 @@ def export_nonstandard_summary_latex(
     caption = (
         "Number of non-standard LLM annotations per model and dataset, "
         "summed over all instruction prompts. Unparsed: no integer found "
-        "in the reply (dropped from the analysis); Out of range: an "
-        "integer outside the dataset's annotation scale. Incidence: "
+        "in the reply; Out of range: an integer outside the dataset's "
+        "annotation scale. Both are dropped from the analysis. Incidence: "
         "percentage of the model's annotations on that dataset."
     )
     table = summary.assign(
@@ -806,7 +801,7 @@ def run_histogram_step(
         annotations_dir=annotations_dir,
         output_path=output_path,
         prompt_name=prompt_name,
-        # ignore dices which were not annotated
+        # skip dices as they are not annotated
         dataset_keys=INHERENT_HIST_DATASET_KEYS,
     )
 

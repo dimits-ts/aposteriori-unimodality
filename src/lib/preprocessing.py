@@ -14,6 +14,14 @@ def _safe_len(x) -> int:
 
 class Dataset(abc.ABC):
 
+    # Valid annotation values (integers) of the dataset's annotation scale.
+    # A class attribute, so it can be read without loading the data (e.g.
+    # to validate LLM annotations of the dataset).
+    VALID_ANNOTATION_VALUES: frozenset[int] = frozenset(range(1, 6))
+
+    def get_valid_annotation_values(self) -> frozenset[int]:
+        return self.VALID_ANNOTATION_VALUES
+
     def get_dataset(self) -> pd.DataFrame:
         raise NotImplementedError()
 
@@ -82,6 +90,9 @@ class LazyDatasetLoader:
 
 
 class DicesDataset(Dataset):
+    # No / Unsure / Yes (see _base_df).
+    VALID_ANNOTATION_VALUES = frozenset({-1, 0, 1})
+
     def __init__(self, dataset_path: Path, variant: str):
         self.variant = variant
         self.df = self._base_df(dataset_path)
@@ -604,3 +615,15 @@ class PopquornDataset(Dataset):
         agg["text"] = "first"
         df = df.groupby("instance_id").agg(agg).reset_index()
         return df
+
+
+# Dataset class per dataset key (as used in the analysis scripts and in the
+# LLM annotation file names). Class attributes such as
+# VALID_ANNOTATION_VALUES can be read from it without loading the data.
+DATASET_CLASSES: dict[str, type[Dataset]] = {
+    "dices-350": DicesDataset,
+    "dices-990": DicesDataset,
+    "sap": SapDataset,
+    "kumar": KumarDataset,
+    "popquorn": PopquornDataset,
+}
