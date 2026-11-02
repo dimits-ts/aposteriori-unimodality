@@ -42,6 +42,12 @@ The following are produced:
    without the models in EXCLUDED_MODELS (files with an "_excluding"
    suffix).
 
+4b. A LaTeX table of the overall Spearman correlation between the human
+    and each model's per-comment nDFU, pooled over datasets, for the
+    no-persona baseline and every instruction prompt
+    (human_llm_ndfu_spearman.tex; also with an "_excluding" variant; see
+    stats.compute_human_llm_ndfu_correlations).
+
 5. A single LaTeX table, over all datasets, of which PC dimensions (SDB
    features such as age or gender; a dimension counts as significant if any
    of its groups is) each model finds statistically significant under each
@@ -232,12 +238,14 @@ def main(
         human_results_dir,
         exclude_models,
     )
+    ndfu_df, no_persona_df = load_mean_ndfu_records(
+        human_datasets, annotations_dir, cache_dir
+    )
     run_mean_ndfu_step(
-        human_datasets,
-        annotations_dir,
-        latex_output_dir,
-        cache_dir,
-        exclude_models,
+        ndfu_df, no_persona_df, latex_output_dir, exclude_models
+    )
+    run_ndfu_correlation_step(
+        ndfu_df, no_persona_df, latex_output_dir, exclude_models
     )
 
     run_inherent_polarization_steps(
@@ -798,7 +806,8 @@ def run_histogram_step(
         annotations_dir=annotations_dir,
         output_path=output_path,
         prompt_name=prompt_name,
-        dataset_keys=MAIN_DATASET_KEYS,
+        # ignore dices which were not annotated
+        dataset_keys=INHERENT_HIST_DATASET_KEYS,
     )
 
 
@@ -1331,13 +1340,16 @@ def _read_ndfu_records(path: Path) -> pd.DataFrame:
     return pd.read_csv(path, dtype={"text_id": str})
 
 
-def run_mean_ndfu_step(
-    human_datasets,
-    annotations_dir,
-    latex_output_dir,
-    cache_dir,
-    exclude_models,
-):
+def load_mean_ndfu_records(
+    human_datasets, annotations_dir: Path, cache_dir: Path
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    (per-comment nDFU records of the human annotations and of every model
+    under every main prompt, the same for the no-persona runs; LLM rows
+    only), see stats.compute_mean_ndfu_records. Both are cached in
+    cache_dir and shared by the mean nDFU tables and the human-LLM
+    correlation table.
+    """
     # Computed for every model; the "excluding" variants are filtered from
     # these records. (New cache name: the old mean_ndfu_records.csv was
     # written without olmo7b/llama8b and would be silently reused.)
@@ -1383,7 +1395,15 @@ def run_mean_ndfu_step(
     # give integers, and "123" != 123 would silently drop the rows.
     ndfu_df["text_id"] = ndfu_df["text_id"].astype(str)
     no_persona_df["text_id"] = no_persona_df["text_id"].astype(str)
+    return ndfu_df, no_persona_df
 
+
+def run_mean_ndfu_step(
+    ndfu_df: pd.DataFrame,
+    no_persona_df: pd.DataFrame,
+    latex_output_dir: Path,
+    exclude_models,
+):
     if ndfu_df.empty:
         print("No matched human/LLM annotations; skipping mean nDFU tables.")
         return
@@ -1425,6 +1445,47 @@ def run_mean_ndfu_step(
             / f"mean_ndfu_default_vs_human{file_suffix}.tex",
             caption=default_caption,
             label=f"tab:mean-ndfu-default-vs-human{label_suffix}",
+        )
+
+
+def run_ndfu_correlation_step(
+    ndfu_df: pd.DataFrame,
+    no_persona_df: pd.DataFrame,
+    latex_output_dir: Path,
+    exclude_models,
+):
+    """
+    Overall (pooled over datasets) Spearman correlation between the human
+    and each model's per-comment nDFU, under the no-persona baseline and
+    every main prompt (human_llm_ndfu_spearman.tex, plus an "_excluding"
+    variant). The Holm correction is applied per table, over its cells.
+    """
+    if ndfu_df.empty:
+        print("No matched human/LLM annotations; skipping correlation table.")
+        return
+    records = pd.concat([ndfu_df, no_persona_df], ignore_index=True)
+
+    caption = rf"""Spearman correlation between the per-comment
+        {labels.NDFU.tex} of the human annotations and of each LLM's
+        annotations, without a persona (No Persona) and with a
+        sociodemographic persona under each instruction prompt. Comments
+        are pooled over all datasets; $n$ is the number of comments per
+        model, shared by all of its prompts."""
+
+    for file_suffix, label_suffix, models in _model_variants(exclude_models):
+        corr_df = stats.compute_human_llm_ndfu_correlations(
+            _drop_models(records, models),
+            prompt_names=stats.CORRELATION_PROMPT_NAMES,
+            correction_method="holm",
+        )
+        stats.export_human_llm_correlation_table(
+            stats.build_human_llm_correlation_table(
+                corr_df, prompt_names=stats.CORRELATION_PROMPT_NAMES
+            ),
+            output_path=latex_output_dir
+            / f"human_llm_ndfu_spearman{file_suffix}.tex",
+            caption=caption,
+            label=f"tab:human-llm-ndfu-spearman{label_suffix}",
         )
 
 
