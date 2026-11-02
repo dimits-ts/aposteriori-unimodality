@@ -37,7 +37,7 @@ The following are produced:
 4. Two compact LaTeX tables of the mean per-comment nDFU of the human
    annotations and of the LLM annotations (mean_ndfu_by_prompt.tex: every
    instruction prompt; mean_ndfu_default_vs_human.tex: default prompt
-   only), per model and dataset (see stats.build_mean_ndfu_table). The
+   only, next to the no-persona baseline runs), per model and dataset (see stats.build_mean_ndfu_table). The
    same tables, and the Cohen's d table (cohens_d.tex), are also exported
    without the models in EXCLUDED_MODELS (files with an "_excluding"
    suffix).
@@ -73,7 +73,11 @@ drawn for every model and every prompt variant of a given dataset.
 """
 
 import argparse
+import logging
+from collections.abc import Iterable, Iterator
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
+from typing import NamedTuple
 
 import pandas as pd
 
@@ -85,7 +89,7 @@ from ..lib.preprocessing import (
     PopquornDataset,
 )
 
-from ..lib import graphs
+from ..lib import graphs, labels
 from ..lib.util import (
     skip_if_exists,
     center_table_latex,
@@ -93,6 +97,8 @@ from ..lib.util import (
     trim_numeric_col_latex,
 )
 from . import polarization, stats, shared, plots
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Run configuration (only used by this script)
@@ -152,6 +158,7 @@ def main(
     human_results_dir: Path,
     exclude_models: list[str],
     prompt_name: str = "default",
+    n_workers: int = 1,
 ):
     graphs.graph_setup()
     graph_output_dir.mkdir(parents=True, exist_ok=True)
@@ -188,7 +195,7 @@ def main(
     # apunim results for every comparison dataset, computed (or loaded from
     # the cache) once and shared by the apunim table steps below.
     apunim_results = load_apunim_results(
-        human_datasets, annotations_dir, cache_dir
+        human_datasets, annotations_dir, cache_dir, n_workers=n_workers
     )
 
     run_histogram_step(
@@ -423,7 +430,9 @@ def export_nonstandard_summary_latex(
         "percentage of the model's annotations on that dataset."
     )
     table = summary.assign(
-        incidence=trim_numeric_col_latex(summary["incidence"], ".2f")
+        model=summary["model"].map(labels.model_label),
+        dataset=summary["dataset"].map(labels.dataset_label),
+        incidence=trim_numeric_col_latex(summary["incidence"], ".2f"),
     ).rename(
         columns={
             "model": "Model",
@@ -467,26 +476,35 @@ def run_nonstandard_answers_step(
 # ---------------------------------------------------------------------------
 
 
-def _model_variants(exclude_models):
-    """
-    Variants of a per-model table: all models, and (if any models are
-    excluded) all models but the excluded ones. Yields
-    (file suffix, label suffix, caption note, models to drop).
-    """
-    yield "", "", "", set()
-    if exclude_models:
-        excluded_str = ", ".join(sorted(exclude_models))
-        yield (
-            "_excluding",
-            "-excluding",
-            f" Excluding the following models: {excluded_str}.",
-            set(exclude_models),
-        )
+class ModelVariant(NamedTuple):
+    """One version of a per-model figure or table."""
+
+    file_suffix: str  # appended to the output file name
+    label_suffix: str  # appended to the LaTeX \label{}
+    dropped_models: frozenset[str]  # models left out of this version
 
 
-def _drop_models(df: pd.DataFrame, models: set[str]) -> pd.DataFrame:
-    """Rows of a long/results frame whose `Model` is not in `models`."""
-    return df.loc[~df["Model"].isin(models)] if models else df
+def _model_variants(exclude_models: Iterable[str]) -> list[ModelVariant]:
+    """
+    The versions to export of every per-model figure or table: one with
+    all models and, if `exclude_models` is not empty, a second one without
+    them ("_excluding" file, "-excluding" label).
+    """
+    variants = [ModelVariant("", "", frozenset())]
+    excluded = frozenset(exclude_models)
+    if excluded:
+        variants.append(ModelVariant("_excluding", "-excluding", excluded))
+    return variants
+
+
+def _drop_models(
+    df: pd.DataFrame, models: set[str] | frozenset[str]
+) -> pd.DataFrame:
+    """Rows of a long/results frame whose `Model` is not in `models`. A
+    frame without a `Model` column (no results at all) is returned as is."""
+    if not models or "Model" not in df.columns:
+        return df
+    return df.loc[~df["Model"].isin(models)]
 
 
 def _comparison_keys(human_datasets) -> list[str]:
@@ -505,7 +523,7 @@ COHENS_D_ALL_LABEL = "All"
 # Layout of the exported Cohen's d table: models as rows, one column group
 # per dataset, one column per prompt. Sized to fit a 455pt text width
 # without \resizebox.
-COHENS_D_FONT_SIZE = r"\footnotesize"
+COHENS_D_FONT_SIZE = r"\normalsize"
 COHENS_D_TABCOLSEP_PT = 1.5
 COHENS_D_GROUP_GAP_PT = 4
 # Shown for a (model, dataset) pair without results.
@@ -545,25 +563,20 @@ def _cohens_d_cell(value) -> str:
 
 
 def _cohens_d_n_note(flat: pd.DataFrame) -> str:
-    """Caption sentence with the number of comments per dataset; models
-    whose count differs from the usual one are listed in parentheses."""
+    """Caption sentence with the number of comments per dataset, given as
+    a range if it differs between models."""
     per_dataset = flat.loc[flat["Dataset"] != COHENS_D_ALL_LABEL]
+    counts = pd.to_numeric(per_dataset["n"]).groupby(
+        per_dataset["Dataset"], sort=False
+    )
     parts = []
-    for dataset, group in per_dataset.groupby("Dataset", sort=False):
-        counts = pd.to_numeric(group["n"])
-        usual = int(counts.mode().iloc[0])
-        part = f"{_tex_escape(dataset)}: {usual}"
-        odd = group.loc[counts != usual]
-        if not odd.empty:
-            exceptions = ", ".join(
-                f"{_tex_escape(model)}: {int(n)}"
-                for model, n in zip(odd["Model"], odd["n"])
-            )
-            part += f" ({exceptions})"
-        parts.append(part)
+    for dataset, n in counts:
+        low, high = int(n.min()), int(n.max())
+        n_str = str(low) if low == high else f"{low}--{high}"
+        parts.append(f"{_tex_escape(dataset)}: {n_str}")
     if not parts:
         return ""
-    return "Comments per model: " + "; ".join(parts) + "."
+    return "Number of comments: " + "; ".join(parts) + "."
 
 
 def _cohens_d_header(datasets: list, prompts: list) -> list[str]:
@@ -611,7 +624,6 @@ def export_cohens_d_table_latex(
     output_path: Path,
     caption: str,
     label: str,
-    note: str = "",
 ) -> None:
     """
     Writes the Cohen's d table with models as rows and one column group
@@ -620,7 +632,7 @@ def export_cohens_d_table_latex(
     output: (Model, Dataset) rows, an `n` column and one column per
     prompt. The comment counts move from the `n` column to the caption.
     """
-    flat = _cohens_d_flat(compact)
+    flat = labels.relabel_frame(_cohens_d_flat(compact))
     prompts = [c for c in flat.columns if c not in ("Model", "Dataset", "n")]
     models = list(dict.fromkeys(flat["Model"]))
     datasets = list(dict.fromkeys(flat["Dataset"]))
@@ -629,7 +641,7 @@ def export_cohens_d_table_latex(
         caption.strip(),
         _cohens_d_n_note(flat),
     )
-    full_caption = " ".join(part for part in caption_parts if part) + note
+    full_caption = " ".join(part for part in caption_parts if part)
 
     group_gap = rf"@{{\hspace{{{COHENS_D_GROUP_GAP_PT}pt}}}}"
     col_spec = "l " + group_gap.join(["r" * len(prompts)] * len(datasets))
@@ -654,25 +666,109 @@ def export_cohens_d_table_latex(
     output_path.write_text("\n".join(lines) + "\n")
 
 
+# Layout of the default-prompt mean nDFU table: a tabularx spanning the
+# full line width, so the value columns share the spare width evenly and
+# adjacent "mean (SE)" cells never touch. Needs \\usepackage{tabularx}.
+MEAN_NDFU_FONT_SIZE = r"\normalsize"
+MEAN_NDFU_TABLE_WIDTH = r"\linewidth"
+# Centered paragraph column that stretches to fill the table width.
+MEAN_NDFU_VALUE_COL = r">{\centering\arraybackslash}X"
+
+
+def _mean_ndfu_header(datasets: list, sub_cols: list) -> list[str]:
+    """Dataset group row, the rules under it, and the column labels."""
+    groups, rules = [], []
+    for i, dataset in enumerate(datasets):
+        first = 2 + i * len(sub_cols)
+        last = first + len(sub_cols) - 1
+        groups.append(
+            rf"\multicolumn{{{len(sub_cols)}}}{{c}}{{{_tex_escape(dataset)}}}"
+        )
+        rules.append(rf"\cmidrule(lr){{{first}-{last}}}")
+    sub_header = " & ".join(_tex_escape(col) for col in sub_cols)
+    return [
+        " & " + " & ".join(groups) + r" \\",
+        "".join(rules),
+        "Model & " + " & ".join([sub_header] * len(datasets)) + r" \\",
+    ]
+
+
+def export_mean_ndfu_default_table_latex(
+    table_df: pd.DataFrame,
+    output_path: Path,
+    caption: str,
+    label: str,
+) -> None:
+    """
+    Writes the default-prompt mean nDFU table as a full-width tabularx:
+    models as rows, one column group per dataset with a No Persona / With
+    Persona column each. `table_df` is
+    stats.build_default_mean_ndfu_table's output. The Human value does not
+    depend on the prompt and spans both columns of its dataset.
+    """
+    datasets = list(dict.fromkeys(table_df.columns.get_level_values(0)))
+    sub_cols = list(dict.fromkeys(table_df.columns.get_level_values(1)))
+
+    def _cell(value) -> str:
+        text = str(value).strip()
+        return COHENS_D_MISSING if text in ("", "---", "nan") else text
+
+    rows = []
+    for model, row in table_df.iterrows():
+        if model == stats.HUMAN_LABEL:
+            cells = [
+                rf"\multicolumn{{{len(sub_cols)}}}{{c}}"
+                rf"{{{_cell(row[(d, sub_cols[0])])}}}"
+                for d in datasets
+            ]
+        else:
+            cells = [_cell(row[(d, c)]) for d in datasets for c in sub_cols]
+        rows.append(
+            f"{_tex_escape(labels.model_label(model))} & "
+            + " & ".join(cells)
+            + r" \\"
+        )
+
+    n_value_cols = len(sub_cols) * len(datasets)
+    col_spec = rf"l*{{{n_value_cols}}}{{{MEAN_NDFU_VALUE_COL}}}"
+    lines = [
+        r"\begin{table}[t]",
+        rf"\caption{{{caption.strip()}}}",
+        rf"\label{{{label}}}",
+        r"\centering",
+        MEAN_NDFU_FONT_SIZE,
+        rf"\begin{{tabularx}}{{{MEAN_NDFU_TABLE_WIDTH}}}{{{col_spec}}}",
+        r"\toprule",
+        *_mean_ndfu_header(
+            [labels.dataset_label(d) for d in datasets], sub_cols
+        ),
+        r"\midrule",
+        *rows,
+        r"\bottomrule",
+        r"\end{tabularx}",
+        r"\end{table}",
+    ]
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text("\n".join(lines) + "\n")
+    print(f"Table exported to {output_path.resolve()}")
+
+
 def _export_cohens_d_variant(
-    res_df,
-    latex_output_dir,
-    caption,
-    file_suffix,
-    label_suffix,
-    note,
-    models,
-):
-    variant_df = _drop_models(res_df, models)
+    res_df: pd.DataFrame,
+    latex_output_dir: Path,
+    caption: str,
+    variant: ModelVariant,
+) -> None:
+    output_path = latex_output_dir / f"cohens_d{variant.file_suffix}.tex"
+    variant_df = _drop_models(res_df, variant.dropped_models)
     if variant_df.empty:
-        print(f"No Cohen's d results left{note}; skipping table.")
+        print(f"No Cohen's d results left; skipping {output_path}.")
         return
     export_cohens_d_table_latex(
         stats.compute_cohens_d_compact_table(variant_df),
-        output_path=latex_output_dir / f"cohens_d{file_suffix}.tex",
+        output_path=output_path,
         caption=caption,
-        label=f"tab:cohens-d{label_suffix}",
-        note=note,
+        label=f"tab:cohens-d{variant.label_suffix}",
     )
 
 
@@ -680,22 +776,12 @@ def run_cohens_d_step(res_df, latex_output_dir, exclude_models):
     # The effect sizes are computed independently per (model, dataset), so
     # dropping models from the results gives exactly the table one would
     # get by never running them.
-    caption = r"""Cohen's d between the default and each adversarial
-        instruction prompt, computed on the per-comment \ac{ndfu}. Results
-        are given per model, for each dataset separately and as the
+    caption = rf"""Cohen's d between the default and each adversarial
+        instruction prompt, computed on the per-comment {labels.NDFU.tex}.
+        Results are given per model, for each dataset separately and as the
         unweighted mean over datasets (All)."""
-    for file_suffix, label_suffix, note, models in _model_variants(
-        exclude_models
-    ):
-        _export_cohens_d_variant(
-            res_df,
-            latex_output_dir,
-            caption,
-            file_suffix,
-            label_suffix,
-            note,
-            models,
-        )
+    for variant in _model_variants(exclude_models):
+        _export_cohens_d_variant(res_df, latex_output_dir, caption, variant)
 
 
 # ---------------------------------------------------------------------------
@@ -762,7 +848,9 @@ def _run_cross_model_consistency_excluding_step(
     output_path = (
         latex_output_dir / "llm-consistency-cross-model-excluding.tex"
     )
-    excluded_str = ", ".join(sorted(exclude_models))
+    excluded_str = ", ".join(
+        labels.model_label(m) for m in sorted(exclude_models)
+    )
     stats.export_latex_table(
         stats.cross_model_consistency_table(
             human_datasets=human_datasets,
@@ -826,9 +914,24 @@ def run_repeat_consistency_step(
 # ---------------------------------------------------------------------------
 
 
+# Columns of an apunim results frame (stats.compute_llm_apunim_by_prompt).
+APUNIM_COLUMNS = [
+    "SDB Feature",
+    "Value",
+    "Model",
+    "Prompt",
+    "apunim",
+    "pvalue",
+    "support",
+]
+
+
 def _read_apunim_cache(cache_path: Path) -> pd.DataFrame:
+    # Without a cache, start from an empty frame that still has the result
+    # columns: a dataset none of whose pairs produce results stays empty,
+    # and the steps downstream select columns such as "Model".
     if not cache_path.exists():
-        return pd.DataFrame()
+        return pd.DataFrame(columns=APUNIM_COLUMNS)
     long_df = pd.read_csv(cache_path)
     # Older caches were written with the DataFrame index as a column.
     return long_df.loc[:, ~long_df.columns.str.startswith("Unnamed")]
@@ -877,6 +980,23 @@ def _pending_apunim_pairs(
     return pending
 
 
+def _apunim_pair_kwargs(
+    annotations_dir: Path,
+    key: str,
+    prompt_name: str,
+    model: str,
+    all_models: set[str],
+) -> dict:
+    """Arguments of stats.compute_llm_apunim_by_prompt for one (model,
+    prompt) pair: every other model of the prompt is excluded."""
+    return dict(
+        annotations_dir=annotations_dir,
+        dataset_key=key,
+        prompt_names=[prompt_name],
+        exclude_models=all_models - {model},
+    )
+
+
 def _compute_apunim_pair(
     annotations_dir: Path,
     key: str,
@@ -886,54 +1006,139 @@ def _compute_apunim_pair(
 ) -> pd.DataFrame:
     print(f"Computing apunim: {key} / {prompt_name} / {model}")
     return stats.compute_llm_apunim_by_prompt(
-        annotations_dir=annotations_dir,
-        dataset_key=key,
-        prompt_names=[prompt_name],
-        exclude_models=all_models - {model},
+        **_apunim_pair_kwargs(
+            annotations_dir, key, prompt_name, model, all_models
+        )
     )
 
 
-def _load_or_compute_apunim(
-    annotations_dir: Path, cache_dir: Path, key: str
-) -> pd.DataFrame:
+def _iter_apunim_pairs_serial(
+    annotations_dir: Path,
+    pending: list[tuple[str, str, str, set[str]]],
+) -> Iterator[tuple[str, pd.DataFrame]]:
+    for key, prompt_name, model, all_models in pending:
+        yield key, _compute_apunim_pair(
+            annotations_dir, key, prompt_name, model, all_models
+        )
+
+
+def _iter_apunim_pairs_parallel(
+    annotations_dir: Path,
+    pending: list[tuple[str, str, str, set[str]]],
+    n_workers: int,
+) -> Iterator[tuple[str, pd.DataFrame]]:
     """
-    apunim results for every model and prompt of one dataset, cached in
-    cache_dir/apunim_<key>.csv.
+    Runs the pairs in a pool of `n_workers` processes and yields
+    (dataset key, results) in order of completion. The worker is
+    stats.compute_llm_apunim_by_prompt itself (a function of an importable
+    module), so it pickles under every start method, including spawn and
+    forkserver. If a pair fails, the pairs not started yet are cancelled,
+    the ones already running are still yielded (and so cached) as they
+    finish, and the first error is then re-raised.
+    """
+    executor = ProcessPoolExecutor(max_workers=n_workers)
+    try:
+        futures = {}
+        for key, prompt_name, model, all_models in pending:
+            print(f"Queued apunim: {key} / {prompt_name} / {model}")
+            future = executor.submit(
+                stats.compute_llm_apunim_by_prompt,
+                **_apunim_pair_kwargs(
+                    annotations_dir, key, prompt_name, model, all_models
+                ),
+            )
+            futures[future] = (key, prompt_name, model)
+
+        error = None
+        for future in as_completed(futures):
+            if future.cancelled():
+                continue
+            key, prompt_name, model = futures[future]
+            try:
+                result = future.result()
+            except Exception as exc:
+                print(f"Failed apunim: {key} / {prompt_name} / {model}")
+                if error is None:
+                    error = exc
+                    for other in futures:
+                        other.cancel()
+                continue
+            print(f"Finished apunim: {key} / {prompt_name} / {model}")
+            yield key, result
+        if error is not None:
+            raise error
+    finally:
+        executor.shutdown(wait=True, cancel_futures=True)
+
+
+def _iter_apunim_pairs(
+    annotations_dir: Path,
+    pending: list[tuple[str, str, str, set[str]]],
+    n_workers: int,
+) -> Iterator[tuple[str, pd.DataFrame]]:
+    """(dataset key, results) of every pending (key, prompt, model,
+    all models) pair; in a process pool if n_workers > 1."""
+    n_workers = min(n_workers, len(pending))
+    if n_workers <= 1:
+        return _iter_apunim_pairs_serial(annotations_dir, pending)
+    print(f"Computing {len(pending)} apunim pairs with {n_workers} processes.")
+    return _iter_apunim_pairs_parallel(annotations_dir, pending, n_workers)
+
+
+def _apunim_cache_path(cache_dir: Path, key: str) -> Path:
+    return cache_dir / f"apunim_{key}.csv"
+
+
+def load_apunim_results(
+    human_datasets,
+    annotations_dir: Path,
+    cache_dir: Path,
+    n_workers: int = 1,
+) -> dict[str, pd.DataFrame]:
+    """
+    dataset key -> apunim results (every model and prompt), for every
+    comparison dataset, cached in cache_dir/apunim_<key>.csv. Computed once
+    and shared by the apunim-by-prompt tables and the significant-PC-
+    dimension tables.
 
     The cache is checked per (model, prompt) pair -- the unit apunim is run
     on -- so annotation runs that are still in progress are handled: pairs
     already in the cache are never recomputed, pairs whose annotation file
     appears later are added on the next run, and the cache is rewritten
     after every pair, so an interrupted run keeps what it finished.
+
+    The pending pairs of all datasets are computed together, in a pool of
+    `n_workers` processes when n_workers > 1. Results are written to the
+    cache by this (parent) process only, as each pair finishes.
     """
-    cache_path = cache_dir / f"apunim_{key}.csv"
-    long_df = _read_apunim_cache(cache_path)
-    n_rows_before = len(long_df)
-
-    pending = _pending_apunim_pairs(
-        annotations_dir, key, _cached_apunim_pairs(long_df)
-    )
-    for prompt_name, model, all_models in pending:
-        new_df = _compute_apunim_pair(
-            annotations_dir, key, prompt_name, model, all_models
-        )
-        long_df = _update_apunim_cache(long_df, new_df, cache_path)
-
-    if len(long_df) == n_rows_before:
-        print(f"Skipping (nothing new to compute): {cache_path}")
-    return long_df
-
-
-def load_apunim_results(
-    human_datasets, annotations_dir: Path, cache_dir: Path
-) -> dict[str, pd.DataFrame]:
-    """dataset key -> apunim results (every model and prompt), for every
-    comparison dataset. Computed once and shared by the apunim-by-prompt
-    tables and the significant-PC-dimension tables."""
-    return {
-        key: _load_or_compute_apunim(annotations_dir, cache_dir, key)
-        for key in _comparison_keys(human_datasets)
+    keys = _comparison_keys(human_datasets)
+    results = {
+        key: _read_apunim_cache(_apunim_cache_path(cache_dir, key))
+        for key in keys
     }
+    n_rows_before = {key: len(df) for key, df in results.items()}
+
+    pending = [
+        (key, prompt_name, model, all_models)
+        for key in keys
+        for prompt_name, model, all_models in _pending_apunim_pairs(
+            annotations_dir, key, _cached_apunim_pairs(results[key])
+        )
+    ]
+    for key, new_df in _iter_apunim_pairs(annotations_dir, pending, n_workers):
+        results[key] = _update_apunim_cache(
+            results[key], new_df, _apunim_cache_path(cache_dir, key)
+        )
+
+    for key in keys:
+        if results[key].empty:
+            print(f"Warning: no apunim results for {key}.")
+        elif len(results[key]) == n_rows_before[key]:
+            print(
+                "Skipping (nothing new to compute): "
+                f"{_apunim_cache_path(cache_dir, key)}"
+            )
+    return results
 
 
 # ---------------------------------------------------------------------------
@@ -1028,15 +1233,12 @@ def run_apunim_significance_step(
         for key, value in inputs.items()
         if key not in SIGNIFICANCE_TABLE_SKIP_KEYS
     }
-    for file_suffix, label_suffix, note, models in _model_variants(
-        exclude_models
-    ):
+    for variant in _model_variants(exclude_models):
+        file_suffix, label_suffix, models = variant
         _export_significance_counts(
             _significance_inputs_by_name(human_datasets, inputs, models),
             latex_output_dir,
-            file_suffix,
-            label_suffix,
-            note,
+            variant,
         )
         by_name = _significance_inputs_by_name(
             human_datasets, table_inputs, models
@@ -1057,18 +1259,20 @@ def run_apunim_significance_step(
             output_path=latex_output_dir
             / f"llm-apunim-significance{file_suffix}.tex",
             label=f"tab:llm-apunim-significance{label_suffix}",
-            note=note,
             # if includes extra models, make the table smaller
             table_size=r"\footnotesize" if len(file_suffix) == 0 else None,
         )
 
 
 def _export_significance_counts(
-    by_name, latex_output_dir, file_suffix, label_suffix, note
-):
+    by_name: dict[str, tuple[pd.DataFrame, pd.DataFrame]],
+    latex_output_dir: Path,
+    variant: ModelVariant,
+) -> None:
     """Share of PC dimensions each model finds significant, per dataset
     (including the datasets left out of the significance table):
     concisely for the default prompt, and in full per prompt."""
+    file_suffix, label_suffix = variant.file_suffix, variant.label_suffix
     counts = stats.count_significant_dimensions(
         by_name, prompt_names=shared.MAIN_PROMPT_NAMES
     )
@@ -1077,7 +1281,6 @@ def _export_significance_counts(
         output_path=latex_output_dir
         / f"llm-apunim-significance-counts{file_suffix}.tex",
         label=f"tab:llm-apunim-significance-counts{label_suffix}",
-        note=note,
     )
     stats.export_significant_dimension_by_prompt(
         counts,
@@ -1085,13 +1288,47 @@ def _export_significance_counts(
         / f"llm-apunim-significance-counts-by-prompt{file_suffix}.tex",
         label=f"tab:llm-apunim-significance-counts-by-prompt{label_suffix}",
         prompt_names=shared.MAIN_PROMPT_NAMES,
-        note=note,
     )
 
 
 # ---------------------------------------------------------------------------
 # Mean nDFU
 # ---------------------------------------------------------------------------
+
+
+def _missing_no_persona_annotations(
+    human_datasets, annotations_dir: Path
+) -> list[Path]:
+    """
+    The expected no-persona annotation files ("<dataset>-nopersona-<model>
+    .csv") that do not exist, for every model that has default-prompt
+    annotations for a dataset. Each missing file (or a missing annotations
+    directory) is logged as a warning; the matching table cells are then
+    left empty.
+    """
+    if not annotations_dir.is_dir():
+        logger.warning("Annotations directory not found: %s", annotations_dir)
+        return [annotations_dir]
+    missing = []
+    for dataset_key in _comparison_keys(human_datasets):
+        default_files = shared.find_annotation_files(
+            annotations_dir, dataset_key, "default"
+        )
+        for model in default_files:
+            path = (
+                annotations_dir
+                / f"{dataset_key}-{stats.NO_PERSONA_PROMPT_NAME}-{model}.csv"
+            )
+            if not path.is_file():
+                logger.warning("Missing no-persona annotations: %s", path)
+                missing.append(path)
+    return missing
+
+
+def _read_ndfu_records(path: Path) -> pd.DataFrame:
+    """Cached mean-nDFU records, with text_id always read as a string (it
+    mixes numeric and non-numeric ids across datasets)."""
+    return pd.read_csv(path, dtype={"text_id": str})
 
 
 def run_mean_ndfu_step(
@@ -1106,7 +1343,7 @@ def run_mean_ndfu_step(
     # written without olmo7b/llama8b and would be silently reused.)
     cache_path = cache_dir / "mean_ndfu_records_all_models.csv"
     if skip_if_exists(cache_path):
-        ndfu_df = pd.read_csv(cache_path)
+        ndfu_df = _read_ndfu_records(cache_path)
     else:
         ndfu_df = stats.compute_mean_ndfu_records(
             human_datasets=human_datasets,
@@ -1118,23 +1355,51 @@ def run_mean_ndfu_step(
         cache_path.parent.mkdir(parents=True, exist_ok=True)
         ndfu_df.to_csv(cache_path, index=False)
 
+    # The no-persona baseline runs (LLM rows only), cached separately so
+    # the records above need not be recomputed. Only used by the
+    # default-vs-human table. Every model run on the default prompt should
+    # have a no-persona run too; missing files are logged and their cells
+    # left empty. Results are only cached once no file is missing, so a
+    # cache written before all files existed is never reused.
+    missing = _missing_no_persona_annotations(human_datasets, annotations_dir)
+    no_persona_cache_path = cache_dir / "mean_ndfu_records_no_persona.csv"
+    if not missing and skip_if_exists(no_persona_cache_path):
+        no_persona_df = _read_ndfu_records(no_persona_cache_path)
+    else:
+        no_persona_df = stats.compute_mean_ndfu_records(
+            human_datasets=human_datasets,
+            annotations_dir=annotations_dir,
+            dataset_keys=shared.PROMPT_COMPARISON_DATASET_KEYS,
+            prompt_names=[stats.NO_PERSONA_PROMPT_NAME],
+            exclude_models=None,
+            include_human=False,
+        )
+        if not missing:
+            no_persona_cache_path.parent.mkdir(parents=True, exist_ok=True)
+            no_persona_df.to_csv(no_persona_cache_path, index=False)
+
+    # Comments are matched across these frames by text_id, so its type must
+    # agree: a cached CSV gives strings where freshly computed records may
+    # give integers, and "123" != 123 would silently drop the rows.
+    ndfu_df["text_id"] = ndfu_df["text_id"].astype(str)
+    no_persona_df["text_id"] = no_persona_df["text_id"].astype(str)
+
     if ndfu_df.empty:
         print("No matched human/LLM annotations; skipping mean nDFU tables.")
         return
 
-    by_prompt_caption = r"""Mean (SE) per-comment \ac{ndfu} of the human annotations
+    by_prompt_caption = rf"""Mean (SE) per-comment {labels.NDFU.tex} of the human annotations
         and of the LLM annotations under each instruction prompt. Human
         annotations do not depend on the prompt. Rows give results per
         model, pooled over all datasets (All) and for each dataset
         separately; $n$ is the number of comments."""
-    default_caption = r"""Mean (SE) per-comment \ac{ndfu} of the human annotations
-        and of the LLM annotations under the default prompt, per dataset
-        and pooled over all datasets (All). $n$ is the number of
-        comments."""
+    default_caption = rf"""Mean (SE) per-comment {labels.NDFU.tex} of the human annotations
+        and of the LLM annotations under the default prompt, without a
+        persona (No Persona) and with a sociodemographic persona (With
+        Persona) with default instruction prompting (no adversarial prompts), 
+        per model and dataset."""
 
-    for file_suffix, label_suffix, note, models in _model_variants(
-        exclude_models
-    ):
+    for file_suffix, label_suffix, models in _model_variants(exclude_models):
         variant_df = _drop_models(ndfu_df, models)
 
         stats.export_compact_prompt_table_latex(
@@ -1143,17 +1408,22 @@ def run_mean_ndfu_step(
             ),
             output_path=latex_output_dir
             / f"mean_ndfu_by_prompt{file_suffix}.tex",
-            caption=by_prompt_caption + note,
+            caption=by_prompt_caption,
             label=f"tab:mean-ndfu-by-prompt{label_suffix}",
         )
 
-        stats.export_default_mean_ndfu_latex(
+        export_mean_ndfu_default_table_latex(
             stats.build_default_mean_ndfu_table(
-                variant_df, prompt_name="default"
+                pd.concat(
+                    [variant_df, _drop_models(no_persona_df, models)],
+                    ignore_index=True,
+                ),
+                prompt_name="default",
+                no_persona_prompt_name=stats.NO_PERSONA_PROMPT_NAME,
             ),
             output_path=latex_output_dir
             / f"mean_ndfu_default_vs_human{file_suffix}.tex",
-            caption=default_caption + note,
+            caption=default_caption,
             label=f"tab:mean-ndfu-default-vs-human{label_suffix}",
         )
 
@@ -1234,7 +1504,7 @@ def run_inherent_polarization_by_model_step(
     apriori.png: inherent-polarization-by-model.png with every model, and
     inherent-polarization-by-model_excluding.png without `exclude_models`.
     """
-    for file_suffix, _, _, dropped in _model_variants(exclude_models):
+    for file_suffix, _, dropped in _model_variants(exclude_models):
         plots.plot_inherent_polarization_by_model(
             full_df=full_df,
             subsampled_df=subsampled_df,
@@ -1262,7 +1532,7 @@ def run_inherent_polarization_by_dataset_step(
     model, and inherent-polarization-by-dataset_excluding.png without
     `exclude_models`.
     """
-    for file_suffix, _, _, dropped in _model_variants(exclude_models):
+    for file_suffix, _, dropped in _model_variants(exclude_models):
         plots.plot_inherent_polarization_by_dataset(
             full_df=full_df,
             subsampled_df=subsampled_df,
@@ -1327,7 +1597,21 @@ def run_inherent_polarization_steps(
     )
 
 
+def _positive_int(value: str) -> int:
+    n = int(value)
+    if n < 1:
+        raise argparse.ArgumentTypeError(f"must be >= 1, got {value}")
+    return n
+
+
 if __name__ == "__main__":
+    # Warnings from every library, but INFO only from this project, so
+    # third-party INFO messages (e.g. matplotlib's font lookup) stay hidden.
+    logging.basicConfig(
+        level=logging.WARNING,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
+    logging.getLogger("src").setLevel(logging.INFO)
     parser = argparse.ArgumentParser(
         description=(
             "Compare human vs. LLM annotations: normalized histograms, "
@@ -1407,6 +1691,16 @@ if __name__ == "__main__":
             "written by the human analysis scripts, e.g. output/human/main."
         ),
     )
+    parser.add_argument(
+        "--n-workers",
+        type=_positive_int,
+        default=1,
+        help=(
+            "Number of worker processes for the apunim computation (one "
+            "task per dataset/prompt/model pair not yet cached). Only that "
+            "step is parallelized. Default: 1 (no multiprocessing)."
+        ),
+    )
     args = parser.parse_args()
 
     main(
@@ -1424,4 +1718,5 @@ if __name__ == "__main__":
         cache_dir=Path(args.cache_dir),
         human_results_dir=Path(args.human_results_dir),
         exclude_models=EXCLUDED_MODELS,
+        n_workers=args.n_workers,
     )

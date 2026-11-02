@@ -42,7 +42,7 @@ from matplotlib.transforms import Bbox
 import numpy as np
 import pandas as pd
 
-from ..lib import graphs
+from ..lib import graphs, labels
 from ..lib.util import skip_if_exists, stable_seed
 from .plots import (
     DETECTION_RATE_LABEL,
@@ -476,7 +476,7 @@ def plot(rows, methods, out_path, panel_titles=None):
     _legends(fig, empty_axes, methods)
 
     fig.suptitle(
-        "Efficacy of IAA and Other Prior Methods on "
+        f"Efficacy of {labels.IAA.short} and Other Prior Methods on "
         "Systematic Disagreement Attribution"
     )
     fig.supylabel(DETECTION_RATE_LABEL)

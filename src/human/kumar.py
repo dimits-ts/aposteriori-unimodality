@@ -9,6 +9,7 @@ from ..lib.preprocessing import KumarDataset, LazyDatasetLoader
 from ..lib.util import skip_if_exists
 from ..lib import run_helper
 from ..lib import graphs
+from ..lib import labels
 
 
 def main(
@@ -61,7 +62,8 @@ def main(
         output_path=latex_output_dir / "kumar_sample_size_comparison.tex",
         caption=(
             "Comparison of Apunim values across different sample sizes "
-            "(1k, 3k, 10k, 30k) for the Kumar dataset."
+            "(1k, 3k, 10k, 30k) for the "
+            f"{labels.dataset_label('kumar')} dataset."
         ),
         label=r"tab:num-comments-apunim",
         sample_sizes=[1_000, 3_000, 10_000, 30_000],
@@ -152,7 +154,7 @@ def export_latex_sample_size_table(
     # Pivot: rows = (dimension, subgroup), columns = sample sizes.
     combined = pd.DataFrame({n: df["apunim"] for n, df in frames.items()})
     combined.columns = [r"\textbf{" + str(n) + "}" for n in combined.columns]
-    combined.index.names = [None, r"\textbf{\ac{sdd}}"]
+    combined.index.names = [None, rf"\textbf{{{labels.SDD.tex}}}"]
 
     latex = combined.to_latex(
         longtable=True,

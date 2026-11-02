@@ -11,7 +11,7 @@ import pandas as pd
 from scipy import stats
 from statsmodels.stats.multitest import multipletests
 
-from ..lib import run_helper
+from ..lib import labels, run_helper
 from ..lib.util import (
     center_table_latex,
     small_table_latex,
@@ -299,7 +299,7 @@ def per_model_repeat_consistency_table(
 def export_latex_table(
     df: pd.DataFrame, output_path: Path, caption: str, label: str
 ) -> None:
-    df = df.copy()
+    df = labels.relabel_frame(df)
     # very common column in all exported tables in this module
     if "Krippendorff's alpha" in df.columns:
         df["Krippendorff's alpha"] = trim_numeric_col_latex(
@@ -403,19 +403,22 @@ def export_llm_apunim_prompt_table(
             f"skipping {output_path}."
         )
         return
-    df = df.rename(columns={"SDB Feature": r"\ac{sdd}"})
+    df = labels.relabel_frame(df).rename(
+        columns={"SDB Feature": labels.SDD.tex}
+    )
 
     # The prompt columns already hold formatted "value$^{***}$" strings (see
     # _apunim_prompt_cell); they must not be passed through
     # trim_numeric_col_latex, which would turn the starred cells into "---".
     df = df.replace("_", r"\_", regex=True).set_index(
-        [r"\ac{sdd}", "Value", "Model"]
+        [labels.SDD.tex, "Value", "Model"]
     )
 
     latex_str = df.to_latex(
         caption=(
             "Aposteriori unimodality results for the LLM annotations of "
-            f"the {dataset_name} dataset, across instruction prompts. "
+            f"the {labels.dataset_label(dataset_name)} dataset, across "
+            "instruction prompts. "
             r"$^{*}p<0.05$, $^{**}p<0.01$, $^{***}p<0.001$."
         ),
         label=label,
@@ -466,15 +469,8 @@ _CELL_AGREE_NEITHER = _colored(_COL_AGREE_NEITHER, _SYM_AGREE)
 _CELL_SIGN_DIFFERS = _colored(_COL_SIGN_DIFFERS, _SYM_SIGN_DIFFERS)
 _CELL_DISAGREE = _colored(_COL_DISAGREE, _SYM_DISAGREE)
 
-# Short dataset names for the narrow significance tables.
-_SHORT_DATASET_NAMES = {
-    "Sap et al. 2022": "Sap",
-    "Kumar et al. 2021": "Kumar",
-    "POPQUORN": "POP",
-}
-
 # Each prompt gets a fixed-width slot (in em), so that the symbols of
-# different rows line up and a prompt without LLM results is simply blank.
+# different rows line up.
 # It can be set per table (`slot_width_em`); the symbols are roughly an em
 # wide, so much narrower slots make them touch.
 DEFAULT_SLOT_WIDTH_EM = 1.2
@@ -584,21 +580,16 @@ def _llm_cell(
     slot_width_em: float = DEFAULT_SLOT_WIDTH_EM,
 ) -> str:
     """
-    One slot per prompt (in prompt order); a prompt without an LLM result is
-    a blank slot, and a model without any result gives an empty cell. A
-    dimension missing from the human results counts as not significant.
-    `sign_differs` says, per prompt, whether some group's sign differs from
-    the human one; `slot_width_em` is the width of each prompt slot.
+    One slot per prompt (in prompt order). A dimension without a result
+    counts as not significant, on either side: for the LLM, this happens
+    when apunim found no polarized comments with enough annotations per
+    group (all p-values NaN, or the run skipped). `sign_differs` says, per
+    prompt, whether some group's sign differs from the human one;
+    `slot_width_em` is the width of each prompt slot.
     """
-    if all(llm is None for llm in llm_results):
-        return ""
     return "".join(
         _slot(
-            (
-                ""
-                if llm is None
-                else _comparison_symbol(llm, bool(human_significant), differs)
-            ),
+            _comparison_symbol(bool(llm), bool(human_significant), differs),
             slot_width_em,
         )
         for llm, differs in zip(llm_results, sign_differs)
@@ -713,7 +704,8 @@ def build_apunim_significance_table(
 
     A model cell holds one symbol per prompt (in `prompt_names` order)
     saying how the model's result for the dimension compares with the human
-    one (see _comparison_symbol); a prompt without results is blank.
+    one (see _comparison_symbol); a missing result counts as not
+    significant.
     `slot_width_em` sets the width of each prompt slot, i.e. the cell size.
     The prompts used are stored in `.attrs["prompts"]`.
     """
@@ -756,7 +748,7 @@ def export_apunim_significance_table(
         return
     prompts = table_df.attrs.get("prompts", [])
     caption = (
-        rf"Statistically significant ($p<{alpha}$) \acp{{sdd}} of "
+        rf"Statistically significant ($p<{alpha}$) {labels.SDD.tex_plural} of "
         "each LLM compared with the human annotations, per dataset. A "
         "dimension counts as significant if at least one of its groups is. "
         "Each cell shows one symbol per prompt, in the order "
@@ -766,14 +758,21 @@ def export_apunim_significance_table(
         rf"{_CELL_AGREE_NEITHER}~neither significant; "
         rf"{_CELL_SIGN_DIFFERS}~both significant, but the sign of at least "
         "one group's effect differs; "
-        rf"{_CELL_DISAGREE}~significant for only one of the two; "
-        "blank: no LLM result." + note
+        rf"{_CELL_DISAGREE}~significant for only one of the two. A "
+        "dimension without an LLM result (no polarized comments with enough "
+        "annotations per group) counts as not significant." + note
     )
 
-    df = table_df
-    df.Dataset = df.Dataset.replace(_SHORT_DATASET_NAMES)
-    df = table_df.rename(columns={"SDB Feature": r"\ac{sdd}", "Dataset": "Ds"})
-    df = df.replace("_", r"\_", regex=True).set_index(["Ds", r"\ac{sdd}"])
+    # Model columns and short dataset names (narrow table).
+    df = labels.relabel_frame(table_df, short=True)
+    df = df.rename(
+        columns={
+            **{c: labels.model_label(c) for c in df.columns},
+            "SDB Feature": labels.SDD.tex,
+            "Dataset": "Ds",
+        }
+    )
+    df = df.replace("_", r"\_", regex=True).set_index(["Ds", labels.SDD.tex])
     latex_str = df.to_latex(
         caption=caption,
         label=label,
@@ -890,7 +889,7 @@ def _ratio_cell(
 
 
 def _count_row_label(name: str) -> str:
-    return _SHORT_DATASET_NAMES.get(name, name).replace("_", r"\_")
+    return labels.dataset_label(name, short=True).replace("_", r"\_")
 
 
 def _model_header(
@@ -898,7 +897,10 @@ def _model_header(
 ) -> str:
     """Header row: the leading columns, then the model names (rotated by
     90 degrees if `rotate`)."""
-    names = [m.replace("_", r"\_") for m in [HUMAN_LABEL] + llm_models]
+    names = [
+        labels.model_label(m).replace("_", r"\_")
+        for m in [HUMAN_LABEL] + llm_models
+    ]
     if rotate:
         names = [rf"\rotatebox{{90}}{{{name}}}" for name in names]
     return " & ".join(leading + names) + r" \\"
@@ -928,7 +930,7 @@ def _count_table_latex(
         rf"\caption{{{caption}}}",
         rf"\label{{{label}}}",
         r"\centering",
-        r"\footnotesize",
+        r"\normalsize",
         rf"\begin{{tabular}}{{{col_spec}}}",
         r"\toprule",
         *body,
@@ -1301,6 +1303,7 @@ def export_compact_prompt_table_latex(
     caption: str,
     label: str,
 ) -> None:
+    compact_df = labels.relabel_frame(compact_df)
     latex_str = compact_df.to_latex(
         caption=caption,
         label=label,
@@ -1322,34 +1325,21 @@ def export_compact_prompt_table_latex(
     print(f"Table exported to {output_path.resolve()}")
 
 
-def export_default_mean_ndfu_latex(
-    table_df: pd.DataFrame, output_path: Path, caption: str, label: str
-) -> None:
-    n_groups = len(table_df.columns) // 2
-    latex_str = table_df.to_latex(
-        caption=caption,
-        label=label,
-        position="t",
-        escape=True,
-        index=True,
-        multicolumn=True,
-        multicolumn_format="c",
-        column_format="l" + "rr" * n_groups,
-    )
-    latex_str = center_table_latex(latex_str)
-    latex_str = small_table_latex(latex_str)
-
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(latex_str)
-    print(f"Table exported to {output_path.resolve()}")
-
-
 # ---------------------------------------------------------------------------
 # Mean nDFU: human annotations vs. LLM annotations (per instruction prompt)
 # ---------------------------------------------------------------------------
 
 HUMAN_LABEL = "Human"
 _SPAN_MARK = "@@SPAN@@"
+
+# Prompt name of the no-persona baseline runs (llm_annotate.py
+# --no-persona), i.e. the files "<dataset>-nopersona-<model>.csv" in the
+# annotations directory, next to the persona runs.
+NO_PERSONA_PROMPT_NAME = "nopersona"
+
+# Column labels of the default-prompt mean nDFU table.
+NO_PERSONA_COLUMN = "No Persona"
+WITH_PERSONA_COLUMN = "With Persona"
 
 
 # Per-comment nDFU (shared with the human analysis scripts).
@@ -1363,13 +1353,15 @@ def compute_mean_ndfu_records(
     prompt_names: list[str] = MAIN_PROMPT_NAMES,
     exclude_models: set[str] | None = APUNIM_TABLE_EXCLUDE_MODELS,
     sample_prompt: str = "default",
+    include_human: bool = True,
 ) -> pd.DataFrame:
     """
     Long-format per-comment nDFU, one row per (Dataset, Model, Prompt,
     text_id). Human rows have Model == HUMAN_LABEL and Prompt == "human";
     they are computed on the comments actually sampled for the LLM runs
     (see `_human_sample_dataset`), so human and LLM nDFU are comparable
-    comment by comment.
+    comment by comment. With `include_human=False` only LLM rows are
+    returned (e.g. to add further prompts to an existing set of records).
     """
     exclude_models = set(exclude_models or ())
     records = []
@@ -1398,14 +1390,15 @@ def compute_mean_ndfu_records(
         if human_ds is None:
             continue
         dataset_name = human_datasets[dataset_key].get_name()
-        records.extend(
-            _emit(
-                dataset_name,
-                HUMAN_LABEL,
-                "human",
-                _per_comment_ndfu(human_ds),
+        if include_human:
+            records.extend(
+                _emit(
+                    dataset_name,
+                    HUMAN_LABEL,
+                    "human",
+                    _per_comment_ndfu(human_ds),
+                )
             )
-        )
 
         for prompt_name in prompt_names:
             files = find_annotation_files(
@@ -1426,7 +1419,10 @@ def compute_mean_ndfu_records(
                     )
                 )
 
-    return pd.DataFrame(records)
+    # Explicit columns so an empty result still round-trips through a CSV.
+    return pd.DataFrame(
+        records, columns=["Dataset", "Model", "Prompt", "text_id", "ndfu"]
+    )
 
 
 def _mean_se_str(values: pd.Series) -> str:
@@ -1529,43 +1525,54 @@ def build_mean_ndfu_table(
 def build_default_mean_ndfu_table(
     ndfu_df: pd.DataFrame,
     prompt_name: str = "default",
-    pooled_label: str = "All",
+    no_persona_prompt_name: str = NO_PERSONA_PROMPT_NAME,
 ) -> pd.DataFrame:
     """
-    Human row first, then one row per model. For each dataset (plus a
-    pooled `pooled_label` group) an `n` column (comments) and a
-    "Mean (SE)" column with the mean per-comment nDFU. Model rows only use
-    comments that also appear in the human sample.
+    Human row first, then one row per model. For each dataset a
+    NO_PERSONA_COLUMN column with the mean (SE) per-comment nDFU under
+    `no_persona_prompt_name` and a WITH_PERSONA_COLUMN column with the same
+    under `prompt_name` (columns are a (Dataset, column) MultiIndex). Model
+    rows only use comments that also appear in the human sample. Human
+    annotations do not depend on the prompt, so the Human row holds the
+    same value in both columns of a dataset (the exporter merges them).
     """
     human_df = ndfu_df.loc[ndfu_df["Model"] == HUMAN_LABEL]
+    columns = {
+        NO_PERSONA_COLUMN: no_persona_prompt_name,
+        WITH_PERSONA_COLUMN: prompt_name,
+    }
     llm_df = ndfu_df.loc[
-        (ndfu_df["Model"] != HUMAN_LABEL) & (ndfu_df["Prompt"] == prompt_name)
+        (ndfu_df["Model"] != HUMAN_LABEL)
+        & ndfu_df["Prompt"].isin(set(columns.values()))
     ]
     datasets = _datasets_in_order(human_df)
 
-    def _fill(row: dict, label: str, sub: pd.DataFrame) -> None:
-        row[(label, "n")] = str(len(sub)) if len(sub) else "---"
-        row[(label, "Mean (SE)")] = _mean_se_str(sub["ndfu"])
+    human_row = {}
+    for d in datasets:
+        value = _mean_se_str(human_df.loc[human_df["Dataset"] == d, "ndfu"])
+        for col in columns:
+            human_row[(d, col)] = value
 
-    def _make_row(source: pd.DataFrame, restrict: bool) -> dict:
-        row, pooled_parts = {}, []
+    def _model_row(model_df: pd.DataFrame) -> dict:
+        row = {}
         for d in datasets:
-            sub = source.loc[source["Dataset"] == d]
-            if restrict:
-                ids = set(human_df.loc[human_df["Dataset"] == d, "text_id"])
-                sub = sub[sub["text_id"].isin(ids)]
-            _fill(row, d, sub)
-            pooled_parts.append(sub)
-        _fill(row, pooled_label, pd.concat(pooled_parts))
+            ids = set(human_df.loc[human_df["Dataset"] == d, "text_id"])
+            for col, prompt in columns.items():
+                sub = model_df.loc[
+                    (model_df["Dataset"] == d)
+                    & (model_df["Prompt"] == prompt)
+                    & model_df["text_id"].isin(ids)
+                ]
+                row[(d, col)] = _mean_se_str(sub["ndfu"])
         return row
 
-    rows = {HUMAN_LABEL: _make_row(human_df, restrict=False)}
+    rows = {HUMAN_LABEL: human_row}
     for model in _order_models(set(llm_df["Model"])):
-        rows[model] = _make_row(
-            llm_df.loc[llm_df["Model"] == model], restrict=True
-        )
+        rows[model] = _model_row(llm_df.loc[llm_df["Model"] == model])
 
     out = pd.DataFrame.from_dict(rows, orient="index")
-    out.columns = pd.MultiIndex.from_tuples(out.columns)
+    out.columns = pd.MultiIndex.from_tuples(
+        out.columns, names=["Dataset", None]
+    )
     out.index.name = "Model"
     return out

@@ -15,6 +15,7 @@ from scipy.stats import chi2_contingency
 from sklearn.metrics import adjusted_rand_score
 from sklearn.mixture import GaussianMixture
 
+from ..lib import labels
 from .simulation import N_LEVELS
 
 
@@ -34,15 +35,15 @@ METHOD_ORDER = [
 LEGEND_LABEL = {
     "apunim": "apunim (ours)",
     "Krippendorff delta-alpha": r"Krippendorff $\Delta\alpha$",
-    "aposteriori unimodality (2024)": "AU",
+    "aposteriori unimodality (2024)": labels.AU.short,
     "chi-squared (Akhtar et al. 2019)": r"$\chi^2$",
-    "GMM clustering (Checco/Mignemi)": "GMM",
+    "GMM clustering (Checco/Mignemi)": labels.GMM.short,
 }
 
 # Labels for LaTeX tables included in the paper, where \ac{...} works.
 TABLE_LABEL = {
     **LEGEND_LABEL,
-    "aposteriori unimodality (2024)": r"\ac{au}",
+    "aposteriori unimodality (2024)": labels.AU.tex,
 }
 
 
