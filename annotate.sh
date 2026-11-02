@@ -64,8 +64,8 @@ declare -A model_params_b=(
 )
 
 # Models for the main and ablation runs (all) and the adversarial runs (subset).
-all_models=("olmo32b" "qwen32b" "olmo7b" "qwen7b" "llama8b" "mistral24b" "mistral7b" "gemma7b")
-adv_models=("olmo32b" "qwen32b" "olmo7b" "qwen7b" "llama8b" "mistral24b" "mistral7b" "gemma7b")
+all_models=("olmo32b" "qwen32b" "olmo7b" "qwen7b" "llama8b" "mistral24b" "mistral7b" "gemma7b" "gemma31b")
+adv_models=("olmo32b" "qwen32b" "olmo7b" "qwen7b" "llama8b" "mistral24b" "mistral7b" "gemma7b" "gemma31b")
 
 # With a single GPU, drop models above the parameter limit.
 # filter_models_for_gpus <models_array_name>
@@ -92,7 +92,7 @@ filter_models_for_gpus all_models
 filter_models_for_gpus adv_models
 
 # Anything above the number of annotators is wasted.
-batch_size=20
+batch_size=10
 
 # ============================================================
 # Directory / run configuration

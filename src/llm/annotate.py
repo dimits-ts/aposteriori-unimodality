@@ -27,7 +27,7 @@ logger = logging.getLogger("annotate")
 LOG_FORMAT = "%(asctime)s %(levelname)s [%(name)s] %(message)s"
 SEED = 42
 MAX_NEW_TOKENS = 3
-MAX_CTX_TOKENS = 512
+MAX_CTX_TOKENS = 256
 
 
 DATASET_LOADERS = {
