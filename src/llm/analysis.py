@@ -978,7 +978,6 @@ def run_inherent_polarization_step(
         human_results_dir=human_results_dir,
         dataset_keys=MAIN_DATASET_KEYS,
         prompt_names=MAIN_PROMPT_NAMES,
-        use_monte_carlo=True,
         subsample=subsample,
     )
 

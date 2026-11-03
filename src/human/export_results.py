@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pandas as pd
 import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import stats
 
@@ -59,10 +58,6 @@ def main(
             )
         ),
         graph_output_dir=graph_output_dir,
-    )
-    plot_sample_size_polarization(
-        csv_path=results_dir / "sample_size_polarization.csv",
-        output_path=graph_output_dir / "sample_size_polarization.png",
     )
     if ratings_path is not None:
         if cache_dir is None:
@@ -626,36 +621,6 @@ def ndfu_rating_correlation_to_latex(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(latex_str)
     print(f"Table exported to {output_path.resolve()}")
-
-
-def plot_sample_size_polarization(csv_path: Path, output_path: Path):
-    df = pd.read_csv(csv_path)
-
-    _, ax = plt.subplots()
-
-    for dataset, group in df.groupby("dataset"):
-        color = sns.color_palette()[
-            list(df["dataset"].unique()).index(dataset)
-        ]
-        ax.plot(
-            group["sample_size"],
-            group["mean"],
-            label=labels.dataset_label(dataset),
-            color=color,
-        )
-        ax.fill_between(
-            group["sample_size"],
-            group["mean"] - group["std"],
-            group["mean"] + group["std"],
-            alpha=0.2,
-            color=color,
-        )
-
-    ax.set_xlabel("Number of annotators")
-    ax.set_ylabel("Mean polarization")
-    ax.legend(title="Dataset")
-    graphs.save_plot(output_path)
-    plt.close()
 
 
 if __name__ == "__main__":

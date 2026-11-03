@@ -1,50 +1,17 @@
 import argparse
 from pathlib import Path
 
-import pandas as pd
-import numpy as np
-from tqdm.auto import tqdm
-
-from ..lib import graphs
+from ..lib import graphs, run_helper
 from ..lib.preprocessing import DicesDataset
-from ..lib import run_helper
 from ..lib.util import skip_if_exists
 
-SAMPLE_SIZES = range(5, 51, 2)
-N_RUNS = 10
-
-# Config for the new fixed-size resampled experiment
+# Fixed-size resampled experiment (see run_resampled_experiment).
 RESAMPLED_SIZE = 5
 RESAMPLED_RUNS = 10
 
-
-def run_for_dataset(
-    ds: DicesDataset, sample_sizes: range, seed: int = 42
-) -> pd.DataFrame:
-    """
-    Original sample-size sweep experiment: for each size in `sample_sizes`,
-    runs N_RUNS resamples and records the mean/std of inherent polarization
-    across runs.
-    """
-    rng = np.random.default_rng(seed)
-    rows = []
-    for size in tqdm(sample_sizes, desc=f"Sample sizes for {ds.get_name()}"):
-        run_means = []
-        for _ in range(N_RUNS):
-            subsampled_ds = run_helper.subsample_dataset(ds, size, rng)
-            result = run_helper.compute_inherent_polarization_random(
-                subsampled_ds
-            )
-            run_means.append(np.mean(result))
-        rows.append(
-            {
-                "dataset": ds.get_name(),
-                "sample_size": size,
-                "mean": np.mean(run_means),
-                "std": np.std(run_means),
-            }
-        )
-    return pd.DataFrame(rows)
+# Repeats of the inherent-polarization experiment with every comment
+# subsampled down to run_helper.INHERENT_SUBSAMPLE_SIZE (6) annotators.
+INHERENT_SUBSAMPLE_REPEATS = 100
 
 
 def run_resampled_experiment(
@@ -54,11 +21,11 @@ def run_resampled_experiment(
     n_runs: int = RESAMPLED_RUNS,
 ) -> None:
     """
-    New experiment: for each SDB factor, resample `sample_size` annotators
-    per comment (with replacement), `n_runs` times, and save the mean apunim
-    value with its standard deviation (in place of kappa/pvalue). Output is
-    written under `ablation_dir` since this operates on a subsampled
-    ("ablated") view of the dataset.
+    For each SDB factor, resample `sample_size` annotators per comment (with
+    replacement), `n_runs` times, and save the mean apunim value with its
+    standard deviation (in place of kappa/pvalue). Output is written under
+    `ablation_dir` since this operates on a subsampled ("ablated") view of
+    the dataset.
     """
     output_path = (
         ablation_dir
@@ -73,6 +40,42 @@ def run_resampled_experiment(
     res.to_csv(output_path)
 
 
+def run_for_dataset(
+    ds: DicesDataset,
+    name: str,
+    output_dir: Path,
+    graph_output_dir: Path,
+    ablation_dir: Path,
+    cache_dir: Path,
+) -> None:
+    """Every result of one DICES variant; each output is skipped if it
+    already exists."""
+    graph_path = graph_output_dir / f"{name}.png"
+    if not skip_if_exists(graph_path):
+        graphs.polarization_plot(ds=ds, output_path=graph_path)
+
+    # Inherent polarization (exhaustive) on all annotators, and with every
+    # comment subsampled down to 6 annotators.
+    inherent_path = output_dir / f"{name}-inherent.csv"
+    if not skip_if_exists(inherent_path):
+        res = run_helper.compute_inherent_polarization_exhaustive(ds)
+        res.to_csv(inherent_path, header=True, index_label="comment")
+    run_helper.write_inherent_polarization_subsampled(
+        ds, output_dir, name=name, n_repeats=INHERENT_SUBSAMPLE_REPEATS
+    )
+
+    ndfu_path = run_helper.human_ndfu_path(cache_dir, name)
+    if not skip_if_exists(ndfu_path):
+        run_helper.write_human_ndfu(ds, ndfu_path)
+
+    results_path = output_dir / f"{name}-results.csv"
+    if not skip_if_exists(results_path):
+        res = run_helper.run_all_results(ds=ds)
+        res.to_csv(results_path)
+
+    run_resampled_experiment(ds, ablation_dir)
+
+
 def main(
     dataset_path_small: Path,
     dataset_path_large: Path,
@@ -80,69 +83,24 @@ def main(
     graph_output_dir: Path,
     ablation_dir: Path,
     cache_dir: Path,
-):
+) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     graph_output_dir.mkdir(parents=True, exist_ok=True)
     ablation_dir.mkdir(parents=True, exist_ok=True)
 
     graphs.graph_setup()
-    ds_350 = DicesDataset(dataset_path=dataset_path_small, variant="350")
-
-    graph_path = graph_output_dir / "dices-350.png"
-    if not skip_if_exists(graph_path):
-        graphs.polarization_plot(ds=ds_350, output_path=graph_path)
-
-    inherent_path = output_dir / "dices-350-inherent.csv"
-    if not skip_if_exists(inherent_path):
-        res = run_helper.compute_inherent_polarization_random(ds_350)
-        res.to_csv(inherent_path, header=True, index_label="comment")
-    run_helper.write_inherent_polarization_subsampled(
-        ds_350, output_dir, name="dices-350", n_repeats=100
-    )
-
-    ndfu_path = run_helper.human_ndfu_path(cache_dir, "dices-350")
-    if not skip_if_exists(ndfu_path):
-        run_helper.write_human_ndfu(ds_350, ndfu_path)
-
-    results_path = output_dir / "dices-350-results.csv"
-    if not skip_if_exists(results_path):
-        res = run_helper.run_all_results(ds=ds_350)
-        res.to_csv(results_path)
-
-    ds_990 = DicesDataset(dataset_path=dataset_path_large, variant="990")
-
-    graph_path = graph_output_dir / "dices-990.png"
-    if not skip_if_exists(graph_path):
-        graphs.polarization_plot(ds=ds_990, output_path=graph_path)
-
-    inherent_path = output_dir / "dices-990-inherent.csv"
-    if not skip_if_exists(inherent_path):
-        res = run_helper.compute_inherent_polarization_random(ds_990)
-        res.to_csv(inherent_path, header=True, index_label="comment")
-    run_helper.write_inherent_polarization_subsampled(
-        ds_990, output_dir, name="dices-990", n_repeats=100
-    )
-
-    ndfu_path = run_helper.human_ndfu_path(cache_dir, "dices-990")
-    if not skip_if_exists(ndfu_path):
-        run_helper.write_human_ndfu(ds_990, ndfu_path)
-
-    results_path = output_dir / "dices-990-results.csv"
-    if not skip_if_exists(results_path):
-        res = run_helper.run_all_results(ds=ds_990)
-        res.to_csv(results_path)
-
-    # Sample-size sweep -> back to original behavior: computed together and
-    # written once to output_dir, skipped entirely if it already exists.
-    combined_path = output_dir / "sample_size_polarization.csv"
-    if not skip_if_exists(combined_path):
-        df_350 = run_for_dataset(ds_350, SAMPLE_SIZES)
-        df_990 = run_for_dataset(ds_990, SAMPLE_SIZES)
-        combined = pd.concat([df_350, df_990], ignore_index=True)
-        combined.to_csv(combined_path, index=False)
-
-    run_resampled_experiment(ds_350, ablation_dir)
-    run_resampled_experiment(ds_990, ablation_dir)
+    for path, variant in [
+        (dataset_path_small, "350"),
+        (dataset_path_large, "990"),
+    ]:
+        run_for_dataset(
+            DicesDataset(dataset_path=path, variant=variant),
+            name=f"dices-{variant}",
+            output_dir=output_dir,
+            graph_output_dir=graph_output_dir,
+            ablation_dir=ablation_dir,
+            cache_dir=cache_dir,
+        )
 
 
 if __name__ == "__main__":

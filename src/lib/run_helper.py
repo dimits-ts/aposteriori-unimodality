@@ -1,7 +1,6 @@
 from pathlib import Path
 from itertools import combinations, product
 from collections.abc import Iterable
-import re
 
 import apunim
 import pandas as pd
@@ -274,35 +273,6 @@ def _iter_exhaustive_groups(
 
     for size in range(min_group_size, n + 1):
         yield from combinations(range(n), size)
-
-
-def _iter_random_groups(
-    n: int,
-    iterations: int,
-    rng: np.random.Generator,
-    min_group_size: int = 3,
-) -> Iterable[np.ndarray]:
-    """
-    Yield random subsets of indices.
-
-    Group sizes are sampled uniformly from:
-        [min_group_size, n]
-    """
-
-    if n < min_group_size:
-        return
-
-    for _ in range(iterations):
-
-        size = rng.integers(min_group_size, n + 1)
-
-        idxs = rng.choice(
-            n,
-            size=size,
-            replace=False,
-        )
-
-        yield idxs
 
 
 def _evaluate_groups(
@@ -631,42 +601,3 @@ def write_human_ndfu(
     res = per_comment_ndfu(dataset).dropna()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     res.to_csv(output_path, header=["ndfu"], index_label="comment")
-
-
-def compute_inherent_polarization_random(
-    dataset: preprocessing.Dataset,
-    num_bins: int | None = None,
-    max_annotators: int = 420,
-    iterations: int = 1000,
-    seed: int = 42,
-    show_progress: bool = False,
-    progress_position: int = 0,
-    progress_desc: str | None = None,
-) -> pd.Series:
-    """
-    Randomly samples annotator groups.
-
-    `show_progress`, `progress_position` and `progress_desc` control an
-    optional per-comment tqdm bar (see _compute_comment_polarization).
-
-    Returns
-    -------
-    pd.Series
-        Series indexed by comment text, with inherent polarization values.
-
-    Group size is sampled uniformly from:
-
-    :contentReference[oaicite:1]{index=1}
-    """
-    rng = np.random.default_rng(seed)
-    return _compute_comment_polarization(
-        dataset=dataset,
-        group_generator_fn=lambda n: _iter_random_groups(
-            n, iterations=iterations, rng=rng
-        ),
-        num_bins=num_bins,
-        max_annotators=max_annotators,
-        show_progress=show_progress,
-        progress_position=progress_position,
-        progress_desc=progress_desc,
-    )

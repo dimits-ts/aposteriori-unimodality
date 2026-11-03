@@ -26,9 +26,6 @@ from .shared import (
     sample_text_ids,
 )
 
-# Computes the inherent polarization of every comment of a dataset.
-InherentFunction = Callable[..., pd.Series]
-
 
 # Progress is reported with three nested tqdm bars:
 #   position 0: datasets
@@ -54,16 +51,15 @@ class SubsampleSpec:
 
 
 def _compute_inherent(
-    ds: Dataset,
-    subsample: SubsampleSpec | None,
-    default_fn: InherentFunction | None,
-    **progress: Any,
+    ds: Dataset, subsample: SubsampleSpec | None, **progress: Any
 ) -> pd.Series:
-    """Inherent polarization of `ds`: `default_fn` normally, the repeated
-    annotator-subsampling variant when `subsample` is given."""
+    """Inherent polarization of `ds` (exhaustive): on all annotators
+    normally, on repeatedly subsampled annotators when `subsample` is
+    given."""
     if subsample is None:
-        assert default_fn is not None, "default_fn is needed without subsample"
-        return default_fn(ds, **progress)
+        return run_helper.compute_inherent_polarization_exhaustive(
+            ds, **progress
+        )
     return run_helper.compute_inherent_polarization_subsampled(
         ds,
         size=subsample.size,
@@ -98,7 +94,6 @@ def _human_inherent_polarization(
     sample_ids: set[object],
     human_results_dir: Path,
     apunim_output_dir: Path,
-    use_monte_carlo: bool = False,
     subsample: SubsampleSpec | None = None,
 ) -> pd.Series:
     """
@@ -117,7 +112,7 @@ def _human_inherent_polarization(
         return _cached_series(
             apunim_output_dir
             / f"{dataset_key}-{prompt_name}-Human-inherent.csv",
-            lambda: _compute_inherent(human_ds, subsample, None, **progress),
+            lambda: _compute_inherent(human_ds, subsample, **progress),
         )
 
     cached_path = human_results_dir / f"{dataset_key}-inherent.csv"
@@ -127,12 +122,7 @@ def _human_inherent_polarization(
         ]
         return series[series.index.isin(sample_ids)].dropna()
 
-    fn = (
-        run_helper.compute_inherent_polarization_random
-        if use_monte_carlo
-        else run_helper.compute_inherent_polarization_exhaustive
-    )
-    return fn(human_ds, **progress).dropna()
+    return _compute_inherent(human_ds, None, **progress).dropna()
 
 
 def _llm_inherent_polarization(
@@ -157,7 +147,6 @@ def _llm_inherent_polarization(
         return _compute_inherent(
             ds,
             subsample,
-            run_helper.compute_inherent_polarization_exhaustive,
             show_progress=True,
             progress_position=COMMENT_BAR_POSITION,
             progress_desc=f"    {dataset_key}/{prompt_name}/{pseudo}: comments",
@@ -222,7 +211,6 @@ def _inherent_records_for_prompt(
     apunim_output_dir: Path,
     human_results_dir: Path,
     exclude_models: set[str],
-    use_monte_carlo: bool,
     subsample: SubsampleSpec | None = None,
 ) -> list[dict[str, object]]:
     files = find_annotation_files(annotations_dir, key, prompt_name)
@@ -252,7 +240,6 @@ def _inherent_records_for_prompt(
                 sample_ids,
                 human_results_dir,
                 apunim_output_dir,
-                use_monte_carlo,
                 subsample,
             )
             records.extend(
@@ -283,7 +270,6 @@ def _inherent_records_for_dataset(
     apunim_output_dir: Path,
     human_results_dir: Path,
     exclude_models: set[str],
-    use_monte_carlo: bool,
     subsample: SubsampleSpec | None = None,
 ) -> list[dict[str, object]]:
     ds_human = human_datasets[key]
@@ -303,7 +289,6 @@ def _inherent_records_for_dataset(
                 apunim_output_dir,
                 human_results_dir,
                 exclude_models,
-                use_monte_carlo,
                 subsample,
             )
         )
@@ -315,7 +300,6 @@ def compute_inherent_polarization_comparison(
     annotations_dir: Path,
     apunim_output_dir: Path,
     human_results_dir: Path,
-    use_monte_carlo: bool,
     dataset_keys: Iterable[str],
     prompt_names: list[str],
     exclude_models: Iterable[str] | None = None,
@@ -347,7 +331,6 @@ def compute_inherent_polarization_comparison(
                 apunim_output_dir,
                 human_results_dir,
                 excluded,
-                use_monte_carlo,
                 subsample,
             )
         )
