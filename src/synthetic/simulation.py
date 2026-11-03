@@ -29,8 +29,22 @@ DELTAS = [
 SIMULATION_UNIDIRECTIONAL = "unidirectional"
 SIMULATION_BIDIRECTIONAL = "bidirectional"
 
+# Annotator-specific group effects (the default model): the two-group
+# loading g_i is drawn from Uniform(0, GROUP_LOADING_MAX) (sign by group),
+# the multigroup strength h_i from Uniform(0, STRENGTH_MAX).
+GROUP_LOADING_MAX = 0.5
+STRENGTH_MAX = 1.0
+
+# The fixed-group-effect variant gives every annotator the *mean* of those
+# distributions, so the expected group effect (and so the expected
+# difference between groups at a given delta) is the same as in the default
+# model: only the within-group variation is removed.
+FIXED_GROUP_LOADING = GROUP_LOADING_MAX / 2  # E[Uniform(0, 1/2)] = 1/4
+FIXED_STRENGTH = STRENGTH_MAX / 2  # E[Uniform(0, 1)] = 1/2
+
 # Both experiments run with annotator-specific group effects (default) and
-# with the original fixed group effect, each into its own cache and figure.
+# with a fixed, mean-matched group effect, each into its own cache and
+# figure.
 FIXED_GROUP_EFFECT_VARIANTS = (False, True)
 FIXED_GROUP_EFFECT_SUFFIX = "-fixed-group-effect"
 
@@ -99,8 +113,9 @@ def simulate(
             g_i ~ Uniform(0, 1/2) for group B.
             Groups always pull in opposite directions, but annotators
             within a group differ in how strongly.
-            fixed_group_effect=True: g_i = -1/2 for A and +1/2 for B
-            (the original model).
+            fixed_group_effect=True: g_i = -1/4 for A and +1/4 for B, the
+            means of those distributions, so the expected difference
+            between the groups is unchanged (FIXED_GROUP_LOADING).
 
         p_j:
             Item-specific polarization effect.
@@ -130,16 +145,18 @@ def simulate(
 
 def _group_codes(groups, rng, fixed_group_effect):
     """g_i ~ Uniform(-1/2, 0) for group A and Uniform(0, 1/2) for group B,
-    or exactly -1/2 / +1/2 if fixed (drawing nothing from rng, so the fixed
-    variant reproduces the original model's random stream)."""
+    or exactly the means of those, -1/4 / +1/4, if fixed (drawing nothing
+    from rng)."""
     if fixed_group_effect:
-        return np.where(groups == "B", 0.5, -0.5)
+        return np.where(
+            groups == "B", FIXED_GROUP_LOADING, -FIXED_GROUP_LOADING
+        )
 
     n_ann = len(groups)
     return np.where(
         groups == "B",
-        rng.uniform(0, 0.5, size=n_ann),
-        rng.uniform(-0.5, 0, size=n_ann),
+        rng.uniform(0, GROUP_LOADING_MAX, size=n_ann),
+        rng.uniform(-GROUP_LOADING_MAX, 0, size=n_ann),
     )
 
 
@@ -171,7 +188,9 @@ def simulate_multigroup(
             Uniform(0, 1). Annotators in the polarizing group all shift in
             the same direction, but by differing amounts (mirrors g_i in
             simulate). Irrelevant for non-polarizing groups (mu = 0).
-            fixed_group_effect=True: h_i = 1 (the original model).
+            fixed_group_effect=True: h_i = 1/2, the mean of that
+            distribution, so the expected shift is unchanged
+            (FIXED_STRENGTH).
 
         mu_{g, j}:
             Group- and item-specific offset (Option B).
@@ -198,11 +217,10 @@ def simulate_multigroup(
         else:
             pol_effect = rng.uniform(-delta, delta, size=n_items)
 
-        # No draw when fixed, to reproduce the original random stream.
         strength = (
-            np.ones(pol_mask.sum())
+            np.full(pol_mask.sum(), FIXED_STRENGTH)
             if fixed_group_effect
-            else rng.uniform(0, 1, size=pol_mask.sum())
+            else rng.uniform(0, STRENGTH_MAX, size=pol_mask.sum())
         )
         shift[pol_mask] = strength[:, None] * pol_effect[None, :]
 
