@@ -11,6 +11,8 @@ Only things used by more than one module live here; anything used by a
 single module is defined in that module.
 """
 
+import re
+from collections.abc import Collection, Iterable
 from pathlib import Path
 
 import pandas as pd
@@ -23,25 +25,38 @@ from ..lib.preprocessing import (
 )
 
 # ---------------------------------------------------------------------------
-# Constants
+# Data vocabulary
 # ---------------------------------------------------------------------------
 
-DATASET_KEYS = ["dices-350", "dices-990", "sap", "kumar", "popquorn"]
+# `Model` value of the rows holding human (rather than LLM) results, and the
+# `Prompt` value they carry (human annotations do not depend on the prompt).
+HUMAN_LABEL = "Human"
+HUMAN_PROMPT_NAME = "human"
 
-# Columns in an llm_annotate.py output CSV (plus the "annotation_clean"
-# column we add in load_llm_df) that are *not* persona/SDB attributes.
-NON_PERSONA_COLS = {
-    "model",
-    "instruction_prompt",
-    "text_id",
-    "text",
-    "annotation",
-    "annotation_clean",
-}
+# `Dataset` value of rows pooled over all datasets.
+POOLED_LABEL = "All"
 
-# Preferred left-to-right column order for the composite apunim grid (models
-# not in this list are appended alphabetically after it).
-MODEL_DISPLAY_ORDER = [
+# Prompt name of the no-persona baseline runs (llm_annotate.py
+# --no-persona), i.e. the files "<dataset>-nopersona-<model>.csv" in the
+# annotations directory, next to the persona runs.
+NO_PERSONA_PROMPT_NAME = "nopersona"
+
+# Columns of an llm_annotate.py output CSV (plus the "annotation_clean"
+# column added by load_llm_df) that are *not* persona/SDB attributes.
+_NON_PERSONA_COLS = frozenset(
+    {
+        "model",
+        "instruction_prompt",
+        "text_id",
+        "text",
+        "annotation",
+        "annotation_clean",
+    }
+)
+
+# Display order of the models in every table and figure (models not listed
+# are appended alphabetically).
+_MODEL_DISPLAY_ORDER = (
     "llama8b",
     "olmo32b",
     "olmo7b",
@@ -51,46 +66,22 @@ MODEL_DISPLAY_ORDER = [
     "mistral24b",
     "gemma7b",
     "gemma31b",
-]
-
-# The main instruction prompts compared throughout this module (mean-diff
-# plots, apunim prompt table, ...). "default" is treated as the baseline
-# that the other prompts are compared against.
-MAIN_PROMPT_NAMES = ["default", "stereotype", "persona", "single", "direct"]
-
-# Datasets for which all MAIN_PROMPT_NAMES were run -- used for the prompt
-# mean-diff plot, the apunim-by-prompt LaTeX table and grids, and the
-# prompt-sensitivity ANOVA.
-PROMPT_COMPARISON_DATASET_KEYS = DATASET_KEYS
-
-# Models excluded from the apunim-by-prompt LaTeX table (they were never
-# run on the stereotype/persona prompts to begin with; listed explicitly
-# so the table is correct even if that changes).
-# Also used for LLM polarization grid.
-APUNIM_TABLE_EXCLUDE_MODELS = {"olmo7b", "llama8b"}
+)
 
 
 # ---------------------------------------------------------------------------
-# HumanDatasets: dict-like container of per-key LazyDatasetLoaders
+# Datasets
 # ---------------------------------------------------------------------------
 
 
 class HumanDatasets:
     """
-    Dict-like container that holds one :class:`LazyDatasetLoader` per
-    dataset key and exposes the same ``key in ds``, ``ds[key]``,
-    ``ds.keys()`` interface that the rest of the codebase uses, so no
-    call sites need to change.
-
-    Each dataset is constructed at most once: the first access to
-    ``ds[key]`` calls that key's loader factory; subsequent accesses
-    return the cached instance.
+    Dict-like container of one :class:`LazyDatasetLoader` per dataset key,
+    supporting ``key in ds``, ``ds[key]`` and ``ds.keys()``. Each dataset is
+    constructed at most once, on first access.
     """
 
-    def __init__(
-        self,
-        loaders: dict[str, LazyDatasetLoader],
-    ) -> None:
+    def __init__(self, loaders: dict[str, LazyDatasetLoader]) -> None:
         self._loaders = loaders
 
     def __contains__(self, key: object) -> bool:
@@ -117,12 +108,12 @@ class LLMAnnotationDataset(Dataset):
         dataset_key: str,
         model_pseudo: str,
         prompt_name: str,
-    ):
+    ) -> None:
         self._name = f"{dataset_key}-{prompt_name}-{model_pseudo}"
         persona_cols = _persona_columns(df)
 
         df = df.dropna(subset=["annotation_clean"]).copy()
-        agg = {col: list for col in persona_cols}
+        agg: dict[str, type[list]] = {col: list for col in persona_cols}
         agg["annotation_clean"] = list
         self.df = df.groupby("text_id").agg(agg).reset_index()
         self.sdb_columns = persona_cols
@@ -146,38 +137,23 @@ class LLMAnnotationDataset(Dataset):
         return "text_id"
 
 
-# ---------------------------------------------------------------------------
-# Generic helpers: dataset/model bookkeeping, file discovery, loading
-# ---------------------------------------------------------------------------
-
-
-def _persona_columns(df: pd.DataFrame) -> list[str]:
-    return [c for c in df.columns if c not in NON_PERSONA_COLS]
-
-
-def _order_models(models: set[str] | list[str]) -> list[str]:
-    known = [m for m in MODEL_DISPLAY_ORDER if m in models]
-    unknown = sorted(m for m in models if m not in MODEL_DISPLAY_ORDER)
-    return known + unknown
-
-
-def _available_dataset_keys(
-    human_datasets: HumanDatasets,
-    dataset_keys: list[str] = DATASET_KEYS,
+def available_dataset_keys(
+    human_datasets: HumanDatasets, dataset_keys: Iterable[str]
 ) -> list[str]:
+    """The keys of `dataset_keys` that are loaded in `human_datasets`."""
     return [k for k in dataset_keys if k in human_datasets]
 
 
-def _clean_annotation(series: pd.Series) -> pd.Series:
-    """
-    LLMs were asked to "reply with a single number only", but generations
-    can still contain stray characters (whitespace, punctuation, a partial
-    second token, ...). Extract the first signed integer found in each
-    reply; anything that can't be parsed becomes NaN and is dropped
-    downstream.
-    """
-    extracted = series.astype(str).str.extract(r"(-?\d+)")[0]
-    return pd.to_numeric(extracted, errors="coerce")
+def order_models(models: Collection[str]) -> list[str]:
+    """`models` in display order (see _MODEL_DISPLAY_ORDER)."""
+    known = [m for m in _MODEL_DISPLAY_ORDER if m in models]
+    unknown = sorted(m for m in models if m not in _MODEL_DISPLAY_ORDER)
+    return known + unknown
+
+
+# ---------------------------------------------------------------------------
+# Annotation files
+# ---------------------------------------------------------------------------
 
 
 def find_annotation_files(
@@ -189,18 +165,42 @@ def find_annotation_files(
     llm_annotate.py / annotate_experiments.sh). Run-suffixed files (e.g.
     the "-run0" repeat ablation) are intentionally excluded.
     """
-    import re
-
     pattern = re.compile(
         rf"^{re.escape(dataset_key)}-{re.escape(prompt_name)}-([^-.]+)\.csv$"
     )
-    out = {}
+    out: dict[str, Path] = {}
     if not directory.exists():
         return out
     for path in sorted(directory.glob(f"{dataset_key}-{prompt_name}-*.csv")):
         m = pattern.match(path.name)
         if m:
             out[m.group(1)] = path
+    return out
+
+
+def find_repeat_files(
+    directory: Path, dataset_key: str, prompt_name: str
+) -> dict[str, dict[str, Path]]:
+    """
+    Returns {model_pseudo: {run_label: path}} for every file in `directory`
+    matching f"{dataset_key}-{prompt_name}-<pseudo>-run<N>.csv" (e.g. as
+    written by the repeat ablation in annotate_experiments.sh: the same
+    prompt run N times over the same 10% sub-sample).
+    """
+    pattern = re.compile(
+        rf"^{re.escape(dataset_key)}-{re.escape(prompt_name)}-"
+        rf"([^-.]+)-(run\d+)\.csv$"
+    )
+    out: dict[str, dict[str, Path]] = {}
+    if not directory.exists():
+        return out
+    for path in sorted(
+        directory.glob(f"{dataset_key}-{prompt_name}-*-run*.csv")
+    ):
+        m = pattern.match(path.name)
+        if m:
+            pseudo, run_label = m.group(1), m.group(2)
+            out.setdefault(pseudo, {})[run_label] = path
     return out
 
 
@@ -219,8 +219,20 @@ def dataset_key_of_file(path: Path) -> str:
     )
 
 
-def out_of_range(cleaned: pd.Series, valid: frozenset[int]) -> pd.Series:
-    """Parsed annotations (see _clean_annotation) that are not NaN but not
+def clean_annotation(series: pd.Series) -> pd.Series:
+    """
+    LLMs were asked to "reply with a single number only", but generations
+    can still contain stray characters (whitespace, punctuation, a partial
+    second token, ...). Extract the first signed integer found in each
+    reply; anything that can't be parsed becomes NaN and is dropped
+    downstream.
+    """
+    extracted = series.astype(str).str.extract(r"(-?\d+)")[0]
+    return pd.to_numeric(extracted, errors="coerce")
+
+
+def out_of_range(cleaned: pd.Series, valid: Collection[int]) -> pd.Series:
+    """Parsed annotations (see clean_annotation) that are not NaN but not
     in `valid` either."""
     return cleaned.notna() & ~cleaned.isin(valid)
 
@@ -228,32 +240,37 @@ def out_of_range(cleaned: pd.Series, valid: frozenset[int]) -> pd.Series:
 def load_llm_df(path: Path) -> pd.DataFrame:
     """
     An llm_annotate.py output CSV, with an added "annotation_clean" column:
-    the reply parsed to an integer (see _clean_annotation), NaN if it
+    the reply parsed to an integer (see clean_annotation), NaN if it
     cannot be parsed or is outside the dataset's valid range
-    (VALID_ANNOTATION_VALUES of the lib.preprocessing class of the
-    dataset key in the file name). The
-    raw "annotation" column is kept as is.
+    (VALID_ANNOTATION_VALUES of the lib.preprocessing class of the dataset
+    key in the file name). The raw "annotation" column is kept as is.
     """
     df = pd.read_csv(path)
-    cleaned = _clean_annotation(df["annotation"])
+    cleaned = clean_annotation(df["annotation"])
     dataset_cls = DATASET_CLASSES[dataset_key_of_file(path)]
     valid = dataset_cls.VALID_ANNOTATION_VALUES
     df["annotation_clean"] = cleaned.mask(out_of_range(cleaned, valid))
     return df
 
 
-def _key_columns(dfs: dict[str, pd.DataFrame]) -> list[str]:
+def _persona_columns(df: pd.DataFrame) -> list[str]:
+    return [c for c in df.columns if c not in _NON_PERSONA_COLS]
+
+
+def key_columns(dfs: dict[str, pd.DataFrame]) -> list[str]:
     """
     The columns that jointly identify a sampled (comment, persona) item --
     shared across models/prompts/variants because llm_annotate.py is seeded
-    to draw the same items for all of them (see module docstring).
+    to draw the same items for all of them.
     """
     return ["text_id"] + _persona_columns(next(iter(dfs.values())))
 
 
-def _keyed_series(
+def keyed_series(
     df: pd.DataFrame, key_cols: list[str], label: str
 ) -> pd.Series:
+    """The parsed annotations of `df`, indexed by the tuple of `key_cols`
+    (duplicates dropped) and named `label`."""
     d = df.dropna(subset=["annotation_clean"]).copy()
     d["_key"] = list(zip(*[d[c] for c in key_cols]))
     d = d.drop_duplicates(subset="_key")
@@ -263,23 +280,19 @@ def _keyed_series(
 
 
 # ---------------------------------------------------------------------------
-# Sampled-comment helpers, shared by the apunim grid (plots.py) and the
-# inherent-polarization comparison (polarization.py) -- both need "the
-# same items the LLMs saw".
+# The comments the LLMs saw, shared by the human/LLM comparisons
 # ---------------------------------------------------------------------------
 
 
-def _sample_text_ids(
+def sample_text_ids(
     annotations_dir: Path, dataset_key: str, prompt_name: str
-) -> set:
+) -> set[object]:
     """
     Every text_id appearing in any model's annotation CSV for
     (dataset_key, prompt_name) -- i.e. the comments llm_annotate.py
-    actually sampled for that (dataset, prompt). Shared by
-    _human_sample_dataset and the inherent-polarization comparison so both
-    restrict to exactly the same comment set the same way.
+    actually sampled for that (dataset, prompt).
     """
-    ids: set = set()
+    ids: set[object] = set()
     for path in find_annotation_files(
         annotations_dir, dataset_key, prompt_name
     ).values():
@@ -287,22 +300,23 @@ def _sample_text_ids(
     return ids
 
 
-def _human_sample_dataset(
+def human_sample_dataset(
     ds_human: Dataset,
     annotations_dir: Path,
     dataset_key: str,
     prompt_name: str,
 ) -> Dataset | None:
     """
-    Restricts `ds_human` down to just the comments actually sampled by
-    llm_annotate.py for (dataset_key, prompt_name). Returns None if no
-    LLM annotation files exist for this (dataset, prompt).
+    `ds_human` restricted to the comments sampled by llm_annotate.py for
+    (dataset_key, prompt_name). None if no LLM annotation files exist for
+    this (dataset, prompt).
     """
-    sample_ids = _sample_text_ids(annotations_dir, dataset_key, prompt_name)
+    sample_ids = sample_text_ids(annotations_dir, dataset_key, prompt_name)
     if not sample_ids:
         return None
 
     comment_col = ds_human.get_comment_key_column()
     df = ds_human.get_dataset()
     restricted = df[df[comment_col].isin(sample_ids)]
-    return SubsampledView(ds_human, restricted)
+    # SubsampledView delegates everything else to the wrapped Dataset.
+    return SubsampledView(ds_human, restricted)  # type: ignore[return-value]

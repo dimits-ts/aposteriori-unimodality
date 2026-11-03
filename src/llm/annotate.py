@@ -1,18 +1,26 @@
 import argparse
+import copy
 import logging
+import math
 import os
 import sys
-import math
-import copy
-from pathlib import Path
+from collections.abc import Sequence
 from itertools import product
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import torch
 import transformers
 from tqdm.auto import tqdm
-from transformers import AutoTokenizer, DynamicCache, pipeline
+from transformers import (
+    AutoTokenizer,
+    DynamicCache,
+    Pipeline,
+    PreTrainedModel,
+    PreTrainedTokenizerBase,
+    pipeline,
+)
 
 from ..lib.preprocessing import (
     SapDataset,
@@ -23,6 +31,13 @@ from ..lib.preprocessing import (
 )
 
 logger = logging.getLogger("annotate")
+
+# A sampled persona: SDB column -> value.
+Persona = dict[str, object]
+# SDB column -> the values a persona can take.
+ValuePools = dict[str, list[object]]
+# A chat conversation in the role/content format of chat templates.
+Messages = list[dict[str, str]]
 
 LOG_FORMAT = "%(asctime)s %(levelname)s [%(name)s] %(message)s"
 SEED = 42
@@ -52,7 +67,7 @@ def main(
     num_annotators: int,
     sample_fraction: float | None = None,
     no_persona: bool = False,
-):
+) -> None:
     # Toggle to True if VRAM is under durress
     os.environ.setdefault(
         "PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:False"
@@ -156,7 +171,7 @@ def setup_logging(log_file: Path | None) -> None:
     """Log to stderr and, if given, append to log_file. Warnings from
     transformers / huggingface_hub and Python warnings go through the same
     handlers, so they reach the log file too."""
-    handlers = [logging.StreamHandler()]
+    handlers: list[logging.Handler] = [logging.StreamHandler()]
     if log_file is not None:
         log_file.parent.mkdir(parents=True, exist_ok=True)
         handlers.append(
@@ -184,7 +199,7 @@ def _route_library_logs() -> None:
 
 
 def _warn_if_persona_capped(
-    value_pools: dict[str, list], num_annotators: int
+    value_pools: ValuePools, num_annotators: int
 ) -> None:
     total = _count_possible_personas(value_pools)
     if total < num_annotators:
@@ -201,7 +216,7 @@ def load_dataset(dataset_key: str, dataset_path: Path) -> Dataset:
     return DATASET_LOADERS[dataset_key](dataset_path)
 
 
-def load_generator(model_name: str):
+def load_generator(model_name: str) -> Pipeline:
     # pipeline() has no tokenizer_kwargs argument, so loader flags must be
     # passed by loading the tokenizer ourselves. fix_mistral_regex is a no-op
     # for tokenizers that aren't affected.
@@ -223,9 +238,7 @@ def load_generator(model_name: str):
     return generator
 
 
-def get_subgroup_value_pools(
-    ds: Dataset,
-) -> dict[str, list]:
+def get_subgroup_value_pools(ds: Dataset) -> ValuePools:
     """Distinct observed values per SDB column, used as the sampling pool
     for random persona characteristics."""
     pools = {}
@@ -234,7 +247,9 @@ def get_subgroup_value_pools(
     return pools
 
 
-def truncate_text(tokenizer, text: str, max_tokens: int) -> str:
+def truncate_text(
+    tokenizer: PreTrainedTokenizerBase, text: str, max_tokens: int
+) -> str:
     """Truncates to the last max_tokens tokens, so every prompt fed to the
     model has a bounded, consistent sequence length."""
     ids = tokenizer(text, add_special_tokens=False)["input_ids"]
@@ -258,22 +273,29 @@ def sample_texts(
     return [(keys[i], texts[i]) for i in idx]
 
 
-def _count_possible_personas(value_pools: dict[str, list]) -> int:
+def _count_possible_personas(value_pools: ValuePools) -> int:
     return math.prod(len(v) for v in value_pools.values())
 
 
 def _sample_personas_exhaustive(
-    value_pools: dict[str, list], columns, n: int, rng: np.random.Generator
-):
+    value_pools: ValuePools,
+    columns: Sequence[str],
+    n: int,
+    rng: np.random.Generator,
+) -> list[Persona]:
     all_combos = list(product(*(value_pools[c] for c in columns)))
     idx = rng.choice(len(all_combos), size=n, replace=False)
     return [dict(zip(columns, all_combos[i])) for i in idx]
 
 
 def _sample_personas_rejection(
-    value_pools: dict[str, list], columns, n: int, rng: np.random.Generator
-):
-    seen, personas = set(), []
+    value_pools: ValuePools,
+    columns: Sequence[str],
+    n: int,
+    rng: np.random.Generator,
+) -> list[Persona]:
+    seen: set[tuple[object, ...]] = set()
+    personas: list[Persona] = []
     while len(personas) < n:
         candidate = tuple(
             value_pools[col][rng.integers(len(value_pools[col]))]
@@ -285,7 +307,9 @@ def _sample_personas_rejection(
     return personas
 
 
-def sample_personas(value_pools, n, rng):
+def sample_personas(
+    value_pools: ValuePools, n: int, rng: np.random.Generator
+) -> list[Persona]:
     """Sample n distinct personas. If n exceeds the number of possible
     combinations, returns all of them (in random order)."""
     columns = list(value_pools.keys())
@@ -303,15 +327,15 @@ def sample_personas(value_pools, n, rng):
         )
 
 
-def format_persona(persona: dict[str, str]) -> str:
+def format_persona(persona: Persona) -> str:
     return "; ".join(f"{k}: {v}" for k, v in persona.items())
 
 
 def build_messages(
     template: str,
-    persona: dict[str, str] | None,
+    persona: Persona | None,
     text: str,
-) -> list[dict]:
+) -> Messages:
     """If persona is None (no-persona condition), the user message is just
     the comment text, with no PERSONA_SUFFIX appended."""
     content = text
@@ -324,7 +348,7 @@ def build_messages(
 
 
 def _tokenize_prompts(
-    tok, batch_of_messages: list[list[dict]]
+    tok: PreTrainedTokenizerBase, batch_of_messages: list[Messages]
 ) -> list[list[int]]:
     """Render each conversation with the chat template and tokenize it.
     Working at token level guarantees the cached tokens match exactly."""
@@ -350,7 +374,9 @@ def _common_prefix_length(all_ids: list[list[int]]) -> int:
     return n
 
 
-def _prefill_prefix(model, prefix_ids: torch.Tensor) -> DynamicCache:
+def _prefill_prefix(
+    model: PreTrainedModel, prefix_ids: torch.Tensor
+) -> DynamicCache:
     """Run the shared prefix through the model once and return its KV cache.
     Only the cache is needed, so logits are computed for the last position
     only (full-prefix logits cost prefix_len x vocab floats; with Gemma's
@@ -384,7 +410,7 @@ def _build_batch_inputs(
     prefix_ids: torch.Tensor,
     suffixes: list[list[int]],
     pad_id: int,
-    device,
+    device: torch.device | str,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Concatenate prefix + padded suffixes into full input_ids and attention
     mask. The padding sits between prefix and suffix, which is fine because
@@ -408,7 +434,7 @@ def _expand_cache(prefix_cache: DynamicCache, batch_size: int) -> DynamicCache:
 
 
 def _generate_batch(
-    generator,
+    generator: Pipeline,
     prefix_ids: torch.Tensor,
     prefix_cache: DynamicCache,
     suffixes: list[list[int]],
@@ -440,8 +466,8 @@ def _generate_batch(
 
 
 def generate_annotations(
-    generator,
-    batch_of_messages: list[list[dict]],
+    generator: Pipeline,
+    batch_of_messages: list[Messages],
     batch_size: int,
 ) -> list[str]:
     """Prefill the shared prefix (instructions + comment) once, then run the
@@ -465,18 +491,18 @@ def generate_annotations(
 
 
 def annotate_comment(
-    generator,
+    generator: Pipeline,
     template: str,
     text_id: str,
     text: str,
-    value_pools: dict[str, list],
+    value_pools: ValuePools,
     model_name: str,
     prompt_name: str,
     rng: np.random.Generator,
     batch_size: int,
     num_annotators: int,
     no_persona: bool = False,
-) -> list[dict]:
+) -> list[dict[str, object]]:
     """
     Sample up to n distinct personas for this comment,
     then generate one annotation per persona in batches.
@@ -484,13 +510,12 @@ def annotate_comment(
     If no_persona is set, num_annotators identical persona-less prompts are
     used instead, so annotations differ only through sampling.
     """
+    personas: list[Persona | None]
     if no_persona:
         personas = [None] * num_annotators
     else:
-        personas = sample_personas(
-            value_pools=value_pools,
-            n=num_annotators,
-            rng=rng,
+        personas = list(
+            sample_personas(value_pools=value_pools, n=num_annotators, rng=rng)
         )
 
     batch = [
@@ -501,7 +526,7 @@ def annotate_comment(
 
     rows = []
     for i, (persona, annotation) in enumerate(zip(personas, annotations)):
-        row = {
+        row: dict[str, object] = {
             "model": model_name,
             "instruction_prompt": prompt_name,
             "text_id": text_id,

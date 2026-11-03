@@ -3,48 +3,175 @@ Statistical analysis of LLM (and, for the consistency tables, cross-model)
 annotation agreement and significance.
 """
 
+from collections.abc import Callable, Collection, Iterable
+from enum import Enum
 from pathlib import Path
-from typing import Callable
+from typing import NamedTuple
 
 import krippendorff
-from matplotlib.pyplot import table
 import numpy as np
 import pandas as pd
 from scipy import stats
 from statsmodels.stats.multitest import multipletests
 
-from ..lib import labels, run_helper
-from ..lib.preprocessing import Dataset
-from ..lib.util import (
-    SIGNIFICANCE_LEVELS,
-    center_table_latex,
-    small_table_latex,
-    trim_numeric_col_latex,
-    significance_superscript,
-)
+from ..lib import run_helper
+from ..lib.preprocessing import DATASET_CLASSES, Dataset
 from .shared import (
-    APUNIM_TABLE_EXCLUDE_MODELS,
-    DATASET_KEYS,
-    _human_sample_dataset,
+    HUMAN_LABEL,
+    HUMAN_PROMPT_NAME,
+    POOLED_LABEL,
     HumanDatasets,
-    MAIN_PROMPT_NAMES,
     LLMAnnotationDataset,
-    _available_dataset_keys,
-    _key_columns,
-    _keyed_series,
-    _order_models,
+    available_dataset_keys,
+    clean_annotation,
     find_annotation_files,
+    find_repeat_files,
+    human_sample_dataset,
+    key_columns,
+    keyed_series,
     load_llm_df,
-    PROMPT_COMPARISON_DATASET_KEYS,
+    order_models,
+    out_of_range,
 )
 
-# Prompt-variant names used by the paraphrase ablation
-# (instructions/ablation/<dataset>/variant{1,2,3}.txt).
-VARIANT_NAMES = ["variant1", "variant2", "variant3"]
+# Maps a dataset key to its (human, LLM) apunim results.
+ApunimInputs = dict[str, tuple[pd.DataFrame, pd.DataFrame]]
+
+# (model, dataset) -> number of annotations.
+AnnotationTotals = dict[tuple[str, str], int]
 
 
 # ---------------------------------------------------------------------------
-# Krippendorff's-alpha consistency tables
+# Non-standard answers
+# ---------------------------------------------------------------------------
+
+
+def _annotation_status(
+    annotation: pd.Series, valid: Collection[int]
+) -> pd.Series:
+    """
+    Per-reply status, judged with the parser the analysis uses
+    (shared.clean_annotation): "unparsed" (no integer found) or
+    "out_of_range" (integer not valid for the dataset), both NaN in
+    shared.load_llm_df and so dropped downstream, or NA for a reply that
+    parses to a valid value (including replies that only parse after
+    cleaning).
+    """
+    cleaned = clean_annotation(annotation)
+
+    status = pd.Series(pd.NA, index=annotation.index, dtype="object")
+    status[cleaned.isna()] = "unparsed"
+    status[out_of_range(cleaned, valid)] = "out_of_range"
+    return status
+
+
+def _nonstandard_counts_for_file(
+    path: Path, model: str, key: str, valid: Collection[int]
+) -> tuple[pd.DataFrame, int]:
+    """(status/answer value counts of one annotation file, its row count)."""
+    df = pd.read_csv(path)
+    raw = df["annotation"].fillna("<empty>").astype(str)
+    status = _annotation_status(df["annotation"], valid)
+
+    flagged = status.notna()
+    counts = (
+        pd.DataFrame({"status": status[flagged], "answer": raw[flagged]})
+        .value_counts()
+        .reset_index(name="count")
+    )
+    counts["model"] = model
+    counts["dataset"] = key
+    return counts, len(df)
+
+
+def _nonstandard_counts_for_dataset(
+    annotations_dir: Path,
+    key: str,
+    prompt_names: Iterable[str],
+    totals: AnnotationTotals,
+) -> list[pd.DataFrame]:
+    """Counts for every prompt and model of one dataset. Adds each file's
+    row count to `totals[(model, key)]` (in place)."""
+    valid = DATASET_CLASSES[key].VALID_ANNOTATION_VALUES
+    frames = []
+    for prompt_name in prompt_names:
+        files = find_annotation_files(annotations_dir, key, prompt_name)
+        for model, path in sorted(files.items()):
+            counts, n_rows = _nonstandard_counts_for_file(
+                path, model, key, valid
+            )
+            totals[(model, key)] = totals.get((model, key), 0) + n_rows
+            frames.append(counts)
+    return frames
+
+
+def collect_nonstandard_counts(
+    annotations_dir: Path,
+    dataset_keys: Iterable[str],
+    prompt_names: Collection[str],
+) -> tuple[pd.DataFrame, AnnotationTotals]:
+    """
+    (per-file counts of non-standard replies with columns
+    model/dataset/status/answer/count, total number of annotations per
+    (model, dataset)), over `dataset_keys` and `prompt_names`. Statuses:
+    "unparsed" and "out_of_range" (see _annotation_status).
+    """
+    frames: list[pd.DataFrame] = []
+    totals: AnnotationTotals = {}
+    for key in dataset_keys:
+        frames.extend(
+            _nonstandard_counts_for_dataset(
+                annotations_dir, key, prompt_names, totals
+            )
+        )
+
+    if not frames:
+        empty = pd.DataFrame(
+            columns=["model", "dataset", "status", "answer", "count"]
+        )
+        return empty, totals
+    return pd.concat(frames, ignore_index=True), totals
+
+
+def nonstandard_by_model(
+    detailed: pd.DataFrame, totals: AnnotationTotals
+) -> pd.DataFrame:
+    """One row per (model, status, answer), with the model's total number
+    of annotations (n_total_model) and the share each row represents."""
+    per_model: dict[str, int] = {}
+    for (model, _), n in totals.items():
+        per_model[model] = per_model.get(model, 0) + n
+
+    result = detailed.groupby(["model", "status", "answer"], as_index=False)[
+        "count"
+    ].sum()
+    result["n_total_model"] = result["model"].map(per_model)
+    result["rate"] = result["count"] / result["n_total_model"]
+    return result.sort_values(
+        ["model", "status", "count"], ascending=[True, True, False]
+    ).reset_index(drop=True)
+
+
+def nonstandard_summary(
+    detailed: pd.DataFrame, totals: AnnotationTotals
+) -> pd.DataFrame:
+    """One row per (model, dataset, status), summed over answers and
+    prompts. `incidence` is the count as a percentage of all of the
+    model's annotations on that dataset (over all prompts)."""
+    summary = detailed.groupby(["model", "dataset", "status"], as_index=False)[
+        "count"
+    ].sum()
+    keys = pd.Series(
+        list(zip(summary["model"], summary["dataset"])), index=summary.index
+    )
+    summary["incidence"] = 100 * summary["count"] / keys.map(totals)
+    return summary.sort_values(["model", "dataset", "status"]).reset_index(
+        drop=True
+    )
+
+
+# ---------------------------------------------------------------------------
+# Krippendorff's-alpha consistency
 # ---------------------------------------------------------------------------
 
 
@@ -55,15 +182,12 @@ def _build_reliability_matrix(
     dfs: {rater_label: dataframe}, each with `key_cols` plus
     'annotation_clean'.
 
-    Returns
-    -------
-    (matrix, n_items)
-        matrix has shape (n_raters, n_items) -- the layout krippendorff.alpha
-        expects -- aligned on the union of keys across raters, with NaN
-        where a given rater has no annotation for that item.
+    Returns (matrix, n_items): matrix has shape (n_raters, n_items) -- the
+    layout krippendorff.alpha expects -- aligned on the union of keys
+    across raters, with NaN where a rater has no annotation for an item.
     """
     series_list = [
-        _keyed_series(df, key_cols, label) for label, df in dfs.items()
+        keyed_series(df, key_cols, label) for label, df in dfs.items()
     ]
     if not series_list:
         return np.empty((0, 0)), 0
@@ -85,102 +209,73 @@ def krippendorff_alpha_safe(matrix: np.ndarray) -> float:
 
 def _consistency_row(
     dfs: dict[str, pd.DataFrame],
-    key_cols: list[str],
     count_label: str,
-    extra_fields: dict,
-) -> dict:
-    matrix, n_items = _build_reliability_matrix(dfs, key_cols)
-    alpha = krippendorff_alpha_safe(matrix)
+    extra_fields: dict[str, str],
+) -> dict[str, object]:
+    matrix, n_items = _build_reliability_matrix(dfs, key_columns(dfs))
     return {
         **extra_fields,
         count_label: matrix.shape[0],
         "Items": n_items,
-        "Krippendorff's alpha": alpha,
+        "Krippendorff's alpha": krippendorff_alpha_safe(matrix),
     }
-
-
-def _cross_model_row(
-    human_datasets: HumanDatasets,
-    annotations_dir: Path,
-    key: str,
-    prompt_name: str,
-    exclude_models: set[str],
-) -> dict | None:
-    files = {
-        pseudo: path
-        for pseudo, path in find_annotation_files(
-            annotations_dir, key, prompt_name
-        ).items()
-        if pseudo not in exclude_models
-    }
-    if len(files) < 2:
-        return None
-
-    dfs = {pseudo: load_llm_df(path) for pseudo, path in files.items()}
-    key_cols = _key_columns(dfs)
-    return _consistency_row(
-        dfs,
-        key_cols,
-        "Models",
-        {"Dataset": human_datasets[key].get_name(), "Prompt": prompt_name},
-    )
 
 
 def cross_model_consistency_table(
     human_datasets: HumanDatasets,
     annotations_dir: Path,
-    prompt_name: str = "default",
-    exclude_models: list[str] | None = None,
-    dataset_keys: list[str] = DATASET_KEYS,
+    prompt_name: str,
+    dataset_keys: Iterable[str],
+    exclude_models: Iterable[str] | None = None,
 ) -> pd.DataFrame:
     """
     For each dataset in `dataset_keys`: how consistent are the different
-    LLMs with each other, when all of them are given the same (default)
-    prompt?
+    LLMs with each other, when all of them are given the same prompt?
     """
-    exclude_models = set(exclude_models or [])
+    excluded = set(exclude_models or ())
     rows = []
-    for key in _available_dataset_keys(human_datasets, dataset_keys):
-        row = _cross_model_row(
-            human_datasets, annotations_dir, key, prompt_name, exclude_models
-        )
-        if row is not None:
-            rows.append(row)
-    return pd.DataFrame(rows)
-
-
-def _variant_dfs_for_model(
-    files_by_variant: dict[str, dict[str, Path]],
-    pseudo: str,
-    variant_names: list[str],
-) -> dict[str, pd.DataFrame]:
-    dfs = {}
-    for v in variant_names:
-        path = files_by_variant[v].get(pseudo)
-        if path is not None:
-            dfs[v] = load_llm_df(path)
-    return dfs
-
-
-def _variant_rows_for_dataset(
-    human_datasets: HumanDatasets,
-    key: str,
-    files_by_variant: dict[str, dict[str, Path]],
-    variant_names: list[str],
-) -> list[dict]:
-    models = sorted(set.union(*(set(f) for f in files_by_variant.values())))
-    rows = []
-    for pseudo in models:
-        dfs = _variant_dfs_for_model(files_by_variant, pseudo, variant_names)
-        if len(dfs) < 2:
+    for key in available_dataset_keys(human_datasets, dataset_keys):
+        files = {
+            pseudo: path
+            for pseudo, path in find_annotation_files(
+                annotations_dir, key, prompt_name
+            ).items()
+            if pseudo not in excluded
+        }
+        if len(files) < 2:
             continue
-        key_cols = _key_columns(dfs)
+        dfs = {pseudo: load_llm_df(path) for pseudo, path in files.items()}
         rows.append(
             _consistency_row(
                 dfs,
-                key_cols,
-                "Variants",
-                {"Dataset": human_datasets[key].get_name(), "Model": pseudo},
+                "Models",
+                {
+                    "Dataset": human_datasets[key].get_name(),
+                    "Prompt": prompt_name,
+                },
+            )
+        )
+    return pd.DataFrame(rows)
+
+
+def _variant_rows_for_dataset(
+    dataset_name: str,
+    files_by_variant: dict[str, dict[str, Path]],
+    variant_names: list[str],
+) -> list[dict[str, object]]:
+    models = sorted(set.union(*(set(f) for f in files_by_variant.values())))
+    rows = []
+    for pseudo in models:
+        dfs = {
+            v: load_llm_df(files_by_variant[v][pseudo])
+            for v in variant_names
+            if pseudo in files_by_variant[v]
+        }
+        if len(dfs) < 2:
+            continue
+        rows.append(
+            _consistency_row(
+                dfs, "Variants", {"Dataset": dataset_name, "Model": pseudo}
             )
         )
     return rows
@@ -189,17 +284,15 @@ def _variant_rows_for_dataset(
 def per_model_variant_consistency_table(
     human_datasets: HumanDatasets,
     paraphrase_dir: Path,
-    variant_names: list[str] = None,
-    dataset_keys: list[str] = DATASET_KEYS,
+    variant_names: list[str],
+    dataset_keys: Iterable[str],
 ) -> pd.DataFrame:
     """
     For each (dataset in `dataset_keys`, model): how consistent is that
-    model with itself across the paraphrased prompt variants
-    (variant1/variant2/variant3)?
+    model with itself across the paraphrased prompt variants?
     """
-    variant_names = variant_names or VARIANT_NAMES
     rows = []
-    for key in _available_dataset_keys(human_datasets, dataset_keys):
+    for key in available_dataset_keys(human_datasets, dataset_keys):
         files_by_variant = {
             v: find_annotation_files(paraphrase_dir, key, v)
             for v in variant_names
@@ -208,127 +301,67 @@ def per_model_variant_consistency_table(
             continue
         rows.extend(
             _variant_rows_for_dataset(
-                human_datasets, key, files_by_variant, variant_names
+                human_datasets[key].get_name(), files_by_variant, variant_names
             )
         )
     return pd.DataFrame(rows)
 
 
-def _repeat_row(
-    human_datasets: HumanDatasets,
-    key: str,
-    pseudo: str,
-    run_files: dict[str, Path],
-) -> dict | None:
-    dfs = {
-        run_label: load_llm_df(path)
-        for run_label, path in sorted(run_files.items())
-    }
-    if len(dfs) < 2:
-        return None
-    key_cols = _key_columns(dfs)
-    return _consistency_row(
-        dfs,
-        key_cols,
-        "Runs",
-        {"Dataset": human_datasets[key].get_name(), "Model": pseudo},
-    )
-
-
-def _repeat_rows_for_dataset(
-    human_datasets: HumanDatasets,
-    key: str,
-    files_by_model: dict[str, dict[str, Path]],
-) -> list[dict]:
-    rows = []
-    for pseudo, run_files in sorted(files_by_model.items()):
-        row = _repeat_row(human_datasets, key, pseudo, run_files)
-        if row is not None:
-            rows.append(row)
-    return rows
-
-
-def find_repeat_files(
-    directory: Path, dataset_key: str, prompt_name: str
-) -> dict[str, dict[str, Path]]:
-    """
-    Returns {model_pseudo: {run_label: path}} for every file in `directory`
-    matching f"{dataset_key}-{prompt_name}-<pseudo>-run<N>.csv" (e.g. as
-    written by the repeat ablation in annotate_experiments.sh: the same
-    prompt run N times over the same 10% sub-sample).
-    """
-    import re
-
-    pattern = re.compile(
-        rf"^{re.escape(dataset_key)}-{re.escape(prompt_name)}-"
-        rf"([^-.]+)-(run\d+)\.csv$"
-    )
-    out: dict[str, dict[str, Path]] = {}
-    if not directory.exists():
-        return out
-    for path in sorted(
-        directory.glob(f"{dataset_key}-{prompt_name}-*-run*.csv")
-    ):
-        m = pattern.match(path.name)
-        if m:
-            pseudo, run_label = m.group(1), m.group(2)
-            out.setdefault(pseudo, {})[run_label] = path
-    return out
-
-
 def per_model_repeat_consistency_table(
     human_datasets: HumanDatasets,
     repeat_dir: Path,
-    prompt_name: str = "default",
-    dataset_keys: list[str] = DATASET_KEYS,
+    prompt_name: str,
+    dataset_keys: Iterable[str],
 ) -> pd.DataFrame:
     """
     For each (dataset in `dataset_keys`, model): how consistent is that
     model with itself across repeated runs of the *same* prompt?
     """
     rows = []
-    for key in _available_dataset_keys(human_datasets, dataset_keys):
+    for key in available_dataset_keys(human_datasets, dataset_keys):
         files_by_model = find_repeat_files(repeat_dir, key, prompt_name)
         if not files_by_model:
             raise ValueError(
                 f"No files for repeat ablation found in {repeat_dir} for "
                 f"dataset {key} and prompt {prompt_name}."
             )
-        rows.extend(
-            _repeat_rows_for_dataset(human_datasets, key, files_by_model)
-        )
+        for pseudo, run_files in sorted(files_by_model.items()):
+            dfs = {
+                run_label: load_llm_df(path)
+                for run_label, path in sorted(run_files.items())
+            }
+            if len(dfs) < 2:
+                continue
+            rows.append(
+                _consistency_row(
+                    dfs,
+                    "Runs",
+                    {
+                        "Dataset": human_datasets[key].get_name(),
+                        "Model": pseudo,
+                    },
+                )
+            )
     return pd.DataFrame(rows)
 
 
-def export_latex_table(
-    df: pd.DataFrame, output_path: Path, caption: str, label: str
-) -> None:
-    df = labels.relabel_frame(df)
-    # very common column in all exported tables in this module
-    if "Krippendorff's alpha" in df.columns:
-        df["Krippendorff's alpha"] = trim_numeric_col_latex(
-            df["Krippendorff's alpha"], float_format=".4f"  # type: ignore
-        )
-
-    latex_str = df.to_latex(
-        index=False,
-        caption=caption,
-        label=label,
-        position="t",
-        escape=True,
-    )
-    latex_str = center_table_latex(latex_str=latex_str)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(latex_str)
-    print(f"Table exported to {output_path.resolve()}")
-
-
 # ---------------------------------------------------------------------------
-# Apunim-by-prompt LaTeX table (default / stereotype / persona columns)
+# apunim on the LLM annotations
 # ---------------------------------------------------------------------------
 
+# Columns of an apunim results frame (compute_llm_apunim_by_prompt).
+APUNIM_COLUMNS = [
+    "SDB Feature",
+    "Value",
+    "Model",
+    "Prompt",
+    "apunim",
+    "pvalue",
+    "support",
+]
 
-def _apunim_row_for_model(
+
+def _apunim_for_model(
     dataset_key: str, prompt_name: str, pseudo: str, path: Path
 ) -> pd.DataFrame | None:
     df = load_llm_df(path)
@@ -345,139 +378,33 @@ def _apunim_row_for_model(
     return res_df
 
 
-def _apunim_rows_for_prompt(
-    annotations_dir: Path,
-    dataset_key: str,
-    prompt_name: str,
-    exclude_models: set[str],
-) -> list[pd.DataFrame]:
-    files = find_annotation_files(annotations_dir, dataset_key, prompt_name)
-    models = _order_models(set(files) - exclude_models)
-    rows = []
-    for pseudo in models:
-        res_df = _apunim_row_for_model(
-            dataset_key, prompt_name, pseudo, files[pseudo]
-        )
-        if res_df is not None:
-            rows.append(res_df)
-    return rows
-
-
 def compute_llm_apunim_by_prompt(
     annotations_dir: Path,
     dataset_key: str,
-    prompt_names: list[str] = MAIN_PROMPT_NAMES,
-    exclude_models: set[str] | None = None,
+    prompt_names: Iterable[str],
+    exclude_models: Iterable[str] | None = None,
 ) -> pd.DataFrame:
     """
     Runs apunim over LLM annotation CSVs, once per (prompt, model)
-    available for `dataset_key`. Returns long-format DataFrame with one
-    row per (SDB Feature, Value, Model, Prompt).
+    available for `dataset_key`. Returns a long-format DataFrame with one
+    row per (SDB Feature, Value, Model, Prompt); see APUNIM_COLUMNS.
     """
-    exclude_models = set(exclude_models or ())
-    rows = []
+    excluded = set(exclude_models or ())
+    frames = []
     for prompt_name in prompt_names:
-        rows.extend(
-            _apunim_rows_for_prompt(
-                annotations_dir, dataset_key, prompt_name, exclude_models
+        files = find_annotation_files(
+            annotations_dir, dataset_key, prompt_name
+        )
+        for pseudo in order_models(set(files) - excluded):
+            res_df = _apunim_for_model(
+                dataset_key, prompt_name, pseudo, files[pseudo]
             )
-        )
+            if res_df is not None:
+                frames.append(res_df)
 
-    if not rows:
-        return pd.DataFrame(
-            columns=[
-                "SDB Feature",
-                "Value",
-                "Model",
-                "Prompt",
-                "apunim",
-                "pvalue",
-                "support",
-            ]
-        )
-    return pd.concat(rows, ignore_index=True)
-
-
-def export_llm_apunim_prompt_table(
-    df: pd.DataFrame, output_path: Path, dataset_name: str, label: str
-) -> None:
-    if df.empty:
-        print(
-            f"No LLM apunim-by-prompt results for {dataset_name}; "
-            f"skipping {output_path}."
-        )
-        return
-    df = labels.relabel_frame(df).rename(
-        columns={"SDB Feature": labels.SDD.tex}
-    )
-
-    # The prompt columns already hold formatted "value$^{***}$" strings (see
-    # _apunim_prompt_cell); they must not be passed through
-    # trim_numeric_col_latex, which would turn the starred cells into "---".
-    df = df.replace("_", r"\_", regex=True).set_index(
-        [labels.SDD.tex, "Value", "Model"]
-    )
-
-    latex_str = df.to_latex(
-        caption=(
-            "Aposteriori unimodality results for the LLM annotations of "
-            f"the {labels.dataset_label(dataset_name)} dataset, across "
-            "instruction prompts. "
-            r"$^{*}p<0.05$, $^{**}p<0.01$, $^{***}p<0.001$."
-        ),
-        label=label,
-        escape=False,
-        position="t",
-        index=True,
-        multirow=True,
-        longtable=True,
-    )
-
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(latex_str)
-    print(f"Table exported to {output_path.resolve()}")
-
-
-# ---------------------------------------------------------------------------
-# Significant PC dimensions: human vs. LLM annotations, per prompt
-# ---------------------------------------------------------------------------
-
-# apunim's p-values already account for testing several PC dimensions, so a
-# dimension counts as significant when its reported p-value is below this.
-SIGNIFICANCE_ALPHA = 0.05
-
-# Symbols of the significance table (LaTeX; \sigyes and \signo are macros
-# defined in the paper preamble). The legend is written into the caption.
-_SYM_AGREE = r"\sigyes"  # agree on significance (and on sign, if significant)
-_SYM_DISAGREE = r"\signo"  # significant for only one of the two
-_SYM_SIGN_DIFFERS = r"$\pm$"  # both significant, but the sign differs
-
-# Colour macros for the symbols, defined in the paper preamble as
-# \newcommand{\sigcol...}[1]{\textcolor[HTML]{...}{#1}} with colours from
-# graphs.COLORBLIND_PALETTE. Colour only separates the categories; every
-# category is also distinguished by its symbol (or, for the two kinds of
-# agreement, explained in the caption).
-_COL_AGREE_SIGNIFICANT = r"\sigcolagree"  # both significant, same sign
-_COL_AGREE_NEITHER = r"\sigcolneither"  # neither significant
-_COL_SIGN_DIFFERS = r"\sigcolsign"  # both significant, sign differs
-_COL_DISAGREE = r"\sigcoldisagree"  # significant for only one of the two
-
-
-def _colored(color_macro: str, symbol: str) -> str:
-    return rf"{color_macro}{{{symbol}}}"
-
-
-# Coloured symbol per comparison outcome (used in cells and caption alike).
-_CELL_AGREE_SIGNIFICANT = _colored(_COL_AGREE_SIGNIFICANT, _SYM_AGREE)
-_CELL_AGREE_NEITHER = _colored(_COL_AGREE_NEITHER, _SYM_AGREE)
-_CELL_SIGN_DIFFERS = _colored(_COL_SIGN_DIFFERS, _SYM_SIGN_DIFFERS)
-_CELL_DISAGREE = _colored(_COL_DISAGREE, _SYM_DISAGREE)
-
-# Each prompt gets a fixed-width slot (in em), so that the symbols of
-# different rows line up.
-# It can be set per table (`slot_width_em`); the symbols are roughly an em
-# wide, so much narrower slots make them touch.
-DEFAULT_SLOT_WIDTH_EM = 1.2
+    if not frames:
+        return pd.DataFrame(columns=APUNIM_COLUMNS)
+    return pd.concat(frames, ignore_index=True)
 
 
 def load_human_apunim_results(
@@ -503,6 +430,24 @@ def load_human_apunim_results(
         columns={df.columns[0]: "SDB Feature", df.columns[1]: "Value"}
     )
     return df[["SDB Feature", "Value", "apunim", "pvalue"]]
+
+
+# ---------------------------------------------------------------------------
+# Significant PC dimensions: human vs. LLM annotations, per prompt
+# ---------------------------------------------------------------------------
+
+# apunim's p-values already account for testing several PC dimensions, so a
+# dimension counts as significant when its reported p-value is below this.
+SIGNIFICANCE_ALPHA = 0.05
+
+
+class SignificanceOutcome(Enum):
+    """How an LLM result for a PC dimension compares with the human one."""
+
+    AGREE_SIGNIFICANT = "agree_significant"  # both significant, same sign
+    AGREE_NEITHER = "agree_neither"  # neither significant
+    SIGN_DIFFERS = "sign_differs"  # both significant, sign differs
+    DISAGREE = "disagree"  # significant for only one of the two
 
 
 def _dimension_significance(df: pd.DataFrame, alpha: float) -> dict[str, bool]:
@@ -555,49 +500,16 @@ def _sign_disagreement_dimensions(
     }
 
 
-def _slot(symbol: str, width_em: float) -> str:
-    return rf"\makebox[{width_em:g}em][c]{{{symbol}}}"
-
-
-def _comparison_symbol(
+def _comparison_outcome(
     llm_significant: bool, human_significant: bool, sign_differs: bool
-) -> str:
-    """
-    How the LLM result for a dimension compares with the human one, as a
-    coloured symbol: disagreement on significance, both significant but
-    with a different sign for some group, or agreement (both significant,
-    or neither, which get different colours).
-    """
+) -> SignificanceOutcome:
     if llm_significant != human_significant:
-        return _CELL_DISAGREE
+        return SignificanceOutcome.DISAGREE
     if llm_significant and sign_differs:
-        return _CELL_SIGN_DIFFERS
+        return SignificanceOutcome.SIGN_DIFFERS
     if llm_significant:
-        return _CELL_AGREE_SIGNIFICANT
-    return _CELL_AGREE_NEITHER
-
-
-def _llm_cell(
-    llm_results: list[bool | None],
-    human_significant: bool | None,
-    sign_differs: list[bool],
-    slot_width_em: float = DEFAULT_SLOT_WIDTH_EM,
-) -> str:
-    """
-    One slot per prompt (in prompt order). A dimension without a result
-    counts as not significant, on either side: for the LLM, this happens
-    when apunim found no polarized comments with enough annotations per
-    group (all p-values NaN, or the run skipped). `sign_differs` says, per
-    prompt, whether some group's sign differs from the human one;
-    `slot_width_em` is the width of each prompt slot.
-    """
-    return "".join(
-        _slot(
-            _comparison_symbol(bool(llm), bool(human_significant), differs),
-            slot_width_em,
-        )
-        for llm, differs in zip(llm_results, sign_differs)
-    )
+        return SignificanceOutcome.AGREE_SIGNIFICANT
+    return SignificanceOutcome.AGREE_NEITHER
 
 
 def _llm_pair_results(
@@ -643,7 +555,7 @@ def _report_unmatched(
             "these should match, check that the feature labels agree."
         )
 
-    def groups(df):
+    def groups(df: pd.DataFrame) -> set[tuple[str, str]]:
         return set(zip(df["SDB Feature"].astype(str), df["Value"].astype(str)))
 
     shared_dims = human_dims & llm_dims
@@ -665,9 +577,8 @@ def _dataset_significance_rows(
     models: list[str],
     prompts: list[str],
     alpha: float,
-    slot_width_em: float,
-) -> list[dict]:
-    """Table rows (one per PC dimension) of one dataset."""
+) -> list[dict[str, object]]:
+    """Rows (one per PC dimension) of one dataset."""
     human = _dimension_significance(human_df, alpha)
     pairs = _llm_pair_results(
         llm_df,
@@ -677,44 +588,49 @@ def _dataset_significance_rows(
         _significant_group_signs(human_df, alpha),
     )
 
-    llm_dims = set()
+    llm_dims: set[str] = set()
     for significance, _ in pairs.values():
         llm_dims |= set(significance)
     _report_unmatched(dataset_name, set(human), llm_dims, human_df, llm_df)
 
-    rows = []
+    rows: list[dict[str, object]] = []
     for dim in sorted(llm_dims):
-        cells = {}
-        for m in models:
-            results = [pairs[(m, p)][0].get(dim) for p in prompts]
-            differs = [dim in pairs[(m, p)][1] for p in prompts]
-            cells[m] = _llm_cell(
-                results, human.get(dim), differs, slot_width_em
+        human_significant = bool(human.get(dim))
+        cells = {
+            m: tuple(
+                # A dimension without a result counts as not significant.
+                _comparison_outcome(
+                    bool(pairs[(m, p)][0].get(dim)),
+                    human_significant,
+                    dim in pairs[(m, p)][1],
+                )
+                for p in prompts
             )
+            for m in models
+        }
         rows.append({"Dataset": dataset_name, "SDB Feature": dim, **cells})
     return rows
 
 
-def build_apunim_significance_table(
-    inputs: dict[str, tuple[pd.DataFrame, pd.DataFrame]],
-    prompt_names: list[str] = MAIN_PROMPT_NAMES,
+def compute_apunim_significance(
+    inputs: ApunimInputs,
+    prompt_names: list[str],
     alpha: float = SIGNIFICANCE_ALPHA,
-    slot_width_em: float = DEFAULT_SLOT_WIDTH_EM,
 ) -> pd.DataFrame:
     """
     One row per (dataset, PC dimension) for which the LLMs have results, and
     one column per model. `inputs` maps a dataset name to its (human, LLM)
     apunim results.
 
-    A model cell holds one symbol per prompt (in `prompt_names` order)
-    saying how the model's result for the dimension compares with the human
-    one (see _comparison_symbol); a missing result counts as not
-    significant.
-    `slot_width_em` sets the width of each prompt slot, i.e. the cell size.
-    The prompts used are stored in `.attrs["prompts"]`.
+    A model cell is a tuple with one SignificanceOutcome per prompt (in
+    `prompt_names` order, restricted to the prompts with results), saying
+    how the model's result for the dimension compares with the human one.
+    A missing result counts as not significant (for the LLM, this happens
+    when apunim found no polarized comments with enough annotations per
+    group). The prompts used are stored in `.attrs["prompts"]`.
     """
     llm_dfs = [llm_df for _, llm_df in inputs.values()]
-    models = _order_models({m for df in llm_dfs for m in df["Model"]})
+    models = order_models({m for df in llm_dfs for m in df["Model"]})
     prompts = [
         p
         for p in prompt_names
@@ -725,13 +641,7 @@ def build_apunim_significance_table(
     for dataset_name, (human_df, llm_df) in inputs.items():
         rows.extend(
             _dataset_significance_rows(
-                dataset_name,
-                human_df,
-                llm_df,
-                models,
-                prompts,
-                alpha,
-                slot_width_em,
+                dataset_name, human_df, llm_df, models, prompts, alpha
             )
         )
     out = pd.DataFrame(rows)
@@ -739,112 +649,9 @@ def build_apunim_significance_table(
     return out
 
 
-def export_apunim_significance_table(
-    table_df: pd.DataFrame,
-    output_path: Path,
-    label: str,
-    alpha: float = SIGNIFICANCE_ALPHA,
-    note: str = "",
-    table_size: str | None = None,
-) -> None:
-    if table_df.empty:
-        print(f"No apunim significance results; skipping {output_path}.")
-        return
-    prompts = table_df.attrs.get("prompts", [])
-    caption = (
-        rf"Statistically significant ($p<{alpha}$) {labels.SDD.tex_plural} of "
-        "each LLM compared with the human annotations, per dataset. A "
-        "dimension counts as significant if at least one of its groups is. "
-        "Each cell shows one symbol per prompt, in the order "
-        f"{', '.join(prompts)}: "
-        rf"{_CELL_AGREE_SIGNIFICANT}~both significant, with the same sign "
-        "for every group that is significant in both; "
-        rf"{_CELL_AGREE_NEITHER}~neither significant; "
-        rf"{_CELL_SIGN_DIFFERS}~both significant, but the sign of at least "
-        "one group's effect differs; "
-        rf"{_CELL_DISAGREE}~significant for only one of the two. A "
-        "dimension without an LLM result (no polarized comments with enough "
-        "annotations per group) counts as not significant." + note
-    )
-
-    # Model columns and short dataset names (narrow table).
-    df = labels.relabel_frame(table_df, short=True)
-    df = df.rename(
-        columns={
-            **{c: labels.model_label(c) for c in df.columns},
-            "SDB Feature": labels.SDD.tex,
-            "Dataset": "Ds",
-        }
-    )
-    df = df.replace("_", r"\_", regex=True).set_index(["Ds", labels.SDD.tex])
-    latex_str = df.to_latex(
-        caption=caption,
-        label=label,
-        escape=False,
-        position="t",
-        index=True,
-        multirow=True,
-        longtable=False,
-        column_format="ll" + "c" * len(df.columns),
-    )
-    latex_str = "\\setlength{\\tabcolsep}{3pt}\n" + latex_str + "\n"
-    if table_size is not None:
-        latex_str = small_table_latex(latex_str, size=table_size)
-
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(latex_str)
-    print(f"Table exported to {output_path.resolve()}")
-
-
-# ---------------------------------------------------------------------------
-# Number of significant PC dimensions per model and dataset (and prompt)
-# ---------------------------------------------------------------------------
-
-# Prompt label of the human rows in count_significant_dimensions.
-_HUMAN_PROMPT = "human"
-_COUNT_MISSING = "---"
-# Marks a ratio over fewer dimensions than the dataset has.
-_PARTIAL_MARK = r"$^\dagger$"
-
-
-def count_significant_dimensions(
-    inputs: dict[str, tuple[pd.DataFrame, pd.DataFrame]],
-    prompt_names: list[str] = MAIN_PROMPT_NAMES,
-    alpha: float = SIGNIFICANCE_ALPHA,
-) -> pd.DataFrame:
-    """
-    One row per (Dataset, Model, Prompt): how many PC dimensions are
-    significant (`significant`) out of those with results (`tested`), with
-    significance decided as in the significance table
-    (_dimension_significance). `inputs` is the same mapping as for
-    build_apunim_significance_table; the human results are included as
-    Model HUMAN_LABEL, Prompt "human".
-    """
-    rows = []
-    for dataset_name, (human_df, llm_df) in inputs.items():
-        rows.append(
-            _dimension_count(
-                dataset_name, HUMAN_LABEL, _HUMAN_PROMPT, human_df, alpha
-            )
-        )
-        for (model, prompt), pair_df in llm_df.groupby(
-            ["Model", "Prompt"], sort=False
-        ):
-            if prompt in prompt_names:
-                rows.append(
-                    _dimension_count(
-                        dataset_name, model, prompt, pair_df, alpha
-                    )
-                )
-    return pd.DataFrame(
-        rows,
-        columns=["Dataset", "Model", "Prompt", "significant", "tested"],
-    )
-
-
 def _dimension_count(
     dataset_name: str, model: str, prompt: str, df: pd.DataFrame, alpha: float
-) -> dict:
+) -> dict[str, object]:
     significance = _dimension_significance(df, alpha)
     return {
         "Dataset": dataset_name,
@@ -855,280 +662,53 @@ def _dimension_count(
     }
 
 
-def _count_layout(
-    counts: pd.DataFrame,
-) -> tuple[list[str], list[tuple[list[str], str]], dict[str, int]]:
-    """(LLM models in order; row groups, one per dataset, as
-    (datasets, label); label -> number of PC dimensions)."""
-    llm_models = _order_models(set(counts["Model"]) - {HUMAN_LABEL})
-    datasets = list(dict.fromkeys(counts["Dataset"]))
-    n_dims = counts.groupby("Dataset")["tested"].max().to_dict()
-    groups = [([d], d) for d in datasets]
-    return llm_models, groups, n_dims
-
-
-def _ratio_cell(
-    counts: pd.DataFrame,
-    model: str,
-    prompt: str,
-    datasets: list[str],
-    n_dimensions: int,
-) -> str:
-    """Share of the tested PC dimensions that `model` finds significant
-    under `prompt`, over `datasets`.
-    Marked with _PARTIAL_MARK if the model has results for fewer than
-    `n_dimensions` dimensions."""
-    if model == HUMAN_LABEL:
-        prompt = _HUMAN_PROMPT
-    rows = counts.loc[
-        (counts["Model"] == model)
-        & (counts["Prompt"] == prompt)
-        & counts["Dataset"].isin(datasets)
-    ]
-    tested = rows["tested"].sum()
-    if tested == 0:
-        return _COUNT_MISSING
-    ratio = rf"{int(rows['significant'].sum() / tested*100)}\%"
-    return ratio if tested == n_dimensions else ratio + _PARTIAL_MARK
-
-
-def _count_row_label(name: str) -> str:
-    return labels.dataset_label(name, short=True).replace("_", r"\_")
-
-
-def _model_header(
-    leading: list[str], llm_models: list[str], rotate: bool = False
-) -> str:
-    """Header row: the leading columns, then the model names (rotated by
-    90 degrees if `rotate`)."""
-    names = [
-        labels.model_label(m).replace("_", r"\_")
-        for m in [HUMAN_LABEL] + llm_models
-    ]
-    if rotate:
-        names = [rf"\rotatebox{{90}}{{{name}}}" for name in names]
-    return " & ".join(leading + names) + r" \\"
-
-
-def _model_col_spec(leading: str, n_llm_models: int) -> str:
-    """Leading columns, the Human column, a gap, then one per LLM."""
-    return leading + r"c@{\hspace{10pt}}" + "c" * n_llm_models
-
-
-def _count_caption_note(counts: pd.DataFrame) -> str:
-    """Explains _PARTIAL_MARK, if the table uses it."""
-    n_dims = counts.groupby("Dataset")["tested"].transform("max")
-    if not (counts["tested"] < n_dims).any():
-        return ""
-    return (
-        f" {_PARTIAL_MARK}: ratio over fewer dimensions, as the model has "
-        "results for only some of them."
-    )
-
-
-def _count_table_latex(
-    caption: str, label: str, col_spec: str, body: list[str], table_size: str
-) -> str:
-    lines = [
-        r"\begin{table}[t]",
-        rf"\caption{{{caption}}}",
-        rf"\label{{{label}}}",
-        r"\centering",
-        table_size,
-        rf"\begin{{tabular}}{{{col_spec}}}",
-        r"\toprule",
-        *body,
-        r"\bottomrule",
-        r"\end{tabular}",
-        r"\end{table}",
-    ]
-    table_str = "\n".join(lines) + "\n"
-    return table_str
-
-
-def _write_count_table(latex_str: str, output_path: Path) -> None:
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(latex_str)
-    print(f"Table exported to {output_path.resolve()}")
-
-
-def export_significant_dimension_summary(
-    counts: pd.DataFrame,
-    output_path: Path,
-    label: str,
-    table_size: str,
-    prompt_name: str = "default",
+def count_significant_dimensions(
+    inputs: ApunimInputs,
+    prompt_names: Collection[str],
     alpha: float = SIGNIFICANCE_ALPHA,
-    note: str = "",
-) -> None:
-    """
-    Concise table: one row per dataset, a column with the number
-    of PC dimensions (n), then one column per model (Human first) with the
-    share of dimensions found significant under `prompt_name`.
-    """
-    if counts.empty:
-        print(f"No significance counts; skipping {output_path}.")
-        return
-    llm_models, groups, n_dims = _count_layout(counts)
-
-    body = [_model_header(["Dataset", "$n$"], llm_models), r"\midrule"]
-    for datasets, name in groups:
-        cells = [
-            _ratio_cell(counts, m, prompt_name, datasets, n_dims[name])
-            for m in [HUMAN_LABEL] + llm_models
-        ]
-        row = [_count_row_label(name), str(n_dims[name]), *cells]
-        body.append(" & ".join(row) + r" \\")
-
-    caption = (
-        rf"Share of \acp{{sdd}} that are statistically significant "
-        rf"($p<{alpha}$) in the human annotations and in each LLM's "
-        f"annotations under the {prompt_name} prompt, per dataset; $n$ is "
-        "the number of dimensions. A dimension counts as significant if at "
-        "least one of its groups is." + _count_caption_note(counts) + note
-    )
-    _write_count_table(
-        _count_table_latex(
-            caption,
-            label,
-            _model_col_spec("lr", len(llm_models)),
-            body,
-            table_size=table_size,
-        ),
-        output_path,
-    )
-
-
-def export_significant_dimension_by_prompt(
-    counts: pd.DataFrame,
-    output_path: Path,
-    label: str,
-    table_size: str,
-    prompt_names: list[str] = MAIN_PROMPT_NAMES,
-    alpha: float = SIGNIFICANCE_ALPHA,
-    note: str = "",
-) -> None:
-    """
-    Full table: for each dataset, one row per prompt, with the
-    number of PC dimensions (n) and one column per model (Human first)
-    holding the share of dimensions found significant. Human annotations
-    do not depend on the prompt, so their value spans the dataset's rows.
-    """
-    if counts.empty:
-        print(f"No significance counts; skipping {output_path}.")
-        return
-    llm_models, groups, n_dims = _count_layout(counts)
-    prompts = [p for p in prompt_names if p in set(counts["Prompt"])]
-
-    body = [
-        _model_header(["Dataset", "$n$", "Prompt"], llm_models, rotate=True)
-    ]
-    for datasets, name in groups:
-        body.append(r"\midrule")
-        body += _by_prompt_rows(
-            counts, datasets, name, prompts, llm_models, n_dims[name]
-        )
-
-    caption = (
-        rf"Share of \acp{{sdd}} that are statistically significant "
-        rf"($p<{alpha}$) in the human annotations and in each LLM's "
-        "annotations under each instruction prompt, per dataset; $n$ is the "
-        "number of dimensions. A dimension counts as significant if at least "
-        "one of its groups is; human annotations do not depend on the prompt."
-        + _count_caption_note(counts)
-        + note
-    )
-    _write_count_table(
-        _count_table_latex(
-            caption,
-            label,
-            _model_col_spec("lrl", len(llm_models)),
-            body,
-            table_size=table_size,
-        ),
-        output_path,
-    )
-
-
-def _by_prompt_rows(
-    counts: pd.DataFrame,
-    datasets: list[str],
-    name: str,
-    prompts: list[str],
-    llm_models: list[str],
-    n_dimensions: int,
-) -> list[str]:
-    """One row per prompt for one dataset group; the dataset name, n and
-    the human value span the group's rows."""
-
-    def spanning(text: str) -> str:
-        return rf"\multirow{{{len(prompts)}}}{{*}}{{{text}}}"
-
-    human = _ratio_cell(counts, HUMAN_LABEL, "", datasets, n_dimensions)
-    rows = []
-    for i, prompt in enumerate(prompts):
-        first = i == 0
-        lead = [
-            spanning(_count_row_label(name)) if first else "",
-            spanning(str(n_dimensions)) if first else "",
-            prompt.capitalize().replace("_", r"\_"),
-            spanning(human) if first else "",
-        ]
-        cells = [
-            _ratio_cell(counts, m, prompt, datasets, n_dimensions)
-            for m in llm_models
-        ]
-        rows.append(" & ".join(lead + cells) + r" \\")
-    return rows
-
-
-def _apunim_prompt_cell(row: pd.Series) -> str:
-    if pd.isna(row["apunim"]):
-        return "---"
-    stars = significance_superscript(row["pvalue"])
-    return f"{row['apunim']:.3f}{stars}"
-
-
-def build_llm_apunim_prompt_table(
-    long_df: pd.DataFrame, prompt_names: list[str] = MAIN_PROMPT_NAMES
 ) -> pd.DataFrame:
     """
-    Pivots long-format apunim output into one row per (SDB Feature, Value,
-    Model) and one column per prompt.
+    One row per (Dataset, Model, Prompt): how many PC dimensions are
+    significant (`significant`) out of those with results (`tested`), with
+    significance decided as in compute_apunim_significance. `inputs` is the
+    same mapping as there; the human results are included as Model
+    HUMAN_LABEL, Prompt HUMAN_PROMPT_NAME.
     """
-    if long_df.empty:
-        return pd.DataFrame()
-
-    long_df = long_df.copy()
-    long_df["cell"] = long_df.apply(_apunim_prompt_cell, axis=1)
-
-    wide = long_df.pivot_table(
-        index=["SDB Feature", "Value", "Model"],
-        columns="Prompt",
-        values="cell",
-        aggfunc="first",
-    )
-    prompt_cols = [p for p in prompt_names if p in wide.columns]
-    wide = wide.reindex(columns=prompt_cols)
-    wide.columns = [c.capitalize() for c in wide.columns]
-    wide = wide.fillna("---").reset_index()
-
-    model_order = _order_models(set(wide["Model"]))
-    wide["Model"] = pd.Categorical(
-        wide["Model"], categories=model_order, ordered=True
-    )
-    return wide.sort_values(["SDB Feature", "Value", "Model"]).reset_index(
-        drop=True
+    rows = []
+    for dataset_name, (human_df, llm_df) in inputs.items():
+        rows.append(
+            _dimension_count(
+                dataset_name, HUMAN_LABEL, HUMAN_PROMPT_NAME, human_df, alpha
+            )
+        )
+        for (model, prompt), pair_df in llm_df.groupby(
+            ["Model", "Prompt"], sort=False
+        ):
+            if prompt in prompt_names:
+                rows.append(
+                    _dimension_count(
+                        dataset_name, str(model), str(prompt), pair_df, alpha
+                    )
+                )
+    return pd.DataFrame(
+        rows,
+        columns=["Dataset", "Model", "Prompt", "significant", "tested"],
     )
 
 
 # ---------------------------------------------------------------------------
-# Prompt-sensitivity ANOVA on per-comment nDFU
+# Prompt-sensitivity ANOVA on per-comment nDFU, and Cohen's d
 # ---------------------------------------------------------------------------
 
+# Per-comment nDFU (shared with the human analysis scripts).
+_per_comment_ndfu = run_helper.per_comment_ndfu
 
-def _cohens_d(a, b) -> float:
-    """Pooled-SD standardized mean difference between two samples."""
+
+def _cohens_d(a: np.ndarray | None, b: np.ndarray | None) -> float:
+    """Pooled-SD standardized mean difference between two samples; NaN if
+    either is missing or too small."""
+    if a is None or b is None:
+        return np.nan
     a = np.asarray(a, dtype=float)
     b = np.asarray(b, dtype=float)
     n1, n2 = len(a), len(b)
@@ -1141,19 +721,44 @@ def _cohens_d(a, b) -> float:
     return (a.mean() - b.mean()) / pooled_sd
 
 
+def _cohens_d_column(prompt_name: str, baseline_prompt: str) -> str:
+    return f"cohens_d_{prompt_name}_vs_{baseline_prompt}"
+
+
+def _ndfu_by_prompt(
+    files_by_prompt: dict[str, dict[str, Path]],
+    dataset_key: str,
+    model: str,
+) -> dict[str, np.ndarray]:
+    """prompt -> per-comment nDFU values of `model` (prompts with fewer
+    than two values are left out)."""
+    out = {}
+    for prompt_name, files in files_by_prompt.items():
+        path = files.get(model)
+        if path is None:
+            continue
+        ds = LLMAnnotationDataset(
+            load_llm_df(path), dataset_key, model, prompt_name
+        )
+        values = _per_comment_ndfu(ds).dropna().to_numpy()
+        if len(values) >= 2:
+            out[prompt_name] = values
+    return out
+
+
 def compute_ndfu_anova_by_prompt(
     human_datasets: HumanDatasets,
     annotations_dir: Path,
-    dataset_keys: list[str] = PROMPT_COMPARISON_DATASET_KEYS,
-    prompt_names: list[str] = MAIN_PROMPT_NAMES,
-    exclude_models: set[str] | None = None,
-    correction_method: str = "fdr_bh",
-    baseline_prompt: str = "default",
+    dataset_keys: Iterable[str],
+    prompt_names: list[str],
+    baseline_prompt: str,
+    exclude_models: Iterable[str] | None = None,
+    correction_method: str | None = "fdr_bh",
 ) -> pd.DataFrame:
     """
     One-way ANOVA per (dataset, model) testing whether the per-comment nDFU
     distribution shifts across instruction prompts, with corrected p-values
-    and Cohen's d effect sizes vs. the baseline prompt.
+    and Cohen's d effect sizes vs. `baseline_prompt`.
 
     Each comment contributes exactly one nDFU value per prompt (computed on
     all of its annotations). The test and the effect size are therefore
@@ -1161,43 +766,30 @@ def compute_ndfu_anova_by_prompt(
     of once per demographic group: per-group samples are near-copies of the
     same comments, so per-group tests would not be independent evidence.
     """
-    exclude_models = set(exclude_models or ())
+    excluded = set(exclude_models or ())
     records = []
 
-    for dataset_key in dataset_keys:
-        if dataset_key not in human_datasets:
-            continue
-
+    for dataset_key in available_dataset_keys(human_datasets, dataset_keys):
         files_by_prompt = {
             p: find_annotation_files(annotations_dir, dataset_key, p)
             for p in prompt_names
         }
-        models = _order_models(
-            set.union(*(set(f) for f in files_by_prompt.values()))
-            - exclude_models
+        models = order_models(
+            set.union(*(set(f) for f in files_by_prompt.values())) - excluded
         )
         dataset_name = human_datasets[dataset_key].get_name()
 
         for model in models:
-            ndfu_by_prompt = {}
-            for prompt_name in prompt_names:
-                path = files_by_prompt[prompt_name].get(model)
-                if path is None:
-                    continue
-                ds = LLMAnnotationDataset(
-                    load_llm_df(path), dataset_key, model, prompt_name
-                )
-                values = _per_comment_ndfu(ds).dropna().to_numpy()
-                if len(values) >= 2:
-                    ndfu_by_prompt[prompt_name] = values
-
+            ndfu_by_prompt = _ndfu_by_prompt(
+                files_by_prompt, dataset_key, model
+            )
             samples = list(ndfu_by_prompt.values())
             if len(samples) < 2:
                 continue
             f_stat, p_value = stats.f_oneway(*samples)
 
             baseline_values = ndfu_by_prompt.get(baseline_prompt)
-            record = {
+            record: dict[str, object] = {
                 "Dataset": dataset_name,
                 "Model": model,
                 "F": f_stat,
@@ -1211,15 +803,12 @@ def compute_ndfu_anova_by_prompt(
                 ),
             }
             for prompt_name in prompt_names:
-                if prompt_name == baseline_prompt:
-                    continue
-                prompt_values = ndfu_by_prompt.get(prompt_name)
-                record[f"cohens_d_{prompt_name}_vs_{baseline_prompt}"] = (
-                    _cohens_d(prompt_values, baseline_values)
-                    if prompt_values is not None
-                    and baseline_values is not None
-                    else np.nan
-                )
+                if prompt_name != baseline_prompt:
+                    record[_cohens_d_column(prompt_name, baseline_prompt)] = (
+                        _cohens_d(
+                            ndfu_by_prompt.get(prompt_name), baseline_values
+                        )
+                    )
             records.append(record)
 
     result_df = pd.DataFrame(records)
@@ -1234,7 +823,7 @@ def compute_ndfu_anova_by_prompt(
     return result_df
 
 
-def export_ndfu_anova_by_prompt(
+def write_ndfu_anova_by_prompt(
     result_df: pd.DataFrame, output_path: Path
 ) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1242,122 +831,54 @@ def export_ndfu_anova_by_prompt(
     print(f"ANOVA results exported to {output_path.resolve()}")
 
 
-# ---------------------------------------------------------------------------
-# Cohen's d summary table
-# ---------------------------------------------------------------------------
-
-
 def compute_cohens_d_compact_table(
     result_df: pd.DataFrame,
-    prompt_names: list[str] = MAIN_PROMPT_NAMES,
-    baseline_prompt: str = "default",
-    pooled_label: str = "All",
+    prompt_names: Iterable[str],
+    baseline_prompt: str,
 ) -> pd.DataFrame:
     """
-    Compact Cohen's d summary: one row per (Model, Dataset), one column per
-    non-baseline prompt, and a leading `n` column with the number of
-    comments the effect size is computed over. Each cell is a single
-    Cohen's d (prompt vs. `baseline_prompt`) on per-comment nDFU. A pooled
-    `pooled_label` row per model gives the unweighted mean of the
-    per-dataset values (and the total comment count).
+    Compact Cohen's d summary of compute_ndfu_anova_by_prompt's results:
+    one row per (Model, Dataset), a leading `n` column with the number of
+    comments the effect size is computed over, and one column per
+    non-baseline prompt holding Cohen's d (prompt vs. `baseline_prompt`) on
+    per-comment nDFU, NaN if unavailable. A pooled POOLED_LABEL row per
+    model gives the unweighted mean of the per-dataset values (and the
+    total comment count).
     """
     cols = {
-        p: f"cohens_d_{p}_vs_{baseline_prompt}"
+        p: _cohens_d_column(p, baseline_prompt)
         for p in prompt_names
         if p != baseline_prompt
-        and f"cohens_d_{p}_vs_{baseline_prompt}" in result_df.columns
+        and _cohens_d_column(p, baseline_prompt) in result_df.columns
     }
 
-    def _row(sub: pd.DataFrame) -> dict:
+    def _row(sub: pd.DataFrame) -> dict[str, float]:
         n = pd.to_numeric(sub["n_comments"], errors="coerce").sum()
-        row = {"n": str(int(n))}
+        row: dict[str, float] = {"n": int(n)}
         for prompt_name, col in cols.items():
-            vals = pd.to_numeric(sub[col], errors="coerce").dropna()
-            row[prompt_name] = "---" if vals.empty else f"{vals.mean():.2f}"
+            row[prompt_name] = pd.to_numeric(sub[col], errors="coerce").mean()
         return row
 
     rows, index = [], []
-    for model in _order_models(set(result_df["Model"])):
+    for model in order_models(set(result_df["Model"])):
         model_df = result_df.loc[result_df["Model"] == model]
         rows.append(_row(model_df))
-        index.append((model, pooled_label))
+        index.append((model, POOLED_LABEL))
         # Preserve dataset order of appearance in the results.
         for dataset in model_df["Dataset"].drop_duplicates():
             rows.append(_row(model_df.loc[model_df["Dataset"] == dataset]))
             index.append((model, dataset))
 
-    out = pd.DataFrame(
+    return pd.DataFrame(
         rows,
         index=pd.MultiIndex.from_tuples(index, names=["Model", "Dataset"]),
+        columns=["n", *cols],
     )
-    out.columns = ["n"] + [str(c).capitalize() for c in out.columns[1:]]
-    return out
-
-
-def _merge_span_cells(latex_str: str, n_total_cols: int) -> str:
-    """
-    Rewrites rows containing a `_SPAN_MARK` value cell so that the value
-    spans all remaining columns of the row (the rest of the row is empty).
-    """
-    out = []
-    for line in latex_str.splitlines():
-        if _SPAN_MARK not in line:
-            out.append(line)
-            continue
-        prefix, rest = line.split(_SPAN_MARK, 1)
-        value = rest.split(" & ", 1)[0].removesuffix("\\\\").strip()
-        span = n_total_cols - prefix.count(" & ")
-        out.append(f"{prefix}\\multicolumn{{{span}}}{{c}}{{{value}}} \\\\")
-    return "\n".join(out) + "\n"
-
-
-def export_compact_prompt_table_latex(
-    compact_df: pd.DataFrame,
-    output_path: Path,
-    caption: str,
-    label: str,
-) -> None:
-    compact_df = labels.relabel_frame(compact_df)
-    latex_str = compact_df.to_latex(
-        caption=caption,
-        label=label,
-        position="t",
-        escape=True,
-        index=True,
-        multirow=True,
-        column_format="ll" + "r" * len(compact_df.columns),
-    )
-    latex_str = _merge_span_cells(
-        latex_str,
-        n_total_cols=compact_df.index.nlevels + len(compact_df.columns),
-    )
-    latex_str = center_table_latex(latex_str)
-    latex_str = small_table_latex(latex_str)
-
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(latex_str)
-    print(f"Table exported to {output_path.resolve()}")
 
 
 # ---------------------------------------------------------------------------
-# Mean nDFU: human annotations vs. LLM annotations (per instruction prompt)
+# Per-comment records: human annotations vs. LLM annotations
 # ---------------------------------------------------------------------------
-
-HUMAN_LABEL = "Human"
-_SPAN_MARK = "@@SPAN@@"
-
-# Prompt name of the no-persona baseline runs (llm_annotate.py
-# --no-persona), i.e. the files "<dataset>-nopersona-<model>.csv" in the
-# annotations directory, next to the persona runs.
-NO_PERSONA_PROMPT_NAME = "nopersona"
-
-# Column labels of the default-prompt mean nDFU table.
-NO_PERSONA_COLUMN = "No Persona"
-WITH_PERSONA_COLUMN = "With Persona"
-
-
-# Per-comment nDFU (shared with the human analysis scripts).
-_per_comment_ndfu = run_helper.per_comment_ndfu
 
 
 def per_comment_mean_annotation(ds: Dataset) -> pd.Series:
@@ -1376,31 +897,39 @@ def per_comment_mean_annotation(ds: Dataset) -> pd.Series:
     return pd.Series(values, dtype=float)
 
 
+# Signature shared by compute_mean_ndfu_records and
+# compute_mean_annotation_records.
+RecordsFunction = Callable[..., pd.DataFrame]
+
+
 def _compute_per_comment_records(
     human_datasets: HumanDatasets,
     annotations_dir: Path,
     per_comment: Callable[[Dataset], pd.Series],
     value_col: str,
-    dataset_keys: list[str],
-    prompt_names: list[str],
-    exclude_models: set[str] | None,
+    dataset_keys: Iterable[str],
+    prompt_names: Iterable[str],
+    exclude_models: Iterable[str] | None,
     sample_prompt: str,
     include_human: bool,
 ) -> pd.DataFrame:
     """
     Long-format per-comment values (`per_comment` of each dataset, in
     column `value_col`), one row per (Dataset, Model, Prompt, text_id).
-    Human rows have Model == HUMAN_LABEL and Prompt == "human"; they are
-    computed on the comments actually sampled for the LLM runs (see
-    `_human_sample_dataset`), so human and LLM values are comparable
-    comment by comment. With `include_human=False` only LLM rows are
-    returned (e.g. to add further prompts to an existing set of records).
+    Human rows have Model == HUMAN_LABEL and Prompt == HUMAN_PROMPT_NAME;
+    they are computed on the comments actually sampled for the LLM runs
+    (see shared.human_sample_dataset), so human and LLM values are
+    comparable comment by comment. With `include_human=False` only LLM
+    rows are returned (e.g. to add further prompts to an existing set of
+    records).
     """
-    exclude_models = set(exclude_models or ())
-    records = []
+    excluded = set(exclude_models or ())
+    records: list[dict[str, object]] = []
 
-    def _emit(dataset_name, model, prompt, values: pd.Series):
-        return [
+    def _emit(
+        dataset_name: str, model: str, prompt: str, values: pd.Series
+    ) -> None:
+        records.extend(
             {
                 "Dataset": dataset_name,
                 "Model": model,
@@ -1409,12 +938,10 @@ def _compute_per_comment_records(
                 value_col: value,
             }
             for text_id, value in values.dropna().items()
-        ]
+        )
 
-    for dataset_key in dataset_keys:
-        if dataset_key not in human_datasets:
-            continue
-        human_ds = _human_sample_dataset(
+    for dataset_key in available_dataset_keys(human_datasets, dataset_keys):
+        human_ds = human_sample_dataset(
             human_datasets[dataset_key],
             annotations_dir,
             dataset_key,
@@ -1424,10 +951,11 @@ def _compute_per_comment_records(
             continue
         dataset_name = human_datasets[dataset_key].get_name()
         if include_human:
-            records.extend(
-                _emit(
-                    dataset_name, HUMAN_LABEL, "human", per_comment(human_ds)
-                )
+            _emit(
+                dataset_name,
+                HUMAN_LABEL,
+                HUMAN_PROMPT_NAME,
+                per_comment(human_ds),
             )
 
         for prompt_name in prompt_names:
@@ -1435,16 +963,12 @@ def _compute_per_comment_records(
                 annotations_dir, dataset_key, prompt_name
             )
             for model, path in files.items():
-                if model in exclude_models:
+                if model in excluded:
                     continue
                 llm_ds = LLMAnnotationDataset(
                     load_llm_df(path), dataset_key, model, prompt_name
                 )
-                records.extend(
-                    _emit(
-                        dataset_name, model, prompt_name, per_comment(llm_ds)
-                    )
-                )
+                _emit(dataset_name, model, prompt_name, per_comment(llm_ds))
 
     # Explicit columns so an empty result still round-trips through a CSV.
     return pd.DataFrame(
@@ -1455,9 +979,9 @@ def _compute_per_comment_records(
 def compute_mean_ndfu_records(
     human_datasets: HumanDatasets,
     annotations_dir: Path,
-    dataset_keys: list[str] = PROMPT_COMPARISON_DATASET_KEYS,
-    prompt_names: list[str] = MAIN_PROMPT_NAMES,
-    exclude_models: set[str] | None = APUNIM_TABLE_EXCLUDE_MODELS,
+    dataset_keys: Iterable[str],
+    prompt_names: Iterable[str],
+    exclude_models: Iterable[str] | None = None,
     sample_prompt: str = "default",
     include_human: bool = True,
 ) -> pd.DataFrame:
@@ -1479,9 +1003,9 @@ def compute_mean_ndfu_records(
 def compute_mean_annotation_records(
     human_datasets: HumanDatasets,
     annotations_dir: Path,
-    dataset_keys: list[str] = PROMPT_COMPARISON_DATASET_KEYS,
-    prompt_names: list[str] = MAIN_PROMPT_NAMES,
-    exclude_models: set[str] | None = APUNIM_TABLE_EXCLUDE_MODELS,
+    dataset_keys: Iterable[str],
+    prompt_names: Iterable[str],
+    exclude_models: Iterable[str] | None = None,
     sample_prompt: str = "default",
     include_human: bool = True,
 ) -> pd.DataFrame:
@@ -1500,154 +1024,173 @@ def compute_mean_annotation_records(
     )
 
 
-def _mean_se_str(values: pd.Series) -> str:
+# ---------------------------------------------------------------------------
+# Mean nDFU tables
+# ---------------------------------------------------------------------------
+
+
+class MeanSE(NamedTuple):
+    """Mean and standard error of a sample: mean is NaN for an empty sample,
+    se is NaN for fewer than two values."""
+
+    mean: float
+    se: float
+
+
+def mean_se(values: pd.Series) -> MeanSE:
     values = pd.to_numeric(values, errors="coerce").dropna()
     if values.empty:
-        return "---"
+        return MeanSE(np.nan, np.nan)
     se = (
         values.std(ddof=1) / np.sqrt(len(values))
         if len(values) > 1
         else np.nan
     )
-    return f"{values.mean():.2f} ({se:.2f})"
+    return MeanSE(values.mean(), se)
 
 
 def _datasets_in_order(df: pd.DataFrame) -> list[str]:
     return list(df["Dataset"].drop_duplicates())
 
 
-def build_mean_ndfu_table(
-    ndfu_df: pd.DataFrame,
-    prompt_names: list[str] = MAIN_PROMPT_NAMES,
-    pooled_label: str = "All",
+def _matched_model_rows(
+    model_df: pd.DataFrame,
+    human_df: pd.DataFrame,
+    datasets: list[str],
+    prompts: list[str],
+) -> dict[str, pd.DataFrame]:
+    """dataset -> rows of one model restricted to the comments that the
+    human sample and every prompt the model has for that dataset share
+    (datasets without any of `prompts` are left out)."""
+    matched = {}
+    for d in datasets:
+        sub = model_df.loc[model_df["Dataset"] == d]
+        present = [p for p in prompts if p in set(sub["Prompt"])]
+        if not present:
+            continue
+        ids = set(human_df.loc[human_df["Dataset"] == d, "text_id"])
+        for p in present:
+            ids &= set(sub.loc[sub["Prompt"] == p, "text_id"])
+        matched[d] = sub[sub["text_id"].isin(ids)]
+    return matched
+
+
+def _n_comments(sub: pd.DataFrame) -> int:
+    """Number of comments of `sub` (counted under its first prompt; all of
+    its prompts share the same comments)."""
+    first = sub.loc[sub["Prompt"] == sub["Prompt"].iloc[0]]
+    return first["text_id"].nunique()
+
+
+def compute_mean_ndfu_table(
+    ndfu_df: pd.DataFrame, prompt_names: Iterable[str]
 ) -> pd.DataFrame:
     """
-    Compact table: a leading Human block, then one block per model; each
-    block has a pooled `pooled_label` row and one row per dataset. Columns
-    are `n` (comments) and one per instruction prompt, with the mean (SE)
-    per-comment nDFU. Human annotations do not depend on the prompt, so
-    their value is placed in a single cell spanning all prompt columns
-    (see `export_compact_prompt_table_latex`). Within a model row only
-    comments that the human sample and every available prompt share are
-    used, so all cells in a row use the same comments.
+    Mean (SE) per-comment nDFU of the human annotations and of each model
+    under each prompt. Index (Model, Dataset): a leading HUMAN_LABEL block,
+    then one block per model, each with a pooled POOLED_LABEL row and one
+    row per dataset. Columns: `n` (comments), then one MeanSE per prompt
+    (the prompts in `prompt_names` that have results). Human annotations do
+    not depend on the prompt, so the human rows hold the same value in
+    every prompt column. Within a model row only comments that the human
+    sample and every available prompt share are used, so all cells in a
+    row use the same comments.
     """
     human_df = ndfu_df.loc[ndfu_df["Model"] == HUMAN_LABEL]
     llm_df = ndfu_df.loc[ndfu_df["Model"] != HUMAN_LABEL]
     prompts = [p for p in prompt_names if p in set(llm_df["Prompt"])]
     datasets = _datasets_in_order(human_df)
 
-    def _human_row(sub: pd.DataFrame) -> dict:
-        row = {"n": str(len(sub))}
-        for i, p in enumerate(prompts):
-            row[p] = _SPAN_MARK + _mean_se_str(sub["ndfu"]) if i == 0 else ""
-        return row
+    def _human_row(sub: pd.DataFrame) -> dict[str, object]:
+        value = mean_se(sub["ndfu"])
+        return {"n": len(sub), **{p: value for p in prompts}}
 
-    rows, index = [], []
+    def _model_row(sub: pd.DataFrame) -> dict[str, object]:
+        return {
+            "n": _n_comments(sub),
+            **{
+                p: mean_se(sub.loc[sub["Prompt"] == p, "ndfu"])
+                for p in prompts
+            },
+        }
 
-    # Human block
-    rows.append(_human_row(human_df))
-    index.append((HUMAN_LABEL, pooled_label))
+    rows = [_human_row(human_df)]
+    index = [(HUMAN_LABEL, POOLED_LABEL)]
     for d in datasets:
         rows.append(_human_row(human_df.loc[human_df["Dataset"] == d]))
         index.append((HUMAN_LABEL, d))
 
-    # Model blocks
-    for model in _order_models(set(llm_df["Model"])):
-        model_df = llm_df.loc[llm_df["Model"] == model]
-        matched = {}
-        for d in datasets:
-            sub = model_df.loc[model_df["Dataset"] == d]
-            present = [p for p in prompts if p in set(sub["Prompt"])]
-            if not present:
-                continue
-            ids = set(human_df.loc[human_df["Dataset"] == d, "text_id"])
-            for p in present:
-                ids &= set(sub.loc[sub["Prompt"] == p, "text_id"])
-            matched[d] = sub[sub["text_id"].isin(ids)]
-
-        def _row(sub: pd.DataFrame) -> dict:
-            first = sub.loc[sub["Prompt"] == sub["Prompt"].iloc[0]]
-            row = {"n": str(first["text_id"].nunique())}
-            for p in prompts:
-                row[p] = _mean_se_str(sub.loc[sub["Prompt"] == p, "ndfu"])
-            return row
-
+    for model in order_models(set(llm_df["Model"])):
+        matched = _matched_model_rows(
+            llm_df.loc[llm_df["Model"] == model], human_df, datasets, prompts
+        )
         if not matched:
             continue
-        pooled_n = sum(
-            m.loc[m["Prompt"] == m["Prompt"].iloc[0], "text_id"].nunique()
-            for m in matched.values()
-            if not m.empty
+        pooled = _model_row(pd.concat(matched.values()))
+        pooled["n"] = sum(
+            _n_comments(m) for m in matched.values() if not m.empty
         )
-        pooled = _row(pd.concat(matched.values()))
-        pooled["n"] = str(pooled_n)
         rows.append(pooled)
-        index.append((model, pooled_label))
+        index.append((model, POOLED_LABEL))
         for d, sub in matched.items():
             if sub.empty:
                 continue
-            rows.append(_row(sub))
+            rows.append(_model_row(sub))
             index.append((model, d))
 
-    out = pd.DataFrame(
+    return pd.DataFrame(
         rows,
         index=pd.MultiIndex.from_tuples(index, names=["Model", "Dataset"]),
+        columns=["n", *prompts],
     )
-    out.columns = ["n"] + [str(c).capitalize() for c in out.columns[1:]]
-    return out
 
 
-def build_default_mean_ndfu_table(
+def compute_default_mean_ndfu_table(
     ndfu_df: pd.DataFrame,
-    prompt_name: str = "default",
-    no_persona_prompt_name: str = NO_PERSONA_PROMPT_NAME,
+    prompt_name: str,
+    no_persona_prompt_name: str,
 ) -> pd.DataFrame:
     """
-    Human row first, then one row per model. For each dataset a
-    NO_PERSONA_COLUMN column with the mean (SE) per-comment nDFU under
-    `no_persona_prompt_name` and a WITH_PERSONA_COLUMN column with the same
-    under `prompt_name` (columns are a (Dataset, column) MultiIndex). Model
-    rows only use comments that also appear in the human sample. Human
-    annotations do not depend on the prompt, so the Human row holds the
-    same value in both columns of a dataset (the exporter merges them).
+    Mean (SE) per-comment nDFU under `no_persona_prompt_name` and under
+    `prompt_name`: a HUMAN_LABEL row first, then one row per model; columns
+    are a (Dataset, Prompt) MultiIndex with the no-persona prompt first,
+    cells are MeanSE. Model rows only use comments that also appear in the
+    human sample. Human annotations do not depend on the prompt, so the
+    human row holds the same value under both prompts of a dataset.
     """
     human_df = ndfu_df.loc[ndfu_df["Model"] == HUMAN_LABEL]
-    columns = {
-        NO_PERSONA_COLUMN: no_persona_prompt_name,
-        WITH_PERSONA_COLUMN: prompt_name,
-    }
+    prompts = [no_persona_prompt_name, prompt_name]
     llm_df = ndfu_df.loc[
-        (ndfu_df["Model"] != HUMAN_LABEL)
-        & ndfu_df["Prompt"].isin(set(columns.values()))
+        (ndfu_df["Model"] != HUMAN_LABEL) & ndfu_df["Prompt"].isin(prompts)
     ]
     datasets = _datasets_in_order(human_df)
 
     human_row = {}
     for d in datasets:
-        value = _mean_se_str(human_df.loc[human_df["Dataset"] == d, "ndfu"])
-        for col in columns:
-            human_row[(d, col)] = value
+        value = mean_se(human_df.loc[human_df["Dataset"] == d, "ndfu"])
+        for prompt in prompts:
+            human_row[(d, prompt)] = value
 
-    def _model_row(model_df: pd.DataFrame) -> dict:
+    def _model_row(model_df: pd.DataFrame) -> dict[tuple[str, str], MeanSE]:
         row = {}
         for d in datasets:
             ids = set(human_df.loc[human_df["Dataset"] == d, "text_id"])
-            for col, prompt in columns.items():
+            for prompt in prompts:
                 sub = model_df.loc[
                     (model_df["Dataset"] == d)
                     & (model_df["Prompt"] == prompt)
                     & model_df["text_id"].isin(ids)
                 ]
-                row[(d, col)] = _mean_se_str(sub["ndfu"])
+                row[(d, prompt)] = mean_se(sub["ndfu"])
         return row
 
     rows = {HUMAN_LABEL: human_row}
-    for model in _order_models(set(llm_df["Model"])):
+    for model in order_models(set(llm_df["Model"])):
         rows[model] = _model_row(llm_df.loc[llm_df["Model"] == model])
 
     out = pd.DataFrame.from_dict(rows, orient="index")
     out.columns = pd.MultiIndex.from_tuples(
-        out.columns, names=["Dataset", None]
+        list(out.columns), names=["Dataset", "Prompt"]
     )
     out.index.name = "Model"
     return out
@@ -1656,18 +1199,6 @@ def build_default_mean_ndfu_table(
 # ---------------------------------------------------------------------------
 # Spearman correlation of per-comment values: human vs. LLM, per prompt
 # ---------------------------------------------------------------------------
-
-# Prompts of the correlation table, in column order: the no-persona
-# baseline first, then the persona runs (default and adversarial prompts).
-CORRELATION_PROMPT_NAMES = [NO_PERSONA_PROMPT_NAME, *MAIN_PROMPT_NAMES]
-
-_CORR_MISSING = "---"
-
-
-def _prompt_column_label(prompt_name: str) -> str:
-    if prompt_name == NO_PERSONA_PROMPT_NAME:
-        return NO_PERSONA_COLUMN
-    return prompt_name.capitalize().replace("_", r"\_")
 
 
 def _spearman(x: pd.Series, y: pd.Series) -> tuple[float, float]:
@@ -1681,8 +1212,8 @@ def _spearman(x: pd.Series, y: pd.Series) -> tuple[float, float]:
 
 def compute_human_llm_correlations(
     records_df: pd.DataFrame,
+    prompt_names: list[str],
     value_col: str = "annotation",
-    prompt_names: list[str] = CORRELATION_PROMPT_NAMES,
     correction_method: str | None = "holm",
 ) -> pd.DataFrame:
     """
@@ -1711,7 +1242,7 @@ def compute_human_llm_correlations(
     ]
 
     records = []
-    for model in _order_models(set(llm_df["Model"])):
+    for model in order_models(set(llm_df["Model"])):
         for dataset in _datasets_in_order(human_df):
             sub = llm_df.loc[
                 (llm_df["Model"] == model) & (llm_df["Dataset"] == dataset)
@@ -1725,10 +1256,11 @@ def compute_human_llm_correlations(
                 prompt: g.set_index("text_id")[value_col]
                 for prompt, g in sub.groupby("Prompt")
             }
-            ids = set(human.index).intersection(
-                *(set(v.index) for v in by_prompt.values())
+            ids = sorted(
+                set(human.index).intersection(
+                    *(set(v.index) for v in by_prompt.values())
+                )
             )
-            ids = sorted(ids)
             for prompt in prompt_names:
                 if prompt not in by_prompt:
                     continue
@@ -1757,128 +1289,3 @@ def compute_human_llm_correlations(
             out.loc[tested, "p_raw"], alpha=0.05, method=correction_method
         )[1]
     return out
-
-
-def _correlation_cell(row: pd.Series, p_col: str) -> str:
-    """rho as a math expression, with significance stars as superscript."""
-    if pd.isna(row["spearman_rho"]):
-        return _CORR_MISSING
-    stars = next(
-        (s for threshold, s in SIGNIFICANCE_LEVELS if row[p_col] < threshold),
-        "",
-    )
-    value = f"{row['spearman_rho']:.2f}"
-    return f"${value}^{{{stars}}}$" if stars else f"${value}$"
-
-
-def build_human_llm_correlation_table(
-    corr_df: pd.DataFrame,
-    prompt_names: list[str] = CORRELATION_PROMPT_NAMES,
-) -> pd.DataFrame:
-    """
-    One row per (Model, Dataset) of `corr_df` (index levels Model and
-    Dataset, in the order of compute_human_llm_correlations) with its
-    number of comments (`n`) and one column per prompt in `prompt_names`
-    that has results, holding the formatted Spearman rho (stars from the
-    corrected p-values if present, else the raw ones). The prompts used
-    are stored in `.attrs["prompts"]`.
-    """
-    if corr_df.empty:
-        return pd.DataFrame()
-    p_col = "p_corrected" if "p_corrected" in corr_df.columns else "p_raw"
-    df = corr_df.copy()
-    df["cell"] = df.apply(_correlation_cell, axis=1, p_col=p_col)
-
-    prompts = [p for p in prompt_names if p in set(df["Prompt"])]
-    rows = pd.MultiIndex.from_frame(df[["Model", "Dataset"]].drop_duplicates())
-    wide = df.set_index(["Model", "Dataset", "Prompt"])["cell"].unstack(
-        "Prompt"
-    )
-    wide = wide.reindex(index=rows, columns=prompts).fillna(_CORR_MISSING)
-    n = df.groupby(["Model", "Dataset"])["n"].first().reindex(rows)
-    wide.insert(0, "n", n.astype(int).astype(str))
-    wide.columns.name = None
-
-    wide.attrs["prompts"] = prompts
-    wide.attrs["corrected"] = p_col == "p_corrected"
-    return wide
-
-
-def export_human_llm_correlation_table(
-    table_df: pd.DataFrame,
-    output_path: Path,
-    caption: str,
-    label: str,
-) -> None:
-    """
-    One block of rows per model (one row per dataset; the model named on
-    the block's first row, blocks separated by a rule); a dataset and an n
-    column, then one column per prompt (no-persona baseline first,
-    separated by a small gap) under a common "Spearman's rho" header. A
-    note on the significance stars is appended to `caption`.
-    """
-    if table_df.empty:
-        print(f"No human-LLM correlations; skipping {output_path}.")
-        return
-    prompts = table_df.attrs["prompts"]
-    n_prompts = len(prompts)
-
-    significance = (
-        ("Holm-corrected " if table_df.attrs.get("corrected") else "")
-        + "significance: "
-        + ", ".join(
-            f"$^{{{stars}}}p<{threshold}$"
-            for threshold, stars in reversed(SIGNIFICANCE_LEVELS)
-        )
-        + "."
-    )
-
-    first_gap = (
-        r"@{\hspace{10pt}}"
-        if prompts and prompts[0] == NO_PERSONA_PROMPT_NAME and n_prompts > 1
-        else ""
-    )
-    col_spec = "llr" + (
-        "r" + first_gap + "r" * (n_prompts - 1) if n_prompts else ""
-    )
-
-    header = [
-        rf" & & & \multicolumn{{{n_prompts}}}{{c}}{{Spearman's $\rho$}} \\",
-        rf"\cmidrule(lr){{4-{3 + n_prompts}}}",
-        "Model & Dataset & $n$ & "
-        + " & ".join(_prompt_column_label(p) for p in prompts)
-        + r" \\",
-    ]
-    body = []
-    previous_model = None
-    for (model, dataset), row in table_df.iterrows():
-        new_model = model != previous_model
-        if new_model and previous_model is not None:
-            body.append(r"\midrule")
-        previous_model = model
-        cells = [
-            labels.model_label(model).replace("_", r"\_") if new_model else "",
-            labels.dataset_label(dataset).replace("_", r"\_"),
-            row["n"],
-            *(row[p] for p in prompts),
-        ]
-        body.append(" & ".join(cells) + r" \\")
-
-    lines = [
-        r"\begin{table}[t]",
-        rf"\caption{{{caption.strip()} {significance}}}",
-        rf"\label{{{label}}}",
-        r"\centering",
-        r"\small",
-        rf"\begin{{tabular}}{{{col_spec}}}",
-        r"\toprule",
-        *header,
-        r"\midrule",
-        *body,
-        r"\bottomrule",
-        r"\end{tabular}",
-        r"\end{table}",
-    ]
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text("\n".join(lines) + "\n")
-    print(f"Table exported to {output_path.resolve()}")

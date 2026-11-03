@@ -1,26 +1,31 @@
+"""
+Figures comparing the human and the LLM annotations.
+"""
+
 import itertools
+from collections.abc import Iterable
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
-import seaborn as sns
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
+import seaborn as sns
+from matplotlib.artist import Artist
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 
 from ..lib import graphs, labels
 from ..lib.preprocessing import Dataset
 from .shared import (
-    DATASET_KEYS,
     HumanDatasets,
+    available_dataset_keys,
     find_annotation_files,
+    key_columns,
+    keyed_series,
     load_llm_df,
-    _available_dataset_keys,
-    _key_columns,
-    _keyed_series,
-    _order_models,
-    MAIN_PROMPT_NAMES,
+    order_models,
 )
 
 
@@ -29,22 +34,24 @@ from .shared import (
 # ---------------------------------------------------------------------------
 
 
-def _subplot_grid(n: int, ncols: int):
+def _subplot_grid(n: int, ncols: int) -> tuple[Figure, np.ndarray, int]:
     nrows = -(-n // ncols)  # ceil division
     fig, axes = plt.subplots(nrows, ncols, squeeze=False)
     return fig, axes, nrows
 
 
-def _axis_at(axes, i: int, ncols: int):
+def _axis_at(axes: np.ndarray, i: int, ncols: int) -> Axes:
     return axes[i // ncols][i % ncols]
 
 
-def _hide_unused_axes(axes, n_used: int, nrows: int, ncols: int) -> None:
+def _hide_unused_axes(
+    axes: np.ndarray, n_used: int, nrows: int, ncols: int
+) -> None:
     for j in range(n_used, nrows * ncols):
         _axis_at(axes, j, ncols).set_visible(False)
 
 
-def _clean_legend(ax, fontsize: int = 10) -> None:
+def _clean_legend(ax: Axes, fontsize: int = 10) -> None:
     legend = ax.get_legend()
     if legend is None:
         return
@@ -60,7 +67,7 @@ def _clean_legend(ax, fontsize: int = 10) -> None:
 
 def collect_human_annotations(ds: Dataset) -> np.ndarray:
     col = ds.get_annotation_column()
-    values = []
+    values: list[object] = []
     for entry in ds.get_dataset()[col]:
         if isinstance(entry, (list, np.ndarray)):
             values.extend(entry)
@@ -74,7 +81,7 @@ def collect_human_annotations(ds: Dataset) -> np.ndarray:
 def collect_llm_annotations(
     annotations_dir: Path, dataset_key: str, prompt_name: str
 ) -> dict[str, np.ndarray]:
-    out = {}
+    out: dict[str, np.ndarray] = {}
     for pseudo, path in find_annotation_files(
         annotations_dir, dataset_key, prompt_name
     ).items():
@@ -85,7 +92,7 @@ def collect_llm_annotations(
 
 def _histogram_records(
     human_vals: np.ndarray, llm_vals: dict[str, np.ndarray]
-) -> list[dict]:
+) -> list[dict[str, object]]:
     records = [{"value": v, "source": "Human"} for v in human_vals]
     for pseudo, vals in sorted(llm_vals.items()):
         records.extend({"value": v, "source": pseudo} for v in vals)
@@ -93,7 +100,7 @@ def _histogram_records(
 
 
 def _draw_annotation_histogram(
-    ax,
+    ax: Axes,
     ds: Dataset,
     annotations_dir: Path,
     dataset_key: str,
@@ -148,11 +155,11 @@ def plot_annotation_histograms(
     human_datasets: HumanDatasets,
     annotations_dir: Path,
     output_path: Path,
-    dataset_keys: list[str],
-    prompt_name: str = "default",
+    dataset_keys: Iterable[str],
+    prompt_name: str,
     ncols: int = 2,
 ) -> None:
-    dataset_keys = _available_dataset_keys(human_datasets, dataset_keys)
+    dataset_keys = available_dataset_keys(human_datasets, dataset_keys)
     fig, axes, nrows = _subplot_grid(len(dataset_keys), ncols)
 
     for i, key in enumerate(dataset_keys):
@@ -166,7 +173,7 @@ def plot_annotation_histograms(
 
     _hide_unused_axes(axes, len(dataset_keys), nrows, ncols)
 
-    handles_by_label = {}
+    handles_by_label: dict[str, Artist] = {}
     for ax in fig.axes:
         for handle, label in zip(*ax.get_legend_handles_labels()):
             handles_by_label.setdefault(label, handle)
@@ -203,9 +210,9 @@ def _paired_prompt_annotations(
     if dfs is None:
         return None
 
-    key_cols = _key_columns(dfs)
+    key_cols = key_columns(dfs)
     series_list = [
-        _keyed_series(df, key_cols, prompt_name)
+        keyed_series(df, key_cols, prompt_name)
         for prompt_name, df in dfs.items()
     ]
     wide = pd.concat(series_list, axis=1).dropna()
@@ -218,7 +225,7 @@ def _load_model_prompt_dfs(
     model: str,
     prompt_names: list[str],
 ) -> dict[str, pd.DataFrame] | None:
-    dfs = {}
+    dfs: dict[str, pd.DataFrame] = {}
     for prompt_name in prompt_names:
         path = find_annotation_files(
             annotations_dir, dataset_key, prompt_name
@@ -236,7 +243,7 @@ def _prompt_diff_records_for_model(
     prompt_names: list[str],
     baseline_prompt: str,
     other_prompts: list[str],
-) -> list[dict]:
+) -> list[dict[str, object]]:
     wide = _paired_prompt_annotations(
         annotations_dir, dataset_key, model, prompt_names
     )
@@ -260,7 +267,7 @@ def _prompt_diff_records_for_dataset(
     prompt_names: list[str],
     baseline_prompt: str,
     other_prompts: list[str],
-) -> list[dict]:
+) -> list[dict[str, object]]:
     records = []
     for model in models:
         records.extend(
@@ -284,9 +291,9 @@ def _collect_prompt_diff_by_dataset(
     baseline_prompt: str,
     other_prompts: list[str],
 ) -> dict[str, pd.DataFrame]:
-    records_by_dataset = {}
+    records_by_dataset: dict[str, pd.DataFrame] = {}
     for key in dataset_keys:
-        models = _order_models(
+        models = order_models(
             set(find_annotation_files(annotations_dir, key, baseline_prompt))
             - exclude_models
         )
@@ -304,7 +311,7 @@ def _collect_prompt_diff_by_dataset(
 
 
 def _draw_prompt_diff_subplot(
-    ax,
+    ax: Axes,
     dataset_name: str,
     plot_df: pd.DataFrame,
     other_prompts: list[str],
@@ -316,7 +323,7 @@ def _draw_prompt_diff_subplot(
         if f"{other} - {baseline_prompt}" in set(plot_df["Diff"])
     ]
     model_order = [
-        labels.model_label(m) for m in _order_models(set(plot_df["Model"]))
+        labels.model_label(m) for m in order_models(set(plot_df["Model"]))
     ]
     plot_df = plot_df.assign(Model=plot_df["Model"].map(labels.model_label))
     palette = dict(zip(diff_order, graphs.COLORBLIND_PALETTE[1:]))
@@ -345,11 +352,11 @@ def plot_prompt_mean_diff(
     human_datasets: HumanDatasets,
     annotations_dir: Path,
     output_path: Path,
-    exclude_models: list[str],
-    prompt_names: list[str] = MAIN_PROMPT_NAMES,
-    baseline_prompt: str = "default",
+    exclude_models: Iterable[str],
+    prompt_names: list[str],
+    baseline_prompt: str,
+    dataset_keys: Iterable[str],
     ncols: int = 2,
-    dataset_keys: list[str] = DATASET_KEYS,
 ) -> None:
     """
     One subplot per dataset in `dataset_keys`: for each model, the mean
@@ -357,14 +364,13 @@ def plot_prompt_mean_diff(
     and the baseline, computed item-by-item on the same (comment, persona)
     pairs.
     """
-    exclude_models = set(exclude_models)
     other_prompts = [p for p in prompt_names if p != baseline_prompt]
-    dataset_keys = _available_dataset_keys(human_datasets, dataset_keys)
+    dataset_keys = available_dataset_keys(human_datasets, dataset_keys)
 
     records_by_dataset = _collect_prompt_diff_by_dataset(
         annotations_dir,
         dataset_keys,
-        exclude_models,
+        set(exclude_models),
         prompt_names,
         baseline_prompt,
         other_prompts,
@@ -442,7 +448,7 @@ def plot_inherent_polarization_histogram_grid(
         print(f"No inherent-polarization values; skipping {output_path}.")
         return
 
-    sources = ["Human"] + _order_models(set(df["Source"]) - {"Human"})
+    sources = ["Human"] + order_models(set(df["Source"]) - {"Human"})
     sources = [s for s in sources if s in set(df["Source"])]
     style = {
         s: (
@@ -540,7 +546,7 @@ def _inherent_values_by_model(
     pooled over all datasets. Human rows and empty models are dropped."""
     df = long_df.loc[long_df["Prompt"] == prompt_name]
     values = pd.to_numeric(df["value"], errors="coerce")
-    out = {}
+    out: dict[str, pd.Series] = {}
     for model in models:
         series = values[df["Source"] == model].dropna()
         if not series.empty:
@@ -553,8 +559,8 @@ def plot_inherent_polarization_by_model(
     subsampled_df: pd.DataFrame,
     output_path: Path,
     subsample_size: int,
-    exclude_models: set[str] | None = None,
-    prompt_name: str = "default",
+    prompt_name: str,
+    exclude_models: Iterable[str] | None = None,
 ) -> None:
     """
     Mirrored histograms of per-comment inherent polarization (USD), one
@@ -569,14 +575,14 @@ def plot_inherent_polarization_by_model(
     pooled over all datasets for `prompt_name`. Human rows are ignored and
     the models in `exclude_models` are left out.
     """
-    exclude_models = set(exclude_models or ())
+    excluded = set(exclude_models or ())
     sources = set(full_df.get("Source", [])) | set(
         subsampled_df.get("Source", [])
     )
     # Styles follow all models, so a model has the same colour/hatch with
     # and without the excluded ones.
-    all_models = _order_models(sources - {"Human"})
-    models = [m for m in all_models if m not in exclude_models]
+    all_models = order_models(sources - {"Human"})
+    models = [m for m in all_models if m not in excluded]
 
     def _relabel(values: dict[str, pd.Series]) -> dict[str, pd.Series]:
         return {labels.model_label(m): s for m, s in values.items()}
@@ -607,7 +613,7 @@ def _inherent_values_by_dataset(
         (long_df["Prompt"] == prompt_name) & long_df["Source"].isin(models)
     ]
     values = pd.to_numeric(df["value"], errors="coerce")
-    out = {}
+    out: dict[str, pd.Series] = {}
     for key in df["Dataset"].unique():
         series = values[df["Dataset"] == key].dropna()
         if not series.empty:
@@ -620,9 +626,9 @@ def plot_inherent_polarization_by_dataset(
     subsampled_df: pd.DataFrame,
     output_path: Path,
     subsample_size: int,
-    exclude_models: set[str] | None = None,
-    prompt_name: str = "default",
-    dataset_keys: list[str] = DATASET_KEYS,
+    prompt_name: str,
+    dataset_keys: Iterable[str],
+    exclude_models: Iterable[str] | None = None,
 ) -> None:
     """
     Mirrored histograms of per-comment LLM inherent polarization (USD),
@@ -636,11 +642,11 @@ def plot_inherent_polarization_by_dataset(
     Datasets are styled in the human figure's (sorted label) order over
     `dataset_keys`, so each dataset has the same colour/hatch in both.
     """
-    exclude_models = set(exclude_models or ())
+    excluded = set(exclude_models or ())
     sources = set(full_df.get("Source", [])) | set(
         subsampled_df.get("Source", [])
     )
-    models = sorted(sources - {"Human"} - exclude_models)
+    models = sorted(sources - {"Human"} - excluded)
 
     graphs.plot_mirrored_inherent_histograms(
         right=_inherent_values_by_dataset(full_df, models, prompt_name),

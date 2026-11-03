@@ -1,35 +1,35 @@
+"""
+Inherent polarization (USD) of the human and the LLM annotations, on the
+comments the LLMs were run on.
+"""
+
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 from tqdm.auto import tqdm
 
-from ..lib import labels, run_helper
+from ..lib import run_helper
 from ..lib.preprocessing import Dataset
-from ..lib.util import (
-    skip_if_exists,
-    center_table_latex,
-    small_table_latex,
-    trim_numeric_col_latex,
-)
+from ..lib.util import skip_if_exists
 from .shared import (
+    HUMAN_LABEL,
     HumanDatasets,
-    load_llm_df,
     LLMAnnotationDataset,
+    available_dataset_keys,
     find_annotation_files,
-    _sample_text_ids,
-    _human_sample_dataset,
-    _order_models,
-    _available_dataset_keys,
-    DATASET_KEYS,
-    MAIN_PROMPT_NAMES,
+    human_sample_dataset,
+    load_llm_df,
+    order_models,
+    sample_text_ids,
 )
 
+# Computes the inherent polarization of every comment of a dataset.
+InherentFunction = Callable[..., pd.Series]
 
-# ---------------------------------------------------------------------------
-# 5. Inherent-polarization comparison (Human vs. LLM), default + adversarial
-# ---------------------------------------------------------------------------
-#
+
 # Progress is reported with three nested tqdm bars:
 #   position 0: datasets
 #   position 1: prompts within the current dataset
@@ -54,11 +54,15 @@ class SubsampleSpec:
 
 
 def _compute_inherent(
-    ds: Dataset, subsample: SubsampleSpec | None, default_fn, **progress
+    ds: Dataset,
+    subsample: SubsampleSpec | None,
+    default_fn: InherentFunction | None,
+    **progress: Any,
 ) -> pd.Series:
     """Inherent polarization of `ds`: `default_fn` normally, the repeated
     annotator-subsampling variant when `subsample` is given."""
     if subsample is None:
+        assert default_fn is not None, "default_fn is needed without subsample"
         return default_fn(ds, **progress)
     return run_helper.compute_inherent_polarization_subsampled(
         ds,
@@ -69,7 +73,9 @@ def _compute_inherent(
     )
 
 
-def _cached_series(cached_path: Path, compute_fn) -> pd.Series:
+def _cached_series(
+    cached_path: Path, compute_fn: Callable[[], pd.Series]
+) -> pd.Series:
     """Read `cached_path` if it exists, else compute and write it."""
     if skip_if_exists(cached_path, quiet=True):
         series = pd.read_csv(cached_path, index_col="comment")[
@@ -89,7 +95,7 @@ def _human_inherent_polarization(
     dataset_key: str,
     prompt_name: str,
     human_ds: Dataset,
-    sample_ids: set,
+    sample_ids: set[object],
     human_results_dir: Path,
     apunim_output_dir: Path,
     use_monte_carlo: bool = False,
@@ -102,7 +108,7 @@ def _human_inherent_polarization(
     precomputed full-annotator file does not apply, so the values are
     computed on the subsampled data and cached in `apunim_output_dir`.
     """
-    progress = dict(
+    progress: dict[str, Any] = dict(
         show_progress=True,
         progress_position=COMMENT_BAR_POSITION,
         progress_desc=f"    {dataset_key} Human: comments",
@@ -166,7 +172,7 @@ def _llm_inherent_polarization(
 
 def _records_from_series(
     series: pd.Series, dataset_key: str, prompt_name: str, source: str
-) -> list[dict]:
+) -> list[dict[str, object]]:
     return [
         {
             "Dataset": dataset_key,
@@ -187,7 +193,7 @@ def _inherent_records_for_models(
     apunim_output_dir: Path,
     progress: tqdm | None = None,
     subsample: SubsampleSpec | None = None,
-) -> list[dict]:
+) -> list[dict[str, object]]:
     records = []
     for pseudo in models:
         if progress is not None:
@@ -218,14 +224,14 @@ def _inherent_records_for_prompt(
     exclude_models: set[str],
     use_monte_carlo: bool,
     subsample: SubsampleSpec | None = None,
-) -> list[dict]:
+) -> list[dict[str, object]]:
     files = find_annotation_files(annotations_dir, key, prompt_name)
-    models = _order_models(set(files) - exclude_models)
+    models = order_models(set(files) - exclude_models)
     if not models:
         return []
 
-    sample_ids = _sample_text_ids(annotations_dir, key, prompt_name)
-    human_ds = _human_sample_dataset(
+    sample_ids = sample_text_ids(annotations_dir, key, prompt_name)
+    human_ds = human_sample_dataset(
         ds_human, annotations_dir, key, prompt_name
     )
 
@@ -238,7 +244,7 @@ def _inherent_records_for_prompt(
         leave=False,
     ) as progress:
         if human_ds is not None:
-            progress.set_postfix_str("Human")
+            progress.set_postfix_str(HUMAN_LABEL)
             human_series = _human_inherent_polarization(
                 key,
                 prompt_name,
@@ -250,7 +256,9 @@ def _inherent_records_for_prompt(
                 subsample,
             )
             records.extend(
-                _records_from_series(human_series, key, prompt_name, "Human")
+                _records_from_series(
+                    human_series, key, prompt_name, HUMAN_LABEL
+                )
             )
             progress.update(1)
         records.extend(
@@ -277,7 +285,7 @@ def _inherent_records_for_dataset(
     exclude_models: set[str],
     use_monte_carlo: bool,
     subsample: SubsampleSpec | None = None,
-) -> list[dict]:
+) -> list[dict[str, object]]:
     ds_human = human_datasets[key]
     records = []
     for prompt_name in tqdm(
@@ -308,9 +316,9 @@ def compute_inherent_polarization_comparison(
     apunim_output_dir: Path,
     human_results_dir: Path,
     use_monte_carlo: bool,
-    dataset_keys: list[str] = DATASET_KEYS,
-    prompt_names: list[str] = MAIN_PROMPT_NAMES,
-    exclude_models: set[str] | None = None,
+    dataset_keys: Iterable[str],
+    prompt_names: list[str],
+    exclude_models: Iterable[str] | None = None,
     subsample: SubsampleSpec | None = None,
 ) -> pd.DataFrame:
     """
@@ -321,9 +329,9 @@ def compute_inherent_polarization_comparison(
     annotators first (use a separate `apunim_output_dir` for this so the
     cached values of the full-annotator run are not mixed up).
     """
-    exclude_models = set(exclude_models or ())
+    excluded = set(exclude_models or ())
     records = []
-    available_keys = _available_dataset_keys(human_datasets, dataset_keys)
+    available_keys = available_dataset_keys(human_datasets, dataset_keys)
     for key in tqdm(
         available_keys,
         desc="Inherent polarization: datasets",
@@ -338,102 +346,9 @@ def compute_inherent_polarization_comparison(
                 annotations_dir,
                 apunim_output_dir,
                 human_results_dir,
-                exclude_models,
+                excluded,
                 use_monte_carlo,
                 subsample,
             )
         )
     return pd.DataFrame(records)
-
-
-def build_inherent_polarization_table(
-    long_df: pd.DataFrame,
-    prompt_names: list[str],
-) -> pd.DataFrame:
-    """Build the inherent-polarization table with raw mean and 2*std values."""
-    table = (
-        long_df.groupby(["Dataset", "Source", "Prompt"])["value"]
-        .agg(["mean", "std"])
-        .reset_index()
-    )
-    table["std"] = 2 * table["std"]  # store as 2*SD from here on
-
-    mean_pivot = table.pivot(
-        index=["Dataset", "Source"], columns="Prompt", values="mean"
-    ).reindex(columns=prompt_names)
-    std_pivot = table.pivot(
-        index=["Dataset", "Source"], columns="Prompt", values="std"
-    ).reindex(columns=prompt_names)
-
-    # MultiIndex columns: (stat, prompt)
-    mean_pivot.columns = pd.MultiIndex.from_tuples(
-        [("mean", c) for c in mean_pivot.columns]
-    )
-    std_pivot.columns = pd.MultiIndex.from_tuples(
-        [("std", c) for c in std_pivot.columns]
-    )
-    return pd.concat([mean_pivot, std_pivot], axis=1)
-
-
-def _escape_underscores(index: pd.MultiIndex) -> pd.MultiIndex:
-    return pd.MultiIndex.from_tuples(
-        [
-            tuple(str(level).replace("_", r"\_") for level in row)
-            for row in index
-        ],
-        names=index.names,
-    )
-
-
-DEFAULT_INHERENT_CAPTION = (
-    "Mean inherent polarization (mean $\\pm$ 2 SD) per "
-    "(dataset, prompt), for Human and each LLM."
-)
-
-
-def export_inherent_polarization_table(
-    df: pd.DataFrame,
-    output_path: Path,
-    label: str,
-    float_format: str,
-    caption: str = DEFAULT_INHERENT_CAPTION,
-) -> None:
-    if df.empty:
-        print(f"No inherent-polarization results; skipping {output_path}.")
-        return
-
-    df = labels.relabel_frame(df)  # (Dataset, Source) index -> labels
-    prompt_names = df["mean"].columns.tolist()
-
-    # Build display DataFrame with formatted "mean ± 2SD" strings per prompt
-    display = pd.DataFrame(index=df.index)
-    for prompt in prompt_names:
-        mean_col = trim_numeric_col_latex(
-            df["mean"][prompt], float_format=float_format
-        )
-        std_col = trim_numeric_col_latex(df["std"][prompt], float_format=".3f")
-        # trim_numeric_col_latex returns a Series of strings; combine them
-        display[prompt.capitalize()] = [
-            f"{m} $\\pm$ {s}" if m != "---" else "---"
-            for m, s in zip(mean_col, std_col)
-        ]
-
-    display.index = _escape_underscores(display.index)
-    col_count = len(display.columns)
-
-    latex_str = display.to_latex(
-        caption=caption,
-        label=label,
-        escape=False,
-        position="t",
-        index=True,
-        multirow=True,
-        column_format="ll" + "r" * col_count,
-    )
-
-    latex_str = center_table_latex(latex_str)
-    latex_str = small_table_latex(latex_str)
-
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(latex_str)
-    print(f"Table exported to {output_path.resolve()}")
