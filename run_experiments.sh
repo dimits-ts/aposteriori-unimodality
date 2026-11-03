@@ -16,23 +16,29 @@ export -f run_and_log
 mkdir -p logs
 
 JOBS=(
-'variance_analysis|python -m src.synthetic.variance_analysis --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --sap-path=data/datasets/sap.csv --kumar-path=data/datasets/kumar.json --graph-output-dir=graphs --cache-dir=cache --latex-output-dir=manuscript/generated'
+'variance_analysis|python -m src.human.variance_analysis --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --graph-output-dir=graphs --cache-dir=cache --popquorn-path=data/datasets/popquorn_offensiveness.csv'
 
 'explanation|python -m src.synthetic.explanation --graph-output-dir=graphs'
 
-'dices|python -m src.human.dices --dataset-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dataset-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --graph-output-dir=graphs --output-dir=output/human/main --ablation-dir=output/human/ablations'
+'dices|python -m src.human.dices --dataset-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dataset-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --graph-output-dir=graphs --output-dir=output/human/main --ablation-dir=output/human/ablations --cache-dir=cache'
 
-'sap|python -m src.human.sap --dataset-path=data/datasets/sap.csv --output-dir=output/human/main --graph-output-dir=graphs'
+'sap|python -m src.human.sap --dataset-path=data/datasets/sap.csv --output-dir=output/human/main --graph-output-dir=graphs --cache-dir=cache'
+
+'popquorn|python -m src.human.popquorn --dataset-path=data/datasets/popquorn_offensiveness.csv --output-dir=output/human/main --graph-output-dir=graphs --cache-dir=cache'
 
 'metric_comparison|python -m src.synthetic.metric_comparison --cache-path=cache/metric-comparison.csv --graph-output-path=graphs/metric_comparison.png'
 
 'metric_comparison_multiple|python -m src.synthetic.metric_comparison_multiple --cache-path=cache/metric-comparison-multiple.csv --graph-output-path=graphs/metric_comparison_multiple.png'
 
+'synthetic_inherent_polarization|python -m src.synthetic.inherent_polarization --cache-dir=cache/synthetic-inherent --graph-output-path=graphs/synthetic_inherent_polarization.png'
+
+'real_data_comparison|python -m src.synthetic.real_data_comparison --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --cache-dir=cache --popquorn-path=data/datasets/popquorn_offensiveness.csv --latex-output-dir=manuscript/generated --sap-path=data/datasets/sap.csv --kumar-path=data/datasets/kumar.json'
+
 'human_comparison|python -m src.synthetic.human_comparison --dices-350-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-990-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --sap-path=data/datasets/sap.csv --kumar-path=data/datasets/kumar.json --cache-dir=cache --latex-output-dir=manuscript/generated'
 
-'kumar|python -m src.human.kumar --dataset-path=data/datasets/kumar.json --output-dir=output/human/main --graph-output-dir=graphs --ablation-dir=output/human/ablations --latex-output-dir=manuscript/generated --graph-output-dir=graphs --latex-output-dir=manuscript/generated'
+'kumar|python -m src.human.kumar --dataset-path=data/datasets/kumar.json --output-dir=output/human/main --graph-output-dir=graphs --ablation-dir=output/human/ablations --latex-output-dir=manuscript/generated --graph-output-dir=graphs --latex-output-dir=manuscript/generated --cache-dir=cache'
 
-'llm|python -m src.llm.analysis --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --sap-path=data/datasets/sap.csv --kumar-path=data/datasets/kumar.json --annotations-dir=output/llm/annotations --paraphrase-dir=output/llm/ablations/paraphrase --repeat-dir=output/llm/ablations/repeat --graph-output-dir=graphs --latex-output-dir=manuscript/generated --cache-dir=cache --exclude-models olmo7b llama8b'
+'llm|python -m src.llm.analysis --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv --sap-path=data/datasets/sap.csv --kumar-path=data/datasets/kumar.json --popquorn-path=data/datasets/popquorn_offensiveness.csv --annotations-dir=output/llm/annotations --paraphrase-dir=output/llm/ablations/paraphrase --repeat-dir=output/llm/ablations/repeat --graph-output-dir=graphs --latex-output-dir=manuscript/generated --cache-dir=cache --human-results-dir=output/human/main'
 )
 
 printf "%s\n" "${JOBS[@]}" |
@@ -41,4 +47,11 @@ printf "%s\n" "${JOBS[@]}" |
 python -m src.human.export_results \
     --results-dir=output/human/main \
     --latex-output-dir=manuscript/generated \
-    --graph-output-dir=graphs
+    --graph-output-dir=graphs \
+    --dices-small-path=data/datasets/dices/350/diverse_safety_adversarial_dialog_350.csv \
+    --dices-large-path=data/datasets/dices/990/diverse_safety_adversarial_dialog_990.csv \
+    --sap-path=data/datasets/sap.csv \
+    --popquorn-path=data/datasets/popquorn_offensiveness.csv \
+    --kumar-path=data/datasets/kumar.json \
+    --cache-dir=cache \
+    --ratings-path=data/swx_ratings.csv

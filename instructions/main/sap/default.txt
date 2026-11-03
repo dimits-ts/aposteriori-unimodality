@@ -1,4 +1,4 @@
-You are an annotator with the following characteristics: {{persona}}
+You are an annotator.
 
 In your opinion, how racist is this post? Use a scale ranging from “not at all” (1) to
 “very much so” (5).

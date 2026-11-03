@@ -1,35 +1,24 @@
 \begin{table}[t]
-\small
-\centering
-\caption{Cohen's d statistics showing the quantitative difference
-        in \ac{ndfu} between the default and each adversarial instruction
-        prompt for each of the groups of both datasets and across all models.}
+\caption{Cohen's d between the default and each adversarial instruction prompt, computed on the per-comment \ac{ndfu}. Results are given per model, for each dataset separately and as the unweighted mean over datasets (All). Number of comments: Sap: 565--585; Kumar: 977--1000; POPQUORN: 1464--1500.}
 \label{tab:cohens-d}
-\begin{tabular}{rrrrrrrrr}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{1.5pt}
+\begin{tabular}{l rrrr@{\hspace{4pt}}rrrr@{\hspace{4pt}}rrrr@{\hspace{4pt}}rrrr}
 \toprule
- &  & Mean & Std & Min & 25\% & 50\% & 75\% & Max \\
-Model &  &  &  &  &  &  &  &  \\
+ & \multicolumn{4}{c}{All} & \multicolumn{4}{c}{Sap} & \multicolumn{4}{c}{Kumar} & \multicolumn{4}{c}{POPQUORN} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-9}\cmidrule(lr){10-13}\cmidrule(lr){14-17}
+Model & \rotatebox{90}{Stereotype} & \rotatebox{90}{Persona} & \rotatebox{90}{Single} & \rotatebox{90}{Direct} & \rotatebox{90}{Stereotype} & \rotatebox{90}{Persona} & \rotatebox{90}{Single} & \rotatebox{90}{Direct} & \rotatebox{90}{Stereotype} & \rotatebox{90}{Persona} & \rotatebox{90}{Single} & \rotatebox{90}{Direct} & \rotatebox{90}{Stereotype} & \rotatebox{90}{Persona} & \rotatebox{90}{Single} & \rotatebox{90}{Direct} \\
 \midrule
-\multirow[t]{4}{*}{llama70b} & stereotype & 0.057 & 0.067 & -0.059 & 0.021 & 0.036 & 0.066 & 0.227 \\
- & persona & 0.013 & 0.090 & -0.102 & -0.038 & -0.020 & 0.008 & 0.255 \\
- & single & 0.167 & 0.041 & 0.084 & 0.137 & 0.159 & 0.185 & 0.254 \\
- & direct & -0.062 & 0.093 & -0.172 & -0.113 & -0.095 & -0.062 & 0.182 \\
-\cline{1-9}
-\multirow[t]{4}{*}{olmo32b} & stereotype & 0.022 & 0.031 & -0.058 & 0.001 & 0.021 & 0.034 & 0.144 \\
- & persona & 0.154 & 0.051 & 0.018 & 0.153 & 0.172 & 0.182 & 0.288 \\
- & single & 0.311 & 0.075 & 0.215 & 0.272 & 0.285 & 0.311 & 0.505 \\
- & direct & 0.122 & 0.098 & -0.132 & 0.135 & 0.156 & 0.170 & 0.236 \\
-\cline{1-9}
-\multirow[t]{4}{*}{qwen32b} & stereotype & 0.004 & 0.041 & -0.088 & -0.017 & 0.005 & 0.031 & 0.111 \\
- & persona & 0.104 & 0.065 & -0.073 & 0.098 & 0.122 & 0.138 & 0.216 \\
- & single & 0.121 & 0.081 & -0.091 & 0.124 & 0.149 & 0.165 & 0.241 \\
- & direct & 0.092 & 0.062 & -0.077 & 0.079 & 0.105 & 0.125 & 0.204 \\
-\cline{1-9}
-\multirow[t]{4}{*}{qwen7b} & stereotype & -0.052 & 0.075 & -0.172 & -0.096 & -0.073 & -0.040 & 0.161 \\
- & persona & 0.106 & 0.056 & 0.023 & 0.069 & 0.088 & 0.122 & 0.258 \\
- & single & -0.047 & 0.066 & -0.199 & -0.090 & -0.063 & -0.025 & 0.128 \\
- & direct & -0.120 & 0.090 & -0.230 & -0.170 & -0.154 & -0.107 & 0.124 \\
-\cline{1-9}
+Llama 8B & 0.41 & $-1.14$ & $-0.64$ & 0.32 & $-0.20$ & $-1.93$ & $-0.70$ & $-0.24$ & 0.75 & 0.23 & -- & 0.56 & 0.67 & $-1.72$ & $-0.58$ & 0.63 \\
+OLMo 32B & $-0.04$ & 0.16 & $-0.04$ & 0.04 & 0.11 & 0.09 & 0.28 & $-0.02$ & $-0.01$ & 0.38 & $-0.37$ & 0.20 & $-0.21$ & 0.00 & $-0.04$ & $-0.06$ \\
+OLMo 7B & $-0.01$ & 0.29 & $-0.08$ & 0.00 & $-0.05$ & 0.05 & $-0.18$ & $-0.17$ & $-0.04$ & 0.54 & 0.17 & 0.03 & 0.06 & 0.29 & $-0.21$ & 0.16 \\
+Qwen 32B & 0.19 & 0.16 & 0.18 & 0.13 & 0.32 & 0.13 & $-0.04$ & 0.09 & 0.17 & 0.21 & 0.51 & 0.31 & 0.08 & 0.13 & 0.07 & $-0.01$ \\
+Qwen 7B & $-0.32$ & $-0.29$ & $-0.19$ & $-0.11$ & 0.02 & 0.06 & $-0.17$ & $-0.02$ & $-1.10$ & $-0.88$ & $-0.39$ & $-0.30$ & 0.11 & $-0.05$ & $-0.00$ & $-0.01$ \\
+Mistral 7B & 0.10 & 0.04 & 0.04 & $-0.18$ & 0.21 & 0.10 & 0.08 & $-0.21$ & 0.12 & 0.03 & $-0.09$ & 0.00 & $-0.04$ & $-0.02$ & 0.13 & $-0.32$ \\
+Mistral 24B & 0.59 & 0.25 & $-0.33$ & $-0.03$ & 0.64 & 0.04 & $-0.88$ & 0.17 & 0.98 & 0.97 & 0.55 & $-0.25$ & 0.17 & $-0.26$ & $-0.66$ & $-0.00$ \\
+Gemma 5B & 0.16 & 0.27 & 0.38 & 0.11 & 0.18 & 0.48 & 0.70 & $-0.09$ & 0.10 & $-0.08$ & $-0.40$ & $-0.07$ & 0.20 & 0.41 & 0.85 & 0.48 \\
+Gemma 31B & 0.30 & 0.19 & $-0.15$ & 0.05 & 0.36 & 0.21 & 0.02 & 0.07 & 0.35 & 0.24 & $-0.14$ & 0.13 & 0.19 & 0.12 & $-0.33$ & $-0.05$ \\
 \bottomrule
 \end{tabular}
 \end{table}

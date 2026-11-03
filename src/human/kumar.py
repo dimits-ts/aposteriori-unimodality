@@ -9,6 +9,7 @@ from ..lib.preprocessing import KumarDataset, LazyDatasetLoader
 from ..lib.util import skip_if_exists
 from ..lib import run_helper
 from ..lib import graphs
+from ..lib import labels
 
 
 def main(
@@ -17,6 +18,7 @@ def main(
     graph_output_dir: Path,
     ablations_dir: Path,
     latex_output_dir: Path,
+    cache_dir: Path,
 ):
     KUMAR_SEED_ABLATION_SEEDS = list(range(10))
     SEED = 42
@@ -27,6 +29,7 @@ def main(
         dataset_path=dataset_path,
         graph_output_dir=graph_output_dir,
         res_output_dir=output_dir,
+        cache_dir=cache_dir,
         num_samples=1_000,
         seed=SEED,
     )
@@ -59,7 +62,8 @@ def main(
         output_path=latex_output_dir / "kumar_sample_size_comparison.tex",
         caption=(
             "Comparison of Apunim values across different sample sizes "
-            "(1k, 3k, 10k, 30k) for the Kumar dataset."
+            "(1k, 3k, 10k, 30k) for the "
+            f"{labels.dataset_label('kumar')} dataset."
         ),
         label=r"tab:num-comments-apunim",
         sample_sizes=[1_000, 3_000, 10_000, 30_000],
@@ -70,6 +74,7 @@ def main_analysis(
     dataset_path: Path,
     graph_output_dir: Path,
     res_output_dir: Path,
+    cache_dir: Path,
     num_samples: int,
     seed: int,
 ):
@@ -90,6 +95,11 @@ def main_analysis(
         loader=loader,
         res_output_dir=res_output_dir,
     )
+    _inherent_subsampled_experiment(
+        loader=loader,
+        res_output_dir=res_output_dir,
+    )
+    _ndfu_experiment(loader=loader, cache_dir=cache_dir)
     _main_experiment(
         dataset_path=dataset_path,
         res_output_dir=res_output_dir,
@@ -144,7 +154,7 @@ def export_latex_sample_size_table(
     # Pivot: rows = (dimension, subgroup), columns = sample sizes.
     combined = pd.DataFrame({n: df["apunim"] for n, df in frames.items()})
     combined.columns = [r"\textbf{" + str(n) + "}" for n in combined.columns]
-    combined.index.names = [None, r"\textbf{\ac{pc}}"]
+    combined.index.names = [None, rf"\textbf{{{labels.SDD.tex}}}"]
 
     latex = combined.to_latex(
         longtable=True,
@@ -195,6 +205,31 @@ def _inherent_experiment(
         header=True,
         index_label="comment",
     )
+
+
+def _inherent_subsampled_experiment(
+    loader: LazyDatasetLoader,
+    res_output_dir: Path,
+) -> None:
+    """Every comment subsampled down to at most 6 annotators (for
+    apriori.png). Unlike kumar-inherent.csv, which drops comments with more
+    than 6 annotators, this keeps them, as for the other datasets."""
+    path = res_output_dir / (
+        f"kumar{run_helper.INHERENT_SUBSAMPLED_STEM_SUFFIX}.csv"
+    )
+    if skip_if_exists(path):  # avoid loading the dataset needlessly
+        return
+    run_helper.write_inherent_polarization_subsampled(
+        loader.get(), res_output_dir, name="kumar"
+    )
+
+
+def _ndfu_experiment(loader: LazyDatasetLoader, cache_dir: Path) -> None:
+    """Per-comment nDFU of the human annotations (cached)."""
+    ndfu_path = run_helper.human_ndfu_path(cache_dir, "kumar")
+    if skip_if_exists(ndfu_path):  # avoid loading the dataset needlessly
+        return
+    run_helper.write_human_ndfu(loader.get(), ndfu_path)
 
 
 def _main_experiment(
@@ -273,7 +308,7 @@ def _seed_ablation(
     g.set_titles("{col_name}")
     g.set_axis_labels("", "Apunim")
     g.set_xticklabels(rotation=90)
-    g.refline(y=0, color="gray", linestyle="--", linewidth=1)
+    g.refline(y=0, color="gray", linestyle=graphs.LINESTYLES[1], linewidth=1)
     g.figure.suptitle(
         f"Mean Apunim across {len(seeds)} seeds, by subgroup", y=1.02
     )
@@ -302,6 +337,7 @@ if __name__ == "__main__":
     parser.add_argument("--graph-output-dir", required=True)
     parser.add_argument("--ablation-dir", required=True)
     parser.add_argument("--latex-output-dir", required=True)
+    parser.add_argument("--cache-dir", required=True)
     args = parser.parse_args()
     main(
         dataset_path=Path(args.dataset_path),
@@ -309,4 +345,5 @@ if __name__ == "__main__":
         graph_output_dir=Path(args.graph_output_dir),
         ablations_dir=Path(args.ablation_dir),
         latex_output_dir=Path(args.latex_output_dir),
+        cache_dir=Path(args.cache_dir),
     )

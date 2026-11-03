@@ -1,4 +1,4 @@
-You are an annotator with the following characteristics: {{persona}}.
+You are an annotator.
 
 In your judgment, how strongly does this post express or promote racism? Assign one rating from 1 to 5:
 

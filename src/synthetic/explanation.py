@@ -3,13 +3,15 @@ from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patheffects as pe
 import seaborn as sns
 import scipy.stats
 import apunim
 from numpy.typing import NDArray
+from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 
-from ..lib import graphs
+from ..lib import graphs, labels
 
 
 INTUITION_SIZE = 50
@@ -26,6 +28,37 @@ HATCH_MAP = {
     "Women": graphs.HATCHES[1],
     "All": graphs.HATCHES[2],
 }
+
+# Annotator groups for the disagreement plots: 0 = majority, 1 = minority.
+GROUP_LABELS = {0: "Non-Muslim", 1: "Muslim"}
+GROUP_COLORS = {
+    0: graphs.COLORBLIND_PALETTE[0],
+    1: graphs.COLORBLIND_PALETTE[1],
+}
+GROUP_MARKERS = {0: graphs.MARKERS[0], 1: graphs.MARKERS[6]}  # circle, X
+# Style for panels that draw no group distinction.
+UNGROUPED_COLOR = graphs.COLORBLIND_PALETTE[2]
+UNGROUPED_MARKER = graphs.MARKERS[3]  # triangle
+# Wider than graphs.DEFAULT_FIGSIZE to fit three panels side by side.
+DISAGREEMENT_FIGSIZE = (20, 4)
+# How many scale points the minority's opinions are shifted up by.
+MINORITY_SHIFT = 2
+
+# Discussion figure: three panels (comment 1, comment 2, pooled).
+# Rating spread of every group on every comment.
+DISCUSSION_SIGMA = 0.5
+# Shared bin edges so bars line up across panels and groups.
+# Only used for drawing; nDFU is still computed with NUM_BINS.
+DISCUSSION_PLOT_BINS = np.linspace(0, 10, 2 * NUM_BINS + 1)
+# Density, so the pooled panel (twice the annotations) shares a y-scale.
+DISCUSSION_HIST_STAT = "density"
+DISCUSSION_TITLE = f"Pooling Annotations Across Items Masks {labels.ASD.short}"
+MEAN_LINESTYLES = {
+    "Men": graphs.LINESTYLES[1],  # dashed
+    "Women": graphs.LINESTYLES[2],  # dotted
+}
+# Mean lines are drawn this many times thicker than rcParams lines.
+MEAN_LINEWIDTH_SCALE = 2
 
 
 def main(graph_dir: Path):
@@ -46,108 +79,6 @@ def _discrete_normal(loc, scale, size):
     return vals
 
 
-def _prepare_distributions(n_annotators, variance):
-    # Define special indices for mean shifts (use the first 20% as "Muslims")
-    n_special = int(0.2 * n_annotators)
-    special_indices = list(range(n_special))  # first 20% will get mean_shift=1
-
-    def make_distribution(base_means, special_indices=[], variance=variance):
-        data = []
-        for i in range(n_annotators):
-            mean_shift = 1 if i in special_indices else 0
-            distributions = [
-                _discrete_normal(base_mean + mean_shift, variance, 1)
-                for base_mean in base_means
-            ]
-            combined = (
-                np.mean(distributions)
-                if len(distributions) > 1
-                else distributions[0][0]
-            )
-            data.append(combined)
-        return data
-
-    unimodal = make_distribution([3], variance=variance)
-    bimodal = make_distribution(
-        [3], special_indices=special_indices, variance=variance
-    )
-    multimodal = make_distribution(
-        [1, 3], special_indices=special_indices, variance=variance * 3
-    )
-    uniform = list(np.random.randint(1, 6, n_annotators))
-
-    group_labels = [
-        1 if i in special_indices else 0 for i in range(n_annotators)
-    ]  # 0=Christian, 1=Muslim
-    return unimodal, bimodal, multimodal, uniform, group_labels
-
-
-def _plot_matrix(
-    ax,
-    data,
-    group_labels,
-    title,
-    horizontal_jitter=0.25,
-    vertical_jitter=0.15,
-):
-    color_map = {0: "blue", 1: "green"}
-
-    marker_map = {
-        0: graphs.MARKERS[0],
-        1: graphs.MARKERS[1],
-    }
-
-    # Scatter points for each group separately
-    for group in [0, 1]:
-        idx = [i for i, g in enumerate(group_labels) if g == group]
-
-        x_jittered = np.array(idx) + np.random.uniform(
-            -horizontal_jitter,
-            horizontal_jitter,
-            size=len(idx),
-        )
-
-        y_jittered = np.array([data[i] for i in idx]) + np.random.uniform(
-            -vertical_jitter,
-            vertical_jitter,
-            size=len(idx),
-        )
-
-        ax.scatter(
-            x_jittered,
-            y_jittered,
-            c=color_map[group],
-            marker=marker_map[group],
-            edgecolor="black",
-            s=65,
-            alpha=0.75,
-            linewidth=0.7,
-        )
-
-    ax.set_xlim(-0.5, len(data) - 0.5)
-    ax.set_xticks([])
-    ax.minorticks_off()
-
-    # emoji labels that render in standard unicode fonts
-    ax.set_yticks([1, 2, 3, 4, 5])
-    ax.set_yticklabels(
-        [r"$\heartsuit\heartsuit$", r"$\heartsuit$", "?", "!", "!!"]
-    )
-
-    ax.set_ylim(0.8, 5.2)
-
-    ax.set_title(title, fontweight="bold")
-
-    # remove unnecessary subplot spines
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-
-    # keep left spine for emoji scale
-    ax.spines["left"].set_linewidth(1.0)
-
-    ax.tick_params(axis="x", length=0)
-
-
 def plot_annotation_distributions(
     graph_dir: Path,
     n_annotators=100,
@@ -155,87 +86,136 @@ def plot_annotation_distributions(
     random_seed=42,
 ):
     np.random.seed(random_seed)
+    groups = _group_labels(n_annotators)
 
-    unimodal, bimodal, multimodal, uniform, group_labels = (
-        _prepare_distributions(n_annotators, variance)
+    # Jitter once so the two systematic-disagreement plots
+    # show identical points.
+    mixed = _jitter(_mixed_opinions(n_annotators))
+    split = _jitter(_minority_split_mixed_opinions(groups, variance))
+
+    fig, axs = plt.subplots(1, 3, sharey=True, figsize=DISAGREEMENT_FIGSIZE)
+    _annotation_axis(axs[0], mixed, groups=None, title="Disagreement")
+    _annotation_axis(
+        axs[1], split, groups=None, title="Systematic Disagreement"
+    )
+    _annotation_axis(
+        axs[2],
+        split,
+        groups=groups,
+        title="Attributable\nSystematic Disagreement",
     )
 
-    fig, axs = plt.subplots(2, 2)
-
-    # Low polarization / low disagreement
-    _plot_matrix(
-        axs[1, 0],
-        unimodal,
-        group_labels,
-        title="No disagreements",
-    )
-
-    # High polarization / low disagreement
-    _plot_matrix(
-        axs[0, 0],
-        bimodal,
-        group_labels,
-        title="Minority split",
-    )
-
-    # High polarization / high disagreement
-    _plot_matrix(
-        axs[0, 1],
-        multimodal,
-        group_labels,
-        title="Minority split, mixed opinions",
-    )
-
-    # Low polarization / high disagreement
-    _plot_matrix(
-        axs[1, 1],
-        uniform,
-        group_labels,
-        title="Overall mixed opinions",
-    )
-
-    # clearer matrix-style labels
-    fig.supxlabel(
-        r"Low $\rightarrow$ High disagreement"
-    )
-
-    fig.supylabel(r"Low $\rightarrow$ High polarization")
+    _group_legend(axs[2])
 
     fig.suptitle(
-        r"``\textit{We will never stop in our fight against Radical Islamic Terrorism}''"
+        r"``\textit{We will never stop in our fight against Radical Islamic Terrorism}''",
+        y=1.1,  # clear of the two-line panel title
     )
-
-    legend_handles = [
-        plt.Line2D(
-            [],
-            [],
-            linestyle="",
-            marker=graphs.MARKERS[1],
-            markersize=18,
-            markerfacecolor="green",
-            markeredgecolor="black",
-            label="Muslim",
-        ),
-        plt.Line2D(
-            [],
-            [],
-            linestyle="",
-            marker=graphs.MARKERS[0],
-            markersize=18,
-            markerfacecolor="blue",
-            markeredgecolor="black",
-            label="Non-Muslim",
-        ),
-    ]
-
-    fig.legend(
-        handles=legend_handles,
-        loc="lower center",
-        ncol=2,
-    )
-
+    fig.supxlabel(f"Annotator ID (1-{DIFF_COMMENTS_SIZE})")
     graphs.save_plot(graph_dir / "disagreement_vs_polarization.png")
-    plt.close()
+    plt.close(fig)
+
+
+def _group_labels(n_annotators: int, minority_frac=0.2) -> NDArray[np.int_]:
+    """The first minority_frac of annotators belong to the minority (1)."""
+    n_minority = int(minority_frac * n_annotators)
+    return np.array([1] * n_minority + [0] * (n_annotators - n_minority))
+
+
+def _mixed_opinions(n_annotators: int) -> NDArray[np.float64]:
+    return np.random.randint(1, 6, n_annotators).astype(float)
+
+
+def _minority_split_mixed_opinions(
+    groups: NDArray[np.int_], variance: float
+) -> NDArray[np.float64]:
+    """Each annotator averages two draws around 1 and 3; the minority is
+    shifted up by MINORITY_SHIFT points."""
+    draws = [
+        _discrete_normal(
+            base + MINORITY_SHIFT * groups, variance * 3, len(groups)
+        )
+        for base in (1, 3)
+    ]
+    return np.mean(draws, axis=0)
+
+
+def _jitter(
+    values: NDArray[np.float64],
+    horizontal_jitter=0.25,
+    vertical_jitter=0.15,
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    """One column per annotator, with jitter so overlapping points show."""
+    n = len(values)
+    x = np.arange(n) + np.random.uniform(
+        -horizontal_jitter, horizontal_jitter, n
+    )
+    y = values + np.random.uniform(-vertical_jitter, vertical_jitter, n)
+    return x, y
+
+
+def _annotation_axis(
+    ax,
+    points: tuple[NDArray[np.float64], NDArray[np.float64]],
+    groups: NDArray[np.int_] | None,
+    title: str,
+) -> None:
+    """Scatter of annotations. Without groups, every annotator is drawn in
+    a neutral style and no legend is shown."""
+    x, y = points
+
+    if groups is None:
+        _scatter(ax, x, y, UNGROUPED_COLOR, UNGROUPED_MARKER, label=None)
+    else:
+        for group, label in GROUP_LABELS.items():
+            mask = groups == group
+            _scatter(
+                ax,
+                x[mask],
+                y[mask],
+                GROUP_COLORS[group],
+                GROUP_MARKERS[group],
+                label=label,
+            )
+
+    _style_annotation_axis(ax, n_annotators=len(x), title=title)
+
+
+def _group_legend(ax) -> None:
+    """Legend for the grouped panel only, since the other panels draw
+    no groups."""
+    ax.legend(
+        markerscale=2,
+    )
+
+
+def _scatter(ax, x, y, color: str, marker: str, label: str | None) -> None:
+    ax.scatter(
+        x,
+        y,
+        c=color,
+        marker=marker,
+        edgecolor="black",
+        s=65,
+        alpha=0.75,
+        linewidth=0.7,
+        label=label,
+    )
+
+
+def _style_annotation_axis(ax, n_annotators: int, title: str) -> None:
+    ax.set_xlim(-0.5, n_annotators - 0.5)
+    ax.set_xticks([])
+    ax.minorticks_off()
+
+    # symbolic labels that render under usetex
+    ax.set_yticks([1, 2, 3, 4, 5])
+    ax.set_yticklabels(
+        [r"$\heartsuit\heartsuit\heartsuit$", r"$\heartsuit$", "?", "!", "!!!"]
+    )
+    ax.set_ylim(0.8, 5.2)
+    ax.tick_params(axis="y", labelsize=plt.rcParams["axes.labelsize"])
+    ax.set_title(title)
 
 
 def dfu_plots(graph_dir: Path) -> None:
@@ -315,137 +295,159 @@ def _combined_dfu_plot(
 
 
 def discussion_example(graph_dir: Path) -> None:
-    misogynist_comment = """``Most women do not drive well.''
-    """
-    misandrist_comment = """``Most men need closer friendships,
-    not just romantic support.''"""
-    discussion_comment = f"{misogynist_comment}{misandrist_comment}"
+    """Two comments with opposite (bidirectional) gender polarization,
+    and the pooled annotations of both, as one three-panel figure."""
+    # Each group rates the comment targeting its own gender as more toxic.
+    women_comment2 = _truncated_normal(
+        loc=2, scale=DISCUSSION_SIGMA, size=DIFF_COMMENTS_SIZE
+    )
+    women_comment1 = _truncated_normal(
+        loc=6, scale=DISCUSSION_SIGMA, size=DIFF_COMMENTS_SIZE
+    )
+    men_comment2 = _truncated_normal(
+        loc=6, scale=DISCUSSION_SIGMA, size=DIFF_COMMENTS_SIZE
+    )
+    men_comment1 = _truncated_normal(
+        loc=2, scale=DISCUSSION_SIGMA, size=DIFF_COMMENTS_SIZE
+    )
 
-    d_woman_comment1 = _truncated_normal(
-        loc=2, scale=1, size=DIFF_COMMENTS_SIZE
-    )
-    d_woman_comment2 = _truncated_normal(
-        loc=6, scale=1, size=DIFF_COMMENTS_SIZE
-    )
-    d_man_comment1 = _truncated_normal(loc=6, scale=1, size=DIFF_COMMENTS_SIZE)
-    d_man_comment2 = _truncated_normal(loc=2, scale=1, size=DIFF_COMMENTS_SIZE)
+    panels = [
+        (
+            "``Most women do not drive well.''",
+            men_comment1,
+            women_comment1,
+        ),
+        (
+            "``Most men need closer friendships,\nnot just romantic support.''",
+            men_comment2,
+            women_comment2,
+        ),
+        (
+            "Both comments pooled",
+            np.hstack([men_comment1, men_comment2]),
+            np.hstack([women_comment1, women_comment2]),
+        ),
+    ]
 
-    d_woman = np.hstack([d_woman_comment1, d_woman_comment2])
-    d_man = np.hstack([d_man_comment1, d_man_comment2])
+    # Figure size and fonts come from graphs.graph_setup(); constrained
+    # layout positions the panels, legend and title without manual offsets.
+    fig, axs = plt.subplots(1, len(panels), sharey=True, layout="constrained")
+    for ax, (title, men_annot, women_annot) in zip(axs, panels):
+        _discussion_panel(ax, title, men_annot, women_annot)
 
-    _plot_example_individual(
-        misogynist_comment,
-        d_man_comment1,
-        d_woman_comment1,
-        graph_dir / "ndfu_comment1.png",
+    axs[0].set_ylabel("Density")
+    handles = _discussion_legend_handles()
+    fig.suptitle(DISCUSSION_TITLE)
+    _legend_below(fig, axs, handles)
+
+    graphs.save_plot(graph_dir / "ndfu_discussion.png")
+    plt.close(fig)
+
+
+def _discussion_panel(
+    ax,
+    title: str,
+    men_annot: NDArray[np.float64],
+    women_annot: NDArray[np.float64],
+) -> None:
+    """Histograms per group, a line at each group's mean, and each group's
+    nDFU and mean under the x-axis."""
+    group_annots = {"Men": men_annot, "Women": women_annot}
+
+    for label, annot in group_annots.items():
+        before = len(ax.patches)
+        sns.histplot(
+            annot,
+            bins=DISCUSSION_PLOT_BINS,
+            stat=DISCUSSION_HIST_STAT,
+            alpha=0.6,
+            kde=True,
+            ax=ax,
+            color=COLOR_MAP[label],
+        )
+        # only hatch the bars this call created
+        for patch in ax.patches[before:]:
+            patch.set_hatch(HATCH_MAP[label])
+            patch.set_edgecolor("black")
+
+        ax.axvline(annot.mean(), **_mean_line_style(label))
+
+    # One quantity per line, so labels of neighboring panels never
+    # collide at the default figure width.
+    stats_lines = [
+        f"$nDFU_{{{label}}}="
+        f"{apunim.dfu(annot, bins=NUM_BINS, normalized=True):.3f}$"
+        for label, annot in group_annots.items()
+    ] + [
+        f"$\\mu_{{{label}}}={annot.mean():.2f}$"
+        for label, annot in group_annots.items()
+    ]
+
+    ax.set_title(title)
+    ax.set_xlabel(
+        r"\begin{tabular}{c}Toxicity\\"
+        + r"\\".join(stats_lines)
+        + r"\end{tabular}"
     )
-    _plot_example_individual(
-        misandrist_comment,
-        d_man_comment2,
-        d_woman_comment2,
-        graph_dir / "ndfu_comment2.png",
+    ax.set_xlim(0, 10)
+
+
+def _mean_line_style(label: str) -> dict:
+    """Line style for a group's mean, sized from rcParams at draw time
+    (after graphs.graph_setup() has run). The black outline keeps the
+    line visible over bars of the same color."""
+    linewidth = MEAN_LINEWIDTH_SCALE * plt.rcParams["lines.linewidth"]
+    return {
+        "color": COLOR_MAP[label],
+        "linestyle": MEAN_LINESTYLES[label],
+        "linewidth": linewidth,
+        "path_effects": [
+            pe.Stroke(
+                linewidth=linewidth + plt.rcParams["lines.linewidth"],
+                foreground="black",
+            ),
+            pe.Normal(),
+        ],
+    }
+
+
+def _legend_below(fig, axs, handles) -> None:
+    """Place the legend just below the lowest x-label, after constrained
+    layout has run."""
+    fig.draw_without_rendering()  # run constrained layout once
+    fig.set_layout_engine("none")  # freeze it; the legend must not move panels
+    renderer = fig.canvas.get_renderer()
+    bottom = min(ax.get_tightbbox(renderer).y0 for ax in axs)
+    _, y = fig.transFigure.inverted().transform((0, bottom))
+    fig.legend(
+        handles=handles,
+        loc="upper center",
+        bbox_to_anchor=(0.5, y),
+        ncol=len(handles),
     )
-    _plot_example_individual(
-        discussion_comment,
-        d_woman,
-        d_man,
-        graph_dir / "ndfu_discussion.png",
-    )
+
+
+def _discussion_legend_handles() -> list:
+    handles = [
+        Patch(
+            facecolor=COLOR_MAP[label],
+            edgecolor="black",
+            hatch=HATCH_MAP[label],
+            label=label,
+            alpha=0.6,
+        )
+        for label in ("Men", "Women")
+    ]
+    handles += [
+        Line2D([], [], label=f"Mean ({label})", **_mean_line_style(label))
+        for label in ("Men", "Women")
+    ]
+    return handles
 
 
 def _truncated_normal(loc, scale, lower=0, upper=10, size=100):
     a, b = (lower - loc) / scale, (upper - loc) / scale
     return scipy.stats.truncnorm(a, b, loc=loc, scale=scale).rvs(size)
-
-
-def _plot_example_individual(
-    title: str,
-    women_annot: NDArray[np.float64],
-    men_annot: NDArray[np.float64],
-    graph_path: Path,
-):
-    ndfu_man = apunim.dfu(men_annot, bins=NUM_BINS, normalized=True)
-    ndfu_woman = apunim.dfu(women_annot, bins=NUM_BINS, normalized=True)
-    ndfu_all = apunim.dfu(
-        np.hstack([ndfu_man, ndfu_woman]), bins=NUM_BINS, normalized=True
-    )
-
-    with plt.rc_context(
-        {
-            key: value * 2
-            for key, value in plt.rcParams.items()
-            if key
-            in {
-                "font.size",
-                "axes.titlesize",
-                "axes.labelsize",
-                "xtick.labelsize",
-                "ytick.labelsize",
-                "legend.fontsize",
-            }
-        }
-    ):
-        fig, ax = plt.subplots()
-
-        sns.histplot(
-            men_annot,
-            bins=NUM_BINS,
-            alpha=0.6,
-            kde=True,
-            ax=ax,
-            color=COLOR_MAP["Men"],
-        )
-        men_patches = list(ax.patches)
-
-        sns.histplot(
-            women_annot,
-            bins=NUM_BINS,
-            alpha=0.6,
-            kde=True,
-            ax=ax,
-            color=COLOR_MAP["Women"],
-        )
-        women_patches = ax.patches[len(men_patches) :]
-
-        for patch in men_patches:
-            patch.set_hatch(HATCH_MAP["Men"])
-            patch.set_edgecolor("black")
-
-        for patch in women_patches:
-            patch.set_hatch(HATCH_MAP["Women"])
-            patch.set_edgecolor("black")
-
-        legend_handles = [
-            Patch(
-                facecolor=COLOR_MAP["Men"],
-                edgecolor="black",
-                hatch=HATCH_MAP["Men"],
-                label="Men",
-                alpha=0.6,
-            ),
-            Patch(
-                facecolor=COLOR_MAP["Women"],
-                edgecolor="black",
-                hatch=HATCH_MAP["Women"],
-                label="Women",
-                alpha=0.6,
-            ),
-        ]
-
-        ax.set_title(title)
-        ax.legend(handles=legend_handles, loc="upper right")
-
-        ax.set_xlabel(
-            "Toxicity\n"
-            f"$nDFU_{{Men}}={ndfu_man:.4f}$\n"
-            f"$nDFU_{{Women}}={ndfu_woman:.4f}$\n"
-            f"$nDFU_{{All}}={ndfu_all:.4f}$",
-        )
-        ax.set_ylabel(r"\#Annotations")
-        ax.set_xlim(1, 10)
-
-        graphs.save_plot(graph_path)
-        plt.close()
 
 
 if __name__ == "__main__":

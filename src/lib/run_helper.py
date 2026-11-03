@@ -1,7 +1,6 @@
 from pathlib import Path
-from itertools import combinations
+from itertools import combinations, product
 from collections.abc import Iterable
-import re
 
 import apunim
 import pandas as pd
@@ -9,6 +8,18 @@ import numpy as np
 from tqdm.auto import tqdm
 
 from . import preprocessing
+
+# Inherent polarization after repeatedly subsampling every comment down to at
+# most this many annotators (see compute_inherent_polarization_subsampled).
+# Six matches the exhaustive cap used for Kumar, so the densely annotated
+# datasets can be compared at a Kumar-like annotation density.
+INHERENT_SUBSAMPLE_SIZE = 6
+INHERENT_SUBSAMPLE_REPEATS = 10
+# File name suffix: "<dataset>-inherent-subsampled-n6.csv". It deliberately
+# does not end in "-inherent", so globs for the full files skip it.
+INHERENT_SUBSAMPLED_STEM_SUFFIX = (
+    f"-inherent-subsampled-n{INHERENT_SUBSAMPLE_SIZE}"
+)
 
 
 def run_all_results(ds: preprocessing.Dataset) -> pd.DataFrame:
@@ -61,18 +72,22 @@ def subsample_dataset(
     ds: preprocessing.Dataset,
     size: int,
     rng: np.random.Generator,
+    replace: bool = True,
 ) -> preprocessing.Dataset:
     """
     Return a view of `ds` where each comment's annotator lists (for the
     annotation column and every SDB column) have been subsampled down to
-    `size` annotators, sampled with replacement. All columns use the same
-    per-row indices so annotator alignment is preserved across columns.
+    `size` annotators. All columns use the same per-row indices so
+    annotator alignment is preserved across columns.
 
     Parameters
     ----------
     ds: The dataset to subsample.
-    size: Number of annotators to sample per comment (with replacement).
+    size: Number of annotators to sample per comment.
     rng: Numpy random generator to use for sampling.
+    replace: If True (default), sample `size` annotators with replacement.
+        If False, sample without replacement and cap at `size`: comments
+        with `size` annotators or fewer keep all of their annotators.
 
     Returns
     -------
@@ -86,7 +101,11 @@ def subsample_dataset(
 
     # Sample indices once per row so all columns stay aligned
     row_indices = [
-        rng.choice(len(values), size=size, replace=True)
+        rng.choice(
+            len(values),
+            size=size if replace else min(size, len(values)),
+            replace=replace,
+        )
         for values in df[annotation_col]
     ]
 
@@ -225,8 +244,6 @@ def _run_aposteriori(
     return results
 
 
-
-
 def _compute_bins(
     annotations: np.ndarray,
     num_bins: int | None,
@@ -256,35 +273,6 @@ def _iter_exhaustive_groups(
 
     for size in range(min_group_size, n + 1):
         yield from combinations(range(n), size)
-
-
-def _iter_random_groups(
-    n: int,
-    iterations: int,
-    rng: np.random.Generator,
-    min_group_size: int = 3,
-) -> Iterable[np.ndarray]:
-    """
-    Yield random subsets of indices.
-
-    Group sizes are sampled uniformly from:
-        [min_group_size, n]
-    """
-
-    if n < min_group_size:
-        return
-
-    for _ in range(iterations):
-
-        size = rng.integers(min_group_size, n + 1)
-
-        idxs = rng.choice(
-            n,
-            size=size,
-            replace=False,
-        )
-
-        yield idxs
 
 
 def _evaluate_groups(
@@ -319,14 +307,63 @@ def _evaluate_groups(
     return values
 
 
+def _evaluate_all_distinct_groups(
+    comm_ann: np.ndarray,
+    bins: int,
+    min_group_size: int = 3,
+) -> list[float]:
+    """
+    Exactly equivalent to `_evaluate_groups(comm_ann,
+    _iter_exhaustive_groups(len(comm_ann)), bins)` as far as the *set* of
+    DFU values goes (and therefore its minimum), but much faster.
+
+    DFU depends only on the multiset of values in a group, not on which
+    annotators they came from. Annotations are usually discrete with few
+    distinct levels, so instead of enumerating all 2^n subsets of
+    annotators this enumerates the distinct sub-multisets, of which there
+    are only prod_i(count_i + 1). With continuous annotations every value
+    is distinct and this degrades to the plain enumeration.
+    """
+    values, counts = np.unique(comm_ann, return_counts=True)
+
+    results = []
+    for take in product(*(range(int(c) + 1) for c in counts)):
+        if sum(take) < min_group_size:
+            continue
+
+        subset = np.repeat(values, take)
+        val = apunim.dfu(subset, bins=bins, normalized=True)
+
+        if np.isnan(val):
+            continue
+
+        results.append(val)
+
+    return results
+
+
 def _compute_comment_polarization(
     dataset: preprocessing.Dataset,
     group_generator_fn,
     max_annotators: int,
     num_bins: int | None = None,
+    show_progress: bool = False,
+    progress_position: int = 0,
+    progress_desc: str | None = None,
+    deduplicate_groups: bool = False,
 ) -> pd.Series:
     """
     Shared engine for polarization computation.
+
+    If `deduplicate_groups` is True, `group_generator_fn` is ignored and
+    all distinct sub-multisets of the annotations are evaluated instead
+    (see `_evaluate_all_distinct_groups`); this is only meaningful for the
+    exhaustive case.
+
+    If `show_progress` is True, a tqdm bar over the comments is shown at
+    row `progress_position` (so it can be nested under other bars) and is
+    cleared when finished. Off by default, so existing callers are
+    unaffected.
 
     Returns
     -------
@@ -352,7 +389,14 @@ def _compute_comment_polarization(
     comment_mins = []
     all_group_values = {}
 
-    for cid in unique_comments:
+    comment_iter = tqdm(
+        unique_comments,
+        desc=progress_desc or "comments",
+        position=progress_position,
+        leave=False,
+        disable=not show_progress,
+    )
+    for cid in comment_iter:
         mask = comments == cid
 
         comm_ann = np.concatenate(
@@ -375,13 +419,14 @@ def _compute_comment_polarization(
             comment_mins.append(np.nan)
             continue
 
-        group_iterator = group_generator_fn(n=n)
-
-        values = _evaluate_groups(
-            comm_ann=comm_ann,
-            group_iterator=group_iterator,
-            bins=bins,
-        )
+        if deduplicate_groups:
+            values = _evaluate_all_distinct_groups(comm_ann, bins)
+        else:
+            values = _evaluate_groups(
+                comm_ann=comm_ann,
+                group_iterator=group_generator_fn(n=n),
+                bins=bins,
+            )
 
         comment_mins.append(np.min(values) if values else np.nan)
 
@@ -396,9 +441,23 @@ def compute_inherent_polarization_exhaustive(
     dataset: preprocessing.Dataset,
     num_bins: int | None = None,
     max_annotators: int = 420,
+    show_progress: bool = False,
+    progress_position: int = 0,
+    progress_desc: str | None = None,
+    deduplicate: bool = True,
 ) -> pd.Series:
     """
     Exhaustively evaluates ALL possible annotator groups.
+
+    With `deduplicate=True` (default) groups that contain the same
+    multiset of annotation values are only evaluated once. This gives
+    exactly the same result as enumerating every subset of annotators,
+    since DFU only depends on the values, but is orders of magnitude
+    faster for discrete annotations. Set it to False to enumerate every
+    subset explicitly.
+
+    `show_progress`, `progress_position` and `progress_desc` control an
+    optional per-comment tqdm bar (see _compute_comment_polarization).
 
     Returns
     -------
@@ -415,34 +474,130 @@ def compute_inherent_polarization_exhaustive(
         group_generator_fn=_iter_exhaustive_groups,
         num_bins=num_bins,
         max_annotators=max_annotators,
+        show_progress=show_progress,
+        progress_position=progress_position,
+        progress_desc=progress_desc,
+        deduplicate_groups=deduplicate,
     )
 
 
-def compute_inherent_polarization_random(
+def compute_inherent_polarization_subsampled(
     dataset: preprocessing.Dataset,
-    num_bins: int | None = None,
-    max_annotators: int = 420,
-    iterations: int = 1000,
+    size: int,
+    n_repeats: int = 10,
     seed: int = 42,
+    **polarization_kwargs,
 ) -> pd.Series:
     """
-    Randomly samples annotator groups.
+    Inherent polarization (exhaustive) after repeatedly subsampling every
+    comment down to at most `size` annotators (without replacement; see
+    `subsample_dataset`). Each repeat draws a fresh subsample; the
+    per-comment values are averaged over repeats (NaNs ignored).
+
+    If no comment has more than `size` annotators, subsampling is a no-op,
+    so the polarization is computed once instead of `n_repeats` times.
+
+    `polarization_kwargs` (e.g. the progress-bar options) are forwarded to
+    `compute_inherent_polarization_exhaustive`.
 
     Returns
     -------
     pd.Series
-        Series indexed by comment text, with inherent polarization values.
-
-    Group size is sampled uniformly from:
-
-    :contentReference[oaicite:1]{index=1}
+        Series indexed by comment, named "inherent_polarization".
     """
     rng = np.random.default_rng(seed)
-    return _compute_comment_polarization(
-        dataset=dataset,
-        group_generator_fn=lambda n: _iter_random_groups(
-            n, iterations=iterations, rng=rng
-        ),
-        num_bins=num_bins,
-        max_annotators=max_annotators,
+    annotation_col = dataset.get_annotation_column()
+    needs_resampling = any(
+        len(values) > size for values in dataset.get_dataset()[annotation_col]
     )
+
+    runs = [
+        compute_inherent_polarization_exhaustive(
+            subsample_dataset(dataset, size=size, rng=rng, replace=False),
+            **polarization_kwargs,
+        )
+        for _ in range(n_repeats if needs_resampling else 1)
+    ]
+    return pd.concat(runs, axis=1).mean(axis=1).rename("inherent_polarization")
+
+
+def write_inherent_polarization_subsampled(
+    dataset: preprocessing.Dataset,
+    output_dir: Path,
+    name: str,
+    n_repeats: int = INHERENT_SUBSAMPLE_REPEATS,
+) -> None:
+    """
+    Write "<name>-inherent-subsampled-n6.csv" to `output_dir` (skipped if it
+    exists): inherent polarization with every comment subsampled down to at
+    most INHERENT_SUBSAMPLE_SIZE annotators, averaged over
+    INHERENT_SUBSAMPLE_REPEATS repeats. Shown on the left of apriori.png.
+    """
+    output_path = output_dir / f"{name}{INHERENT_SUBSAMPLED_STEM_SUFFIX}.csv"
+    if output_path.exists():
+        print(f"Skipping (already exists): {output_path}")
+        return
+
+    res = compute_inherent_polarization_subsampled(
+        dataset=dataset,
+        size=INHERENT_SUBSAMPLE_SIZE,
+        n_repeats=n_repeats,
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    res.to_csv(output_path, header=True, index_label="comment")
+
+
+def ndfu_bin_count(annotation_lists) -> int:
+    """Number of distinct annotation values over all annotation lists (the
+    number of bins nDFU is computed with)."""
+    all_annotations = [
+        v
+        for lst in annotation_lists
+        if isinstance(lst, (list, np.ndarray))
+        for v in lst
+    ]
+    return len(np.unique(all_annotations)) if all_annotations else 0
+
+
+def per_comment_ndfu(ds: preprocessing.Dataset) -> pd.Series:
+    """nDFU (normalized DFU) of each comment's annotation list, indexed by
+    the comment key of the dataset."""
+    df = ds.get_dataset()
+    annotation_col = ds.get_annotation_column()
+    bins = ndfu_bin_count(df[annotation_col].to_list())
+    if bins == 0:
+        return pd.Series(dtype=float)
+
+    key_col = ds.get_comment_key_column()
+    values = {}
+    for _, row in df.iterrows():
+        annotations = row[annotation_col]
+        if not isinstance(annotations, (list, np.ndarray)) or (
+            len(annotations) == 0
+        ):
+            continue
+        try:
+            values[row[key_col]] = apunim.dfu(
+                annotations, bins=bins, normalized=True
+            )
+        except Exception as e:
+            print(f"Error calculating NDFU for an item: {e}")
+    return pd.Series(values, dtype=float)
+
+
+def human_ndfu_path(cache_dir: Path, name: str) -> Path:
+    """Where the human per-comment nDFU of dataset `name` is cached."""
+    return cache_dir / f"{name}-ndfu.csv"
+
+
+def write_human_ndfu(
+    dataset: preprocessing.Dataset, output_path: Path
+) -> None:
+    """
+    Writes the per-comment nDFU of the human annotations (every comment of
+    the dataset) to `output_path`: columns "comment" (the dataset's comment
+    key) and "ndfu".
+    """
+    res = per_comment_ndfu(dataset).dropna()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    res.to_csv(output_path, header=["ndfu"], index_label="comment")

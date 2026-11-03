@@ -6,12 +6,17 @@ is responsible for it, and the rest behave identically.
 
 Generative model:
 
-    y_ij = b_j + mu_{g_i, j} + epsilon_ij
+    y_ij = b_j + h_i * mu_{g_i, j} + epsilon_ij
 
 where:
 
     b_j:
         Baseline rating for item j, drawn from Uniform(2.5, 3.5).
+
+    h_i:
+        Annotator-specific strength ~ Uniform(0, 1), drawn once per
+        annotator, so polarizing annotators differ in how strongly they
+        shift.
 
     mu_{g, j}:
         Group- and item-specific offset (Option B).
@@ -44,23 +49,28 @@ from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
 import pandas as pd
 
 from ..lib import graphs
-from ..lib.util import skip_if_exists
-from .shared import (
-    ALPHA,
+from ..lib.util import skip_if_exists, stable_seed
+from .plots import (
+    DETECTION_RATE_LABEL,
+    EFFECT_SIZE_LABEL,
+    add_simulation_legend,
+    method_legend_handles,
+    order_methods,
+    panel_rows,
+    plot_detection_panel,
+)
+from .methods import ALPHA, run_methods
+from .simulation import (
     DELTAS,
-    LEGEND_LABEL,
-    METHOD_ORDER,
+    FIXED_GROUP_EFFECT_VARIANTS,
     SIMULATION_BIDIRECTIONAL,
-    SIMULATION_LINESTYLE,
     SIMULATION_UNIDIRECTIONAL,
-    _run_methods,
-    _seed,
     simulate_multigroup,
+    variant_path,
 )
 
 
@@ -93,14 +103,35 @@ def main(
     n_reps: int,
     workers: int,
 ) -> None:
+    """Export the figure for both group-effect variants (see
+    simulation.variant_path for the file names)."""
     graphs.graph_setup()
 
+    for fixed in FIXED_GROUP_EFFECT_VARIANTS:
+        _export(
+            variant_path(cache_path, fixed),
+            variant_path(graph_output_path, fixed),
+            n_items,
+            n_reps,
+            workers,
+            fixed_group_effect=fixed,
+        )
+
+
+def _export(
+    cache_path: Path,
+    graph_output_path: Path,
+    n_items: int,
+    n_reps: int,
+    workers: int,
+    fixed_group_effect: bool,
+) -> None:
     cache_path.parent.mkdir(parents=True, exist_ok=True)
 
     if skip_if_exists(cache_path):
         print(f"loading cached results from {cache_path}")
     else:
-        run(cache_path, n_items, n_reps, workers)
+        run(cache_path, n_items, n_reps, workers, fixed_group_effect)
 
     with open(cache_path, newline="") as fh:
         rows = list(csv.DictReader(fh))
@@ -124,7 +155,7 @@ def main(
 # ------------------------------------------------------------------- runner
 
 
-def _one_multigroup(job, n_items):
+def _one_multigroup(job, n_items, fixed_group_effect):
     """
     Run both simulations for a single (k, n_ann, minority, delta, rep) job.
 
@@ -133,16 +164,30 @@ def _one_multigroup(job, n_items):
     """
     k, n_ann, minority, delta, rep = job
 
-    seed = _seed(k, n_ann, minority, delta, rep)
+    seed = stable_seed(k, n_ann, minority, delta, rep)
 
     rng_uni = np.random.default_rng(seed ^ 0xABCD1234)
     rng_bi = np.random.default_rng(seed ^ 0xDCBA4321)
 
     matrix_uni, groups_uni = simulate_multigroup(
-        n_items, n_ann, k, delta, minority, rng_uni, unidirectional=True
+        n_items,
+        n_ann,
+        k,
+        delta,
+        minority,
+        rng_uni,
+        unidirectional=True,
+        fixed_group_effect=fixed_group_effect,
     )
     matrix_bi, groups_bi = simulate_multigroup(
-        n_items, n_ann, k, delta, minority, rng_bi, unidirectional=False
+        n_items,
+        n_ann,
+        k,
+        delta,
+        minority,
+        rng_bi,
+        unidirectional=False,
+        fixed_group_effect=fixed_group_effect,
     )
 
     method_rows = []
@@ -151,9 +196,7 @@ def _one_multigroup(job, n_items):
         (matrix_uni, groups_uni, SIMULATION_UNIDIRECTIONAL),
         (matrix_bi, groups_bi, SIMULATION_BIDIRECTIONAL),
     ]:
-        for method, stat, pvalue in _run_methods(
-            matrix, groups, rep, "apunim"
-        ):
+        for method, stat, pvalue in run_methods(matrix, groups, rep, "apunim"):
             method_rows.append(
                 (
                     k,
@@ -172,7 +215,13 @@ def _one_multigroup(job, n_items):
     return method_rows
 
 
-def run(out_csv: Path, n_items: int, n_reps: int, workers: int) -> None:
+def run(
+    out_csv: Path,
+    n_items: int,
+    n_reps: int,
+    workers: int,
+    fixed_group_effect: bool = False,
+) -> None:
     jobs = [
         (k, n_ann, minority, delta, rep)
         for k, conditions in CONDITIONS_MULTIGROUP.items()
@@ -201,7 +250,11 @@ def run(out_csv: Path, n_items: int, n_reps: int, workers: int) -> None:
             ]
         )
 
-        worker = functools.partial(_one_multigroup, n_items=n_items)
+        worker = functools.partial(
+            _one_multigroup,
+            n_items=n_items,
+            fixed_group_effect=fixed_group_effect,
+        )
 
         with ProcessPoolExecutor(max_workers=workers) as executor:
             for result in executor.map(worker, jobs, chunksize=4):
@@ -224,12 +277,8 @@ def plot(rows, methods, out_path):
     """
     Plot detection rates faceted by k, one panel per (k, condition).
     """
-    methods = [m for m in METHOD_ORDER if m in methods] + [
-        m for m in methods if m not in METHOD_ORDER
-    ]
-
+    methods = order_methods(methods)
     df = pd.DataFrame(rows)
-    colors = graphs.COLORBLIND_PALETTE
 
     # Build ordered list of (k, n_ann, minority) panels
     panels = [
@@ -249,85 +298,40 @@ def plot(rows, methods, out_path):
     axes = axes.ravel()
 
     for ax, (k, n_ann, minority) in zip(axes, panels):
-        condition_df = df[
-            (df["k"] == k)
-            & (df["n_ann"] == n_ann)
-            & (df["minority"] == minority)
-            & (df["method"].isin(methods))
-        ]
+        plot_detection_panel(
+            ax,
+            panel_rows(df, methods, k=k, n_ann=n_ann, minority=minority),
+            methods,
+            title=_condition_title(k, n_ann, minority),
+        )
 
-        for i, method in enumerate(methods):
-            method_df = condition_df[condition_df["method"] == method]
-
-            if len(method_df) == 0:
-                continue
-
-            for simulation in [
-                SIMULATION_UNIDIRECTIONAL,
-                SIMULATION_BIDIRECTIONAL,
-            ]:
-                sim_df = method_df[method_df["simulation"] == simulation]
-                opacity = (
-                    0.3 if simulation == SIMULATION_UNIDIRECTIONAL else 1
-                )
-
-                if len(sim_df) == 0:
-                    continue
-
-                sns.lineplot(
-                    data=sim_df,
-                    x="delta",
-                    y="detected",
-                    estimator="mean",
-                    errorbar="se",
-                    marker=graphs.MARKERS[i % len(graphs.MARKERS)],
-                    color=colors[i % len(colors)],
-                    linestyle=SIMULATION_LINESTYLE[simulation],
-                    lw=1.4,
-                    ms=3.8,
-                    err_style="bars",
-                    err_kws={"capsize": 3},
-                    ax=ax,
-                    legend=False,
-                    alpha=opacity,
-                )
-
-        ax.set_xlabel("")
-        ax.set_ylabel("")
-        ax.set_title(_condition_title(k, n_ann, minority))
-        ax.set_ylim(-0.04, 1.08)
-
-    for ax in axes[len(panels) :]:
+    for ax in axes[len(panels):]:
         ax.set_visible(False)
 
-    method_handles = [
-        plt.Line2D(
-            [0],
-            [0],
-            color=colors[i % len(colors)],
-            marker=graphs.MARKERS[i % len(graphs.MARKERS)],
-            linestyle="-",
-            lw=1.4,
-            ms=4.5,
-            label=LEGEND_LABEL.get(m, m),
-        )
-        for i, m in enumerate(methods)
-    ]
-
-    fig.legend(
-        handles=method_handles,
-        loc="lower center",
-        title="Method",
-        ncols=len(method_handles)
-    )
+    _legends(fig, methods)
 
     fig.suptitle(
-        "Multi-group ablation: detection when one of k groups drives polarization"
+        "Multi-group ablation: detection when one of k groups "
+        "drives polarization"
     )
-    fig.supylabel("Detection rate")
-    fig.supxlabel(r"Maximum group effect size $\delta$")
+    fig.supylabel(DETECTION_RATE_LABEL)
+    fig.supxlabel(EFFECT_SIZE_LABEL)
 
     graphs.save_plot(out_path)
+
+
+def _legends(fig, methods):
+    """Method legend in one row below the shared x-label, with the
+    simulation legend beneath it."""
+    method_handles = method_legend_handles(methods)
+    method_legend = fig.legend(
+        handles=method_handles,
+        loc="upper center",
+        bbox_to_anchor=(0.5, 0),
+        title="Method",
+        ncols=len(method_handles),
+    )
+    add_simulation_legend(fig, below=method_legend)
 
 
 if __name__ == "__main__":

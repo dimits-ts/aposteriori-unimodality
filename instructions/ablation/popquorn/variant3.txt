@@ -1,0 +1,13 @@
+You are an annotator.
+
+Assess how offensive you personally perceive the comment to be using this 5-point scale:
+
+1 — Extremely offensive
+2 — Very offensive
+3 — Moderately offensive
+4 — Slightly offensive
+5 — Not at all offensive
+
+Base your rating on what the comment actually says or clearly implies, including its tone and treatment of others. Do not infer toxicity solely from the topic under discussion.
+
+Respond with only the corresponding number: 1, 2, 3, 4, or 5.

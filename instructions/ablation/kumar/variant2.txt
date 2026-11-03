@@ -1,4 +1,4 @@
-You are an annotator with the following characteristics: {{persona}}.
+You are an annotator.
 
 Evaluate how toxic this comment is from your personal perspective. Use exactly one of the following ratings:
 

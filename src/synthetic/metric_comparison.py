@@ -8,15 +8,17 @@ Both simulations share the same generative model:
 
     y_ij = b_j + g_i * p_j + epsilon_ij
 
-and differ only in how p_j is sampled:
+where g_i ~ Uniform(-1/2, 0) for Group A and g_i ~ Uniform(0, 1/2) for
+Group B, drawn once per annotator. The simulations differ only in how p_j
+is sampled:
 
-    Unidirectional (solid lines):
+    Unidirectional (dashed, faded lines):
         p_j ~ Uniform(0, delta)
 
         The group effect is always positive: Group B always rates higher
         than Group A, though by a varying amount across items.
 
-    Bidirectional (dashed lines):
+    Bidirectional (solid lines):
         p_j ~ Uniform(-delta, delta)
 
         The direction of the group effect varies across items, so groups
@@ -30,29 +32,34 @@ where the strength of polarization is controlled by delta.
 
 import argparse
 import csv
-import math
 import functools
 from concurrent.futures import ProcessPoolExecutor
+from itertools import product
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import seaborn as sns
+from matplotlib.transforms import Bbox
 import numpy as np
 import pandas as pd
 
-from ..lib import graphs
-from ..lib.util import skip_if_exists
-from .shared import (
-    ALPHA,
+from ..lib import graphs, labels
+from ..lib.util import skip_if_exists, stable_seed
+from .plots import (
+    DETECTION_RATE_LABEL,
+    EFFECT_SIZE_LABEL,
+    method_legend_handles,
+    order_methods,
+    panel_rows,
+    plot_detection_panel,
+)
+from .methods import ALPHA, run_methods
+from .simulation import (
     DELTAS,
-    LEGEND_LABEL,
-    METHOD_ORDER,
+    FIXED_GROUP_EFFECT_VARIANTS,
     SIMULATION_BIDIRECTIONAL,
-    SIMULATION_LINESTYLE,
     SIMULATION_UNIDIRECTIONAL,
-    _run_methods,
-    _seed,
     simulate,
+    variant_path,
 )
 
 
@@ -65,7 +72,36 @@ CONDITIONS = [
     (6, 0.5),
 ]
 
-PLOT_NUM_COLS = 3
+# Grid layout is derived from the conditions: one row per distinct
+# annotators/item value, one column per distinct minority share
+# (in order of first appearance). Cells with no condition (here:
+# 6 ann/item, 20% minority) are left empty and host the legend.
+ROW_VALUES = list(dict.fromkeys(n_ann for n_ann, _ in CONDITIONS))
+COL_VALUES = list(dict.fromkeys(minority for _, minority in CONDITIONS))
+
+# Gap (in points) between the column labels and the top row's subplot
+# titles. The labels are anchored to the tallest top-row title, so they
+# move up automatically for multi-line titles and stay level.
+COL_LABEL_PAD = 6
+
+# The shared rcParams default (14, 6) is sized for a single row of panels;
+# a 3-row grid needs more height so titles, tick labels and margin labels
+# have room at the global font sizes set in graphs.graph_setup().
+FIGSIZE = (14, 9)
+
+# Horizontal padding (inches) the constrained layout engine leaves around
+# each axes and figure-level label.
+LAYOUT_W_PAD = 0.15
+
+# Direction cues drawn in the figure margins. Each arrow lives in its own
+# thin gridspec track (left of the rows / above the columns) so the
+# constrained layout engine reserves space for it like any other element.
+# ARROW_TRACK is that track's size relative to one panel.
+ROW_ARROW_LABELS = ("Utopic", "Realistic")  # top -> bottom
+COL_ARROW_LABELS = ("Balanced", "Minority")  # left -> right
+ARROW_TRACK = 0.04
+ARROW_COLOR = "0.35"
+ARROW_LABEL_GAP = 4  # points between an arrow end and its label
 
 
 # --------------------------------------------------------------------- main
@@ -78,14 +114,35 @@ def main(
     n_reps: int,
     workers: int,
 ) -> None:
+    """Export the figure for both group-effect variants (see
+    simulation.variant_path for the file names)."""
     graphs.graph_setup()
 
+    for fixed in FIXED_GROUP_EFFECT_VARIANTS:
+        _export(
+            variant_path(cache_path, fixed),
+            variant_path(graph_output_path, fixed),
+            n_items,
+            n_reps,
+            workers,
+            fixed_group_effect=fixed,
+        )
+
+
+def _export(
+    cache_path: Path,
+    graph_output_path: Path,
+    n_items: int,
+    n_reps: int,
+    workers: int,
+    fixed_group_effect: bool,
+) -> None:
     cache_path.parent.mkdir(parents=True, exist_ok=True)
 
     if skip_if_exists(cache_path):
         print(f"loading cached results from {cache_path}")
     else:
-        run(cache_path, n_items, n_reps, workers)
+        run(cache_path, n_items, n_reps, workers, fixed_group_effect)
 
     with open(cache_path, newline="") as fh:
         rows = list(csv.DictReader(fh))
@@ -102,13 +159,24 @@ def main(
         method for method in dict.fromkeys(row["method"] for row in rows)
     ]
 
-    plot(rows, methods, graph_output_path)
+    plot(
+        rows,
+        methods,
+        graph_output_path,
+        panel_titles=[
+            "Exceptional",
+            "Competitive",
+            "Competitive",
+            "Struggle",
+            "Collapse",
+        ],
+    )
 
 
 # ------------------------------------------------------------------- runner
 
 
-def _one(job, n_items):
+def _one(job, n_items, fixed_group_effect):
     """
     Run both simulations for a single job and emit rows for each.
 
@@ -117,7 +185,7 @@ def _one(job, n_items):
     """
     n_ann, minority, delta, rep = job
 
-    seed = _seed(n_ann, minority, delta, rep)
+    seed = stable_seed(n_ann, minority, delta, rep)
 
     # Use child RNGs derived from the same seed so that the two
     # simulations are independent but still deterministic.
@@ -131,6 +199,7 @@ def _one(job, n_items):
         minority,
         rng_unidirectional,
         unidirectional=True,
+        fixed_group_effect=fixed_group_effect,
     )
     matrix_bidirectional, groups_bidirectional = simulate(
         n_items,
@@ -139,6 +208,7 @@ def _one(job, n_items):
         minority,
         rng_bidirectional,
         unidirectional=False,
+        fixed_group_effect=fixed_group_effect,
     )
 
     method_rows = []
@@ -157,7 +227,7 @@ def _one(job, n_items):
             "apunim",
         ),
     ]:
-        for method, stat, pvalue in _run_methods(
+        for method, stat, pvalue in run_methods(
             matrix, groups, rep, apunim_label
         ):
             method_rows.append(
@@ -177,7 +247,13 @@ def _one(job, n_items):
     return method_rows
 
 
-def run(out_csv: Path, n_items: int, n_reps: int, workers: int) -> None:
+def run(
+    out_csv: Path,
+    n_items: int,
+    n_reps: int,
+    workers: int,
+    fixed_group_effect: bool = False,
+) -> None:
     jobs = [
         (n_ann, minority, delta, rep)
         for n_ann, minority in CONDITIONS
@@ -204,7 +280,9 @@ def run(out_csv: Path, n_items: int, n_reps: int, workers: int) -> None:
             ]
         )
 
-        worker = functools.partial(_one, n_items=n_items)
+        worker = functools.partial(
+            _one, n_items=n_items, fixed_group_effect=fixed_group_effect
+        )
 
         with ProcessPoolExecutor(max_workers=workers) as executor:
             for result in executor.map(worker, jobs, chunksize=4):
@@ -216,113 +294,211 @@ def run(out_csv: Path, n_items: int, n_reps: int, workers: int) -> None:
 # ------------------------------------------------------------------ figure
 
 
-def _condition_title(n_ann, minority):
-    return f"{n_ann} ann/item, {int(round(minority * 100))}\\% minority"
+def _bold(text):
+    return "\n".join(rf"\textbf{{{line}}}" for line in text.split("\n"))
 
 
-def plot(rows, methods, out_path):
+def _row_label(n_ann):
+    return _bold(f"{n_ann} annotators\nper item")
+
+
+def _col_label(minority):
+    return _bold(
+        f"{int(round(minority * 100))}\\%-"
+        f"{int(round((1-minority) * 100))}\\% group sizes"
+    )
+
+
+def _direction_arrow(ax, start_label, end_label, vertical):
     """
-    Plot detection rates for both simulations in a shared panel grid.
+    Draw `start_label ---> end_label` across the full length of `ax`.
+
+    Horizontal arrows run left to right; vertical ones run top to bottom
+    with labels rotated to read in the same direction as the arrow.
+    """
+    ax.axis("off")
+    text_kws = dict(
+        transform=ax.transAxes,
+        color=ARROW_COLOR,
+        fontsize=plt.rcParams["axes.labelsize"],
+    )
+
+    if vertical:
+        start = ax.text(
+            0.5,
+            1,
+            start_label,
+            ha="center",
+            va="top",
+            rotation=90,
+            **text_kws,
+        )
+        end = ax.text(
+            0.5,
+            0,
+            end_label,
+            ha="center",
+            va="bottom",
+            rotation=90,
+            **text_kws,
+        )
+        tail, head = (0.5, 0.0), (0.5, 1.0)  # bottom of start, top of end
+    else:
+        start = ax.text(
+            0, 0.5, start_label, ha="left", va="center", **text_kws
+        )
+        end = ax.text(1, 0.5, end_label, ha="right", va="center", **text_kws)
+        tail, head = (1.0, 0.5), (0.0, 0.5)  # right of start, left of end
+
+    # Arrow from the start label's edge to the end label's edge, so it
+    # always fills the space between them whatever the figure size.
+    ax.annotate(
+        "",
+        xy=head,
+        xycoords=end,
+        xytext=tail,
+        textcoords=start,
+        arrowprops=dict(
+            arrowstyle="-|>",
+            color=ARROW_COLOR,
+            lw=1.4,
+            mutation_scale=18,
+            shrinkA=ARROW_LABEL_GAP,
+            shrinkB=ARROW_LABEL_GAP,
+        ),
+    )
+
+
+def plot(rows, methods, out_path, panel_titles=None):
+    """
+    Plot detection rates for both simulations in a factorial panel grid.
+
+    Layout
+    ------
+    Rows     ->  annotators per item (labelled on the left margin)
+    Columns  ->  minority share (labelled above the top row)
+    Titles   ->  free-form, supplied via `panel_titles` (one per entry in
+                 CONDITIONS, in the same order)
+    Arrows   ->  ROW_ARROW_LABELS left of the rows,
+                 COL_ARROW_LABELS above the columns
 
     Visual encoding
     ---------------
     Color  + marker  ->  method
-    Line style       ->  simulation type (solid = unidirectional, dashed = bidirectional)
+    Line style       ->  simulation type (dashed and faded = unidirectional,
+                         solid = bidirectional)
     """
-    methods = [m for m in METHOD_ORDER if m in methods] + [
-        m for m in methods if m not in METHOD_ORDER
-    ]
-
+    methods = order_methods(methods)
     df = pd.DataFrame(rows)
-    colors = graphs.COLORBLIND_PALETTE
-    n_rows = math.ceil(len(CONDITIONS) / PLOT_NUM_COLS)
 
-    fig, axes = plt.subplots(
-        n_rows,
-        PLOT_NUM_COLS,
-        sharey=True,
-        squeeze=False,
+    n_rows, n_cols = len(ROW_VALUES), len(COL_VALUES)
+
+    fig = plt.figure(figsize=FIGSIZE, layout="constrained")
+    # Extra horizontal padding so the figure-level "Detection rate" label
+    # is visibly separate from the elements next to it.
+    fig.get_layout_engine().set(w_pad=LAYOUT_W_PAD)
+
+    # Panel grid plus one thin track on the left (row arrow) and one on
+    # top (column arrow); the top-left corner cell stays empty.
+    gs = fig.add_gridspec(
+        n_rows + 1,
+        n_cols + 1,
+        width_ratios=[ARROW_TRACK] + [1] * n_cols,
+        height_ratios=[ARROW_TRACK] + [1] * n_rows,
     )
-    axes = axes.ravel()
 
-    for ax, (n_ann, minority) in zip(axes, CONDITIONS):
-        condition_df = df[
-            (df["n_ann"] == n_ann)
-            & (df["minority"] == minority)
-            & (df["method"].isin(methods))
-        ]
-
-        for i, method in enumerate(methods):
-            method_df = condition_df[condition_df["method"] == method]
-
-            if len(method_df) == 0:
-                continue
-
-            for simulation in [
-                SIMULATION_UNIDIRECTIONAL,
-                SIMULATION_BIDIRECTIONAL,
-            ]:
-                sim_df = method_df[method_df["simulation"] == simulation]
-                opacity = (
-                    0.3 if simulation == SIMULATION_UNIDIRECTIONAL else 1
-                )
-
-                if len(sim_df) == 0:
-                    continue
-
-                sns.lineplot(
-                    data=sim_df,
-                    x="delta",
-                    y="detected",
-                    estimator="mean",
-                    errorbar="se",
-                    marker=graphs.MARKERS[i % len(graphs.MARKERS)],
-                    color=colors[i % len(colors)],
-                    linestyle=SIMULATION_LINESTYLE[simulation],
-                    lw=1.4,
-                    ms=3.8,
-                    err_style="bars",
-                    err_kws={"capsize": 3},
-                    ax=ax,
-                    legend=False,
-                    alpha=opacity,
-                )
-
-        ax.set_xlabel("")
-        ax.set_ylabel("")
-        ax.set_title(_condition_title(n_ann, minority))
-        ax.set_ylim(-0.04, 1.08)
-
-    for ax in axes[len(CONDITIONS) :]:
-        ax.set_visible(False)
-
-    method_handles = [
-        plt.Line2D(
-            [0],
-            [0],
-            color=colors[i % len(colors)],
-            marker=graphs.MARKERS[i % len(graphs.MARKERS)],
-            linestyle="-",
-            lw=1.4,
-            ms=4.5,
-            label=LEGEND_LABEL.get(m, m),
+    axes = np.empty((n_rows, n_cols), dtype=object)
+    for r, c in product(range(n_rows), range(n_cols)):
+        axes[r, c] = fig.add_subplot(
+            gs[r + 1, c + 1],
+            sharey=axes[0, 0] if (r, c) != (0, 0) else None,
         )
-        for i, m in enumerate(methods)
-    ]
+        if c > 0:
+            axes[r, c].tick_params(labelleft=False)
 
-    fig.legend(
-        handles=method_handles,
-        loc="lower right",
-        title="Method",
+    _direction_arrow(
+        fig.add_subplot(gs[1:, 0]), *ROW_ARROW_LABELS, vertical=True
     )
+    _direction_arrow(
+        fig.add_subplot(gs[0, 1:]), *COL_ARROW_LABELS, vertical=False
+    )
+
+    occupied = set()
+
+    for k, (n_ann, minority) in enumerate(CONDITIONS):
+        r = ROW_VALUES.index(n_ann)
+        c = COL_VALUES.index(minority)
+        occupied.add((r, c))
+
+        plot_detection_panel(
+            axes[r, c],
+            panel_rows(df, methods, n_ann=n_ann, minority=minority),
+            methods,
+            title=panel_titles[k] if panel_titles is not None else "",
+        )
+
+    # Margin labels: rows on the left (first column), columns on top.
+    # Row labels use the y-label slot and column labels are anchored to the
+    # top of each top-row title, so the constrained layout engine reserves
+    # space for both and they never overlap the (repurposed) titles.
+    for r, n_ann in enumerate(ROW_VALUES):
+        axes[r, 0].set_ylabel(_row_label(n_ann))
+
+    # All column labels share one baseline: the top of the tallest title in
+    # the first row (x follows each column's axes, y follows that union).
+    top_titles = [ax.title for ax in axes[0]]
+
+    def _top_titles_bbox(renderer):
+        return Bbox.union(
+            [title.get_window_extent(renderer) for title in top_titles]
+        )
+
+    for c, minority in enumerate(COL_VALUES):
+        axes[0, c].annotate(
+            _col_label(minority),
+            xy=(0.5, 1.0),
+            xycoords=("axes fraction", _top_titles_bbox),
+            xytext=(0, COL_LABEL_PAD),
+            textcoords="offset points",
+            ha="center",
+            va="bottom",
+            fontsize=plt.rcParams["axes.labelsize"],
+        )
+
+    empty_axes = [
+        axes[r, c]
+        for r, c in product(range(n_rows), range(n_cols))
+        if (r, c) not in occupied
+    ]
+    for ax in empty_axes:
+        ax.axis("off")
+
+    _legends(fig, empty_axes, methods)
 
     fig.suptitle(
-        "Prior approaches fail at attributing systematic disagreement to groups"
+        f"Efficacy of {labels.IAA.short} and Other Prior Methods on "
+        "Systematic Disagreement Attribution"
     )
-    fig.supylabel("Detection rate")
-    fig.supxlabel(r"Maximum group effect size $\delta$")
+    fig.supylabel(DETECTION_RATE_LABEL)
+    fig.supxlabel(EFFECT_SIZE_LABEL)
 
     graphs.save_plot(out_path)
+
+
+def _legends(fig, empty_axes, methods):
+    """Method legend in the first empty grid cell (figure-level if the grid
+    happens to be full).
+
+    There is no simulation (line style) legend: at the graphs default font
+    sizes it does not fit in the cell next to the method legend, so line
+    styles are explained in the caption instead."""
+    method_handles = method_legend_handles(methods)
+    if empty_axes:
+        empty_axes[0].legend(
+            handles=method_handles, loc="center", title="Method", ncol=2
+        )
+    else:
+        fig.legend(handles=method_handles, loc="lower right", title="Method")
 
 
 if __name__ == "__main__":

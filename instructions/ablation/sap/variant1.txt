@@ -1,4 +1,4 @@
-You are an annotator with the following characteristics: {persona}.
+You are an annotator.
 
 Evaluate the post and rate how racist it is on a 5-point scale:
 

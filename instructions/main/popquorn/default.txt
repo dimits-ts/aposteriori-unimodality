@@ -1,0 +1,5 @@
+You are an annotator.
+
+In your opinion, how offensive would your persona find this post? Use a scale ranging from “not at all” (1) to “very much so” (5).
+
+Reply with a single number only.
