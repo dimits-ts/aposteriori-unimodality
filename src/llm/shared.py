@@ -54,6 +54,11 @@ _NON_PERSONA_COLS = frozenset(
     }
 )
 
+# Datasets whose LLM annotations are on the reverse of the human scale: a
+# parsed reply v is mapped to min + max - v of the dataset's valid values
+# (for Kumar et al., 1 <-> 5), so it matches the human annotations.
+_REVERSED_SCALE_DATASETS = frozenset({"kumar"})
+
 # Display order of the models in every table and figure (models not listed
 # are appended alphabetically).
 _MODEL_DISPLAY_ORDER = (
@@ -243,13 +248,17 @@ def load_llm_df(path: Path) -> pd.DataFrame:
     the reply parsed to an integer (see clean_annotation), NaN if it
     cannot be parsed or is outside the dataset's valid range
     (VALID_ANNOTATION_VALUES of the lib.preprocessing class of the dataset
-    key in the file name). The raw "annotation" column is kept as is.
+    key in the file name), and reversed for the datasets in
+    _REVERSED_SCALE_DATASETS. The raw "annotation" column is kept as is.
     """
     df = pd.read_csv(path)
     cleaned = clean_annotation(df["annotation"])
-    dataset_cls = DATASET_CLASSES[dataset_key_of_file(path)]
-    valid = dataset_cls.VALID_ANNOTATION_VALUES
-    df["annotation_clean"] = cleaned.mask(out_of_range(cleaned, valid))
+    dataset_key = dataset_key_of_file(path)
+    valid = DATASET_CLASSES[dataset_key].VALID_ANNOTATION_VALUES
+    cleaned = cleaned.mask(out_of_range(cleaned, valid))
+    if dataset_key in _REVERSED_SCALE_DATASETS:
+        cleaned = min(valid) + max(valid) - cleaned
+    df["annotation_clean"] = cleaned
     return df
 
 
